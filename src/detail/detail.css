@@ -129,6 +129,40 @@ body {
   font-weight: bold;
 }
 
+/* New styles for bidding status */
+.bidding-status {
+  background-color: #e8f5e8;
+  border-color: #5cb85c;
+}
+
+.bidding {
+  color: #5cb85c !important;
+}
+
+.bidding-countdown {
+  font-size: 18px;
+  color: #5cb85c;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.register-bid-btn {
+  background-color: #5cb85c;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+  margin-top: 10px;
+}
+
+.register-bid-btn:hover {
+  background-color: #4cae4c;
+}
+
 .details-table {
   width: 100%;
   border-collapse: collapse;
@@ -283,5 +317,9 @@ body {
   .tab {
     padding: 10px 20px;
     font-size: 13px;
+  }
+
+  .register-bid-btn {
+    width: 100%;
   }
 }

@@ -23,6 +23,11 @@ const AuctionPage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  const handleRegisterBid = () => {
+    // Handle registration logic here, e.g., open modal or redirect
+    alert('Đăng ký đấu giá thành công!'); // Placeholder
+  };
+
   return (
     <div className="container">
       <h2 className="title">
@@ -63,9 +68,23 @@ const AuctionPage = () => {
 
         {/* Info Section */}
         <div className="info-section">
+          {/* Existing Status Box for Registration */}
           <div className="status-box">
             <div className="status-title">Cuộc đấu giá sắp diễn ra, còn :</div>
             <div className="status-message">Hết thời gian đăng ký</div>
+          </div>
+
+          {/* New Status Box for Ongoing Bidding */}
+          <div className="status-box bidding-status">
+            <div className="status-title">Đang diễn ra đấu giá, còn :</div>
+            <div className="status-message bidding">Thời gian trả giá đang diễn ra</div>
+            <div className="bidding-countdown">
+              {/* Placeholder for countdown timer */}
+              <span>02:45:30</span>
+            </div>
+            <button className="register-bid-btn" onClick={handleRegisterBid}>
+              Đăng ký đấu giá
+            </button>
           </div>
 
           <table className="details-table">
