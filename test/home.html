@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đấu giá xe KIA MORNING</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .header h1 {
+            color: #ff9933;
+            font-size: 16px;
+            font-weight: normal;
+        }
+
+        .breadcrumb {
+            color: #ff9933;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .image-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .thumbnail-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-button {
+            background-color: #f0f0f0;
+            border: none;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 18px;
+        }
+
+        .nav-button:hover {
+            background-color: #e0e0e0;
+        }
+
+        .thumbnails {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .thumbnail {
+            width: 150px;
+            height: 100px;
+            object-fit: cover;
+            border: 2px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .thumbnail:hover {
+            border-color: #ff9933;
+        }
+
+        .view-images-btn {
+            background-color: #ff9933;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            align-self: flex-start;
+        }
+
+        .view-images-btn:hover {
+            background-color: #e68a2e;
+        }
+
+        .info-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .status-box {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .status-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .status-message {
+            font-size: 16px;
+            color: #d9534f;
+            font-weight: bold;
+        }
+
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .details-table tr {
+            border-bottom: 1px solid #eee;
+        }
+
+        .details-table td {
+            padding: 12px 0;
+            font-size: 14px;
+        }
+
+        .details-table td:first-child {
+            color: #333;
+            font-weight: 600;
+            width: 45%;
+        }
+
+        .details-table td:last-child {
+            color: #555;
+            text-align: right;
+        }
+
+        .price-highlight {
+            color: #d9534f !important;
+            font-size: 20px !important;
+            font-weight: bold !important;
+        }
+
+        .notice {
+            background-color: #fff9e6;
+            padding: 15px;
+            border-left: 4px solid #ff9933;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-top: 30px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            padding: 12px 30px;
+            background-color: #f5f5f5;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+
+        .tab.active {
+            background-color: #ff9933;
+            color: white;
+        }
+
+        .tab-content {
+            background-color: #fffbf0;
+            padding: 20px;
+            margin-top: 0;
+            border-radius: 0 0 5px 5px;
+        }
+
+        .tab-content ul {
+            list-style-position: inside;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        .location {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .organizer {
+            color: #0066cc;
+            text-decoration: none;
+        }
+
+        .organizer:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 968px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .thumbnails {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="title">01 (một) xe ô tô nhãn hiệu KIA MORNING màu xanh, đã qua sử dụng biển kiểm soát 34A-253.97</h2>
+
+        <div class="content-wrapper">
+            <div class="image-section">
+                <img src="/public/assets/img/xe.png" alt="KIA Morning Dashboard" class="main-image" id="mainImage">
+
+                <div class="thumbnail-container">
+                    <button class="nav-button" onclick="prevImage()">&#8249;</button>
+                    <div class="thumbnails">
+                        <img src="/public/assets/img/2.jpg" alt="Thumbnail 1" class="thumbnail" onclick="changeImage(0)">
+                        <img src="/public/assets/img/3.jpg" alt="Thumbnail 2" class="thumbnail" onclick="changeImage(1)">
+                        <img src="/public/assets/img/4.jpg" alt="Thumbnail 3" class="thumbnail" onclick="changeImage(2)">
+                    </div>
+                    <button class="nav-button" onclick="nextImage()">&#8250;</button>
+                </div>
+
+                <button class="view-images-btn">Hình ảnh</button>
+            </div>
+
+            <div class="info-section">
+                <div class="status-box">
+                    <div class="status-title">Cuộc đấu giá sắp diễn ra, còn :</div>
+                    <div class="status-message">Hết thời gian đăng ký</div>
+                </div>
+
+                <table class="details-table">
+                    <tr>
+                        <td>Mã tài sản:</td>
+                        <td>MTS-RGV82A</td>
+                    </tr>
+                    <tr>
+                        <td>Người có tài sản:</td>
+                        <td>Nguyễn An Sơn</td>
+                    </tr>
+                    <tr>
+                        <td>Tổ chức đấu giá tài sản:</td>
+                        <td>Công ty đấu giá hợp danh trực tuyến toàn cầu</td>
+                    </tr>
+                    <tr>
+                        <td>Phương thức đấu giá:</td>
+                        <td>Đấu giá tự do</td>
+                    </tr>
+                    <tr>
+                        <td>Thời gian mở đăng kí:</td>
+                        <td>14/08/2023 09:19:51</td>
+                    </tr>
+                    <tr>
+                        <td>Thời gian kết thúc đăng kí:</td>
+                        <td>14/08/2023 11:10:51</td>
+                    </tr>
+                    <tr>
+                        <td>Thời gian diễm danh:</td>
+                        <td>14/08/2023 11:11:51</td>
+                    </tr>
+                    <tr>
+                        <td>Thời gian bắt đầu trả giá:</td>
+                        <td class="price-highlight">14/08/2023 11:14:51</td>
+                    </tr>
+                    <tr>
+                        <td>Thời gian kết thúc trả giá:</td>
+                        <td>15/08/2023 09:10:51</td>
+                    </tr>
+                    <tr>
+                        <td>Bước giá:</td>
+                        <td>5,000,000 VNĐ</td>
+                    </tr>
+                    <tr>
+                        <td>Giá khởi điểm:</td>
+                        <td class="price-highlight">92,365,000 VNĐ</td>
+                    </tr>
+                </table>
+
+                <div class="notice">
+                    <strong>Không trong thời gian đăng ký dự đấu giá!</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(0)">Thông tin đấu giá</button>
+            <button class="tab" onclick="switchTab(1)">Hồ sơ pháp lý liên quan</button>
+        </div>
+
+        <!-- Tab 1: Thông tin đấu giá -->
+        <div id="tab-content-0" class="tab-content">
+            <ul>
+                <li>Tên tổ chức: <a href="#" class="organizer">Công ty đấu giá hợp danh An Việt</a></li>
+            </ul>
+            <ul>
+                <li>Đấu giá viên: <span style="color: #0066cc;">Ngô Thị Lưu</span></li>
+            </ul>
+            <ul>
+                <li class="location">Địa chỉ: Số OV14-1, Khu chức năng đô thị Xuân Phương, phường Xuân Phương, quận Nam Từ Liêm, Hà Nội</li>
+            </ul>
+        </div>
+
+        <!-- Tab 2: Hồ sơ pháp lý liên quan -->
+        <div id="tab-content-1" class="tab-content" style="display: none;">
+            <h3 style="margin-bottom: 15px; color: #333;">Các tài liệu pháp lý liên quan đến cuộc đấu giá:</h3>
+            <ul style="list-style: none; padding: 0;">
+                <li style="margin-bottom: 10px; padding: 10px; background: #f9f9f9; border-radius: 5px;">
+                    <strong>1. Quyết định thanh lý tài sản (QC130-16690849166.pdf)</strong><br>
+                    <small>Mô tả: Quyết định phê duyệt thanh lý xe ô tô KIA MORNING, biển 34A-253.97.</small><br>
+                    <a href="/public/docs/QC130-16690849166.pdf" download style="color: #ff9933; text-decoration: none;">Tải về (PDF)</a>
+                </li>
+                <li style="margin-bottom: 10px; padding: 10px; background: #f9f9f9; border-radius: 5px;">
+                    <strong>2. Biên bản kiểm kê tài sản (Tb13-16690888292.pdf)</strong><br>
+                    <small>Mô tả: Biên bản kiểm kê tình trạng xe, giá trị ước tính và các giấy tờ liên quan.</small><br>
+                    <a href="/public/docs/Tb13-16690888292.pdf" download style="color: #ff9933; text-decoration: none;">Tải về (PDF)</a>
+                </li>
+            </ul>
+            <div class="notice" style="margin-top: 15px;">
+                <strong>Lưu ý: Vui lòng kiểm tra kỹ tài liệu trước khi tham gia đấu giá. Liên hệ tổ chức đấu giá nếu cần hỗ trợ.</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const images = [
+            'https://via.placeholder.com/600x400/4a5568/ffffff?text=KIA+MORNING+Interior',
+            'https://via.placeholder.com/600x400/6b7280/ffffff?text=Registration+Document',
+            'https://via.placeholder.com/600x400/9ca3af/ffffff?text=License+Plate'
+        ];
+
+        let currentIndex = 0;
+
+        function changeImage(index) {
+            currentIndex = index;
+            document.getElementById('mainImage').src = images[index];
+        }
+
+        function nextImage() {
+            currentIndex = (currentIndex + 1) % images.length;
+            changeImage(currentIndex);
+        }
+
+        function prevImage() {
+            currentIndex = (currentIndex - 1 + images.length) % images.length;
+            changeImage(currentIndex);
+        }
+
+        // Tab functionality (đã fix để hoạt động)
+        function switchTab(index) {
+            // Ẩn tất cả tab-content
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.style.display = 'none');
+
+            // Bỏ active tất cả tab
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Hiển thị tab-content tương ứng và active tab
+            const targetContent = document.getElementById('tab-content-' + index);
+            if (targetContent) {
+                targetContent.style.display = 'block';
+            }
+            if (tabs[index]) {
+                tabs[index].classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>

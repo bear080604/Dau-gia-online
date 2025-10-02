@@ -1,0 +1,287 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 20px auto;
+  background-color: #fff;
+  padding: 30px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: normal;
+}
+
+.content-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.image-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.main-image {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.thumbnail-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.nav-button {
+  background-color: #f0f0f0;
+  border: none;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 18px;
+  transition: background-color 0.2s;
+}
+
+.nav-button:hover {
+  background-color: #e0e0e0;
+}
+
+.thumbnails {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  overflow-x: auto;
+}
+
+.thumbnail {
+  width: 150px;
+  height: 100px;
+  object-fit: cover;
+  border: 2px solid #ddd;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.thumbnail:hover {
+  border-color: #ff9933;
+}
+
+.view-images-btn {
+  background-color: #ff9933;
+  color: white;
+  border: none;
+  padding: 10px 30px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  align-self: flex-start;
+  transition: background-color 0.2s;
+}
+
+.view-images-btn:hover {
+  background-color: #e68a2e;
+}
+
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.status-box {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.status-title {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.status-message {
+  font-size: 16px;
+  color: #d9534f;
+  font-weight: bold;
+}
+
+.details-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.details-table tr {
+  border-bottom: 1px solid #eee;
+}
+
+.details-table td {
+  padding: 12px 0;
+  font-size: 14px;
+}
+
+.details-table td:first-child {
+  color: #333;
+  font-weight: 600;
+  width: 45%;
+}
+
+.details-table td:last-child {
+  color: #555;
+  text-align: right;
+}
+
+.price-highlight {
+  color: #d9534f !important;
+  font-size: 20px !important;
+  font-weight: bold !important;
+}
+
+.notice {
+  background-color: #fff9e6;
+  padding: 15px;
+  border-left: 4px solid #ff9933;
+  font-size: 14px;
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-top: 30px;
+  border-bottom: 2px solid #ddd;
+}
+
+.tab {
+  padding: 12px 30px;
+  background-color: #f5f5f5;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  transition: background-color 0.2s;
+}
+
+.tab:hover {
+  background-color: #e8e8e8;
+}
+
+.tab.active {
+  background-color: #ff9933;
+  color: white;
+}
+
+.tab-content {
+  background-color: #fffbf0;
+  padding: 20px;
+  border-radius: 0 0 5px 5px;
+}
+
+.tab-content ul {
+  list-style-position: inside;
+  line-height: 1.8;
+  color: #555;
+}
+
+.location {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #666;
+}
+
+.organizer {
+  color: #0066cc;
+  text-decoration: none;
+  transition: text-decoration 0.2s;
+}
+
+.organizer:hover {
+  text-decoration: underline;
+}
+
+.auctioneer {
+  color: #0066cc;
+}
+
+.document-title {
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 16px;
+}
+
+.document-list {
+  list-style: none;
+  padding: 0;
+}
+
+.document-item {
+  margin-bottom: 10px;
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 5px;
+}
+
+.download-link {
+  color: #ff9933;
+  text-decoration: none;
+  transition: text-decoration 0.2s;
+}
+
+.download-link:hover {
+  text-decoration: underline;
+}
+
+.document-notice {
+  margin-top: 15px;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+  .content-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .thumbnails {
+    overflow-x: auto;
+  }
+
+  .container {
+    padding: 15px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .details-table td {
+    font-size: 13px;
+  }
+
+  .tab {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+}
