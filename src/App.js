@@ -11,7 +11,7 @@ function App (){
         <Routes>
           <Route path='/' element={<Home/>} />
           <Route path='/home' element={<Home/>} />
-          <Route path='/auction-items/:id' element={<Detail/>} /> {/* Changed to match Link in Home */}
+          <Route path='/detail/:id' element={<Detail/>} /> {/* Changed to match Link in Home */}
           <Route path='/auction' element={<Home/>} /> {/* Optional: redirect or use Home; adjust as needed */}
         </Routes>
       </div>
