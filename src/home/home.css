@@ -7,15 +7,16 @@
 }
 .list-auction{
     display: flex;
-    flex-wrap: wrap;
+    /* flex-wrap: wrap; */
     justify-content: center;
     align-items: center;
     padding: 20px 0;
-    gap: 20px;
+    gap: 80px;
     width: 100%;
+    padding-bottom: 40px;
 }
 .auction-item{
-    max-width: 20%;
+    max-width: 100%;
     box-shadow: 0 0 10px 0 gray; /* mờ đều 4 cạnh */
 }
 .auction-image{
@@ -50,4 +51,6 @@
     display: flex;
     justify-content: space-around;
     gap: 8px;
+    cursor: pointer;
 }
+

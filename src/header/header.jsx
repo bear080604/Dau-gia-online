@@ -2,7 +2,6 @@ import React from "react";
 import "./header.css";
 
 function Header() {
-    
   return (
     <>
       {/* Top Bar */}
@@ -57,7 +56,7 @@ function Header() {
           </li>
           <li>
             <a href="#">
-              <i className="fa fa-newspaper-o" aria-hidden="true"></i> TIN TỨC - THÔNG BÁO
+              <i className="fa fa-book" aria-hidden="true"></i> TIN TỨC - THÔNG BÁO
             </a>
           </li>
           <li>

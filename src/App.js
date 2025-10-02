@@ -1,15 +1,17 @@
-import React from "react";
-import Header from "./header/header";
-import Home from "./home/home";
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import React from 'react';
+import Home from './pages/Home';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-
-function App() {
+function App (){
   return (
-    <div>
-      <Header />
-      <Home />
-    </div>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path='/' element={<Home/>} />
+          <Route path='/home' element={<Home/>} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
