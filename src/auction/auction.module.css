@@ -1,5 +1,3 @@
-
-
 .container {
   max-width: 1290px;
   margin: 0 auto;
@@ -162,20 +160,26 @@ th {
   display: inline-block;
 }
 
-.user-icon.pink {
+.green {
+  background-color: #4CAF50;
+}
+
+.pink {
   background-color: #e91e63;
 }
 
-input[type="range"] {
+.slider {
   -webkit-appearance: none;
   appearance: none;
   height: 8px;
   background: linear-gradient(to right, #2772BA 0%, #2772BA 0%, #ddd 0%, #ddd 100%);
   border-radius: 5px;
   outline: none;
+  width: 100%;
+  margin: 15px 0;
 }
 
-input[type="range"]::-webkit-slider-thumb {
+.slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 20px;
@@ -186,7 +190,7 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
 }
 
-input[type="range"]::-moz-range-thumb {
+.slider::-moz-range-thumb {
   width: 20px;
   height: 20px;
   background: white;

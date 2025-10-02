@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './auction.css';
+import styles from './auction.module.css';
 
 const AuctionPage = () => {
   const [bidValue, setBidValue] = useState(490000000);
@@ -27,107 +27,107 @@ const AuctionPage = () => {
   };
 
   return (
-    <div className="container">
-      <div className="header">Phiên đấu giá đồng điện rã</div>
+    <div className={styles.container}>
+      <div className={styles.header}>Phiên đấu giá đồng điện rã</div>
       
-      <div className="timer">00:00</div>
+      <div className={styles.timer}>00:00</div>
       
-      <div className="lot-numbers">
-        <div className="lot-number">14</div>
-        <div className="lot-number">17</div>
-        <div className="lot-number">18</div>
-        <div className="lot-number">27</div>
+      <div className={styles['lot-numbers']}>
+        <div className={styles['lot-number']}>14</div>
+        <div className={styles['lot-number']}>17</div>
+        <div className={styles['lot-number']}>18</div>
+        <div className={styles['lot-number']}>27</div>
       </div>
 
-      <div className="content">
-        <div className="left-section">
-          <div className="section-title">THÔNG TIN TÀI SẢN</div>
-          <div className="info-row">
-            <div className="info-label">Mã lô sản:</div>
-            <div className="info-value">D401-22-01-BTN</div>
+      <div className={styles.content}>
+        <div className={styles['left-section']}>
+          <div className={styles['section-title']}>THÔNG TIN TÀI SẢN</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Mã lô sản:</div>
+            <div className={styles['info-value']}>D401-22-01-BTN</div>
           </div>
-          <div className="info-row">
-            <div className="info-label">Loại tài sản:</div>
-            <div className="info-value">Khác</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Loại tài sản:</div>
+            <div className={styles['info-value']}>Khác</div>
           </div>
-          <div className="info-row">
-            <div className="info-label">Người có tài sản:</div>
-            <div className="info-value">Công ty TNHH Nicehustom</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Người có tài sản:</div>
+            <div className={styles['info-value']}>Công ty TNHH Nicehustom</div>
           </div>
-          <div className="info-row">
-            <div className="info-label">Nơi có tài sản:</div>
-            <div className="info-value">Kho hàng thu mua đồi Gò Dưa phường Tân Quy Q7</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Nơi có tài sản:</div>
+            <div className={styles['info-value']}>Kho hàng thu mua đồi Gò Dưa phường Tân Quy Q7</div>
           </div>
-          <div className="info-row">
-            <div className="info-label">Thời gian xem tài sản:</div>
-            <div className="info-value">Giờ hành chính các ngày từ 24/12 đến 28/12/2021</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Thời gian xem tài sản:</div>
+            <div className={styles['info-value']}>Giờ hành chính các ngày từ 24/12 đến 28/12/2021</div>
           </div>
-          <div className="info-row">
-            <div className="info-label">Tổ chức đấu giá tài sản:</div>
-            <div className="info-value">Công ty đấu giá hợp danh Hoàn Cầu</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Tổ chức đấu giá tài sản:</div>
+            <div className={styles['info-value']}>Công ty đấu giá hợp danh Hoàn Cầu</div>
           </div>
-          <div className="info-row">
-            <div className="info-label">Phương thức đấu giá:</div>
-            <div className="info-value">Trực tiếp</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Phương thức đấu giá:</div>
+            <div className={styles['info-value']}>Trực tiếp</div>
           </div>
-          <div className="info-row">
-            <div className="info-label">Thời gian mở đăng ký:</div>
-            <div className="info-value">17/12/2021 08:00:00</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Thời gian mở đăng ký:</div>
+            <div className={styles['info-value']}>17/12/2021 08:00:00</div>
           </div>
-          <div className="info-row">
-            <div className="info-label">Thời gian kết thúc đăng ký:</div>
-            <div className="info-value">30/12/2021 16:30:00</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Thời gian kết thúc đăng ký:</div>
+            <div className={styles['info-value']}>30/12/2021 16:30:00</div>
           </div>
-          <div className="info-row">
-            <div className="info-label">Thời gian bắt đầu trả giá:</div>
-            <div className="info-value">04/01/2022 10:00:00</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Thời gian bắt đầu trả giá:</div>
+            <div className={styles['info-value']}>04/01/2022 10:00:00</div>
           </div>
-          <div className="info-row">
-            <div className="info-label">Tiền hồ sơ:</div>
-            <div className="info-value">500,000 VNĐ</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Tiền hồ sơ:</div>
+            <div className={styles['info-value']}>500,000 VNĐ</div>
           </div>
-          <div className="info-row">
-            <div className="info-label">Tiền đặt trước:</div>
-            <div className="info-value">3,000,000 VNĐ</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Tiền đặt trước:</div>
+            <div className={styles['info-value']}>3,000,000 VNĐ</div>
           </div>
-          <div className="info-row">
-            <div className="info-label">Giá khởi điểm:</div>
-            <div className="info-value">4,000,000,000 VNĐ</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Giá khởi điểm:</div>
+            <div className={styles['info-value']}>4,000,000,000 VNĐ</div>
           </div>
-          <div className="info-row">
-            <div className="info-label">Giá hiện tại:</div>
-            <div className="info-value">4,000,000,000 VNĐ</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Giá hiện tại:</div>
+            <div className={styles['info-value']}>4,000,000,000 VNĐ</div>
           </div>
-          <div className="info-row">
-            <div className="info-label">Số lượt yêu cầu đấu giá:</div>
-            <div className="info-value">4</div>
+          <div className={styles['info-row']}>
+            <div className={styles['info-label']}>Số lượt yêu cầu đấu giá:</div>
+            <div className={styles['info-value']}>4</div>
           </div>
         </div>
 
-        <div className="right-section">
-          <div className="participants-section">
-            <div className="section-title">THÀNH PHẦN THAM DỰ</div>
-            <div className="info-row">
-              <div className="info-label">Thư ký phiên đấu giá:</div>
-              <div className="info-value">Nguyễn Văn A</div>
+        <div className={styles['right-section']}>
+          <div className={styles['participants-section']}>
+            <div className={styles['section-title']}>THÀNH PHẦN THAM DỰ</div>
+            <div className={styles['info-row']}>
+              <div className={styles['info-label']}>Thư ký phiên đấu giá:</div>
+              <div className={styles['info-value']}>Nguyễn Văn A</div>
             </div>
-            <div className="info-row">
-              <div className="info-label">Đại diện bên có tài sản:</div>
-              <div className="info-value">Nguyễn Văn B</div>
+            <div className={styles['info-row']}>
+              <div className={styles['info-label']}>Đại diện bên có tài sản:</div>
+              <div className={styles['info-value']}>Nguyễn Văn B</div>
             </div>
-            <div className="info-row">
-              <div className="info-label">Đấu giá viên:</div>
-              <div className="info-value">Nguyễn Văn D</div>
+            <div className={styles['info-row']}>
+              <div className={styles['info-label']}>Đấu giá viên:</div>
+              <div className={styles['info-value']}>Nguyễn Văn D</div>
             </div>
-            <div className="info-row">
-              <div className="info-label">Đại diện người tham gia đấu giá:</div>
-              <div className="info-value">Nguyễn Văn D</div>
+            <div className={styles['info-row']}>
+              <div className={styles['info-label']}>Đại diện người tham gia đấu giá:</div>
+              <div className={styles['info-value']}>Nguyễn Văn D</div>
             </div>
           </div>
 
-          <div className="bid-section">
-            <div className="section-title">THAM GIA ĐẤU GIÁ</div>
-            <div className="bid-info">
+          <div className={styles['bid-section']}>
+            <div className={styles['section-title']}>THAM GIA ĐẤU GIÁ</div>
+            <div className={styles['bid-info']}>
               <input
                 type="range"
                 min="490000000"
@@ -135,23 +135,23 @@ const AuctionPage = () => {
                 value={bidValue}
                 step="10000000"
                 onChange={handleInput}
-                style={{ width: '100%', margin: '15px 0' }}
+                className={styles.slider}
               />
               <div>Số tiền đấu giá</div>
-              <div className="bid-amount">
+              <div className={styles['bid-amount']}>
                 {formatNumber(bidValue)}<br />VNĐ
               </div>
               <div style={{ fontSize: '12px', color: '#2772BA' }}>
                 Số tiền đấu giá = Số tiền hiện tại + Bước giá
               </div>
             </div>
-            <button className="bid-button">Đấu giá</button>
+            <button className={styles['bid-button']}>Đấu giá</button>
           </div>
         </div>
       </div>
 
-      <div className="participants-table">
-        <div className="table-title">DANH SÁCH NGƯỜI ĐĂNG KÝ ĐẤU GIÁ</div>
+      <div className={styles['participants-table']}>
+        <div className={styles['table-title']}>DANH SÁCH NGƯỜI ĐĂNG KÝ ĐẤU GIÁ</div>
         <table>
           <thead>
             <tr>
@@ -165,28 +165,28 @@ const AuctionPage = () => {
           <tbody>
             <tr>
               <td>1</td>
-              <td><span className="user-icon" style={{ backgroundColor: '#4CAF50' }}></span></td>
+              <td><span className={`${styles['user-icon']} ${styles.green}`}></span></td>
               <td>Bùi Thị B</td>
               <td>400,000</td>
               <td>500,000</td>
             </tr>
             <tr>
               <td>2</td>
-              <td><span className="user-icon pink"></span></td>
+              <td><span className={`${styles['user-icon']} ${styles.pink}`}></span></td>
               <td>Bùi Thị E</td>
               <td>400,000</td>
               <td>500,000</td>
             </tr>
             <tr>
               <td>3</td>
-              <td><span className="user-icon pink"></span></td>
+              <td><span className={`${styles['user-icon']} ${styles.pink}`}></span></td>
               <td>Bùi Thị P</td>
               <td>400,000</td>
               <td>500,000</td>
             </tr>
             <tr>
               <td>4</td>
-              <td><span className="user-icon pink"></span></td>
+              <td><span className={`${styles['user-icon']} ${styles.pink}`}></span></td>
               <td>Bùi Thị F</td>
               <td>400,000</td>
               <td>500,000</td>
