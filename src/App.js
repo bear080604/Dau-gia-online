@@ -2,7 +2,7 @@ import React from 'react';
 import Home from './pages/Home';
 import Detail from './pages/Detail';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import AuctionPage from './pages/Auction';
+// Remove unused import for AuctionPage here, as it's used in Detail
 
 function App (){
   return (
@@ -11,8 +11,8 @@ function App (){
         <Routes>
           <Route path='/' element={<Home/>} />
           <Route path='/home' element={<Home/>} />
-          <Route path='/detail' element={<Detail/>} />
-          <Route path='/auction' element={<AuctionPage/>} />
+          <Route path='/auction-items/:id' element={<Detail/>} /> {/* Changed to match Link in Home */}
+          <Route path='/auction' element={<Home/>} /> {/* Optional: redirect or use Home; adjust as needed */}
         </Routes>
       </div>
     </Router>
