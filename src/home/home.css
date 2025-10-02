@@ -1,0 +1,53 @@
+*{
+    font-family: Montserrat, sans-serif;
+}
+.section-title{
+    text-align: center;
+    font-size: 22px;
+}
+.list-auction{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+    gap: 20px;
+    width: 100%;
+}
+.auction-item{
+    max-width: 20%;
+    box-shadow: 0 0 10px 0 gray; /* mờ đều 4 cạnh */
+}
+.auction-image{
+    max-width: 100%;
+}
+.auction-details{
+    text-align: center;
+    line-height: 0.5;
+    /* padding-bottom: 20px; */
+}
+.auction-name{
+    font-size: 15px;
+}
+.auction-method{
+    font-size: 14px;
+}
+.auction-price{
+    font-size: 14px;
+}
+.action{
+    display: flex;
+    justify-content: center;
+    padding-bottom: 15px;
+}
+.bid-button{
+    border: none;
+    background-color: #2772BA;
+    border-radius: 5px;
+    padding: 7px 25px;
+    color: white;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-around;
+    gap: 8px;
+}

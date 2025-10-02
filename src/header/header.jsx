@@ -2,6 +2,7 @@ import React from "react";
 import "./header.css";
 
 function Header() {
+    
   return (
     <>
       {/* Top Bar */}
@@ -20,8 +21,7 @@ function Header() {
       <header className="header-main">
         <div className="logo">
           <div className="logo-img">
-            {/* Đổi đường dẫn logo bằng import hoặc public */}
-            <img src="/img/logo.jpg" alt="Logo" />
+            <img src="/assets/img/logo.jpg" alt="Logo" />
           </div>
         </div>
 
