@@ -1,0 +1,197 @@
+
+        
+        /* Top Bar */
+        .top-bar {
+            background-color: #f5f5f5;
+            padding: 10px 100px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .hotline {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .hotline::before {
+            font-size: 18px;
+        }
+
+        .auth-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .auth-links a {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .auth-links a:hover {
+            color: #3884ff;
+        }
+
+        /* Header Main */
+        .header-main {
+            background-color: white;
+            padding: 20px 10%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            width: 160px;
+            height: 160px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logo-img{
+            max-width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+        .logo-img img{
+           max-width: 100%;
+        }
+
+
+        .company-name {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .company-name h1 {
+            font-size: 20px;
+            color: #27ae60;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .company-name h1 .highlight {
+            color: #e74c3c;
+        }
+
+        .company-name h2 {
+            font-size: 18px;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        /* Search Bar */
+        .search-container {
+            flex-grow: 1;
+            max-width: 400px;
+            margin: 0 50px;
+        }
+
+        .search-box {
+            display: flex;
+           background-color: #2772BA;
+            border-radius: 25px;
+            overflow: hidden;
+        }
+
+        .search-box input {
+            flex-grow: 1;
+            padding: 12px 20px;
+            border: none;
+            outline: none;
+            background: rgba(255,255,255,0.9);
+            border-radius: 25px 0 0 25px;
+        }
+
+        .search-box button {
+            padding: 12px 25px;
+            border: none;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        /* DateTime */
+        .datetime {
+            color: #2772BA;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* Navigation Bar */
+        .nav-bar {
+           background-color: #2772BA;
+            padding: 0;
+        }
+
+        .nav-menu {
+            display: flex;
+            justify-content: space-around;
+            list-style: none;
+        }
+
+        .nav-menu li {
+            flex: 1;
+        }
+
+        .nav-menu a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 20px;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+            border-right: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .nav-menu li:last-child a {
+            border-right: none;
+        }
+
+        .nav-menu a:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        .nav-menu a i {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        /* Icons */
+        /* .icon-info::before { content: "ℹ"; } */
+        /* .icon-menu::before { content: "☰"; }
+        .icon-gavel::before { content: "🔨"; }
+        .icon-news::before { content: "📰"; }
+        .icon-guide::before { content: "📝"; }
+        .icon-phone::before { content: "📞"; } */
+
+        @media (max-width: 768px) {
+            .top-bar, .header-main {
+                padding: 10px 20px;
+            }
+
+            .nav-menu {
+                flex-wrap: wrap;
+            }
+
+            .nav-menu a {
+                font-size: 12px;
+                padding: 10px 5px;
+            }
+
+            .search-container {
+                margin: 0 20px;
+            }
+        }
+
