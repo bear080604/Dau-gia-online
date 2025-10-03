@@ -1,0 +1,165 @@
+/* login.module.css */
+.container {
+  min-height: 50vh;
+  background-color: #f9fafb;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wrapper {
+  max-width: 1290px;
+  width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.line {
+  width: 4rem;
+  height: 0.125rem;
+  background-color: #d1d5db;
+}
+
+.symbol {
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+  color: #9ca3af;
+  font-size: 1.2rem;
+}
+
+.form {
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+}
+
+.field {
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  display: block;
+  color: #374151;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.input {
+  width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  outline: none;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+.input::placeholder {
+  color: #9ca3af;
+}
+
+.passwordContainer {
+  position: relative;
+}
+
+.eyeButton {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.15s ease-in-out;
+}
+
+.eyeButton:hover {
+  color: #374151;
+}
+
+.options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #374151;
+}
+
+.checkbox {
+  margin-right: 0.5rem;
+  accent-color: #2772ba;
+}
+
+.checkboxText {
+  font-size: 0.875rem;
+}
+
+.forgotLink {
+  color: #2772ba;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.forgotLink:hover {
+  text-decoration: underline;
+}
+
+.submitContainer {
+  text-align: center;
+}
+
+.submitButton {
+  width: 100%;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  color: #ffffff;
+  background-color: #2772ba;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease-in-out;
+}
+
+.submitButton:hover {
+  opacity: 0.9;
+}

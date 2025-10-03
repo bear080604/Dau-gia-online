@@ -12,7 +12,7 @@ import axios from 'axios';
 const Home = () => {
   const [auctionItems, setAuctionItems] = useState([]);
   useEffect(() => {
-    axios.get(`${process.env.REACT_APP_API_URL}products`)
+    axios.get(`${process.env.REACT_APP_API_URL}auction-sessions`)
       .then((res) => {
       const products = res.data.data || [];
 
