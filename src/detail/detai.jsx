@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import axios from 'axios';  // Import axios cho consistent
 import './detail.css';
 
 const AuctionPage = () => {
@@ -15,30 +16,31 @@ const AuctionPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch('http://127.0.0.1:8000/api/auction-sessions'); // Fetch full list
+        const apiUrl = process.env.REACT_APP_API_URL;
+        console.log("API URL for detail:", apiUrl);  // Debug
         
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}...`);
+        if (!apiUrl) {
+          throw new Error('REACT_APP_API_URL không được định nghĩa!');
         }
 
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          const text = await response.text();
-          throw new Error(`Expected JSON, got: ${text.substring(0, 200)}...`);
-        }
+        const fullUrl = `${apiUrl}auction-sessions`;  // Fetch full list, không phải /{id}
+        console.log("Full URL:", fullUrl);  // Debug: http://127.0.0.1:8000/api/auction-sessions
+        
+        const response = await axios.get(fullUrl);
+        console.log("Full response:", response.data);  // Debug data như trước
 
-        const responseData = await response.json();
-        const { sessions } = responseData;
+        const { sessions } = response.data || { sessions: [] };
         // Filter by item_id (from URL param)
         const session = sessions.find(s => s.item && s.item.item_id == id);
         if (!session) {
-          throw new Error('No session found for this item ID');
+          throw new Error(`No session found for item ID: ${id}`);
         }
+        console.log("Found session:", session);  // Debug session cụ thể
+        
         setAuctionItem(session);
       } catch (err) {
         console.error('Fetch error:', err);
-        setError(err.message);
+        setError(err.response?.data?.message || err.message || 'Lỗi không xác định');
       } finally {
         setLoading(false);
       }
@@ -50,21 +52,21 @@ const AuctionPage = () => {
   }, [id]);
 
   if (loading) {
-    return <div className="container">Loading...</div>;
+    return <div className="container">Đang tải...</div>;
   }
 
   if (error) {
     return (
       <div className="container">
-        <h2>Error loading auction item</h2>
+        <h2>Lỗi tải thông tin đấu giá</h2>
         <p>{error}</p>
-        <p>Check the console for more details. Possible causes: Invalid ID, API down, or server returning HTML (e.g., 404 page).</p>
+        <p>Kiểm tra console để biết chi tiết. Có thể: ID không hợp lệ, API lỗi, hoặc server trả HTML (ví dụ: 404).</p>
       </div>
     );
   }
 
   if (!auctionItem || !auctionItem.item) {
-    return <div className="container">Auction item not found</div>;
+    return <div className="container">Không tìm thấy thông tin đấu giá</div>;
   }
 
   // auctionItem is the session, access item and other fields directly
@@ -84,8 +86,8 @@ const AuctionPage = () => {
     return new Date(dateTimeStr).toLocaleString('vi-VN');
   };
 
-  // Check if bidding is ongoing based on current date/time (October 02, 2025)
-  const now = new Date('2025-10-02T12:00:00'); // Midday for demo
+  // Use real current date (October 03, 2025 from context; in prod: new Date())
+  const now = new Date('2025-10-03T12:00:00');  // Midday Oct 03 for demo
   const bidStart = auctionItem.bid_start ? new Date(auctionItem.bid_start) : null;
   const bidEnd = auctionItem.bid_end ? new Date(auctionItem.bid_end) : null;
   const isBiddingOngoing = bidStart && bidEnd && now >= bidStart && now <= bidEnd;
@@ -102,7 +104,7 @@ const AuctionPage = () => {
     statusMessage = 'Đã kết thúc';
   }
 
-  // Countdown placeholder (in real app, calculate remaining time)
+  // Countdown placeholder (real calc based on now)
   const getCountdown = () => {
     if (!bidEnd || now > bidEnd) return 'Hết thời gian';
     const diff = bidEnd - now;
@@ -113,11 +115,15 @@ const AuctionPage = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const images = auctionItem.item.image_url ? [auctionItem.item.image_url] : [
-    '/public/assets/img/2.jpg',
-    '/public/assets/img/3.jpg',
-    '/public/assets/img/4.jpg'
-  ];
+  // Images: Prepend API base if relative path
+  const baseImageUrl = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
+  const images = auctionItem.item.image_url 
+    ? [`${baseImageUrl.replace('/api/', '')}${auctionItem.item.image_url}`]  // Ví dụ: http://127.0.0.1:8000/img1.jpg (adjust nếu ảnh ở /storage/)
+    : [
+        '/public/assets/img/2.jpg',
+        '/public/assets/img/3.jpg',
+        '/public/assets/img/4.jpg'
+      ];
 
   const changeImage = (index) => {
     setCurrentImageIndex(index);
@@ -132,7 +138,7 @@ const AuctionPage = () => {
   };
 
   const handleRegisterBid = () => {
-    alert('Đăng ký đấu giá thành công!'); // Placeholder
+    alert('Đăng ký đấu giá thành công!'); // Placeholder; integrate real API later
   };
 
   return (
@@ -203,7 +209,7 @@ const AuctionPage = () => {
               </tr>
               <tr>
                 <td>Người có tài sản:</td>
-                <td>User ID: {item.owner_id}</td>
+                <td>User ID: {item.owner_id} {/* Later: fetch owner full_name nếu có API */}</td>
               </tr>
               <tr>
                 <td>Tổ chức đấu giá tài sản:</td>
@@ -241,7 +247,7 @@ const AuctionPage = () => {
                 <td>Giá khởi điểm:</td>
                 <td className="price-highlight">{formatPrice(item.starting_price)}</td>
               </tr>
-              {/* No bids in data, so no current price row */}
+              {/* Add row for current price if fetch bids API later */}
             </tbody>
           </table>
 
@@ -278,10 +284,9 @@ const AuctionPage = () => {
               Đấu giá viên: <span className="auctioneer">TBD</span>
             </li>
             <li className="location">
-              Địa chỉ: Category ID {item.category_id} {/* Placeholder; fetch category name if needed */}
+              Địa chỉ: Category ID {item.category_id} {/* Later: fetch category name nếu có API */}
             </li>
-            {/* No bids data, so skip lịch sử đấu giá */}
-            {/* No contract data, so skip kết quả */}
+            {/* Add lịch sử đấu giá if fetch bids */}
           </ul>
         </div>
       )}
@@ -290,7 +295,7 @@ const AuctionPage = () => {
         <div className="tab-content">
           <h3 className="document-title">Các tài liệu pháp lý liên quan đến cuộc đấu giá:</h3>
           <ul className="document-list">
-            {/* Fallback since no documents in data; customize per item if backend adds */}
+            {/* Hardcoded for demo; later: fetch from item.documents if backend adds */}
             <li className="document-item">
               <strong>1. Quyết định thanh lý tài sản (QC130-16690849166.pdf)</strong><br />
               <small>Mô tả: Quyết định phê duyệt thanh lý {item.name}.</small><br />

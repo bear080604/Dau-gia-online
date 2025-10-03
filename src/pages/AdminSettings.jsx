@@ -1,6 +1,6 @@
 import React from "react";
 import Sidebar from "../admin/Header/Header";
-import Home from "../home/home";
+import Settings from "../admin/Settings/Settings";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 
@@ -8,7 +8,7 @@ function Index() {
   return (
     <div>
       <Sidebar />
-      <Home />
+      <Settings />
     </div>
   );
 }

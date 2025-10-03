@@ -4,6 +4,8 @@ import Detail from './pages/Detail';
 import Register from './pages/Register';
 import Login from './pages/login';
 import AdminSettings from './pages/AdminSettings';
+import Admindashboard from './pages/AdminDashboard';
+import AdminReport from './pages/AdminReport';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 // Remove unused import for AuctionPage here, as it's used in Detail
@@ -20,6 +22,8 @@ function App (){
           <Route path = '/register' element = {<Register />} />
           <Route path = '/login' element = {<Login />} />
           <Route path = '/admin/settings' element = {<AdminSettings />} />
+          <Route path = '/admin/dashboard' element = {<Admindashboard />} />
+          <Route path = '/admin/report' element = {<AdminReport />} />
         </Routes>
       </div>
     </Router>
