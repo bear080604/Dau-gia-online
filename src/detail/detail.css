@@ -291,6 +291,20 @@ body {
 .document-notice {
   margin-top: 15px;
 }
+.place-bid-btn {
+  background-color: #ff6b35; /* Màu cam nổi bật */
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.3s;
+}
+.place-bid-btn:hover {
+  background-color: #e55a2b;
+}
 
 /* Responsive */
 @media (max-width: 968px) {

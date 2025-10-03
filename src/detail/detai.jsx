@@ -1,15 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom'; // Thêm useNavigate
 import axios from 'axios';  // Import axios cho consistent
 import './detail.css';
 
 const AuctionPage = () => {
   const { id } = useParams(); // id is item_id from link
+  const navigate = useNavigate(); // Hook để navigate
   const [auctionItem, setAuctionItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState(0);
+  const [currentTime, setCurrentTime] = useState(new Date()); // Real-time clock for dynamic updates
+
+  // Update current time every second for real-time countdown
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchAuctionItem = async () => {
@@ -86,28 +96,35 @@ const AuctionPage = () => {
     return new Date(dateTimeStr).toLocaleString('vi-VN');
   };
 
-  // Use real current date (October 03, 2025 from context; in prod: new Date())
-  const now = new Date('2025-10-03T12:00:00');  // Midday Oct 03 for demo
+  // Time-related logic with currentTime (real-time)
+  const registerStart = auctionItem.register_start ? new Date(auctionItem.register_start) : null;
+  const registerEnd = auctionItem.register_end ? new Date(auctionItem.register_end) : null;
   const bidStart = auctionItem.bid_start ? new Date(auctionItem.bid_start) : null;
   const bidEnd = auctionItem.bid_end ? new Date(auctionItem.bid_end) : null;
-  const isBiddingOngoing = bidStart && bidEnd && now >= bidStart && now <= bidEnd;
 
-  // Enhanced status logic
+  const isRegistrationOpen = registerStart && registerEnd && currentTime >= registerStart && currentTime <= registerEnd;
+  const isBiddingOngoing = bidStart && bidEnd && currentTime >= bidStart && currentTime <= bidEnd;
+
+  // Enhanced status logic including registration phase
   let statusMessage = '';
-  if (!bidStart || !bidEnd) {
+  if (!registerStart || !registerEnd || !bidStart || !bidEnd) {
     statusMessage = 'Chưa xác định thời gian';
-  } else if (now < bidStart) {
-    statusMessage = 'Sắp bắt đầu';
+  } else if (currentTime < registerStart) {
+    statusMessage = 'Chưa mở đăng ký';
+  } else if (isRegistrationOpen) {
+    statusMessage = 'Mở đăng ký dự đấu giá';
+  } else if (currentTime < bidStart) {
+    statusMessage = 'Chờ bắt đầu đấu giá';
   } else if (isBiddingOngoing) {
     statusMessage = 'Đang diễn ra';
   } else {
     statusMessage = 'Đã kết thúc';
   }
 
-  // Countdown placeholder (real calc based on now)
+  // Real-time countdown (updates every second)
   const getCountdown = () => {
-    if (!bidEnd || now > bidEnd) return 'Hết thời gian';
-    const diff = bidEnd - now;
+    if (!bidEnd || currentTime > bidEnd) return 'Hết thời gian';
+    const diff = bidEnd - currentTime;
     if (diff <= 0) return 'Hết thời gian';
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -139,6 +156,11 @@ const AuctionPage = () => {
 
   const handleRegisterBid = () => {
     alert('Đăng ký đấu giá thành công!'); // Placeholder; integrate real API later
+  };
+
+  const handlePlaceBid = () => {
+    // Navigate to /auction page khi ấn nút
+    navigate('/auction'); // Nếu cần truyền params: navigate(`/auction/${id}`)
   };
 
   return (
@@ -194,9 +216,14 @@ const AuctionPage = () => {
                 <span>{getCountdown()}</span>
               </div>
             )}
-            {bidStart && now < bidStart && (
+            {isRegistrationOpen && (
               <button className="register-bid-btn" onClick={handleRegisterBid}>
                 Đăng ký đấu giá
+              </button>
+            )}
+            {isBiddingOngoing && (
+              <button className="place-bid-btn" onClick={handlePlaceBid}>
+                Đấu giá ngay
               </button>
             )}
           </div>

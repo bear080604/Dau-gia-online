@@ -3,6 +3,7 @@ import Home from './pages/Home';
 import Detail from './pages/Detail';
 import Register from './pages/Register';
 import Login from './pages/login';
+import Auction from './pages/Auction';
 import AdminSettings from './pages/AdminSettings';
 import Admindashboard from './pages/AdminDashboard';
 import AdminReport from './pages/AdminReport';
@@ -18,7 +19,7 @@ function App (){
           <Route path='/' element={<Home/>} />
           <Route path='/home' element={<Home/>} />
           <Route path='/detail/:id' element={<Detail/>} /> {/* Changed to match Link in Home */}
-          <Route path='/auction' element={<Home/>} /> {/* Optional: redirect or use Home; adjust as needed */}
+          <Route path='/auction' element={<Auction/>} /> {/* Optional: redirect or use Home; adjust as needed */}
           <Route path = '/register' element = {<Register />} />
           <Route path = '/login' element = {<Login />} />
           <Route path = '/admin/settings' element = {<AdminSettings />} />
