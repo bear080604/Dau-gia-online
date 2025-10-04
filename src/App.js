@@ -32,7 +32,7 @@ function App (){
           <Route path='/' element={<Home/>} />
           <Route path='/home' element={<Home/>} />
           <Route path='/detail/:id' element={<Detail/>} /> {/* Changed to match Link in Home */}
-          <Route path='/auction' element={<Auction/>} /> {/* Optional: redirect or use Home; adjust as needed */}
+          <Route path='/auction/:id' element={<Auction/>} /> {/* Optional: redirect or use Home; adjust as needed */}
           <Route path = '/register' element = {<Register />} />
           <Route path = '/login' element = {<Login />} />
           <Route path = '/auction' element = {<Auction />} /> 

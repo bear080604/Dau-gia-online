@@ -13,6 +13,16 @@ const AuctionPage = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date()); // Real-time clock for dynamic updates
 
+  // Modal states for registration form
+  const [showModal, setShowModal] = useState(false);
+  const [deposit, setDeposit] = useState('');
+  const [depositError, setDepositError] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [successMessage, setSuccessMessage] = useState(false);
+
+  // Check-in success state
+  const [checkinSuccess, setCheckinSuccess] = useState(false);
+
   // Update current time every second for real-time countdown
   useEffect(() => {
     const interval = setInterval(() => {
@@ -61,6 +71,73 @@ const AuctionPage = () => {
     }
   }, [id]);
 
+  // Format number with dots for Vietnamese currency
+  const formatNumberWithDots = (numStr) => {
+    const num = parseFloat(numStr.replace(/\./g, '')) || 0;
+    return num.toLocaleString('vi-VN');
+  };
+
+  // Validate deposit amount (5-20% of starting_price)
+  const validateDeposit = (value) => {
+    if (!auctionItem || !auctionItem.item) return;
+    const startingPrice = parseFloat(auctionItem.item.starting_price) || 0;
+    const minDeposit = startingPrice * 0.05;
+    const maxDeposit = startingPrice * 0.20;
+    const depositValue = parseFloat(value.replace(/\./g, '')) || 0;
+
+    if (depositValue < minDeposit) {
+      setDepositError(`Đặt cọc quá thấp. Tối thiểu: ${formatNumberWithDots(minDeposit.toString())} VNĐ (5%)`);
+      return false;
+    } else if (depositValue > maxDeposit) {
+      setDepositError(`Đặt cọc quá cao. Tối đa: ${formatNumberWithDots(maxDeposit.toString())} VNĐ (20%)`);
+      return false;
+    } else {
+      setDepositError('');
+      return true;
+    }
+  };
+
+  const handleDepositChange = (e) => {
+    const rawValue = e.target.value.replace(/\./g, '');
+    const formattedValue = formatNumberWithDots(rawValue);
+    setDeposit(formattedValue);
+    validateDeposit(formattedValue);
+  };
+
+  const handleFileChange = (e) => {
+    setSelectedFiles(Array.from(e.target.files));
+  };
+
+  const handleRegisterBid = () => {
+    console.log('Button clicked, opening modal'); // Debug log
+    setShowModal(true);
+    // Reset form
+    setDeposit('');
+    setDepositError('');
+    setSelectedFiles([]);
+  };
+
+  const handleSubmitForm = (e) => {
+    e.preventDefault();
+    const rawDeposit = deposit.replace(/\./g, '');
+    if (!validateDeposit(deposit)) {
+      return;
+    }
+    // Fake submit: log files and deposit
+    console.log('Deposit:', rawDeposit);
+    console.log('Files:', selectedFiles);
+    setShowModal(false);
+    setSuccessMessage(true);
+    // Hide success after 5s
+    setTimeout(() => setSuccessMessage(false), 5000);
+  };
+
+  const handleCheckin = () => {
+    setCheckinSuccess(true);
+    // Hide success after 5s
+    setTimeout(() => setCheckinSuccess(false), 5000);
+  };
+
   if (loading) {
     return <div className="container">Đang tải...</div>;
   }
@@ -99,11 +176,17 @@ const AuctionPage = () => {
   // Time-related logic with currentTime (real-time)
   const registerStart = auctionItem.register_start ? new Date(auctionItem.register_start) : null;
   const registerEnd = auctionItem.register_end ? new Date(auctionItem.register_end) : null;
+  const checkinTime = auctionItem.checkin_time ? new Date(auctionItem.checkin_time) : null;
   const bidStart = auctionItem.bid_start ? new Date(auctionItem.bid_start) : null;
   const bidEnd = auctionItem.bid_end ? new Date(auctionItem.bid_end) : null;
 
   const isRegistrationOpen = registerStart && registerEnd && currentTime >= registerStart && currentTime <= registerEnd;
+  const isCheckinTime = checkinTime && bidStart && currentTime >= checkinTime && currentTime < bidStart;
   const isBiddingOngoing = bidStart && bidEnd && currentTime >= bidStart && currentTime <= bidEnd;
+
+  console.log('isRegistrationOpen:', isRegistrationOpen); // Debug log
+  console.log('isCheckinTime:', isCheckinTime); // Debug log
+  console.log('registerStart:', registerStart, 'registerEnd:', registerEnd, 'checkinTime:', checkinTime, 'bidStart:', bidStart, 'currentTime:', currentTime); // Debug dates
 
   // Enhanced status logic including registration phase
   let statusMessage = '';
@@ -113,12 +196,32 @@ const AuctionPage = () => {
     statusMessage = 'Chưa mở đăng ký';
   } else if (isRegistrationOpen) {
     statusMessage = 'Mở đăng ký dự đấu giá';
+  } else if (isCheckinTime) {
+    statusMessage = 'Thời gian điểm danh';
   } else if (currentTime < bidStart) {
     statusMessage = 'Chờ bắt đầu đấu giá';
   } else if (isBiddingOngoing) {
     statusMessage = 'Đang diễn ra';
   } else {
     statusMessage = 'Đã kết thúc';
+  }
+
+  // Notice message based on time
+  let noticeMessage = '';
+  if (!registerStart || !registerEnd || !bidStart || !bidEnd) {
+    noticeMessage = 'Chưa xác định thời gian';
+  } else if (currentTime < registerStart) {
+    noticeMessage = 'Sắp mở đăng ký dự đấu giá!';
+  } else if (isRegistrationOpen) {
+    noticeMessage = 'Sắp dự đấu giá!';
+  } else if (isCheckinTime) {
+    noticeMessage = 'Thời gian điểm danh!';
+  } else if (currentTime < bidStart) {
+    noticeMessage = 'Sắp bắt đầu đấu giá!';
+  } else if (isBiddingOngoing) {
+    noticeMessage = 'Đang đấu giá!';
+  } else {
+    noticeMessage = 'Kết thúc thời gian đấu giá!';
   }
 
   // Real-time countdown (updates every second)
@@ -154,13 +257,112 @@ const AuctionPage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  const handleRegisterBid = () => {
-    alert('Đăng ký đấu giá thành công!'); // Placeholder; integrate real API later
-  };
-
   const handlePlaceBid = () => {
     // Navigate to /auction page khi ấn nút
     navigate('/auction'); // Nếu cần truyền params: navigate(`/auction/${id}`)
+  };
+
+  // Inline styles for modal to ensure visibility
+  const modalOverlayStyle = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000
+  };
+
+  const modalStyle = {
+    backgroundColor: 'white',
+    padding: '20px',
+    borderRadius: '8px',
+    maxWidth: '500px',
+    width: '90%',
+    maxHeight: '80vh',
+    overflowY: 'auto'
+  };
+
+  const formGroupStyle = {
+    marginBottom: '15px'
+  };
+
+  const labelStyle = {
+    display: 'block',
+    marginBottom: '5px',
+    fontWeight: 'bold'
+  };
+
+  const inputStyle = {
+    width: '100%',
+    padding: '8px',
+    border: '1px solid #ccc',
+    borderRadius: '4px',
+    boxSizing: 'border-box'
+  };
+
+  const errorStyle = {
+    color: 'red',
+    fontSize: '0.9em',
+    display: 'block',
+    marginTop: '5px'
+  };
+
+  const formActionsStyle = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginTop: '20px'
+  };
+
+  const buttonStyle = {
+    padding: '10px 20px',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer'
+  };
+
+  const cancelButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: '#ccc',
+    color: 'black'
+  };
+
+  const submitButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: '#007bff',
+    color: 'white'
+  };
+
+  const successOverlayStyle = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000
+  };
+
+  const successBoxStyle = {
+    backgroundColor: '#d4edda',
+    color: '#155724',
+    padding: '20px',
+    borderRadius: '8px',
+    textAlign: 'center',
+    maxWidth: '400px'
+  };
+
+  const checkinButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: '#28a745',
+    color: 'white',
+    marginTop: '10px'
   };
 
   return (
@@ -221,6 +423,11 @@ const AuctionPage = () => {
                 Đăng ký đấu giá
               </button>
             )}
+            {isCheckinTime && (
+              <button className="checkin-btn" onClick={handleCheckin} style={checkinButtonStyle}>
+                Điểm danh
+              </button>
+            )}
             {isBiddingOngoing && (
               <button className="place-bid-btn" onClick={handlePlaceBid}>
                 Đấu giá ngay
@@ -279,7 +486,7 @@ const AuctionPage = () => {
           </table>
 
           <div className="notice">
-            <strong>{item.status === 'ChoDauGia' ? 'Sắp mở đăng ký dự đấu giá!' : auctionItem.status === 'DangDienRa' ? 'Đấu giá đang diễn ra!' : 'Đấu giá đã kết thúc!'}</strong>
+            <strong>{noticeMessage}</strong>
           </div>
         </div>
       </div>
@@ -340,6 +547,66 @@ const AuctionPage = () => {
           </ul>
           <div className="notice document-notice">
             <strong>Lưu ý: Vui lòng kiểm tra kỹ tài liệu trước khi tham gia đấu giá. Liên hệ tổ chức đấu giá nếu cần hỗ trợ.</strong>
+          </div>
+        </div>
+      )}
+
+      {/* Success Message for Registration */}
+      {successMessage && (
+        <div style={successOverlayStyle}>
+          <div style={successBoxStyle}>
+            <p>Đăng ký thành công! Chờ duyệt.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Success Message for Check-in */}
+      {checkinSuccess && (
+        <div style={successOverlayStyle}>
+          <div style={successBoxStyle}>
+            <p>Điểm danh thành công!</p>
+          </div>
+        </div>
+      )}
+
+      {/* Registration Modal */}
+      {showModal && (
+        <div style={modalOverlayStyle}>
+          <div style={modalStyle}>
+            <h3>Form Đăng Ký Dự Đấu Giá</h3>
+            <form onSubmit={handleSubmitForm}>
+              <div style={formGroupStyle}>
+                <label style={labelStyle}>Đặt Cọc (VNĐ):</label>
+                <input
+                  type="text"
+                  value={deposit}
+                  onChange={handleDepositChange}
+                  placeholder="Nhập số tiền đặt cọc (ví dụ: 100000000)"
+                  required
+                  style={inputStyle}
+                />
+                {depositError && <span style={errorStyle}>{depositError}</span>}
+                <small style={{display: 'block', marginTop: '5px'}}>Phải từ 5% đến 20% giá khởi điểm ({formatPrice(item.starting_price)})</small>
+              </div>
+              <div style={formGroupStyle}>
+                <label style={labelStyle}>Tài Liệu Pháp Lý (Upload mới hoặc sử dụng hiện tại):</label>
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleFileChange}
+                  style={{...inputStyle, padding: '5px'}}
+                />
+                <small style={{display: 'block', marginTop: '5px'}}>Chọn file để upload (tùy chọn)</small>
+                {selectedFiles.length > 0 && (
+                  <p style={{marginTop: '5px'}}>Đã chọn {selectedFiles.length} file(s)</p>
+                )}
+              </div>
+              <div style={formActionsStyle}>
+                <button type="button" onClick={() => setShowModal(false)} style={cancelButtonStyle}>Hủy</button>
+                <button type="submit" style={submitButtonStyle}>Submit</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
