@@ -54,3 +54,16 @@
     cursor: pointer;
 }
 
+.home-main {
+    padding: 20px 8%;
+}
+
+.auction-link {
+    text-decoration: none;
+}
+
+.no-products {
+    text-align: center;
+    color: #666;
+}
+

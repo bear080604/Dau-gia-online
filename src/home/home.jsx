@@ -11,49 +11,55 @@ import axios from 'axios';
 
 const Home = () => {
   const [auctionItems, setAuctionItems] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const apiUrl = process.env.REACT_APP_API_URL;
-    console.log("API URL:", apiUrl);
-    
-    if (!apiUrl) {
-      console.error("REACT_APP_API_URL không được định nghĩa!");
-      setLoading(false);
-      return;
+  const getAuctionStatus = (session) => {
+    if (!session || !session.bid_start || !session.bid_end) {
+      return "Chưa bắt đầu";
     }
 
-    const fullUrl = `${apiUrl}auction-sessions`;
-    console.log("Full URL:", fullUrl);
+    // Sử dụng thời gian thực tế
+    const now = new Date();
 
-    axios.get(fullUrl)
-      .then((res) => {
-        console.log("Full response:", res.data);
-        const sessions = res.data.sessions || [];
-        console.log("Sessions:", sessions);
+    const bidStart = new Date(session.bid_start);
+    const bidEnd = new Date(session.bid_end);
 
-        // Map và filter như trên
-        const auctionItemsMapped = sessions
-          .filter(s => s.item && s.status !== "KetThuc")
-          .map(s => ({
-            id: s.item.item_id,
-            name: s.item.name,
-            starting_price: s.item.starting_price,
-            image_url: s.item.image_url,
-            sessions: [s],  // Để khớp render code
-          }));
+    console.log('Debug - Now:', now);
+    console.log('Debug - Bid Start:', bidStart);
+    console.log('Debug - Bid End:', bidEnd);
 
-        console.log("Mapped auctionItems:", auctionItemsMapped);
-        setAuctionItems(auctionItemsMapped);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Lỗi API đầy đủ:", err.response?.data || err.message || err.code);
-        setLoading(false);
-      });
+    if (now < bidStart) {
+      return "Chưa bắt đầu";
+    } else if (now >= bidStart && now <= bidEnd) {
+      return "Đang diễn ra";
+    } else {
+      return "Kết thúc";
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = () => {
+      axios.get(`${process.env.REACT_APP_API_URL}products`)
+        .then((res) => {
+          const products = res.data.data || [];
+
+          // Lọc sản phẩm có sessions
+          const productsWithSessions = products.filter(
+            (p) => Array.isArray(p.sessions) && p.sessions.length > 0
+          );
+
+          setAuctionItems(productsWithSessions);
+        })
+        .catch((err) => {
+          console.error("Lỗi API:", err);
+        });
+    };
+
+    fetchData(); // gọi lần đầu khi mount
+
+    const interval = setInterval(fetchData, 3000); // gọi lại mỗi 3 giây
+
+    return () => clearInterval(interval); // cleanup khi component unmount
   }, []);
-
-  if (loading) return <div className="home-container">Đang tải dữ liệu...</div>;
 
   return (
     <div className="home-container">
@@ -62,21 +68,23 @@ const Home = () => {
           <p>DANH SÁCH TÀI SẢN ĐẤU GIÁ NỔI BẬT/MỚI NHẤT</p>
         </div>
 
-        {auctionItems.length > 0 ? (
-          <Swiper
-            modules={[Navigation, Pagination, Autoplay]}
-            spaceBetween={20}
-            navigation
-            pagination={{ clickable: true }}
-            autoplay={{ delay: 7000 }}
-            loop={true}
-            breakpoints={{
-              320: { slidesPerView: 1 },
-              640: { slidesPerView: 2 },
-              1024: { slidesPerView: 5 },
-            }}
-          >
-            {auctionItems.map((item) => (
+        <Swiper
+          modules={[Navigation, Pagination, Autoplay]}
+          spaceBetween={20}
+          navigation
+          pagination={{ clickable: true }}
+          autoplay={{ delay: 7000 }}
+          loop={true}
+          breakpoints={{
+            320: { slidesPerView: 1 },
+            640: { slidesPerView: 2 },
+            1024: { slidesPerView: 5 },
+          }}
+        >
+          {auctionItems.map((item) => {
+            const currentSession = item.sessions?.[0];
+            const computedStatus = getAuctionStatus(currentSession);
+            return (
               <SwiperSlide key={item.id}>
                 <div className='list-auction'>
                   <div className='auction-item'>
@@ -88,9 +96,7 @@ const Home = () => {
                     <div className='auction-details'>
                       <h3 className='auction-name'>{item.name}</h3>
                       <p className='auction-method'>
-                        {item.sessions?.[0]?.status === "DangDienRa"
-                          ? "Đang diễn ra"
-                          : "Chưa bắt đầu"}
+                        {computedStatus}
                       </p>
                       <p className='auction-price'>
                         Giá khởi điểm: {Number(item.starting_price).toLocaleString()} VNĐ
@@ -106,11 +112,9 @@ const Home = () => {
                   </div>
                 </div>
               </SwiperSlide>
-            ))}
-          </Swiper>
-        ) : (
-          <p>Không có sản phẩm đấu giá nào hiện tại.</p>
-        )}
+            );
+          })}
+        </Swiper>
       </main>
     </div>
   );

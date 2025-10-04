@@ -7,7 +7,7 @@
 }
 
 .mainContent {
-   position: absolute;
+  position: absolute;
   top: 0;
   left: 280px;
   width: calc(100% - 280px);
@@ -187,39 +187,19 @@
   font-weight: 500;
 }
 
-.roleUser {
+.statusMo {
   background-color: rgba(245, 158, 11, 0.1);
   color: #f59e0b;
 }
 
-.roleAdmin {
+.statusDangdienra {
   background-color: rgba(34, 197, 94, 0.1);
   color: #22c55e;
 }
 
-.roleCustomer {
+.statusKetthuc {
   background-color: rgba(16, 185, 129, 0.1);
   color: #10b981;
-}
-
-.roleChuyenvienttc {
-  background-color: rgba(139, 92, 246, 0.1);
-  color: #8b5cf6;
-}
-
-.roleDaugiavien {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-}
-
-.roleDonvithuc {
-  background-color: rgba(245, 101, 101, 0.1);
-  color: #f59e0b;
-}
-
-.roleTochucdaugia {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
 }
 
 .btn {
@@ -269,6 +249,12 @@
 
 .btnSecondary:hover {
   background-color: #4b5563;
+}
+
+.actionButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
 .pagination {
@@ -393,6 +379,38 @@
   margin-top: 1.5rem;
 }
 
+.orderHistory {
+  margin-top: 1rem;
+}
+
+.orderHistory h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.orderTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.orderTable th {
+  border: 1px solid #e5e7eb;
+}
+
+.orderTable td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  text-align: left;
+  overflow-wrap: break-word;
+}
+
+.orderTable th {
+  background: #f9fafb;
+  font-weight: 500;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .filters {
@@ -471,6 +489,7 @@
     width: 25%;
   }
 
+  /* Stack buttons vertically on mobile for actions column */
   .dataTable td[data-label="Hành động"] {
     display: flex;
     flex-direction: column;

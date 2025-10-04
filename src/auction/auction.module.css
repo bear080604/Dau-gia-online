@@ -4,7 +4,8 @@
   background-color: white;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
 }
 
 .header {
@@ -12,6 +13,8 @@
   color: white;
   text-align: center;
   padding: 15px;
+  font-size: 18px;
+  font-weight: bold;
 }
 
 .timer {
@@ -20,6 +23,7 @@
   color: #d9534f;
   font-size: 24px;
   font-weight: bold;
+  background-color: #f8f9fa;
 }
 
 .lot-numbers {
@@ -36,6 +40,7 @@
   border-radius: 4px;
   font-size: 18px;
   font-weight: bold;
+  border: 1px solid #ddd;
 }
 
 .content {
@@ -49,6 +54,8 @@
   background-color: #FFF4E6;
   padding: 20px;
   border-radius: 8px;
+  overflow-y: auto;
+  max-height: 500px;
 }
 
 .section-title {
@@ -58,32 +65,41 @@
   margin: -20px -20px 15px -20px;
   font-weight: bold;
   text-align: center;
+  font-size: 16px;
 }
 
 .info-row {
   display: flex;
   padding: 8px 0;
   border-bottom: 1px solid #e0e0e0;
+  align-items: center;
 }
 
 .info-label {
   flex: 0 0 180px;
   font-weight: normal;
+  color: #333;
+  font-size: 14px;
 }
 
 .info-value {
   flex: 1;
+  color: #555;
+  font-size: 14px;
+  word-wrap: break-word;
 }
 
 .right-section {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .participants-section {
   background-color: #FFF4E6;
   padding: 20px;
   border-radius: 8px;
-  margin-bottom: 20px;
 }
 
 .bid-section {
@@ -95,6 +111,11 @@
 .bid-info {
   text-align: center;
   margin-bottom: 15px;
+}
+
+.bid-info div {
+  margin: 5px 0;
+  font-size: 14px;
 }
 
 .bid-amount {
@@ -116,6 +137,7 @@
   border-radius: 4px;
   cursor: pointer;
   width: 100%;
+  transition: background-color 0.3s;
 }
 
 .bid-button:hover {
@@ -125,6 +147,7 @@
 .participants-table {
   width: 100%;
   margin-top: 20px;
+  overflow-x: auto;
 }
 
 .table-title {
@@ -134,23 +157,42 @@
   text-align: center;
   font-weight: bold;
   margin-bottom: 10px;
+  border-radius: 4px 4px 0 0;
 }
 
-table {
+.participants-table table {
   width: 100%;
   border-collapse: collapse;
   background-color: white;
+  border-radius: 0 0 4px 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0;
 }
 
-th, td {
-  padding: 10px;
+.participants-table th,
+.participants-table td {
+  padding: 12px 8px;
   text-align: center;
   border: 1px solid #ddd;
+  font-size: 14px;
 }
 
-th {
+.participants-table th {
   background-color: #f8f9fa;
   font-weight: bold;
+  color: #333;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.participants-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.participants-table tbody tr:hover {
+  background-color: #f0f8ff;
 }
 
 .user-icon {
@@ -158,6 +200,7 @@ th {
   height: 24px;
   border-radius: 50%;
   display: inline-block;
+  vertical-align: middle;
 }
 
 .green {
@@ -172,11 +215,12 @@ th {
   -webkit-appearance: none;
   appearance: none;
   height: 8px;
-  background: linear-gradient(to right, #2772BA 0%, #2772BA 0%, #ddd 0%, #ddd 100%);
   border-radius: 5px;
   outline: none;
   width: 100%;
   margin: 15px 0;
+  background: linear-gradient(to right, #2772BA 0%, #2772BA 0%, #ddd 0%, #ddd 100%);
+  transition: background 0.3s;
 }
 
 .slider::-webkit-slider-thumb {
@@ -188,6 +232,7 @@ th {
   border: 3px solid #2772BA;
   border-radius: 50%;
   cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .slider::-moz-range-thumb {
@@ -197,4 +242,6 @@ th {
   border: 3px solid #2772BA;
   border-radius: 50%;
   cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: none;
 }

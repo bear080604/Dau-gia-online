@@ -1,15 +1,15 @@
 import React from "react";
 import Sidebar from "../admin/Header/Header";
-import History from "../admin/History/History";
+import AuctionAsset from "../admin/Auction-asset/Auction-asset";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-function AdminHistory() {
+function AdminAuctionAsset() {
   return (
     <div>
       <Sidebar />
-      <History />
+      <AuctionAsset />
     </div>
   );
 }
 
-export default AdminHistory;
+export default AdminAuctionAsset;

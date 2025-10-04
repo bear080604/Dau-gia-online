@@ -1,0 +1,276 @@
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  gap: 20px;
+}
+
+
+
+.leftPanel {
+  width: 35%;
+  position: sticky;
+  z-index: 10;
+}
+
+.rightPanel {
+  width: 65%;
+}
+
+.searchSection {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.searchBox {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.searchBox input {
+  flex: 1;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px 0 0 4px;
+  font-size: 16px;
+}
+
+.searchBox button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.filterSection {
+  margin-bottom: 15px;
+}
+
+.filterGroup {
+  margin-bottom: 15px;
+}
+
+.filterGroup label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.dateFilter {
+  display: flex;
+  gap: 10px;
+}
+
+.dateInput {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+}
+
+.sortSection {
+  display: flex;
+  gap: 10px;
+}
+
+.sortBtn {
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: left;
+}
+
+.sortBtnActive {
+  background-color: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+.resultsInfo {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.auctionItems {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.auctionItem {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease;
+  display: flex;
+}
+
+.auctionItem:hover {
+  transform: translateY(-3px);
+}
+
+.itemImage {
+  width: 200px;
+  height: 160px;
+  background-color: #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.itemDetails {
+  padding: 15px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.itemTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  flex: 1;
+  margin-right: 15px;
+}
+
+.itemPrice {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e74c3c;
+  white-space: nowrap;
+}
+
+.itemTime {
+  font-size: 13px;
+  color: #7f8c8d;
+  margin-bottom: 5px;
+}
+
+.itemFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.itemStatus {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.statusActive {
+  background-color: #e8f6f3;
+  color: #27ae60;
+}
+
+.statusEnded {
+  background-color: #fdedec;
+  color: #e74c3c;
+}
+
+.itemCategory {
+  font-size: 12px;
+  color: #7f8c8d;
+  background-color: #f0f0f0;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.paginationBtn {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.paginationBtnActive {
+  background-color: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+.paginationBtn:hover:not(.paginationBtnActive) {
+  background-color: #f0f0f0;
+}
+
+.paginationBtn:disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .leftPanel, .rightPanel {
+    width: 100%;
+  }
+
+  .auctionItem {
+    flex-direction: column;
+  }
+
+  .itemImage {
+    width: 100%;
+    height: 160px;
+  }
+
+  .itemHeader {
+    flex-direction: column;
+  }
+
+  .itemPrice {
+    margin-top: 10px;
+  }
+}

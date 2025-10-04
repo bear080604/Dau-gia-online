@@ -1,0 +1,524 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+}
+
+.mainContent {
+  position: absolute;
+  top: 0;
+  left: 280px;
+  width: calc(100% - 280px);
+  height: 100vh;
+  padding: 2rem;
+  background-color: #f9fafb;
+  overflow-y: auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-right: 1rem;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.searchBar:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.searchBar input {
+  border: none;
+  outline: none;
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  background: transparent;
+}
+
+.searchBar i {
+  color: #6b7280;
+  margin-right: 0.5rem;
+}
+
+.userProfile {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.notificationBell {
+  position: relative;
+  font-size: 1.25rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.notificationBell:hover {
+  color: #4f46e5;
+}
+
+.profileAvatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background-color: #4f46e5;
+  color: white;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2a44;
+  margin-bottom: 0.5rem;
+}
+
+.pageSubtitle {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+}
+
+.actionsBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.addBtn {
+  background-color: #4f46e5;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.addBtn:hover {
+  background-color: #4338ca;
+}
+
+.addBtn i {
+  font-size: 1rem;
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.filterSelect {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  background-color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.dataTable th {
+  text-align: left;
+  padding: 1rem;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  white-space: nowrap;
+}
+
+.dataTable td {
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.9rem;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.dataTable tr:hover {
+  background-color: #f9fafb;
+}
+
+.dataTable tr:last-child td {
+  border-bottom: none;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.statusChothanhtoan {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.statusDathanhtoan {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.statusHuy {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  margin-right: 0.5rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btnPrimary {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.btnPrimary:hover {
+  background-color: #4338ca;
+}
+
+.btnDanger {
+  background-color: #ef4444;
+  color: white;
+}
+
+.btnDanger:hover {
+  background-color: #dc2626;
+}
+
+.btnSuccess {
+  background-color: #22c55e;
+  color: white;
+}
+
+.btnSuccess:hover {
+  background-color: #16a34a;
+}
+
+.btnSecondary {
+  background-color: #f9fafb;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.btnSecondary:hover {
+  background-color: #ffffff;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.paginationBtn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: 2rem;
+}
+
+.paginationBtn:hover {
+  background-color: #f9fafb;
+}
+
+.paginationBtnActive {
+  background-color: #4f46e5;
+  color: white;
+  border-color: #4f46e5;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 600px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modalClose {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.modalClose:hover {
+  color: #374151;
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modalBody label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.modalBody input,
+.modalBody select,
+.modalBody textarea {
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  width: 100%;
+  overflow-wrap: break-word;
+}
+
+.modalBody textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.modalBody p {
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  overflow-wrap: break-word;
+}
+
+.modalBody p strong {
+  font-weight: 600;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.orderHistory {
+  margin-top: 1rem;
+}
+
+.orderHistory h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.orderTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.orderTable th {
+  border: 1px solid #e5e7eb;
+}
+
+.orderTable td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  text-align: left;
+  overflow-wrap: break-word;
+}
+
+.orderTable th {
+  background: #f9fafb;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .searchBar {
+    max-width: 100%;
+  }
+
+  .actionsBar {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .modalContent {
+    margin: 1rem;
+    max-width: 90%;
+  }
+
+  .dataTable {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .dataTable thead {
+    display: none;
+  }
+
+  .dataTable tbody,
+  .dataTable tr,
+  .dataTable td {
+    display: block;
+    width: 100%;
+  }
+
+  .dataTable td {
+    position: relative;
+    padding-left: 35%;
+    padding-right: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    min-height: 2.5rem;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .dataTable td::before {
+    content: attr(data-label) ": ";
+    position: absolute;
+    left: 0.5rem;
+    width: 30%;
+    font-weight: 600;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    padding-right: 0.5rem;
+  }
+
+  .dataTable td[data-label="Hành động"]::before {
+    content: attr(data-label) ":";
+    width: 25%;
+  }
+
+  /* Stack buttons vertically on mobile for actions column */
+  .dataTable td[data-label="Hành động"] {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .dataTable td[data-label="Hành động"]::before {
+    position: static;
+    width: auto;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+  }
+
+  .dataTable td[data-label="Hành động"] .btn {
+    margin-right: 0;
+    flex: 1;
+    min-width: auto;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+  }
+
+  .paginationBtn {
+    min-width: auto;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+}
