@@ -1,26 +1,13 @@
-# TODO: Fix missing className and tag selectors in CSS
+# TODO List for Login and Header Update
 
-## Files to edit:
+- [x] Create UserContext for global user state management
+- [x] Wrap App with UserProvider
+- [x] Update login.jsx to set user on successful login and redirect to home
+- [x] Update header.jsx to conditionally show user name and logout link when logged in
+- [x] Test the functionality (login, redirect, header update, logout)
 
-### 1. src/contact/contact.jsx
-- [x] Add className={styles.header} to <header>
-- [x] Add className={styles.headerTitle} to <h1>
-
-### 2. src/contact/contact.module.css
-- [x] Change `header {` to `.header {`
-- [x] Change `header h1 {` to `.headerTitle {`
-
-### 3. src/auction-session/auction-session.jsx
-- [x] Add className={styles.pageTitle} to <h1>
-
-### 4. src/auction-session/auction-session.module.css
-- [x] Change `h1 {` to `.pageTitle {`
-- [x] Change `header {` to `.header {` (if applicable, but check if used)
-
-### 5. src/home/home.jsx (optional)
-- Add className to <p> in section-title
-- Move inline style from <main> to CSS class
-
-## Followup:
-- [] Test the changes to ensure styling works
-- [] Check for any other missing classNames or tag selectors
+## Notes
+- Assumed API returns { user: { name: '...', email: '...' } } on login
+- Logout calls /logout API and clears user state
+- Header shows "Xin chào, [name or email]" and "Đăng Xuất" when logged in
+- Links updated to /login and /register

@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Đấu Giá</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            position: relative;
+        }
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .logout-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+        }
+        .welcome {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .back-btn {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+        .back-btn:hover {
+            background: linear-gradient(135deg, #0056b3, #004085);
+        }
+        .countdown {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .countdown.ended {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        .form-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            font-weight: bold;
+            min-width: 200px;
+        }
+        .form-group input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .bid-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        .bid-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #218838, #1e7e34);
+        }
+        .bid-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+        .bid-amount {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .current-winner {
+            background-color: #d4edda !important;
+            font-weight: bold;
+        }
+        .loading {
+            text-align: center;
+            color: #6c757d;
+            font-size: 16px;
+            padding: 50px;
+        }
+        .error {
+            color: #dc3545;
+            text-align: center;
+            padding: 20px;
+            background: #f8d7da;
+            border-radius: 6px;
+        }
+        .no-bids {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 20px;
+        }
+        footer {
+            text-align: center;
+            color: #6c757d;
+            padding: 20px;
+            margin-top: 40px;
+            border-top: 1px solid #dee2e6;
+        }
+        @media (max-width: 768px) {
+            .form-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            table {
+                font-size: 14px;
+            }
+            th, td {
+                padding: 8px;
+            }
+        }
+        /* Toast Styles */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 300px;
+            padding: 16px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 2000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease-in-out;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .toast.error {
+            background-color: #dc3545;
+        }
+        .toast.warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .toast.success {
+            background-color: #28a745;
+        }
+        .toast i {
+            margin-right: 10px;
+        }
+        .toast .close-toast {
+            margin-left: auto;
+            cursor: pointer;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><i class="fas fa-hammer"></i> Trang Đấu Giá</h1>
+        <p>Danh sách các lượt đặt giá thời gian thực</p>
+        <button class="logout-btn" id="logoutBtn" style="display: none;"><i class="fas fa-sign-out-alt"></i> Đăng Xuất</button>
+        <p class="welcome" id="welcome" style="display: none;"></p>
+    </header>
+
+    <div class="container">
+        <div id="loading" class="loading"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="content" style="display: none;">
+            <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i> Quay Lại Chi Tiết</button>
+            <div class="countdown" id="countdown"></div>
+
+            <div class="section">
+                <h2><i class="fas fa-file-alt"></i> Đặt Giá Của Bạn</h2>
+                <form id="bidForm">
+                    <div class="form-group">
+                        <label for="amount">Số tiền đặt (VND, tối thiểu: <span id="minBid">0 ₫</span>):</label>
+                        <input type="number" id="amount" name="amount" min="0" step="100000" placeholder="Nhập số tiền lớn hơn giá hiện tại" required>
+                        <input type="hidden" id="session_id" name="session_id" value="">
+                        <button type="submit" class="bid-btn" id="bidBtn"><i class="fas fa-gavel"></i> Đặt Giá</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="section">
+                <h2><i class="fas fa-list"></i> Danh Sách Lượt Đặt Giá</h2>
+                <table id="bids-table">
+                    <thead>
+                        <tr>
+                            <th>Người Đặt Giá</th>
+                            <th>Số Tiền (VND)</th>
+                            <th>Thời Gian</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bids-body"></tbody>
+                </table>
+                <div id="no-bids" class="no-bids" style="display: none;">Chưa có lượt đặt giá nào.</div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Hệ Thống Đấu Giá. Tất cả quyền được bảo lưu.</p>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" style="display: none;">
+        <i class="fas fa-info-circle"></i>
+        <span id="toast-message"></span>
+        <span class="close-toast" onclick="closeToast()">&times;</span>
+    </div>
+
+    <script>
+        // Lấy session_id từ URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id') || 16;
+        const SESSION_API_URL = `http://localhost:8000/api/auction-sessions/${sessionId}`;
+        const BIDS_API_URL = `http://localhost:8000/api/bids/${sessionId}`;
+
+        let sessionData = null; // Lưu data session để check time/min_bid
+        let isBiddingActive = false; // Flag để disable form nếu hết thời gian
+        let highestBidAmount = 0; // Track highest để tính min_bid
+
+        const elements = {
+            loading: document.getElementById('loading'),
+            error: document.getElementById('error'),
+            content: document.getElementById('content'),
+            bidsBody: document.getElementById('bids-body'),
+            noBids: document.getElementById('no-bids'),
+            countdown: document.getElementById('countdown'),
+            minBid: document.getElementById('minBid'),
+            amount: document.getElementById('amount'),
+            bidBtn: document.getElementById('bidBtn'),
+            bidForm: document.getElementById('bidForm'),
+            sessionIdHidden: document.getElementById('session_id'),
+            logoutBtn: document.getElementById('logoutBtn'),
+            welcomeEl: document.getElementById('welcome')
+        };
+
+        // Formatter
+        const vnFormatter = new Intl.DateTimeFormat('vi-VN', {
+            timeZone: 'Asia/Ho_Chi_Minh',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+
+        function formatDateTime(isoString) {
+            const date = new Date(isoString);
+            return vnFormatter.format(date);
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(price);
+        }
+
+        // Toast functions
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            toastMessage.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.style.display = 'flex';
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.style.display = 'none', 300);
+            }, 5000);
+        }
+
+        function closeToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('show');
+            setTimeout(() => toast.style.display = 'none', 300);
+        }
+
+        // Auth check và logout
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('auth_token');
+            const name = localStorage.getItem('user_name');
+
+            if (!token) {
+                console.warn("Không có token -> quay về login.html");
+                setTimeout(() => {
+                    window.location.href = "login.html";
+                }, 500);
+                return;
+            }
+
+            elements.welcomeEl.textContent = `Xin chào, ${name || 'Người dùng'}!`;
+            elements.welcomeEl.style.display = 'block';
+            elements.logoutBtn.style.display = 'inline-block';
+
+            elements.logoutBtn.onclick = () => {
+                localStorage.removeItem("auth_token");
+                localStorage.removeItem("user_name");
+                localStorage.removeItem("user_id");
+                localStorage.removeItem("user_role");
+                window.location.href = "login.html";
+            };
+
+            elements.sessionIdHidden.value = sessionId;
+            fetchSessionData(); // Load session để check time/min_bid
+        });
+
+        function goBack() {
+            window.history.back();
+        }
+
+        // Fetch session data để check time & min_bid
+        async function fetchSessionData() {
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch(SESSION_API_URL, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Accept": "application/json"
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+                if (data.status) {
+                    sessionData = data.session;
+                    updateBiddingStatus();
+                    updateMinBid();
+                    fetchBids(); // Load bids ban đầu
+                } else {
+                    throw new Error(data.message || 'Lỗi dữ liệu phiên');
+                }
+            } catch (error) {
+                console.error('Fetch session error:', error);
+                showToast(error.message, 'error');
+                elements.error.textContent = 'Lỗi tải thông tin phiên: ' + error.message;
+                elements.error.style.display = 'block';
+            } finally {
+                elements.loading.style.display = 'none';
+                elements.content.style.display = 'block';
+            }
+        }
+
+        // Update status bidding dựa trên time/session
+        function updateBiddingStatus() {
+            if (!sessionData) return;
+            const now = new Date();
+            const bidStart = new Date(sessionData.bid_start);
+            const bidEnd = new Date(sessionData.bid_end);
+            isBiddingActive = now >= bidStart && now <= bidEnd && sessionData.status === 'DangDienRa';
+
+            const bidBtn = elements.bidBtn;
+            if (isBiddingActive) {
+                bidBtn.disabled = false;
+                elements.countdown.classList.remove('ended');
+                updateCountdown();
+                showToast('Phiên đấu giá đang diễn ra. Bạn có thể đặt giá!', 'success');
+            } else {
+                bidBtn.disabled = true;
+                elements.countdown.classList.add('ended');
+                elements.countdown.innerHTML = '<i class="fas fa-flag-checkered"></i> Phiên đấu giá đã kết thúc';
+                showToast('Phiên đấu giá đã kết thúc. Không thể đặt giá mới.', 'warning');
+            }
+        }
+
+        // Update min_bid từ session + highest bids
+        function updateMinBid() {
+            if (!sessionData) return;
+            const starting = parseFloat(sessionData.item.starting_price);
+            const step = parseFloat(sessionData.bid_step);
+            const min = highestBidAmount ? highestBidAmount + step : starting;
+            elements.minBid.textContent = formatPrice(min);
+            elements.amount.min = min;
+        }
+
+        // Countdown thời gian đấu giá
+        function updateCountdown() {
+            if (!sessionData || !isBiddingActive) return;
+            const now = new Date();
+            const bidEnd = new Date(sessionData.bid_end);
+            const diff = bidEnd - now;
+            if (diff > 0) {
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                elements.countdown.innerHTML = `<i class="fas fa-clock"></i> Thời gian còn lại: ${hours ? hours + 'g ' : ''}${minutes}m ${seconds}s`;
+                setTimeout(updateCountdown, 1000);
+            } else {
+                updateBiddingStatus(); // Kết thúc → Disable
+            }
+        }
+
+        // Fetch bids
+        async function fetchBids() {
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch(BIDS_API_URL, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Accept": "application/json"
+                    }
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                updateBidsUI(data);
+            } catch (error) {
+                console.error('Fetch bids error:', error);
+                showToast('Lỗi tải danh sách bid: ' + error.message, 'error');
+            }
+        }
+
+        function updateBidsUI(data) {
+            highestBidAmount = 0; // Reset để tính min_bid
+            if (data.status && data.bids && data.bids.length > 0) {
+                let tableHtml = '';
+                data.bids.forEach(bid => {
+                    const amount = parseFloat(bid.amount);
+                    if (amount > highestBidAmount) highestBidAmount = amount;
+                });
+                data.bids.forEach(bid => {
+                    const amount = parseFloat(bid.amount);
+                    const isWinner = amount === highestBidAmount;
+                    tableHtml += `
+                        <tr ${isWinner ? 'class="current-winner"' : ''}>
+                            <td>${bid.user.full_name} (${bid.user.email})</td>
+                            <td class="bid-amount">${formatPrice(bid.amount)}</td>
+                            <td>${formatDateTime(bid.bid_time)}</td>
+                        </tr>
+                    `;
+                });
+                elements.bidsBody.innerHTML = tableHtml;
+                elements.noBids.style.display = 'none';
+                updateMinBid(); // Cập min_bid sau khi có bids
+            } else {
+                elements.bidsBody.innerHTML = '';
+                elements.noBids.style.display = 'block';
+                updateMinBid(); // Fallback min_bid = starting + step
+            }
+        }
+
+        // Xử lý form POST bid
+        elements.bidForm.onsubmit = async (e) => {
+            e.preventDefault();
+            if (!isBiddingActive) {
+                showToast('Phiên đấu giá đã kết thúc. Không thể đặt giá.', 'error');
+                return;
+            }
+            const amount = parseFloat(elements.amount.value);
+            const min = parseFloat(elements.minBid.textContent.replace(/[^\d]/g, ''));
+            if (amount < min) {
+                showToast(`⚠️ Số tiền phải >= ${formatPrice(min)}!`, 'error');
+                return;
+            }
+
+            const token = localStorage.getItem('auth_token');
+            const formData = new FormData();
+            formData.append('session_id', sessionId);
+            formData.append('amount', amount);
+
+            const submitBtn = elements.bidBtn;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang đặt...';
+
+            try {
+                const response = await fetch('http://localhost:8000/api/bids', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (response.ok && result.status) {
+                    showToast('🎉 Đặt giá thành công! Lượt bid đã được thêm.', 'success');
+                    elements.amount.value = ''; // Reset
+                    fetchBids(); // Refetch để cập table (fallback nếu không Echo)
+                } else {
+                    let errorMsg = result.message || 'Lỗi không xác định';
+                    if (result.errors) errorMsg = Object.values(result.errors).flat().join('\n');
+                    showToast(`❌ ${errorMsg}`, 'error');
+                }
+            } catch (error) {
+                showToast('Không thể kết nối. Thử lại sau!', 'error');
+                console.error('Bid error:', error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-gavel"></i> Đặt Giá';
+            }
+        };
+
+        // Polling every 5s cho real-time (fallback nếu không Echo)
+        setInterval(() => {
+            fetchBids();
+        }, 5000);
+    </script>
+</body>
+</html>

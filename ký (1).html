@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Ký - Hệ Thống Đấu Giá</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .register-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .register-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .register-header h1 {
+            font-size: 28px;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .register-header p {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 12px 12px 40px; /* Padding cho icon */
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background-color: white;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        .form-group i {
+            position: absolute;
+            left: 12px;
+            top: 38px;
+            color: #6c757d;
+            z-index: 1;
+        }
+        .submit-btn {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.3s, transform 0.2s;
+        }
+        .submit-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #0056b3, #004085);
+            transform: translateY(-1px);
+        }
+        .submit-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .loading {
+            text-align: center;
+            color: #007bff;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        .error {
+            color: #dc3545;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+            padding: 10px;
+            background: #f8d7da;
+            border-radius: 4px;
+            border: 1px solid #f5c6cb;
+        }
+        .success {
+            color: #28a745;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+            padding: 10px;
+            background: #d4edda;
+            border-radius: 4px;
+            border: 1px solid #c3e6cb;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .login-link a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        .check-login {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #6c757d;
+            font-size: 12px;
+        }
+        @media (max-width: 480px) {
+            .register-container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="check-login" id="checkLogin">Đang kiểm tra đăng nhập...</div>
+        <div class="register-header" id="registerHeader" style="display: none;">
+            <h1><i class="fas fa-user-plus"></i> Đăng Ký Tài Khoản</h1>
+            <p>Tạo tài khoản mới để tham gia đấu giá</p>
+        </div>
+        <form id="registerForm" style="display: none;">
+            <div class="form-group">
+                <label for="full_name"><i class="fas fa-user"></i></label>
+                <input type="text" id="full_name" placeholder="Họ và tên đầy đủ" required>
+            </div>
+            <div class="form-group">
+                <label for="email"><i class="fas fa-envelope"></i></label>
+                <input type="email" id="email" placeholder="Nhập email của bạn" required>
+            </div>
+            <div class="form-group">
+                <label for="phone"><i class="fas fa-phone"></i></label>
+                <input type="tel" id="phone" placeholder="Số điện thoại" required>
+            </div>
+            <div class="form-group">
+                <label for="password"><i class="fas fa-lock"></i></label>
+                <input type="password" id="password" placeholder="Mật khẩu (ít nhất 6 ký tự)" required>
+            </div>
+            <div class="form-group">
+                <label for="password_confirmation"><i class="fas fa-lock"></i></label>
+                <input type="password" id="password_confirmation" placeholder="Xác nhận mật khẩu" required>
+            </div>
+            <div class="form-group">
+                <label for="role"><i class="fas fa-user-tag"></i></label>
+                <select id="role" required>
+                    <option value="">Chọn vai trò</option>
+                    <option value="User">Người dùng</option>
+                    <option value="Customer">Khách hàng</option>
+                </select>
+            </div>
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <i class="fas fa-user-plus"></i> Đăng Ký
+            </button>
+        </form>
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner fa-spin"></i> Đang đăng ký...
+        </div>
+        <div id="error" class="error"></div>
+        <div id="success" class="success"></div>
+        <div class="login-link" id="loginLink" style="display: none;">
+            <a href="login.html">Đã có tài khoản? Đăng nhập ngay</a>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api/register';
+        const registerForm = document.getElementById('registerForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+        const successEl = document.getElementById('success');
+        const loginLink = document.getElementById('loginLink');
+        const checkLoginEl = document.getElementById('checkLogin');
+        const registerHeader = document.getElementById('registerHeader');
+
+        // Kiểm tra nếu đã đăng nhập (token tồn tại)
+        function checkAuth() {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                // Tự động redirect nếu đã login
+                successEl.textContent = 'Bạn đã đăng nhập! Đang chuyển hướng...';
+                successEl.style.display = 'block';
+                setTimeout(() => {
+                    window.location.href = 'detal.html';
+                }, 1500);
+                return;
+            }
+            // Chưa login, hiển thị form
+            checkLoginEl.style.display = 'none';
+            registerHeader.style.display = 'block';
+            registerForm.style.display = 'block';
+            loginLink.style.display = 'block';
+        }
+
+        // Hiển thị lỗi
+        function showError(message) {
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            successEl.style.display = 'none';
+            loadingEl.style.display = 'none';
+            submitBtn.disabled = false;
+        }
+
+        // Hiển thị thành công
+        function showSuccess(message) {
+            successEl.textContent = message;
+            successEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            loadingEl.style.display = 'none';
+            submitBtn.disabled = false;
+            loginLink.style.display = 'block';
+        }
+
+        // Submit form
+        registerForm.onsubmit = async function(e) {
+            e.preventDefault();
+            const fullName = document.getElementById('full_name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const password = document.getElementById('password').value;
+            const passwordConfirmation = document.getElementById('password_confirmation').value;
+            const role = document.getElementById('role').value;
+
+            // Validation nâng cao
+            if (!fullName || !email || !phone || !password || !passwordConfirmation || !role) {
+                showError('Vui lòng nhập đầy đủ thông tin');
+                return;
+            }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showError('Email không hợp lệ');
+                return;
+            }
+            const phoneRegex = /^[0-9]{10,11}$/;
+            if (!phoneRegex.test(phone)) {
+                showError('Số điện thoại không hợp lệ (10-11 số)');
+                return;
+            }
+            if (password.length < 6) {
+                showError('Mật khẩu phải ít nhất 6 ký tự');
+                return;
+            }
+            if (password !== passwordConfirmation) {
+                showError('Mật khẩu xác nhận không khớp');
+                return;
+            }
+
+            // Show loading
+            submitBtn.disabled = true;
+            loadingEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            successEl.style.display = 'none';
+            loginLink.style.display = 'none';
+
+            try {
+                // Lấy CSRF cookie nếu cần cho Sanctum (tùy backend) - Bọc trong try-catch để tránh lỗi nếu server không hỗ trợ
+                try {
+                    console.log('Fetching CSRF cookie...');
+                    const csrfResponse = await fetch('http://localhost:8000/sanctum/csrf-cookie', { 
+                        method: 'GET',
+                        credentials: 'include' 
+                    });
+                    if (csrfResponse.ok) {
+                        console.log('CSRF cookie fetched successfully');
+                    } else {
+                        console.warn('CSRF cookie fetch failed, but proceeding anyway:', csrfResponse.status);
+                    }
+                } catch (csrfError) {
+                    console.warn('CSRF cookie fetch error (proceeding):', csrfError.message);
+                }
+
+                console.log('Sending register request...');
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    credentials: 'include',  // Để gửi cookie nếu cần
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        
+                        // Không thêm X-XSRF-TOKEN nếu không có, để tránh lỗi
+                    },
+                    body: JSON.stringify({
+                        full_name: fullName,
+                        email: email,
+                        phone: phone,
+                        password: password,
+                        password_confirmation: passwordConfirmation,
+                        role: role
+                    })
+                });
+
+                console.log('Response status:', response.status);
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.');
+
+                    // Tự động chuyển đến trang đăng nhập sau 2 giây
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || `Lỗi đăng ký: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Register error:', error);
+                showError(error.message || 'Lỗi kết nối server. Vui lòng thử lại.');
+            }
+        };
+
+        // Kiểm tra auth khi load trang
+        checkAuth();
+
+        // Xử lý CSRF nếu cần (tùy backend) - Cải thiện để tránh lỗi
+        document.addEventListener('DOMContentLoaded', function() {
+            // Không set X-XSRF-TOKEN nếu không cần, để tránh lỗi header
+            console.log('Page loaded, ready for registration.');
+        });
+    </script>
+</body>
+</html>

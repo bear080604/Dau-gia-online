@@ -3,26 +3,16 @@ import styles from './register.module.css'; // Import CSS Modules
 import { Eye, EyeOff } from 'lucide-react';
 
 export default function RegisterForm() {
-  const [activeTab, setActiveTab] = useState('personal');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState({}); // State để lưu lỗi từng field
   const [formData, setFormData] = useState({
     fullName: '',
-    username: '',
     email: '',
-    password: '',
-    address: '',
     phone: '',
-    birthDate: '',
-    gender: 'Nam',
-    idNumber: '',
-    issueDate: '',
-    issuePlace: '',
-    idFrontImage: null,
-    idBackImage: null,
-    familyBook: null,
-    accountNumber: '',
-    accountHolder: '',
-    bankName: ''
+    password: '',
+    confirmPassword: '',
+    role: 'user'  // Giữ default 'user' – giả sử đã OK từ lần test trước
   });
 
   const handleInputChange = (e) => {
@@ -31,30 +21,41 @@ export default function RegisterForm() {
       ...prev,
       [name]: value
     }));
-  };
-
-  const handleFileChange = (e) => {
-    const { name } = e.target;
-    const file = e.target.files[0];
-    setFormData(prev => ({
-      ...prev,
-      [name]: file
-    }));
+    // Clear error cho field này khi user nhập
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: null }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const formDataToSend = new FormData();
-    Object.keys(formData).forEach(key => {
-      if (formData[key] !== null && formData[key] !== '') {
-        formDataToSend.append(key, formData[key]);
-      }
-    });
+    setErrors({}); // Clear previous errors
+    if (formData.password !== formData.confirmPassword) {
+      setErrors({ confirmPassword: 'Mật khẩu và nhập lại mật khẩu không khớp' });
+      return;
+    }
+
+    // Chỉ gửi các trường backend yêu cầu: full_name, email, phone, password, role
+    // Bao gồm password_confirmation cho validation
+    const dataToSend = {
+      full_name: formData.fullName,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password,
+      password_confirmation: formData.confirmPassword,
+      role: formData.role
+    };
+
+    // Debug: Log data gửi đi để kiểm tra
+    console.log('Data gửi đến server:', dataToSend);
 
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}register`, {
         method: 'POST',
-        body: formDataToSend,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToSend),
       });
 
       if (response.ok) {
@@ -62,10 +63,29 @@ export default function RegisterForm() {
         console.log('Đăng ký thành công:', result);
         // Có thể thêm logic chuyển hướng hoặc hiển thị thông báo thành công
       } else {
-        console.error('Lỗi đăng ký:', response.statusText);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Lỗi đăng ký chi tiết:', errorData);
+        
+        // Map server errors (snake_case) to client fields (camelCase)
+        const fieldErrors = {};
+        if (errorData.errors) {
+          if (errorData.errors.full_name) fieldErrors.fullName = errorData.errors.full_name[0];
+          if (errorData.errors.email) fieldErrors.email = errorData.errors.email[0];
+          if (errorData.errors.phone) fieldErrors.phone = errorData.errors.phone[0];
+          if (errorData.errors.password) fieldErrors.password = errorData.errors.password[0];
+          if (errorData.errors.role) fieldErrors.role = errorData.errors.role[0];
+          if (errorData.errors.password_confirmation) fieldErrors.confirmPassword = errorData.errors.password_confirmation[0];
+        }
+        setErrors(fieldErrors);
+        
+        // Fallback message nếu không có field cụ thể
+        if (Object.keys(fieldErrors).length === 0) {
+          setErrors({ general: errorData.message || 'Lỗi đăng ký không xác định' });
+        }
       }
     } catch (err) {
       console.error('Lỗi API:', err);
+      setErrors({ general: 'Lỗi kết nối. Vui lòng thử lại.' });
     }
   };
 
@@ -84,56 +104,30 @@ export default function RegisterForm() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className={styles.tabs}>
-          <button
-            type="button"
-            onClick={() => setActiveTab('personal')}
-            className={`${styles.tabButton} ${activeTab === 'personal' ? styles.active : ''}`}
-          >
-            Tài khoản cá nhân
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('organization')}
-            className={`${styles.tabButton} ${activeTab === 'organization' ? styles.active : ''}`}
-          >
-            Tài khoản tổ chức
-          </button>
-        </div>
-
         {/* Form */}
         <form onSubmit={handleSubmit} className={styles.form}>
           <p className={styles.introText}>Vui lòng cung cấp chính xác các thông tin dưới đây:</p>
 
+          {errors.general && (
+            <div className={styles.errorMessage}>
+              {errors.general}
+            </div>
+          )}
+
           {/* Họ và tên */}
           <div className={styles.field}>
             <label className={styles.label}>
-              Họ và tên người có tài sản bán <span className={styles.required}>*</span>
+              Họ và tên <span className={styles.required}>*</span>
             </label>
             <input
               type="text"
               name="fullName"
               value={formData.fullName}
               onChange={handleInputChange}
-              className={styles.input}
+              className={`${styles.input} ${errors.fullName ? styles.inputError : ''}`}
               required
             />
-          </div>
-
-          {/* Tên đăng nhập */}
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Tên đăng nhập <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleInputChange}
-              className={styles.input}
-              required
-            />
+            {errors.fullName && <span className={styles.fieldError}>{errors.fullName}</span>}
           </div>
 
           {/* Thư điện tử */}
@@ -146,9 +140,26 @@ export default function RegisterForm() {
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className={styles.input}
+              className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
               required
             />
+            {errors.email && <span className={styles.fieldError}>{errors.email}</span>}
+          </div>
+
+          {/* Số điện thoại */}
+          <div className={styles.field}>
+            <label className={styles.label}>
+              Số điện thoại <span className={styles.required}>*</span>
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              className={`${styles.input} ${errors.phone ? styles.inputError : ''}`}
+              required
+            />
+            {errors.phone && <span className={styles.fieldError}>{errors.phone}</span>}
           </div>
 
           {/* Mật khẩu */}
@@ -162,7 +173,7 @@ export default function RegisterForm() {
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                className={styles.input}
+                className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
                 required
               />
               <button
@@ -173,231 +184,55 @@ export default function RegisterForm() {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
+            {errors.password && <span className={styles.fieldError}>{errors.password}</span>}
           </div>
 
-          {/* Địa chỉ thường trú */}
+          {/* Nhập lại mật khẩu */}
           <div className={styles.field}>
             <label className={styles.label}>
-              Địa chỉ thường trú <span className={styles.required}>*</span>
+              Nhập lại mật khẩu <span className={styles.required}>*</span>
             </label>
-            <input
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={handleInputChange}
-              className={styles.input}
-              required
-            />
-          </div>
-
-          {/* Số điện thoại */}
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Số Điện thoại <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              className={styles.input}
-              required
-            />
-          </div>
-
-
-          {/* Ngày sinh và Giới tính */}
-          <div className={styles.gridFields}>
-             {activeTab === 'personal' && (
-            <div className={styles.field}>
-              <label className={styles.label}>
-                Ngày sinh <span className={styles.required}>*</span>
-              </label>
+            <div className={styles.passwordContainer}>
               <input
-                type="date"
-                name="birthDate"
-                value={formData.birthDate}
+                type={showConfirmPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                value={formData.confirmPassword}
                 onChange={handleInputChange}
-                className={styles.input}
+                className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ''}`}
                 required
               />
-              
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className={styles.eyeButton}
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
-                  )}
-            {activeTab === 'personal' && (
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  Giới tính <span className={styles.required}>*</span>
-                </label>
-                <select
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleInputChange}
-                  className={styles.input}
-                  required
-                >
-                  <option value="Nam">Nam</option>
-                  <option value="Nữ">Nữ</option>
-                  <option value="Khác">Khác</option>
-                </select>
-              </div>
-            )}
+            {errors.confirmPassword && <span className={styles.fieldError}>{errors.confirmPassword}</span>}
           </div>
 
-          {/* Số CMND/CCCD */}
+          {/* Vai trò */}
           <div className={styles.field}>
             <label className={styles.label}>
-              Số CMND/CCCD <span className={styles.required}>*</span>
+              Vai trò <span className={styles.required}>*</span>
             </label>
-            <input
-              type="text"
-              name="idNumber"
-              value={formData.idNumber}
+            <select
+              name="role"
+              value={formData.role}
               onChange={handleInputChange}
-              className={styles.input}
+              className={`${styles.input} ${errors.role ? styles.inputError : ''}`}
               required
-            />
-          </div>
-
-          {/* Ngày cấp */}
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Ngày cấp <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="date"
-              name="issueDate"
-              value={formData.issueDate}
-              onChange={handleInputChange}
-              className={styles.input}
-              required
-            />
-          </div>
-
-          {/* Nơi cấp */}
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Nơi cấp <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              name="issuePlace"
-              value={formData.issuePlace}
-              onChange={handleInputChange}
-              className={styles.input}
-              required
-            />
-          </div>
-
-          {/* Ảnh mặt trước CMND/CCCD */}
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Ảnh mặt trước CMND/CCCD <span className={styles.required}>*</span>
-            </label>
-            <div className={styles.fileUpload}>
-              <input
-                type="file"
-                name="idFrontImage"
-                onChange={handleFileChange}
-                className={styles.fileInput}
-                id="idFrontImage"
-                required
-              />
-              <label htmlFor="idFrontImage" className={styles.fileButton}>
-                Chọn tập
-              </label>
-              <span className={styles.fileText}>
-                {formData.idFrontImage ? formData.idFrontImage.name : 'Không có tệp nào được chọn'}
-              </span>
-            </div>
-          </div>
-
-          {/* Ảnh mặt sau CMND/CCCD */}
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Ảnh mặt sau CMND/CCCD <span className={styles.required}>*</span>
-            </label>
-            <div className={styles.fileUpload}>
-              <input
-                type="file"
-                name="idBackImage"
-                onChange={handleFileChange}
-                className={styles.fileInput}
-                id="idBackImage"
-                required
-              />
-              <label htmlFor="idBackImage" className={styles.fileButton}>
-                Chọn tập
-              </label>
-              <span className={styles.fileText}>
-                {formData.idBackImage ? formData.idBackImage.name : 'Không có tệp nào được chọn'}
-              </span>
-            </div>
-          </div>
-
-          {/* Hộ sơ đính kèm */}
-          <div className={styles.field}>
-            <label className={styles.label}>Hộ sơ đính kèm</label>
-            <div className={styles.fileUpload}>
-              <input
-                type="file"
-                name="familyBook"
-                onChange={handleFileChange}
-                className={styles.fileInput}
-                id="familyBook"
-              />
-              <label htmlFor="familyBook" className={styles.fileButton}>
-                Chọn tập
-              </label>
-              <span className={styles.fileText}>
-                {formData.familyBook ? formData.familyBook.name : 'Không có tệp nào được chọn'}
-              </span>
-            </div>
-          </div>
-
-          {/* Số tài khoản nhận lại tiền đặt trước */}
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Số tài khoản nhận lại tiền đặt trước <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              name="accountNumber"
-              value={formData.accountNumber}
-              onChange={handleInputChange}
-              className={styles.input}
-              required
-            />
-          </div>
-
-          {/* Chủ tài khoản */}
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Chủ tài khoản <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              name="accountHolder"
-              value={formData.accountHolder}
-              onChange={handleInputChange}
-              className={styles.input}
-              required
-            />
-          </div>
-
-          {/* Tên ngân hàng */}
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Tên ngân hàng <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              name="bankName"
-              value={formData.bankName}
-              onChange={handleInputChange}
-              className={styles.input}
-              required
-            />
+            >
+              <option value="user">Người dùng (User)</option>
+              <option value="admin">Quản trị viên (Admin)</option>
+              <option value="bidder">Người đấu giá (Bidder)</option>
+              <option value="seller">Người bán (Seller)</option>
+            </select>
+            {errors.role && <span className={styles.fieldError}>{errors.role}</span>}
+            <small className={styles.helpText}>
+              Các giá trị phổ biến từ Laravel enum Role: user, admin, bidder, seller.
+            </small>
           </div>
 
           {/* Submit Button */}

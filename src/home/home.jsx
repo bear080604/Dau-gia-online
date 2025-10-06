@@ -103,7 +103,7 @@ const Home = () => {
                       </p>
                     </div>
                     <div className='action'>
-                      <Link to={`/detail/${item.id}`} style={{ textDecoration: 'none' }}>
+                      <Link to={`/detail/${currentSession.id}`} style={{ textDecoration: 'none' }}>
                         <button className='bid-button'>
                           <i className="fa fa-gavel" aria-hidden="true"></i> Đấu giá
                         </button>

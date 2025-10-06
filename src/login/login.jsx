@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import styles from './login.module.css'; // Import CSS Modules
 import { Eye, EyeOff } from 'lucide-react';
+import { useUser } from '../UserContext';
 
 function LoginForm() {
+  const { login } = useUser();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   });
 
@@ -25,7 +27,7 @@ function LoginForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formDataToSend = new FormData();
-    formDataToSend.append('username', formData.username);
+    formDataToSend.append('email', formData.email);
     formDataToSend.append('password', formData.password);
     if (rememberMe) {
       formDataToSend.append('rememberMe', 'true');
@@ -40,7 +42,10 @@ function LoginForm() {
       if (response.ok) {
         const result = await response.json();
         console.log('Đăng nhập thành công:', result);
-        // Có thể thêm logic lưu token, chuyển hướng
+        if (result && result.user) {
+          login(result.user);
+          window.location.href = '/';
+        }
       } else {
         console.error('Lỗi đăng nhập:', response.statusText);
       }
@@ -66,18 +71,18 @@ function LoginForm() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className={styles.form}>
-          {/* Tên đăng nhập */}
+          {/* Email */}
           <div className={styles.field}>
             <label className={styles.label}>
-              Tên đăng nhập <span className={styles.required}>*</span>
+              Thư điện tử <span className={styles.required}>*</span>
             </label>
             <input
-              type="text"
-              name="username"
-              value={formData.username}
+              type="email"
+              name="email"
+              value={formData.email}
               onChange={handleInputChange}
               className={styles.input}
-              placeholder="Tên đăng nhập"
+              placeholder="Thư điện tử"
               required
             />
           </div>
@@ -132,4 +137,5 @@ function LoginForm() {
     </div>
   );
 }
-export default  LoginForm;
+
+export default LoginForm;
