@@ -1,23 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import styles from './auction.module.css';
+import { UserContext } from '../UserContext';
 
 const AuctionPage = () => {
-  const { id } = useParams(); // id is item_id or session_id from link
+  const { id } = useParams();
   const navigate = useNavigate();
+  const { user, token } = useContext(UserContext);
   const [auctionItem, setAuctionItem] = useState(null);
+  const [bidders, setBidders] = useState([]);
+  const [bids, setBids] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentTime, setCurrentTime] = useState(new Date()); // Real-time clock for dynamic updates
-  const [bidValue, setBidValue] = useState(0);
-  const [currentPrice, setCurrentPrice] = useState(0); // Will be fetched or simulated
-
-  // Modal states if needed, but for now focus on bidding
-  const [successMessage, setSuccessMessage] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [displayValue, setDisplayValue] = useState('');
+  const [currentPrice, setCurrentPrice] = useState(0);
+  const [toast, setToast] = useState({ message: '', type: '', show: false });
 
   const API_URL = process.env.REACT_APP_API_URL;
 
-  // Update current time every second for real-time countdown
+  const bidStart = auctionItem?.bid_start ? new Date(auctionItem.bid_start) : null;
+  const bidEnd = auctionItem?.bid_end ? new Date(auctionItem.bid_end) : null;
+  const isBiddingOngoing = bidStart && bidEnd && currentTime >= bidStart && currentTime <= bidEnd;
+  const isAuctionEnded = bidEnd && currentTime > bidEnd;
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -25,76 +32,127 @@ const AuctionPage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const fetchBidders = async () => {
+    if (!id || !token) return;
+    try {
+      const fullUrl = `${API_URL}auction-profiles?session_id=${id}`;
+      const response = await axios.get(fullUrl, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      const data = response.data;
+      const profiles = data.profiles || [];
+      const filteredBidders = profiles.filter(p => p.status === 'DaDuyet' || p.status === 'pending');
+      setBidders(filteredBidders);
+    } catch (err) {
+      console.error('Fetch bidders error:', err);
+      setBidders([]);
+    }
+  };
+
+  const fetchBids = async () => {
+    if (!id || !token) return;
+    try {
+      const fullUrl = `${API_URL}bids/${id}`;
+      const response = await axios.get(fullUrl, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      const data = response.data;
+      setBids(data.bids || []);
+      let highest = parseFloat(auctionItem?.item?.starting_price) || 0;
+      if (data.bids && data.bids.length > 0) {
+        const maxAmount = Math.max(...data.bids.map(b => parseFloat(b.amount)));
+        if (maxAmount > highest) highest = maxAmount;
+      }
+      setCurrentPrice(highest);
+    } catch (err) {
+      console.error('Fetch bids error:', err);
+      setBids([]);
+    }
+  };
+
   useEffect(() => {
     const fetchAuctionItem = async () => {
       try {
         setLoading(true);
         setError(null);
-        console.log("API URL for auction:", API_URL);  // Debug
-        
         if (!API_URL) {
           throw new Error('REACT_APP_API_URL không được định nghĩa!');
         }
-
-        const fullUrl = `${API_URL}auction-sessions`;  // Fetch full list, filter by id
-        console.log("Full URL:", fullUrl);  // Debug
-        
-        const response = await fetch(fullUrl);
-        const data = await response.json();
-        console.log("Full response:", data);  // Debug data
-
-        const { sessions } = data || { sessions: [] };
-        // Filter by item_id or session_id (assuming item_id from params)
-        const session = sessions.find(s => s.item && s.item.item_id == id);
+        const fullUrl = `${API_URL}auction-sessions/${id}`;
+        const response = await axios.get(fullUrl, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const data = response.data;
+        const session = data.session;
         if (!session) {
-          throw new Error(`No session found for item ID: ${id}`);
+          throw new Error(`No session found for session ID: ${id}`);
         }
-        console.log("Found session:", session);  // Debug session cụ thể
-        
         setAuctionItem(session);
-        // Set initial current price (simulate or fetch from bids)
-        setCurrentPrice(parseFloat(session.item.starting_price) || 0);
-        // Set initial bid value to min bid: current + step
-        const bidStep = parseFloat(session.bid_step) || 10000000;
-        setBidValue(currentPrice + bidStep);
       } catch (err) {
         console.error('Fetch error:', err);
-        setError(err.message || 'Lỗi không xác định');
+        setError(err.response?.data?.message || err.message || 'Lỗi không xác định');
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) {
+    if (id && token) {
       fetchAuctionItem();
+    } else if (!token) {
+      setError('Vui lòng đăng nhập để xem thông tin đấu giá');
+      setLoading(false);
     }
-  }, [id]);
+  }, [id, token]);
 
-  // Format number with commas
+  useEffect(() => {
+    if (auctionItem) {
+      fetchBidders();
+      fetchBids();
+    }
+  }, [auctionItem]);
+
+  useEffect(() => {
+    let interval;
+    if (auctionItem && isBiddingOngoing && token) {
+      interval = setInterval(fetchBids, 3000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [auctionItem, isBiddingOngoing, token]);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type, show: true });
+    setTimeout(() => setToast({ message: '', type: '', show: false }), 5000);
+  };
+
+  const closeToast = () => {
+    setToast({ message: '', type: '', show: false });
+  };
+
   const formatNumber = (num) => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  // Format price with VNĐ
   const formatPrice = (priceStr) => {
     if (!priceStr) return 'N/A';
     const num = parseFloat(priceStr);
     return num.toLocaleString('vi-VN') + ' VNĐ';
   };
 
-  // Calculate N for bid formula
-  const calculateN = () => {
-    if (!auctionItem || bidValue <= currentPrice) return 0;
-    const bidStep = parseFloat(auctionItem.bid_step) || 10000000;
-    return Math.floor((bidValue - currentPrice) / bidStep);
+  const formatDateTime = (dateTimeStr) => {
+    if (!dateTimeStr) return 'N/A';
+    return new Date(dateTimeStr).toLocaleString('vi-VN');
   };
 
-  // Time-related logic
-  const bidStart = auctionItem?.bid_start ? new Date(auctionItem.bid_start) : null;
-  const bidEnd = auctionItem?.bid_end ? new Date(auctionItem.bid_end) : null;
-  const isBiddingOngoing = bidStart && bidEnd && currentTime >= bidStart && currentTime <= bidEnd;
+  const calculateN = () => {
+    if (!auctionItem) return 0;
+    const currentBidValue = displayValue ? parseInt(displayValue.replace(/,/g, '')) : 0;
+    if (currentBidValue <= currentPrice) return 0;
+    const bidStep = parseFloat(auctionItem.bid_step) || 10000000;
+    return Math.floor((currentBidValue - currentPrice) / bidStep);
+  };
 
-  // Real-time countdown for bidding - return object for hours, minutes, seconds
   const getCountdownParts = () => {
     if (!bidEnd || currentTime > bidEnd) return { hours: '00', minutes: '00', seconds: '00' };
     const diff = bidEnd - currentTime;
@@ -105,30 +163,67 @@ const AuctionPage = () => {
     return { hours, minutes, seconds };
   };
 
-  const handleSliderChange = (e) => {
-    const value = parseInt(e.target.value);
-    setBidValue(value);
+  const handleNumberInputChange = (e) => {
+    const rawValue = e.target.value.replace(/\D/g, '');
+    setDisplayValue(rawValue);
   };
 
-  const updateSliderBackground = (slider) => {
-    const min = slider.min;
-    const max = slider.max;
-    const val = slider.value;
-    const percentage = ((val - min) / (max - min)) * 100;
-    slider.style.background = `linear-gradient(to right, #2772BA 0%, #2772BA ${percentage}%, #ddd ${percentage}%, #ddd 100%)`;
+  const handleBlur = () => {
+    if (displayValue === '') return;
+    const value = parseInt(displayValue) || 0;
+    setDisplayValue(formatNumber(value));
   };
 
-  const handleInput = (e) => {
-    handleSliderChange(e);
-    updateSliderBackground(e.target);
-  };
+  const handlePlaceBid = async () => {
+    if (!user || !token) {
+      showToast('Vui lòng đăng nhập để đấu giá', 'error');
+      navigate('/login');
+      return;
+    }
 
-  const handlePlaceBid = () => {
-    // Fake bid: log and show success
-    console.log('Placing bid:', bidValue);
-    setSuccessMessage(true);
-    setTimeout(() => setSuccessMessage(false), 5000);
-    // Later: API call to place bid
+    if (!displayValue || displayValue.trim() === '') {
+      showToast('Vui lòng nhập số tiền đấu giá!', 'error');
+      return;
+    }
+
+    const currentBidValue = parseInt(displayValue.replace(/,/g, '')) || 0;
+    const bidStep = parseFloat(auctionItem?.bid_step) || 10000000;
+    const minBid = currentPrice + bidStep;
+
+    if (currentBidValue < minBid) {
+      showToast(`Số tiền phải >= ${formatPrice(minBid)}!`, 'error');
+      return;
+    }
+
+    if (!isBiddingOngoing) {
+      showToast('Phiên đấu giá chưa bắt đầu hoặc đã kết thúc.', 'error');
+      return;
+    }
+
+    try {
+      const fullUrl = `${API_URL}bids`;
+      const response = await axios.post(fullUrl, {
+        session_id: id,
+        amount: currentBidValue,
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const result = response.data;
+      if (result.status) {
+        showToast('Đặt giá thành công!', 'success');
+        setDisplayValue('');
+        fetchBids();
+      } else {
+        showToast(result.message || 'Lỗi đặt giá', 'error');
+      }
+    } catch (err) {
+      console.error('Bid error:', err);
+      const errorMsg = err.response?.data?.message || err.message || 'Lỗi không xác định';
+      showToast(errorMsg, 'error');
+    }
   };
 
   if (loading) {
@@ -150,17 +245,16 @@ const AuctionPage = () => {
 
   const item = auctionItem.item;
   const bidStep = parseFloat(auctionItem.bid_step) || 10000000;
-  const startingPrice = parseFloat(item.starting_price) || 0;
   const minBid = currentPrice + bidStep;
-  const maxBid = startingPrice * 10; // Arbitrary max, adjust as needed
   const n = calculateN();
   const countdown = getCountdownParts();
+  const highestBid = bids.length > 0 ? Math.max(...bids.map(b => parseFloat(b.amount))) : currentPrice;
+  const winner = bids.length > 0 ? bids.reduce((a, b) => parseFloat(a.amount) > parseFloat(b.amount) ? a : b) : null;
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>Phiên đấu giá {item.name}</div>
       
-      {/* Lot Numbers Frame with Countdown */}
       <div className={styles['lot-numbers']}>
         <div className={styles['lot-number']}>{countdown.hours}</div>
         <div className={styles['lot-number']}>{countdown.minutes}</div>
@@ -176,19 +270,19 @@ const AuctionPage = () => {
           </div>
           <div className={styles['info-row']}>
             <div className={styles['info-label']}>Loại tài sản:</div>
-            <div className={styles['info-value']}>Bất động sản</div> {/* Based on category_id = 1 */}
+            <div className={styles['info-value']}>Bất động sản</div>
           </div>
           <div className={styles['info-row']}>
             <div className={styles['info-label']}>Người có tài sản:</div>
-            <div className={styles['info-value']}>User ID: {item.owner_id}</div> {/* Fetch full name later */}
+            <div className={styles['info-value']}>User ID: {item.owner_id}</div>
           </div>
           <div className={styles['info-row']}>
             <div className={styles['info-label']}>Nơi có tài sản:</div>
-            <div className={styles['info-value']}>Kho hàng thu mua đồi Gò Dưa phường Tân Quy Q7</div> {/* Fake */}
+            <div className={styles['info-value']}>Kho hàng thu mua đồi Gò Dưa phường Tân Quy Q7</div>
           </div>
           <div className={styles['info-row']}>
             <div className={styles['info-label']}>Thời gian xem tài sản:</div>
-            <div className={styles['info-value']}>Giờ hành chính các ngày từ 24/12 đến 28/12/2021</div> {/* Fake */}
+            <div className={styles['info-value']}>Giờ hành chính các ngày từ 24/12 đến 28/12/2021</div>
           </div>
           <div className={styles['info-row']}>
             <div className={styles['info-label']}>Tổ chức đấu giá tài sản:</div>
@@ -212,11 +306,11 @@ const AuctionPage = () => {
           </div>
           <div className={styles['info-row']}>
             <div className={styles['info-label']}>Tiền hồ sơ:</div>
-            <div className={styles['info-value']}>500,000 VNĐ</div> {/* Fake */}
+            <div className={styles['info-value']}>500,000 VNĐ</div>
           </div>
           <div className={styles['info-row']}>
             <div className={styles['info-label']}>Tiền đặt trước:</div>
-            <div className={styles['info-value']}>3,000,000 VNĐ</div> {/* Fake */}
+            <div className={styles['info-value']}>3,000,000 VNĐ</div>
           </div>
           <div className={styles['info-row']}>
             <div className={styles['info-label']}>Giá khởi điểm:</div>
@@ -224,11 +318,11 @@ const AuctionPage = () => {
           </div>
           <div className={styles['info-row']}>
             <div className={styles['info-label']}>Giá hiện tại:</div>
-            <div className={styles['info-value']}>{formatPrice(currentPrice)}</div> {/* Fetch real-time bids later */}
+            <div className={styles['info-value']}>{formatPrice(currentPrice)}</div>
           </div>
           <div className={styles['info-row']}>
             <div className={styles['info-label']}>Số lượt yêu cầu đấu giá:</div>
-            <div className={styles['info-value']}>4</div> {/* Fake */}
+            <div className={styles['info-value']}>{bids.length}</div>
           </div>
         </div>
 
@@ -237,48 +331,62 @@ const AuctionPage = () => {
             <div className={styles['section-title']}>THÀNH PHẦN THAM DỰ</div>
             <div className={styles['info-row']}>
               <div className={styles['info-label']}>Thư ký phiên đấu giá:</div>
-              <div className={styles['info-value']}>Nguyễn Văn A</div> {/* Fake */}
+              <div className={styles['info-value']}>Nguyễn Văn A</div>
             </div>
             <div className={styles['info-row']}>
               <div className={styles['info-label']}>Đại diện bên có tài sản:</div>
-              <div className={styles['info-value']}>Nguyễn Văn B</div> {/* Fake */}
+              <div className={styles['info-value']}>Nguyễn Văn B</div>
             </div>
             <div className={styles['info-row']}>
               <div className={styles['info-label']}>Đấu giá viên:</div>
-              <div className={styles['info-value']}>Nguyễn Văn D</div> {/* Fake */}
+              <div className={styles['info-value']}>Nguyễn Văn D</div>
             </div>
             <div className={styles['info-row']}>
               <div className={styles['info-label']}>Đại diện người tham gia đấu giá:</div>
-              <div className={styles['info-value']}>Nguyễn Văn E</div> {/* Fake */}
+              <div className={styles['info-value']}>Nguyễn Văn E</div>
             </div>
           </div>
 
           <div className={styles['bid-section']}>
-            <div className={styles['section-title']}>THAM GIA ĐẤU GIÁ</div>
-            <div className={styles['bid-info']}>
-              <input
-                type="range"
-                min={minBid}
-                max={maxBid}
-                value={bidValue}
-                step={bidStep}
-                onChange={handleInput}
-                className={styles.slider}
-              />
-              <div>Số tiền đấu giá</div>
-              <div className={styles['bid-amount']}>
-                {formatNumber(bidValue)}<br />VNĐ
-              </div>
-              <div style={{ fontSize: '12px', color: '#2772BA' }}>
-                Số tiền đấu giá = Giá hiện tại ({formatNumber(currentPrice)} VNĐ) + {n} x Bước giá ({formatNumber(bidStep)} VNĐ)
-              </div>
+            <div className={styles['section-title']}>
+              {isAuctionEnded ? 'KẾT QUẢ ĐẤU GIÁ' : 'THAM GIA ĐẤU GIÁ'}
             </div>
-            {isBiddingOngoing && (
-              <button className={styles['bid-button']} onClick={handlePlaceBid}>
-                Đấu giá
-              </button>
-            )}
-            {!isBiddingOngoing && (
+            {isBiddingOngoing ? (
+              <>
+                <div className={styles['bid-info']}>
+                  <div>Số tiền đấu giá (tối thiểu: {formatPrice(minBid)})</div>
+                  <input
+                    type="text"
+                    value={displayValue}
+                    onChange={handleNumberInputChange}
+                    onBlur={handleBlur}
+                    placeholder="Nhập số tiền lớn hơn giá hiện tại"
+                    className={styles['bid-input']}
+                    style={{ marginBottom: '10px', padding: '8px', width: '100%', border: '1px solid #ccc', borderRadius: '4px' }}
+                  />
+                  <div className={styles['bid-amount']}>
+                    {displayValue ? formatNumber(parseInt(displayValue.replace(/,/g, ''))) : '0'}<br />VNĐ
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#2772BA' }}>
+                    Số tiền đấu giá = Giá hiện tại ({formatNumber(currentPrice)} VNĐ) + {n} x Bước giá ({formatNumber(bidStep)} VNĐ)
+                  </div>
+                </div>
+                <button className={styles['bid-button']} onClick={handlePlaceBid}>
+                  Đấu giá
+                </button>
+              </>
+            ) : isAuctionEnded ? (
+              <div className={styles['bid-info']}>
+                {winner ? (
+                  <>
+                    <div>Người thắng cuộc: {winner.user?.full_name || 'N/A'}</div>
+                    <div>Số tiền thắng: {formatPrice(winner.amount)}</div>
+                  </>
+                ) : (
+                  <div>Không có người tham gia đấu giá</div>
+                )}
+              </div>
+            ) : (
               <button className={styles['bid-button']} disabled>
                 Chưa đến giờ đấu giá
               </button>
@@ -300,54 +408,86 @@ const AuctionPage = () => {
             </tr>
           </thead>
           <tbody>
-            {/* Hardcoded for demo; fetch bidders later */}
-            <tr>
-              <td>1</td>
-              <td><span className={`${styles['user-icon']} ${styles.green}`}></span></td>
-              <td>Bùi Thị B</td>
-              <td>400,000</td>
-              <td>500,000</td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td><span className={`${styles['user-icon']} ${styles.pink}`}></span></td>
-              <td>Bùi Thị E</td>
-              <td>400,000</td>
-              <td>500,000</td>
-            </tr>
-            <tr>
-              <td>3</td>
-              <td><span className={`${styles['user-icon']} ${styles.pink}`}></span></td>
-              <td>Bùi Thị P</td>
-              <td>400,000</td>
-              <td>500,000</td>
-            </tr>
-            <tr>
-              <td>4</td>
-              <td><span className={`${styles['user-icon']} ${styles.pink}`}></span></td>
-              <td>Bùi Thị F</td>
-              <td>400,000</td>
-              <td>500,000</td>
-            </tr>
+            {bidders.length > 0 ? (
+              bidders.map((bidder, index) => (
+                <tr key={bidder.profile_id || index}>
+                  <td>{index + 1}</td>
+                  <td>
+                    <span className={`${styles['user-icon']} ${styles.pink}`}></span>
+                  </td>
+                  <td>{bidder.user?.full_name || bidder.full_name || 'N/A'}</td>
+                  <td>500,000</td>
+                  <td>{formatPrice(bidder.deposit_amount)}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5">Chưa có người đăng ký</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* Success Message */}
-      {successMessage && (
-        <div style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          backgroundColor: '#d4edda',
-          color: '#155724',
-          padding: '20px',
-          borderRadius: '8px',
-          textAlign: 'center',
-          zIndex: 1000
-        }}>
-          <p>Đấu giá thành công!</p>
+      <div className={styles['participants-table']}>
+        <div className={styles['table-title']}>DANH SÁCH LƯỢT ĐẶT GIÁ</div>
+        <table>
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th></th>
+              <th>Người đặt giá</th>
+              <th>Số tiền</th>
+              <th>Thời gian</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bids.length > 0 ? (
+              bids.map((bid, index) => (
+                <tr key={bid.id || index} className={parseFloat(bid.amount) === highestBid ? 'current-winner' : ''}>
+                  <td>{index + 1}</td>
+                  <td>
+                    <span className={`${styles['user-icon']} ${styles.pink}`}></span>
+                  </td>
+                  <td>{bid.user?.full_name || 'N/A'}</td>
+                  <td className="bid-amount">{formatPrice(bid.amount)}</td>
+                  <td>{formatDateTime(bid.bid_time)}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5">Chưa có lượt đặt giá</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {toast.show && (
+        <div 
+          className={`${styles.toast} ${styles[toast.type] || ''}`} 
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            minWidth: '300px',
+            padding: '16px',
+            backgroundColor: toast.type === 'success' ? '#28a745' : toast.type === 'error' ? '#dc3545' : '#ffc107',
+            color: toast.type === 'warning' ? '#212529' : 'white',
+            borderRadius: '6px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          <i className="fas fa-info-circle" style={{ marginRight: '10px' }}></i>
+          <span>{toast.message}</span>
+          <span 
+            className={styles['close-toast']} 
+            onClick={closeToast}
+            style={{ marginLeft: 'auto', cursor: 'pointer', fontSize: '18px' }}
+          >&times;</span>
         </div>
       )}
     </div>

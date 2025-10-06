@@ -282,7 +282,7 @@
 }
 
 .modal {
-  display: none;
+  display: fixed;
   position: fixed;
   top: 0;
   left: 0;
