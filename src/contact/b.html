@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo Sản Phẩm Đấu Giá</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loginPopup {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+            animation: popupFadeIn 0.3s ease-out;
+            overflow: hidden;
+        }
+
+        @keyframes popupFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loginPopup h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .loginPopup p {
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            font-size: 16px;
+        }
+
+        .btnLogin {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #3498db, #2872ba);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btnLogin:hover {
+            background: linear-gradient(135deg, #2980b9, #2872ba);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #4a6491);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .headerTitle {
+            font-size: 28px;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+
+        .content {
+            padding: 30px;
+            overflow-x: hidden;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            overflow: hidden;
+        }
+
+        .sectionTitle {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            word-wrap: break-word;
+        }
+
+        .infoGrid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .infoItem {
+            margin-bottom: 15px;
+        }
+
+        .infoLabel {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .infoValue {
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #e1e5eb;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            word-wrap: break-word;
+        }
+
+        .formGroup {
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .formLabel {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            word-wrap: break-word;
+        }
+
+        .formControl {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border 0.3s;
+            overflow: hidden;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        .formControl[readonly] {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+        }
+
+        textarea.formControl {
+            min-height: 100px;
+            resize: vertical;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+        }
+
+        .formControl:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        select.formControl {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 16px;
+            padding-right: 40px;
+            max-width: 100%;
+        }
+
+        select.formControl option {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+
+        select.formControl:disabled {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+            color: #6c757d;
+        }
+
+        .char-count {
+            font-size: 12px;
+            color: #6c757d;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        #imagePreview {
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        #previewImg {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+
+        .fileUpload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .fileUpload input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .fileUploadLabel {
+            display: block;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border: 1px dashed #ddd;
+            border-radius: 5px;
+            text-align: center;
+            color: #6c757d;
+            transition: all 0.3s;
+            word-wrap: break-word;
+        }
+
+        .fileUpload:hover .fileUploadLabel {
+            background: #e9ecef;
+            border-color: #3498db;
+            color: #3498db;
+        }
+
+        .imagePreviewContainer {
+            margin-top: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            overflow: hidden;
+        }
+
+        .imagePreviewItem {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .imagePreviewItem:hover {
+            transform: translateY(-3px);
+        }
+
+        .imagePreview {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .removeImageBtn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .removeImageBtn:hover {
+            background: rgba(192, 57, 43, 1);
+            transform: scale(1.1);
+        }
+
+        .btnSubmit {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3498db, #2872ba);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btnSubmit:hover {
+            background: linear-gradient(135deg, #2980b9, #2872ba);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btnSubmit:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            color: #3498db;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .error {
+            color: #dc3545;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+            padding: 10px;
+            background: #f8d7da;
+            border-radius: 5px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .redirect-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .redirect-link a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .redirect-link a:hover {
+            text-decoration: underline;
+        }
+
+        .check-auth {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+
+        .validation-error {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        /* Toast Notification Styles */
+        :root{
+          --toast-width: 320px;
+          --toast-gap: 12px;
+          --toast-bg: #d4edda; /* xanh nhẹ cho success */
+          --toast-color: #155724;
+          --toast-radius: 10px;
+          --toast-shadow: 0 6px 18px rgba(0,0,0,0.15);
+        }
+
+        .toast-container{
+          position: fixed;
+          right: 20px;
+          top: 20px;
+          display:flex;
+          flex-direction: column;
+          gap: var(--toast-gap);
+          z-index: 9999;
+          pointer-events: none;
+        }
+
+        .toast{
+          width: var(--toast-width);
+          background: var(--toast-bg);
+          color: var(--toast-color);
+          padding: 12px 14px;
+          border-radius: var(--toast-radius);
+          box-shadow: var(--toast-shadow);
+          display:flex;gap:12px;align-items:flex-start;
+          transform: translateY(-120%);
+          opacity: 0;
+          transition: transform 300ms cubic-bezier(.2,.9,.3,1), opacity 300ms ease;
+          pointer-events: auto;
+        }
+
+        .toast.show{
+          transform: translateY(0);
+          opacity: 1;
+        }
+
+        .toast .title{font-weight:700;margin-bottom:4px}
+        .toast .msg{font-size:13px;opacity:0.9}
+
+        .toast .close{
+          margin-left:auto;background:transparent;border:0;color:inherit;font-size:16px;cursor:pointer;padding:6px;border-radius:6px
+        }
+
+        .progress{
+          height:4px;background:rgba(0,0,0,0.1);border-radius:4px;margin-top:10px;overflow:hidden
+        }
+        .progress > i{display:block;height:100%;background:#28a745;width:100%}
+
+        @media (max-width:420px){
+          :root{--toast-width: calc(100% - 40px)}
+          .toast-container{right:10px;left:10px;top:12px}
+        }
+
+        @media (max-width: 768px) {
+            .infoGrid {
+                grid-template-columns: 1fr;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .imagePreviewContainer {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+
+            .container {
+                margin: 20px auto;
+                border-radius: 8px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .headerTitle {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .sectionTitle {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content {
+                padding: 15px;
+            }
+
+            .formControl {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            .btnSubmit {
+                padding: 12px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="headerTitle">TẠO SẢN PHẨM ĐẤU GIÁ</h1>
+        </header>
+
+        <div class="content">
+            <div class="check-auth" id="checkAuth">Đang kiểm tra xác thực...</div>
+            <div class="section">
+                <h2 class="sectionTitle">Thông tin sản phẩm</h2>
+                <form id="assetForm">
+                    <div class="formGroup">
+                        <label class="formLabel" for="category_id">Danh mục (ID)</label>
+                        <select class="formControl" id="category_id" required>
+                            <option value="">-- Danh mục --</option>
+                            <option value="1">Bất động sản - Nhà đất, căn hộ, đất nền</option>
+                            <option value="2">Xe cộ - Ô tô, xe máy, xe tải</option>
+                            <option value="3">Đồ cổ - Tranh, tượng, đồ sưu tầm</option>
+                            <option value="4">Thiết bị điện tử - Điện thoại, laptop, tivi</option>
+                        </select>
+                        <div class="validation-error" id="category_id_error"></div>
+                    </div>
+
+                    <div class="formGroup">
+                        <label class="formLabel" for="owner_name">Chủ sở hữu</label>
+                        <input
+                            type="text"
+                            class="formControl"
+                            id="owner_name"
+                            placeholder="Tên chủ sở hữu"
+                            readonly
+                            required
+                        />
+                        <input type="hidden" id="owner_id" />
+                        <div class="validation-error" id="owner_id_error"></div>
+                    </div>
+
+                    <div class="formGroup">
+                        <label class="formLabel" for="name">Tên sản phẩm</label>
+                        <input
+                            type="text"
+                            class="formControl"
+                            id="name"
+                            placeholder="Nhập tên sản phẩm (tối đa 255 ký tự)"
+                            maxlength="255"
+                            required
+                        />
+                        <div class="validation-error" id="name_error"></div>
+                    </div>
+
+                    <div class="formGroup">
+                        <label class="formLabel" for="description">Mô tả</label>
+                        <textarea
+                            class="formControl"
+                            id="description"
+                            placeholder="Nhập mô tả chi tiết sản phẩm (tối đa 1000 ký tự)"
+                            maxlength="1000"
+                            rows="4"
+                        ></textarea>
+                        <div class="char-count" id="description_count">0/1000</div>
+                        <div class="validation-error" id="description_error"></div>
+                    </div>
+
+                    <div class="formGroup">
+                        <label class="formLabel" for="starting_price">Giá khởi điểm (VND)</label>
+                        <input
+                            type="number"
+                            class="formControl"
+                            id="starting_price"
+                            placeholder="Nhập giá khởi điểm (tối thiểu 1 VND)"
+                            step="0.01"
+                            min="1"
+                            required
+                        />
+                        <div class="validation-error" id="starting_price_error"></div>
+                    </div>
+
+                    <div class="formGroup">
+                        <label class="formLabel">Hình ảnh sản phẩm</label>
+                        <div class="fileUpload">
+                            <input
+                                type="file"
+                                class="formControl"
+                                id="image_url"
+                                accept="image/*"
+                            />
+                            <label for="image_url" class="fileUploadLabel">Chọn file hình ảnh (tùy chọn)</label>
+                        </div>
+                        <div id="imagePreview" style="display: none;">
+                            <img id="previewImg" src="" alt="Preview" />
+                        </div>
+                        <div class="validation-error" id="image_url_error"></div>
+                    </div>
+
+                    <div class="formGroup">
+                        <label class="formLabel" for="status">Trạng thái</label>
+                        <select class="formControl" id="status" disabled required>
+                            <option value="ChoDuyet" selected>Chờ duyệt (mặc định)</option>
+                        </select>
+                        <div class="validation-error" id="status_error"></div>
+                    </div>
+
+                    <button type="submit" class="btnSubmit" id="submitBtn">Tạo Sản Phẩm</button>
+                </form>
+                <div id="loading" class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Đang tạo sản phẩm...
+                </div>
+                <div id="error" class="error"></div>
+                <div class="redirect-link">
+                    <a href="detail.html" id="redirectLink" style="display: none;">Quay về trang chi tiết</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000/api/auction-items';
+        const assetForm = document.getElementById('assetForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+        const checkAuthEl = document.getElementById('checkAuth');
+        const toasts = document.getElementById('toastContainer');
+        const AUTO_DISMISS_MS = 5000;
+
+        // Các error elements
+        const errors = {
+            category_id: document.getElementById('category_id_error'),
+            owner_id: document.getElementById('owner_id_error'),
+            name: document.getElementById('name_error'),
+            description: document.getElementById('description_error'),
+            starting_price: document.getElementById('starting_price_error'),
+            image_url: document.getElementById('image_url_error'),
+            status: document.getElementById('status_error')
+        };
+
+        // Reset form: Xóa dữ liệu input và preview
+        function resetForm() {
+            assetForm.reset();  // Reset tất cả fields về mặc định
+            document.getElementById('owner_id').value = '';  // Giữ owner_id nếu cần, nhưng xóa để clean
+            document.getElementById('owner_name').value = '';  // Xóa owner_name
+            document.getElementById('status').value = 'ChoDuyet';  // Reset status
+            document.getElementById('description_count').textContent = '0/1000';  // Reset counter
+            document.getElementById('imagePreview').style.display = 'none';  // Ẩn preview
+            document.getElementById('image_url').value = '';  // Clear file input
+            clearErrors();  // Clear errors
+        }
+
+        // Clear errors
+        function clearErrors() {
+            Object.values(errors).forEach(el => el.style.display = 'none');
+            errorEl.style.display = 'none';
+        }
+
+        // Show field error
+        function showFieldError(field, message) {
+            if (errors[field]) {
+                errors[field].textContent = message;
+                errors[field].style.display = 'block';
+            }
+        }
+
+        // Show server errors (chi tiết từng field)
+        function showServerErrors(serverErrors) {
+            clearErrors();
+            let hasFieldErrors = false;
+            Object.keys(serverErrors).forEach(field => {
+                if (errors[field]) {
+                    const msg = Array.isArray(serverErrors[field]) ? serverErrors[field][0] : serverErrors[field];
+                    showFieldError(field, msg);
+                    hasFieldErrors = true;
+                }
+            });
+            if (!hasFieldErrors) {
+                showError('Lỗi validation từ server: ' + JSON.stringify(serverErrors));
+            }
+        }
+
+        // Toast functions
+        function showToast({title = '', message = ''} = {}){
+            toasts.innerHTML = '';
+
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+              <div class="body">
+                <div class="title">${escapeHtml(title)}</div>
+                <div class="msg">${escapeHtml(message)}</div>
+                <div class="progress"><i></i></div>
+              </div>
+              <button class="close">✕</button>
+            `;
+
+            toasts.appendChild(toast);
+            requestAnimationFrame(()=> requestAnimationFrame(()=> toast.classList.add('show')));
+
+            toast.querySelector('.close').addEventListener('click', ()=> dismissToast(toast));
+
+            const progressBar = toast.querySelector('.progress > i');
+            progressBar.style.transition = `width ${AUTO_DISMISS_MS}ms linear`;
+            progressBar.style.width = '100%';
+            requestAnimationFrame(()=> progressBar.style.width = '0%');
+
+            const timer = setTimeout(()=> dismissToast(toast), AUTO_DISMISS_MS);
+            toast._timer = timer;
+
+            toast.addEventListener('transitionend', (e)=>{
+              if(e.propertyName === 'opacity' && !toast.classList.contains('show')){
+                toast.remove();
+              }
+            });
+        }
+
+        function dismissToast(toast){
+          if(toast._timer) clearTimeout(toast._timer);
+          toast.classList.remove('show');
+        }
+
+        function escapeHtml(str){
+          return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+        }
+
+        // Kiểm tra auth khi load trang
+        function checkAuth() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                showError('Bạn cần đăng nhập để tạo sản phẩm. Vui lòng quay lại trang đăng nhập.');
+                checkAuthEl.style.display = 'none';
+                return;
+            }
+            const ownerId = localStorage.getItem('user_id');
+            const ownerName = localStorage.getItem('user_name') || 'Unknown User';
+            if (ownerId) {
+                document.getElementById('owner_id').value = ownerId;
+                document.getElementById('owner_name').value = ownerName;
+                console.log('Auto-set owner_id:', ownerId, 'and name:', ownerName);  // Debug
+            } else {
+                showError('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+                checkAuthEl.style.display = 'none';
+                return;
+            }
+            document.getElementById('status').disabled = true;
+            document.getElementById('status').value = 'ChoDuyet';
+            checkAuthEl.style.display = 'none';
+            setupRealTimeValidation();  // Thêm real-time
+        }
+
+        // Real-time validation (on blur/input)
+        function setupRealTimeValidation() {
+            ['category_id', 'name', 'starting_price'].forEach(field => {
+                const el = document.getElementById(field);
+                if (el) el.addEventListener('blur', () => validateForm());  // Validate toàn bộ khi blur
+            });
+            const desc = document.getElementById('description');
+            const count = document.getElementById('description_count');
+            desc.addEventListener('input', () => count.textContent = desc.value.length + '/1000');
+            const imageFileInput = document.getElementById('image_url');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+            imageFileInput.addEventListener('change', function(e) {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        previewImg.src = ev.target.result;
+                        imagePreview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(e.target.files[0]);
+                } else {
+                    imagePreview.style.display = 'none';
+                }
+            });
+        }
+
+        // Hiển thị lỗi global
+        function showError(message) {
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            loadingEl.style.display = 'none';
+            submitBtn.disabled = false;
+            resetForm();  // Reset form sau khi hiển thị lỗi
+        }
+
+        // Hiển thị thành công với Toast
+        function showSuccess(message) {
+            showToast({
+                title: 'Thành công!',
+                message: message
+            });
+            loadingEl.style.display = 'none';
+            submitBtn.disabled = false;
+            resetForm();  // Reset form sau khi hiển thị thành công
+        }
+
+        // Validation client-side
+        function validateForm() {
+            clearErrors();
+            let isValid = true;
+
+            const category_id = parseInt(document.getElementById('category_id').value);
+            if (!category_id || category_id < 1) { showFieldError('category_id', 'ID danh mục phải > 0'); isValid = false; }
+
+            const owner_id = parseInt(document.getElementById('owner_id').value);
+            if (!owner_id || owner_id < 1) { showFieldError('owner_id', 'ID chủ sở hữu phải > 0'); isValid = false; }
+
+            const name = document.getElementById('name').value.trim();
+            if (!name || name.length > 255) { showFieldError('name', 'Tên bắt buộc, max 255 ký tự'); isValid = false; }
+
+            const description = document.getElementById('description').value.trim();
+            if (description.length > 1000) { showFieldError('description', 'Mô tả max 1000 ký tự'); isValid = false; }
+
+            const starting_price = parseFloat(document.getElementById('starting_price').value);
+            if (!starting_price || starting_price < 1) { showFieldError('starting_price', 'Giá >= 1 VND'); isValid = false; }
+
+            const status = document.getElementById('status').value;
+            const validStatuses = ['ChoDuyet', 'ChoDauGia', 'DangDauGia', 'DaBan', 'Huy'];
+            if (!validStatuses.includes(status)) { showFieldError('status', 'Trạng thái không hợp lệ'); isValid = false; }
+
+            return isValid;
+        }
+
+        // Submit form
+        assetForm.onsubmit = async function(e) {
+            e.preventDefault();
+            if (!validateForm()) return;
+
+            const token = localStorage.getItem('auth_token');
+            const formData = new FormData();
+
+            formData.append('category_id', document.getElementById('category_id').value);
+            formData.append('owner_id', document.getElementById('owner_id').value);
+            formData.append('name', document.getElementById('name').value.trim());
+            formData.append('description', document.getElementById('description').value.trim());
+            formData.append('starting_price', document.getElementById('starting_price').value);
+            formData.append('status', document.getElementById('status').value);
+
+            const file = document.getElementById('image_url').files[0];
+            if (file) {
+                formData.append('image', file);
+            }
+
+            submitBtn.disabled = true;
+            loadingEl.style.display = 'block';
+            clearErrors();
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData  // KHÔNG đặt Content-Type ở đây
+                });
+
+                const data = await response.json();
+                console.log('Phản hồi:', data);
+
+                if (response.ok) {
+                    showSuccess('Tạo thành công! ID: ' + (data.item?.item_id || 'N/A'));
+                } else if (response.status === 422 && data.errors) {
+                    showServerErrors(data.errors);
+                } else {
+                    throw new Error(data.message || 'Lỗi tạo sản phẩm');
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showError(error.message || 'Lỗi kết nối server');
+            } finally {
+                submitBtn.disabled = false;
+                loadingEl.style.display = 'none';
+            }
+        };
+
+        checkAuth();
+    </script>
+</body>
+</html>

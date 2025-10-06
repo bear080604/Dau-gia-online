@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Thông báo (Toast) tự tắt</title>
+  <style>
+    :root{
+      --toast-width: 320px;
+      --toast-gap: 12px;
+      --toast-bg: #e0f7fa; /* xanh nhẹ */
+      --toast-color: #065f46;
+      --toast-radius: 10px;
+      --toast-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+
+    body{
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      padding: 40px;
+      background: #f4f6f8;
+      color: #111;
+      line-height: 1.4;
+    }
+
+    .card{
+      background: white;
+      padding: 18px;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+      max-width: 640px;
+    }
+
+    label{display:block;margin-bottom:6px;font-weight:600}
+    input[type="text"], textarea{
+      width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ee;margin-bottom:12px;
+    }
+
+    button{
+      background:#2563eb;color:white;padding:10px 16px;border-radius:8px;border:0;cursor:pointer;font-weight:600
+    }
+
+    .toast-container{
+      position: fixed;
+      right: 20px;
+      top: 20px;
+      display:flex;
+      flex-direction: column;
+      gap: var(--toast-gap);
+      z-index: 9999;
+      pointer-events: none;
+    }
+
+    .toast{
+      width: var(--toast-width);
+      background: var(--toast-bg);
+      color: var(--toast-color);
+      padding: 12px 14px;
+      border-radius: var(--toast-radius);
+      box-shadow: var(--toast-shadow);
+      display:flex;gap:12px;align-items:flex-start;
+      transform: translateY(-120%);
+      opacity: 0;
+      transition: transform 300ms cubic-bezier(.2,.9,.3,1), opacity 300ms ease;
+      pointer-events: auto;
+    }
+
+    .toast.show{
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast .title{font-weight:700;margin-bottom:4px}
+    .toast .msg{font-size:13px;opacity:0.9}
+
+    .toast .close{
+      margin-left:auto;background:transparent;border:0;color:inherit;font-size:16px;cursor:pointer;padding:6px;border-radius:6px
+    }
+
+    .progress{
+      height:4px;background:rgba(0,0,0,0.1);border-radius:4px;margin-top:10px;overflow:hidden
+    }
+    .progress > i{display:block;height:100%;background:#38bdf8;width:100%}
+
+    @media (max-width:420px){
+      :root{--toast-width: calc(100% - 40px)}
+      .toast-container{right:10px;left:10px;top:12px}
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Gửi thông tin</h2>
+    <p>Nhấn Gửi để hiển thị thông báo thành công ở góc phải trên và tự tắt sau 5s.</p>
+
+    <form id="demoForm">
+      <label for="name">Tên</label>
+      <input id="name" name="name" type="text" placeholder="Tên của bạn" required />
+
+      <label for="message">Nội dung</label>
+      <textarea id="message" name="message" rows="4" placeholder="Nội dung..." required></textarea>
+
+      <button type="submit">Gửi</button>
+    </form>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    (function(){
+      const form = document.getElementById('demoForm');
+      const toasts = document.getElementById('toastContainer');
+      const AUTO_DISMISS_MS = 5000;
+
+      form.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        const name = document.getElementById('name').value || 'Người dùng';
+        showToast({title: 'Gửi thành công', message: `Cảm ơn ${name}! Chúng tôi đã nhận thông tin.`});
+        form.reset();
+      });
+
+      function showToast({title = '', message = ''} = {}){
+        toasts.innerHTML = '';
+
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `
+          <div class="body">
+            <div class="title">${escapeHtml(title)}</div>
+            <div class="msg">${escapeHtml(message)}</div>
+            <div class="progress"><i></i></div>
+          </div>
+          <button class="close">✕</button>
+        `;
+
+        toasts.appendChild(toast);
+        requestAnimationFrame(()=> requestAnimationFrame(()=> toast.classList.add('show')));
+
+        toast.querySelector('.close').addEventListener('click', ()=> dismissToast(toast));
+
+        const progressBar = toast.querySelector('.progress > i');
+        progressBar.style.transition = `width ${AUTO_DISMISS_MS}ms linear`;
+        progressBar.style.width = '100%';
+        requestAnimationFrame(()=> progressBar.style.width = '0%');
+
+        const timer = setTimeout(()=> dismissToast(toast), AUTO_DISMISS_MS);
+        toast._timer = timer;
+
+        toast.addEventListener('transitionend', (e)=>{
+          if(e.propertyName === 'opacity' && !toast.classList.contains('show')){
+            toast.remove();
+          }
+        });
+      }
+
+      function dismissToast(toast){
+        if(toast._timer) clearTimeout(toast._timer);
+        toast.classList.remove('show');
+      }
+
+      function escapeHtml(str){
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+    })();
+  </script>
+</body>
+</html>
