@@ -1,25 +1,33 @@
 // Sidebar.jsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Giữ nguyên từ trước
 import styles from './Header.module.css'; // Assuming CSS module file
 
 const Sidebar = () => {
   const [activeItem, setActiveItem] = useState('settings'); // Default active is settings
+  const navigate = useNavigate(); // Giữ nguyên
+
+  // Helper function để thêm prefix "/admin" nếu href không phải '#'
+  const addAdminPrefix = (href) => {
+    if (href === '#') return href;
+    return `/admin${href.startsWith('/') ? href : `/${href}`}`;
+  };
 
   const sidebarItems = [
-    { id: 'dashboard', icon: 'fas fa-home', label: 'Trang chủ', href: 'dashboard.html' },
-    { id: 'assets', icon: 'fas fa-box-open', label: 'Tài sản đấu giá', href: '#' },
-    { id: 'auctions', icon: 'fas fa-clock', label: 'Phiên đấu giá', href: '#' },
-    { id: 'contracts', icon: 'fas fa-file-contract', label: 'Hợp đồng', href: '#' },
-    { id: 'reports', icon: 'fas fa-chart-bar', label: 'Báo cáo', href: '#' },
-    { id: 'users', icon: 'fas fa-users', label: 'Quản lý người dùng', href: '#' },
-    { id: 'bids', icon: 'fas fa-file-alt', label: 'Hồ sơ đấu giá', href: '#' },
-    { id: 'notifications', icon: 'fas fa-bell', label: 'Thông báo', href: '#' },
-    { id: 'payments', icon: 'fas fa-money-bill-wave', label: 'Thanh toán', href: '#' },
-    { id: 'econtracts', icon: 'fas fa-file-signature', label: 'Hợp đồng điện tử', href: '#' },
-    { id: 'settings', icon: 'fas fa-cog', label: 'Cài đặt', href: '#', active: true },
-    { id: 'support', icon: 'fas fa-headset', label: 'Hỗ trợ', href: '#' },
-    { id: 'security', icon: 'fas fa-shield-alt', label: 'Bảo mật', href: '#' },
-    { id: 'logs', icon: 'fas fa-history', label: 'Lịch sử log', href: '#' },
+    { id: 'dashboard', icon: 'fas fa-home', label: 'Trang chủ', href: addAdminPrefix('/dashboard') },
+    { id: 'assets', icon: 'fas fa-box-open', label: 'Tài sản đấu giá', href: addAdminPrefix('/auction-asset') },
+    { id: 'auctions', icon: 'fas fa-clock', label: 'Phiên đấu giá', href: addAdminPrefix('/auction-session') },
+    { id: 'contracts', icon: 'fas fa-file-contract', label: 'Hợp đồng', href: addAdminPrefix('/contract') },
+    { id: 'reports', icon: 'fas fa-chart-bar', label: 'Báo cáo', href: addAdminPrefix('/report') },
+    { id: 'users', icon: 'fas fa-users', label: 'Quản lý người dùng', href: addAdminPrefix('/users') },
+    { id: 'bids', icon: 'fas fa-file-alt', label: 'Hồ sơ đấu giá', href: addAdminPrefix('/profile') },
+    { id: 'notifications', icon: 'fas fa-bell', label: 'Thông báo', href: addAdminPrefix('/notification') },
+    { id: 'payments', icon: 'fas fa-money-bill-wave', label: 'Thanh toán', href: addAdminPrefix('/payment') },
+    { id: 'econtracts', icon: 'fas fa-file-signature', label: 'Hợp đồng điện tử', href: addAdminPrefix('/econtract') },
+    { id: 'settings', icon: 'fas fa-cog', label: 'Cài đặt', href: addAdminPrefix('/settings'), active: true },
+    { id: 'support', icon: 'fas fa-headset', label: 'Hỗ trợ', href: '#' }, // Giữ nguyên
+    { id: 'security', icon: 'fas fa-shield-alt', label: 'Bảo mật', href: '#' }, // Giữ nguyên
+    { id: 'logs', icon: 'fas fa-history', label: 'Lịch sử log', href: addAdminPrefix('/history') },
   ];
 
   const sections = [
@@ -37,8 +45,11 @@ const Sidebar = () => {
     },
   ];
 
-  const handleItemClick = (id) => {
+  const handleItemClick = (id, href) => {
     setActiveItem(id);
+    if (href !== '#') {
+      navigate(href); // Sử dụng href đã có prefix
+    }
   };
 
   return (
@@ -59,7 +70,7 @@ const Sidebar = () => {
               className={`${styles.sidebarItem} ${activeItem === item.id ? styles.active : ''}`}
               onClick={(e) => {
                 e.preventDefault();
-                handleItemClick(item.id);
+                handleItemClick(item.id, item.href);
               }}
             >
               <i className={item.icon}></i>
