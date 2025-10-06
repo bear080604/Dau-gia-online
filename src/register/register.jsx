@@ -12,7 +12,7 @@ export default function RegisterForm() {
     phone: '',
     password: '',
     confirmPassword: '',
-    role: 'user'  // Giữ default 'user' – giả sử đã OK từ lần test trước
+    role: 'User'  // Giữ default 'user' – giả sử đã OK từ lần test trước
   });
 
   const handleInputChange = (e) => {
