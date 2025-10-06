@@ -7,7 +7,7 @@
   const AuctionPage = () => {
     const { id } = useParams(); // id is session_id from link
     const navigate = useNavigate();
-    const { user } = useContext(UserContext);
+    const { user, token } = useContext(UserContext);
     
     // Debug: Log user state ngay khi component mount
     console.log('User từ Context ở AuctionPage:', user);

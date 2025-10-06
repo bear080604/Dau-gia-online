@@ -11,7 +11,7 @@ export const useUser = () => {
 };
 
 export const UserProvider = ({ children }) => {
-  console.log('🟢 UserProvider MOUNTED!'); 
+  console.log('🟢 UserProvider MOUNTED!');
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('user');
@@ -22,15 +22,25 @@ export const UserProvider = ({ children }) => {
       return null;
     }
   });
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem('token') || null;
+  });
  console.log('👤 Current user state:', user);
-  const login = (userData) => {
+ console.log('🔑 Current token:', token);
+  const login = (userData, tokenData) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
+    if (tokenData) {
+      setToken(tokenData);
+      localStorage.setItem('token', tokenData);
+    }
   };
 
   const logout = async () => {
     setUser(null);
-    localStorage.removeItem('user'); // Clear token nếu lưu ở đây
+    setToken(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}logout`, { // Thêm / nếu API prefix /api
         method: 'POST',
@@ -48,20 +58,20 @@ export const UserProvider = ({ children }) => {
 useEffect(() => {
   const validateUser = async () => {
     const savedUser = localStorage.getItem('user');
-    
+
     if (savedUser) {
       try {
         const parsedUser = JSON.parse(savedUser);
-        
+
         // ✅ Set user TRƯỚC KHI validate API
         setUser(parsedUser);
-        
+
         // Optional: Validate với server (nếu có endpoint /user)
         try {
           const response = await fetch(`${process.env.REACT_APP_API_URL}user`, {
             credentials: 'include',
           });
-          
+
           if (response.ok) {
             const userData = await response.json();
             // Update nếu server trả data khác
@@ -90,7 +100,7 @@ useEffect(() => {
 }, []); // Chỉ chạy 1 lần khi mount
 
   return (
-    <UserContext.Provider value={{ user, login, logout }}>
+    <UserContext.Provider value={{ user, token, login, logout }}>
       {children}
     </UserContext.Provider>
   );
