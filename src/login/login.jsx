@@ -37,13 +37,15 @@ function LoginForm() {
       const response = await fetch(`${process.env.REACT_APP_API_URL}login`, {
         method: 'POST',
         body: formDataToSend,
+        credentials: 'include',
       });
 
       if (response.ok) {
         const result = await response.json();
         console.log('Đăng nhập thành công:', result);
         if (result && result.user) {
-          login(result.user);
+          const token = result.token || null;
+          login(result.user, token);
           window.location.href = '/';
         }
       } else {
