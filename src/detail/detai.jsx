@@ -8,12 +8,12 @@ const AuctionPage = () => {
   const { id } = useParams(); // id is session_id from link
   const navigate = useNavigate();
   const { user, token } = useContext(UserContext);
-  
-  // Debug: Log user state ngay khi component mount
+
+  // Debug: Log user state when component mounts
   console.log('User từ Context ở AuctionPage:', user);
   console.log('Có tài khoản?', !!user);
   console.log('User ID?', user?.user_id);
-  
+
   const [auctionItem, setAuctionItem] = useState(null);
   const [profile, setProfile] = useState(null); // User's profile for this session
   const [loading, setLoading] = useState(true);
@@ -21,16 +21,12 @@ const AuctionPage = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date()); // Real-time clock for dynamic updates
-
-  // Modal states for registration form
   const [showModal, setShowModal] = useState(false);
-  const [showLoginPrompt, setShowLoginPrompt] = useState(false); // Modal nhắc đăng nhập
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false); // Modal for login prompt
   const [deposit, setDeposit] = useState('');
   const [depositError, setDepositError] = useState('');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [successMessage, setSuccessMessage] = useState(false);
-
-  // Check-in success state
   const [checkinSuccess, setCheckinSuccess] = useState(false);
 
   // Update current time every second for real-time countdown
@@ -41,75 +37,77 @@ const AuctionPage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch profile status if user is logged in
-  const fetchProfile = async () => {
-    if (!user || !user.user_id || !id) return;
+  // Fetch auction item
+  const fetchAuctionItem = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const apiUrl = process.env.REACT_APP_API_URL;
-      if (!apiUrl) return;
-      const fullUrl = `${apiUrl}auction-profiles?user_id=${user.user_id}&session_id=${id}`;
+      console.log("API URL for detail:", apiUrl);
+
+      if (!apiUrl) {
+        throw new Error('REACT_APP_API_URL không được định nghĩa!');
+      }
+      const fullUrl = `${apiUrl}auction-sessions/${id}`;
+      console.log("Full URL:", fullUrl);
+
       const response = await axios.get(fullUrl, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      if (response.data.profiles && response.data.profiles.length > 0) {
-        setProfile(response.data.profiles[0]);
-      } else {
-        setProfile(null);
+      console.log("Full response:", response.data);
+
+      const session = response.data.session;
+      if (!session) {
+        throw new Error(`No session found for session ID: ${id}`);
       }
+      console.log("Found session:", session);
+      setAuctionItem(session);
     } catch (err) {
-      console.error('Fetch profile error:', err);
-      setProfile(null); // No profile found is normal
+      console.error('Fetch error:', err);
+      setError(err.response?.data?.message || err.message || 'Lỗi không xác định');
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Fetch profile status if user is logged in
+  const fetchProfile = async () => {
+    if (!user || !user.user_id || !id) return;
+    try {
+      const apiUrl = process.env.REACT_APP_API_URL;
+      const fullUrl = `${apiUrl}auction-profiles?session_id=${id}&user_id=${user.user_id}`;
+      const response = await axios.get(fullUrl, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      const myProfiles = response.data.profiles?.filter(p => p.user_id === user.user_id) || [];
+      setProfile(myProfiles[0] || null);
+    } catch (err) {
+      console.error('Fetch profile error:', err);
+      setProfile(null);
+    }
+  };
+
+  // Initial fetch and polling for auction item and profile
   useEffect(() => {
-    const fetchAuctionItem = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const apiUrl = process.env.REACT_APP_API_URL;
-        console.log("API URL for detail:", apiUrl);  // Debug
-        
-        if (!apiUrl) {
-          throw new Error('REACT_APP_API_URL không được định nghĩa!');
-        }
-
-        const fullUrl = `${apiUrl}auction-sessions/${id}`;  // Fetch specific session by session_id
-        console.log("Full URL:", fullUrl);  // Debug: http://127.0.0.1:8000/api/auction-sessions/{id}
-        
-        const response = await axios.get(fullUrl, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        console.log("Full response:", response.data);  // Debug data như trước
-
-        const session = response.data.session;  // Extract session from response.data.session
-        if (!session) {
-          throw new Error(`No session found for session ID: ${id}`);
-        }
-        console.log("Found session:", session);  // Debug session cụ thể
-        
-        setAuctionItem(session);
-      } catch (err) {
-        console.error('Fetch error:', err);
-        setError(err.response?.data?.message || err.message || 'Lỗi không xác định');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (id) {
       fetchAuctionItem();
+      fetchProfile();
     }
-  }, [id]);
 
-  // Fetch profile after auction loads or user changes
-  useEffect(() => {
-    fetchProfile();
-  }, [auctionItem, user]);
+    // Set up polling every 10 seconds
+    const pollingInterval = setInterval(() => {
+      fetchAuctionItem();
+      if (user && user.user_id) {
+        fetchProfile();
+      }
+    }, 10000); // Poll every 10 seconds
+
+    // Cleanup polling interval
+    return () => clearInterval(pollingInterval);
+  }, [id, user, token]);
 
   // Format number with dots for Vietnamese currency
   const formatNumberWithDots = (numStr) => {
@@ -149,28 +147,31 @@ const AuctionPage = () => {
   };
 
   const handleRegisterBid = () => {
-    // Debug: Log user khi click button
     console.log('Click Đăng ký đấu giá - User:', user);
     console.log('Click - Có user?', !!user);
     console.log('Click - Có user.user_id?', !!user?.user_id);
-    
-    console.log('Button clicked, checking login...'); // Debug log
-    if (!user) {  // Kiểm tra user từ context
-      setShowLoginPrompt(true); // Hiển thị prompt đăng nhập
+
+    console.log('Button clicked, checking login...');
+    if (!user) {
+      setShowLoginPrompt(true);
       return;
-    } 
-    if (!user.user_id) {  // Extra check cho an toàn (nếu context có user nhưng user_id null)
+    }
+    if (!user.user_id) {
       console.error('User logged in but no user_id – refetch or logout');
       setShowLoginPrompt(true);
       return;
     }
-    // Check if already has profile
-    if (profile && (profile.status === 'DaDuyet' || profile.status === 'pending')) {
-      alert(profile.status === 'DaDuyet' ? 'Hồ sơ đã được duyệt!' : 'Đã đăng ký, chờ duyệt!');
-      return;
+    if (profile && profile.user_id === user.user_id) {
+      if (profile.status === 'DaDuyet') {
+        alert('Hồ sơ đã được duyệt!');
+        return;
+      } else if (profile.status === 'pending') {
+        alert('Bạn đã đăng ký, chờ duyệt!');
+        return;
+      }
     }
+
     setShowModal(true);
-    // Reset form
     setDeposit('');
     setDepositError('');
     setSelectedFiles([]);
@@ -183,7 +184,6 @@ const AuctionPage = () => {
       return;
     }
 
-    // Check user lại trước submit (double-check)
     if (!user || !user.user_id) {
       alert('Session hết hạn! Vui lòng đăng nhập lại.');
       setShowModal(false);
@@ -191,20 +191,16 @@ const AuctionPage = () => {
       return;
     }
 
-    // Tạo profile_id tự động (unique ID, ví dụ dùng timestamp)
     const profileId = Date.now().toString();
-
-    // Tạo FormData cho file upload và gửi hồ sơ
     const formDataToSend = new FormData();
     formDataToSend.append('profile_id', profileId);
-    formDataToSend.append('user_id', user.user_id); // Dùng user.user_id từ context
-    formDataToSend.append('session_id', id); // session_id từ params
+    formDataToSend.append('user_id', user.user_id);
+    formDataToSend.append('session_id', id);
     formDataToSend.append('deposit_amount', rawDeposit);
     selectedFiles.forEach(file => {
-      formDataToSend.append('document_url', file); // Upload file(s)
+      formDataToSend.append('document_url', file);
     });
 
-    // Debug: Log FormData contents
     console.log('Data gửi đến /auction-profiles:');
     for (let [key, value] of formDataToSend.entries()) {
       console.log(key, value);
@@ -215,7 +211,6 @@ const AuctionPage = () => {
       if (!apiUrl) {
         throw new Error('REACT_APP_API_URL không được định nghĩa!');
       }
-      // Dùng full URL từ env giống auction-sessions
       const fullUrl = `${apiUrl}auction-profiles`;
       const response = await axios.post(fullUrl, formDataToSend, {
         headers: {
@@ -225,19 +220,16 @@ const AuctionPage = () => {
         withCredentials: true,
       });
 
-      // Success (200/201)
       console.log('Đăng ký thành công:', response.data);
       setShowModal(false);
       setSuccessMessage('Đăng ký thành công! Chờ duyệt.');
-      // Refetch profile to update status
       setTimeout(() => {
         fetchProfile();
         setSuccessMessage(false);
       }, 2000);
-
     } catch (err) {
       console.error('Lỗi API đăng ký:', err);
-      if (err.response?.status === 401) {  // Check status từ error
+      if (err.response?.status === 401) {
         alert('Unauthorized – Vui lòng đăng nhập lại.');
         navigate('/login');
       } else if (err.response?.status === 422) {
@@ -250,12 +242,11 @@ const AuctionPage = () => {
 
   const handleCheckin = () => {
     setCheckinSuccess(true);
-    // Hide success after 5s
     setTimeout(() => setCheckinSuccess(false), 5000);
   };
 
   const handleLoginPrompt = () => {
-    navigate('/login'); // Chuyển hướng đến trang đăng nhập
+    navigate('/login');
   };
 
   if (loading) {
@@ -276,24 +267,20 @@ const AuctionPage = () => {
     return <div className="container">Không tìm thấy thông tin đấu giá</div>;
   }
 
-  // auctionItem is the session, access item and other fields directly
   const item = auctionItem.item;
   const auctionOrg = auctionItem.auction_org;
 
-  // Format prices
   const formatPrice = (priceStr) => {
     if (!priceStr) return 'N/A';
     const num = parseFloat(priceStr);
     return num.toLocaleString('vi-VN') + ' VNĐ';
   };
 
-  // Format date/time if available
   const formatDateTime = (dateTimeStr) => {
     if (!dateTimeStr) return 'Chưa xác định';
     return new Date(dateTimeStr).toLocaleString('vi-VN');
   };
 
-  // Time-related logic with currentTime (real-time)
   const registerStart = auctionItem.register_start ? new Date(auctionItem.register_start) : null;
   const registerEnd = auctionItem.register_end ? new Date(auctionItem.register_end) : null;
   const checkinTime = auctionItem.checkin_time ? new Date(auctionItem.checkin_time) : null;
@@ -304,11 +291,10 @@ const AuctionPage = () => {
   const isCheckinTime = checkinTime && bidStart && currentTime >= checkinTime && currentTime < bidStart;
   const isBiddingOngoing = bidStart && bidEnd && currentTime >= bidStart && currentTime <= bidEnd;
 
-  console.log('isRegistrationOpen:', isRegistrationOpen); // Debug log
-  console.log('isCheckinTime:', isCheckinTime); // Debug log
-  console.log('registerStart:', registerStart, 'registerEnd:', registerEnd, 'checkinTime:', checkinTime, 'bidStart:', bidStart, 'currentTime:', currentTime); // Debug dates
+  console.log('isRegistrationOpen:', isRegistrationOpen);
+  console.log('isCheckinTime:', isCheckinTime);
+  console.log('registerStart:', registerStart, 'registerEnd:', registerEnd, 'checkinTime:', checkinTime, 'bidStart:', bidStart, 'currentTime:', currentTime);
 
-  // Profile status logic
   let profileStatusMessage = '';
   const isProfileApproved = profile && profile.status === 'DaDuyet';
   const canRegister = !profile || profile.status !== 'DaDuyet';
@@ -317,7 +303,7 @@ const AuctionPage = () => {
 
   if (user) {
     if (!profile) {
-      profileStatusMessage = ''; // No profile, can register if time allows
+      profileStatusMessage = '';
     } else if (profile.status === 'pending') {
       profileStatusMessage = 'Chờ duyệt hồ sơ';
     } else if (profile.status === 'DaDuyet') {
@@ -327,7 +313,6 @@ const AuctionPage = () => {
     }
   }
 
-  // Enhanced status logic including registration phase and profile
   let statusMessage = '';
   if (!registerStart || !registerEnd || !bidStart || !bidEnd) {
     statusMessage = 'Chưa xác định thời gian';
@@ -349,7 +334,6 @@ const AuctionPage = () => {
     statusMessage += ` | Hồ sơ: ${profileStatusMessage}`;
   }
 
-  // Notice message based on time and profile
   let noticeMessage = '';
   if (!registerStart || !registerEnd || !bidStart || !bidEnd) {
     noticeMessage = 'Chưa xác định thời gian';
@@ -371,7 +355,6 @@ const AuctionPage = () => {
     noticeMessage += ` | ${profileStatusMessage}`;
   }
 
-  // Real-time countdown (updates every second)
   const getCountdown = () => {
     if (!bidEnd || currentTime > bidEnd) return 'Hết thời gian';
     const diff = bidEnd - currentTime;
@@ -382,10 +365,9 @@ const AuctionPage = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // Images: Prepend API base if relative path
   const baseImageUrl = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
-  const images = auctionItem.item.image_url 
-    ? [`${baseImageUrl.replace('/api/', '')}${auctionItem.item.image_url}`]  // Ví dụ: http://127.0.0.1:8000/img1.jpg (adjust nếu ảnh ở /storage/)
+  const images = auctionItem.item.image_url
+    ? [`${baseImageUrl.replace('/api/', '')}${auctionItem.item.image_url}`]
     : [
         '/public/assets/img/2.jpg',
         '/public/assets/img/3.jpg',
@@ -405,11 +387,9 @@ const AuctionPage = () => {
   };
 
   const handlePlaceBid = () => {
-    // Navigate to /auction page khi ấn nút, truyền session_id
     navigate(`/auction/${id}`);
   };
 
-  // Inline styles for modal to ensure visibility
   const modalOverlayStyle = {
     position: 'fixed',
     top: 0,
@@ -528,14 +508,12 @@ const AuctionPage = () => {
       </h2>
 
       <div className="content-wrapper">
-        {/* Image Section */}
         <div className="image-section">
           <img
             src={images[currentImageIndex] || '/public/assets/img/xe.png'}
             alt={`${item.name} - ${item.description}`}
             className="main-image"
           />
-
           <div className="thumbnail-container">
             <button className="nav-button" onClick={prevImage}>
               ‹
@@ -555,13 +533,10 @@ const AuctionPage = () => {
               ›
             </button>
           </div>
-
           <button className="view-images-btn">Hình ảnh</button>
         </div>
 
-        {/* Info Section */}
         <div className="info-section">
-          {/* Registration/Bidding Status Box */}
           <div className={`status-box ${isBiddingOngoing ? 'bidding-status' : ''}`}>
             <div className="status-title">
               {isBiddingOngoing ? 'Đang diễn ra đấu giá, còn :' : 'Trạng thái đấu giá: '}
@@ -642,7 +617,6 @@ const AuctionPage = () => {
                 <td>Giá khởi điểm:</td>
                 <td className="price-highlight">{formatPrice(item.starting_price)}</td>
               </tr>
-              {/* Add row for current price if fetch bids API later */}
             </tbody>
           </table>
 
@@ -652,7 +626,6 @@ const AuctionPage = () => {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="tabs">
         <button
           className={`tab ${activeTab === 0 ? 'active' : ''}`}
@@ -668,7 +641,6 @@ const AuctionPage = () => {
         </button>
       </div>
 
-      {/* Tab Content */}
       {activeTab === 0 && (
         <div className="tab-content">
           <ul>
@@ -679,9 +651,8 @@ const AuctionPage = () => {
               Đấu giá viên: <span className="auctioneer">TBD</span>
             </li>
             <li className="location">
-              Địa chỉ: Category ID {item.category_id} {/* Later: fetch category name nếu có API */}
+              Địa chỉ: Category ID {item.category_id}
             </li>
-            {/* Add lịch sử đấu giá if fetch bids */}
           </ul>
         </div>
       )}
@@ -690,7 +661,6 @@ const AuctionPage = () => {
         <div className="tab-content">
           <h3 className="document-title">Các tài liệu pháp lý liên quan đến cuộc đấu giá:</h3>
           <ul className="document-list">
-            {/* Hardcoded for demo; later: fetch from item.documents if backend adds */}
             <li className="document-item">
               <strong>1. Quyết định thanh lý tài sản (QC130-16690849166.pdf)</strong><br />
               <small>Mô tả: Quyết định phê duyệt thanh lý {item.name}.</small><br />
@@ -712,7 +682,6 @@ const AuctionPage = () => {
         </div>
       )}
 
-      {/* Success Message for Registration */}
       {successMessage && (
         <div style={successOverlayStyle}>
           <div style={successBoxStyle}>
@@ -721,7 +690,6 @@ const AuctionPage = () => {
         </div>
       )}
 
-      {/* Success Message for Check-in */}
       {checkinSuccess && (
         <div style={successOverlayStyle}>
           <div style={successBoxStyle}>
@@ -730,7 +698,6 @@ const AuctionPage = () => {
         </div>
       )}
 
-      {/* Login Prompt Modal */}
       {showLoginPrompt && (
         <div style={modalOverlayStyle}>
           <div style={modalStyle}>
@@ -748,7 +715,6 @@ const AuctionPage = () => {
         </div>
       )}
 
-      {/* Registration Modal */}
       {showModal && (
         <div style={modalOverlayStyle}>
           <div style={modalStyle}>

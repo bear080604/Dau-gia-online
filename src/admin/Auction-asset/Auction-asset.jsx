@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import styles from './Auction-asset.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
@@ -13,6 +14,8 @@ function AuctionAsset() {
   const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [assets, setAssets] = useState([]);
+  const [bidHistory, setBidHistory] = useState([]);
   const [assetForm, setAssetForm] = useState({
     code: '',
     name: '',
@@ -21,125 +24,60 @@ function AuctionAsset() {
     startingPrice: '',
     description: '',
     imageUrl: '',
-    status: 'ChoDuyet'
+    status: 'ChoDuyet',
   });
 
   const itemsPerPage = 5;
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
 
-  const assets = [
-    {
-      id: '#TS-001',
-      name: 'Bất động sản quận 1',
-      category: 'Bất động sản',
-      categoryId: '1',
-      owner: 'Nguyễn Văn A',
-      ownerId: '1',
-      startingPrice: '2.500.000.000đ',
-      startingPriceValue: 2500000000,
-      status: 'Chờ duyệt',
-      statusClass: 'statusChoduyet',
-      createdDate: '2025-10-01',
-      description: 'Mô tả chi tiết về bất động sản tại quận 1, TP.HCM. Diện tích 100m², vị trí trung tâm.',
-      imageUrl: 'https://example.com/image1.jpg'
-    },
-    {
-      id: '#TS-002',
-      name: 'Xe hơi Mercedes',
-      category: 'Ô tô',
-      categoryId: '2',
-      owner: 'Trần Thị B',
-      ownerId: '2',
-      startingPrice: '1.200.000.000đ',
-      startingPriceValue: 1200000000,
-      status: 'Chờ đấu giá',
-      statusClass: 'statusChodau',
-      createdDate: '2025-09-30',
-      description: 'Xe Mercedes 2023, màu đen, đầy đủ tiện nghi.',
-      imageUrl: 'https://example.com/image2.jpg'
-    },
-    {
-      id: '#TS-003',
-      name: 'Đồng hồ Rolex',
-      category: 'Đồ cổ',
-      categoryId: '3',
-      owner: 'Lê Văn C',
-      ownerId: '3',
-      startingPrice: '150.000.000đ',
-      startingPriceValue: 150000000,
-      status: 'Đã bán',
-      statusClass: 'statusDaban',
-      createdDate: '2025-09-29',
-      description: 'Đồng hồ Rolex cổ điển, sản xuất năm 1950.',
-      imageUrl: 'https://example.com/image3.jpg'
-    },
-    {
-      id: '#TS-004',
-      name: 'Tranh nghệ thuật',
-      category: 'Nghệ thuật',
-      categoryId: '4',
-      owner: 'Phạm Thị D',
-      ownerId: '4',
-      startingPrice: '500.000.000đ',
-      startingPriceValue: 500000000,
-      status: 'Hủy',
-      statusClass: 'statusHuy',
-      createdDate: '2025-09-28',
-      description: 'Tranh sơn dầu của họa sĩ nổi tiếng.',
-      imageUrl: 'https://example.com/image4.jpg'
-    },
-    {
-      id: '#TS-005',
-      name: 'Máy ảnh Canon',
-      category: 'Đồ cổ',
-      categoryId: '3',
-      owner: 'Hoàng Văn E',
-      ownerId: '5',
-      startingPrice: '50.000.000đ',
-      startingPriceValue: 50000000,
-      status: 'Đang đấu giá',
-      statusClass: 'statusDangdau',
-      createdDate: '2025-09-27',
-      description: 'Máy ảnh Canon cổ, model 1970.',
-      imageUrl: 'https://example.com/image5.jpg'
-    },
-    {
-      id: '#TS-006',
-      name: 'Điện thoại iPhone',
-      category: 'Ô tô',
-      categoryId: '2',
-      owner: 'Vũ Thị F',
-      ownerId: '6',
-      startingPrice: '30.000.000đ',
-      startingPriceValue: 30000000,
-      status: 'Chờ duyệt',
-      statusClass: 'statusChoduyet',
-      createdDate: '2025-09-26',
-      description: 'iPhone 14 Pro Max, mới 99%.',
-      imageUrl: 'https://example.com/image6.jpg'
-    },
-    {
-      id: '#TS-007',
-      name: 'Đất nền ngoại ô',
-      category: 'Bất động sản',
-      categoryId: '1',
-      owner: 'Nguyễn Văn G',
-      ownerId: '7',
-      startingPrice: '800.000.000đ',
-      startingPriceValue: 800000000,
-      status: 'Đã bán',
-      statusClass: 'statusDaban',
-      createdDate: '2025-09-25',
-      description: 'Đất nền 200m² tại ngoại ô Hà Nội.',
-      imageUrl: 'https://example.com/image7.jpg'
-    },
-  ];
+  // Fetch assets from API
+  useEffect(() => {
+    const fetchAssets = async () => {
+      try {
+        const response = await axios.get(`${API_URL}products`);
+        const formattedAssets = response.data.data.map(asset => ({
+          id: `#TS-${asset.id.toString().padStart(3, '0')}`,
+          name: asset.name,
+          category: asset.category,
+          categoryId: asset.category === 'Bất động sản' ? '1' :
+                      asset.category === 'Xe cộ' ? '2' :
+                      asset.category === 'Đồ cổ' ? '3' :
+                      asset.category === 'Nghệ thuật' ? '4' : '5',
+          owner: asset.owner.name,
+          ownerId: asset.owner.id.toString(),
+          startingPrice: new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+          }).format(asset.starting_price),
+          startingPriceValue: parseFloat(asset.starting_price),
+          status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
+                  asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
+                  asset.status === 'DangDauGia' ? 'Đang đấu giá' :
+                  asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
+          statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
+                       asset.status === 'ChoDauGia' ? 'statusChodau' :
+                       asset.status === 'DangDauGia' ? 'statusDangdau' :
+                       asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
+          createdDate: asset.created_at ? new Date(asset.created_at).toISOString().split('T')[0] : 'N/A',
+          description: asset.description,
+          imageUrl: asset.image_url || 'https://example.com/placeholder.jpg',
+        }));
+        setAssets(formattedAssets);
+      } catch (error) {
+        console.error('Lỗi khi lấy dữ liệu tài sản:', error.response?.data || error);
+        alert(`Không thể tải dữ liệu tài sản: ${error.response?.data?.message || 'Vui lòng thử lại.'}`);
+      }
+    };
 
+    fetchAssets();
+  }, []);
+
+  // Apply filters
   const applyFilters = () => {
     return assets.filter(asset => {
       const searchMatch =
         asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.owner.toLowerCase().includes(searchTerm.toLowerCase());
-
       const statusMatch = !statusFilter || asset.status.toLowerCase().includes(statusFilter.toLowerCase());
       const categoryMatch = !categoryFilter || asset.categoryId.toLowerCase().includes(categoryFilter.toLowerCase());
       return searchMatch && statusMatch && categoryMatch;
@@ -192,7 +130,6 @@ function AuctionAsset() {
         </button>
       );
     }
-
     return pages;
   };
 
@@ -210,7 +147,7 @@ function AuctionAsset() {
         status: asset.status === 'Chờ duyệt' ? 'ChoDuyet' :
                 asset.status === 'Chờ đấu giá' ? 'ChoDauGia' :
                 asset.status === 'Đang đấu giá' ? 'DangDauGia' :
-                asset.status === 'Đã bán' ? 'DaBan' : 'Huy'
+                asset.status === 'Đã bán' ? 'DaBan' : 'Huy',
       });
     } else {
       setAssetForm({
@@ -221,7 +158,7 @@ function AuctionAsset() {
         startingPrice: '',
         description: '',
         imageUrl: '',
-        status: 'ChoDuyet'
+        status: 'ChoDuyet',
       });
     }
     setShowAssetModal(true);
@@ -231,13 +168,21 @@ function AuctionAsset() {
     setShowAssetModal(false);
   };
 
-  const openViewModal = (asset) => {
+  const openViewModal = async (asset) => {
     setSelectedAsset(asset);
+    try {
+      const response = await axios.get(`${API_URL}auction-profiles/${asset.id.replace('#TS-', '')}/bids`);
+      setBidHistory(response.data.data);
+    } catch (error) {
+      console.error('Lỗi khi lấy lịch sử bid:', error.response?.data || error);
+      setBidHistory([]);
+    }
     setShowViewModal(true);
   };
 
   const closeViewModal = () => {
     setShowViewModal(false);
+    setBidHistory([]);
   };
 
   const openRejectModal = (asset) => {
@@ -254,32 +199,215 @@ function AuctionAsset() {
     const { name, value } = e.target;
     setAssetForm(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleSaveAsset = () => {
-    alert('Chức năng lưu chỉ là demo, không lưu thực tế.');
-    closeAssetModal();
-  };
+  const handleSaveAsset = async () => {
+    // Client-side validation
+    if (!assetForm.name.trim()) {
+      alert('Tên tài sản không được để trống!');
+      return;
+    }
+    if (!assetForm.category) {
+      alert('Vui lòng chọn danh mục!');
+      return;
+    }
+    if (!assetForm.owner || isNaN(parseInt(assetForm.owner))) {
+      alert('ID chủ sở hữu không hợp lệ!');
+      return;
+    }
+    if (!assetForm.startingPrice || isNaN(parseFloat(assetForm.startingPrice)) || parseFloat(assetForm.startingPrice) <= 0) {
+      alert('Giá khởi điểm phải là số dương!');
+      return;
+    }
 
-  const handleDeleteAsset = (asset) => {
-    if (window.confirm('Bạn có chắc muốn xóa tài sản này?')) {
-      alert('Chức năng xóa chỉ là demo, không xóa thực tế.');
+    try {
+      const assetData = {
+        name: assetForm.name,
+        description: assetForm.description,
+        starting_price: parseFloat(assetForm.startingPrice),
+        status: assetForm.status,
+        category: assetForm.category === '1' ? 'Bất động sản' :
+                  assetForm.category === '2' ? 'Xe cộ' :
+                  assetForm.category === '3' ? 'Đồ cổ' :
+                  assetForm.category === '4' ? 'Nghệ thuật' : 'Thiết bị điện tử',
+        owner_id: parseInt(assetForm.owner),
+        image_url: assetForm.imageUrl,
+      };
+
+      if (modalMode === 'edit') {
+        await axios.put(`${API_URL}/auction-profiles/${assetForm.code.replace('#TS-', '')}`, assetData);
+        alert('Cập nhật tài sản thành công!');
+      } else {
+        await axios.post(`${API_URL}/auction-profiles`, assetData);
+        alert('Thêm tài sản thành công!');
+      }
+
+      // Refresh assets
+      const response = await axios.get(`${API_URL}/auction-profiles`);
+      const formattedAssets = response.data.data.map(asset => ({
+        id: `#TS-${asset.id.toString().padStart(3, '0')}`,
+        name: asset.name,
+        category: asset.category,
+        categoryId: asset.category === 'Bất động sản' ? '1' :
+                    asset.category === 'Xe cộ' ? '2' :
+                    asset.category === 'Đồ cổ' ? '3' :
+                    asset.category === 'Nghệ thuật' ? '4' : '5',
+        owner: asset.owner.name,
+        ownerId: asset.owner.id.toString(),
+        startingPrice: new Intl.NumberFormat('vi-VN', {
+          style: 'currency',
+          currency: 'VND',
+        }).format(asset.starting_price),
+        startingPriceValue: parseFloat(asset.starting_price),
+        status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
+                asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
+                asset.status === 'DangDauGia' ? 'Đang đấu giá' :
+                asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
+        statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
+                     asset.status === 'ChoDauGia' ? 'statusChodau' :
+                     asset.status === 'DangDauGia' ? 'statusDangdau' :
+                     asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
+        createdDate: asset.created_at ? new Date(asset.created_at).toISOString().split('T')[0] : 'N/A',
+        description: asset.description,
+        imageUrl: asset.image_url || 'https://example.com/placeholder.jpg',
+      }));
+      setAssets(formattedAssets);
+      closeAssetModal();
+    } catch (error) {
+      console.error('Lỗi khi lưu tài sản:', error.response?.data || error);
+      alert(`Lỗi khi lưu tài sản: ${error.response?.data?.message || 'Vui lòng thử lại.'}`);
     }
   };
 
-  const handleApproveAsset = (asset) => {
-    alert('Đã duyệt tài sản thành công!');
+  const handleDeleteAsset = async (asset) => {
+    if (window.confirm('Bạn có chắc muốn xóa tài sản này?')) {
+      try {
+        await axios.delete(`${API_URL}/auction-profiles/${asset.id.replace('#TS-', '')}`);
+        alert('Xóa tài sản thành công!');
+        const response = await axios.get(`${API_URL}/auction-profiles`);
+        const formattedAssets = response.data.data.map(asset => ({
+          id: `#TS-${asset.id.toString().padStart(3, '0')}`,
+          name: asset.name,
+          category: asset.category,
+          categoryId: asset.category === 'Bất động sản' ? '1' :
+                      asset.category === 'Xe cộ' ? '2' :
+                      asset.category === 'Đồ cổ' ? '3' :
+                      asset.category === 'Nghệ thuật' ? '4' : '5',
+          owner: asset.owner.name,
+          ownerId: asset.owner.id.toString(),
+          startingPrice: new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+          }).format(asset.starting_price),
+          startingPriceValue: parseFloat(asset.starting_price),
+          status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
+                  asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
+                  asset.status === 'DangDauGia' ? 'Đang đấu giá' :
+                  asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
+          statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
+                       asset.status === 'ChoDauGia' ? 'statusChodau' :
+                       asset.status === 'DangDauGia' ? 'statusDangdau' :
+                       asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
+          createdDate: asset.created_at ? new Date(asset.created_at).toISOString().split('T')[0] : 'N/A',
+          description: asset.description,
+          imageUrl: asset.image_url || 'https://example.com/placeholder.jpg',
+        }));
+        setAssets(formattedAssets);
+      } catch (error) {
+        console.error('Lỗi khi xóa tài sản:', error.response?.data || error);
+        alert(`Lỗi khi xóa tài sản: ${error.response?.data?.message || 'Vui lòng thử lại.'}`);
+      }
+    }
   };
 
-  const handleRejectAsset = () => {
+  const handleApproveAsset = async (asset) => {
+    try {
+      await axios.put(`${API_URL}/auction-profiles/${asset.id.replace('#TS-', '')}/status`, {
+        status: 'ChoDauGia',
+      });
+      alert('Duyệt tài sản thành công!');
+      const response = await axios.get(`${API_URL}/auction-profiles`);
+      const formattedAssets = response.data.data.map(asset => ({
+        id: `#TS-${asset.id.toString().padStart(3, '0')}`,
+        name: asset.name,
+        category: asset.category,
+        categoryId: asset.category === 'Bất động sản' ? '1' :
+                    asset.category === 'Xe cộ' ? '2' :
+                    asset.category === 'Đồ cổ' ? '3' :
+                    asset.category === 'Nghệ thuật' ? '4' : '5',
+        owner: asset.owner.name,
+        ownerId: asset.owner.id.toString(),
+        startingPrice: new Intl.NumberFormat('vi-VN', {
+          style: 'currency',
+          currency: 'VND',
+        }).format(asset.starting_price),
+        startingPriceValue: parseFloat(asset.starting_price),
+        status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
+                asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
+                asset.status === 'DangDauGia' ? 'Đang đấu giá' :
+                asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
+        statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
+                     asset.status === 'ChoDauGia' ? 'statusChodau' :
+                     asset.status === 'DangDauGia' ? 'statusDangdau' :
+                     asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
+        createdDate: asset.created_at ? new Date(asset.created_at).toISOString().split('T')[0] : 'N/A',
+        description: asset.description,
+        imageUrl: asset.image_url || 'https://example.com/placeholder.jpg',
+      }));
+      setAssets(formattedAssets);
+    } catch (error) {
+      console.error('Lỗi khi duyệt tài sản:', error.response?.data || error);
+      alert(`Lỗi khi duyệt tài sản: ${error.response?.data?.message || 'Vui lòng thử lại.'}`);
+    }
+  };
+
+  const handleRejectAsset = async () => {
     if (!rejectReason.trim()) {
       alert('Vui lòng nhập lý do từ chối!');
       return;
     }
-    alert(`Đã từ chối tài sản với lý do: ${rejectReason}`);
-    closeRejectModal();
+    try {
+      await axios.put(`${API_URL}/auction-profiles/${selectedAsset.id.replace('#TS-', '')}/status`, {
+        status: 'Huy',
+        reject_reason: rejectReason,
+      });
+      alert(`Từ chối tài sản thành công với lý do: ${rejectReason}`);
+      closeRejectModal();
+      const response = await axios.get(`${API_URL}/auction-profiles`);
+      const formattedAssets = response.data.data.map(asset => ({
+        id: `#TS-${asset.id.toString().padStart(3, '0')}`,
+        name: asset.name,
+        category: asset.category,
+        categoryId: asset.category === 'Bất động sản' ? '1' :
+                    asset.category === 'Xe cộ' ? '2' :
+                    asset.category === 'Đồ cổ' ? '3' :
+                    asset.category === 'Nghệ thuật' ? '4' : '5',
+        owner: asset.owner.name,
+        ownerId: asset.owner.id.toString(),
+        startingPrice: new Intl.NumberFormat('vi-VN', {
+          style: 'currency',
+          currency: 'VND',
+        }).format(asset.starting_price),
+        startingPriceValue: parseFloat(asset.starting_price),
+        status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
+                asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
+                asset.status === 'DangDauGia' ? 'Đang đấu giá' :
+                asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
+        statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
+                     asset.status === 'ChoDauGia' ? 'statusChodau' :
+                     asset.status === 'DangDauGia' ? 'statusDangdau' :
+                     asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
+        createdDate: asset.created_at ? new Date(asset.created_at).toISOString().split('T')[0] : 'N/A',
+        description: asset.description,
+        imageUrl: asset.image_url || 'https://example.com/placeholder.jpg',
+      }));
+      setAssets(formattedAssets);
+    } catch (error) {
+      console.error('Lỗi khi từ chối tài sản:', error.response?.data || error);
+      alert(`Lỗi khi từ chối tài sản: ${error.response?.data?.message || 'Vui lòng thử lại.'}`);
+    }
   };
 
   const handleCreateAuction = (asset) => {
@@ -292,7 +420,7 @@ function AuctionAsset() {
       'Chờ đấu giá': 'statusChodau',
       'Đang đấu giá': 'statusDangdau',
       'Đã bán': 'statusDaban',
-      'Hủy': 'statusHuy'
+      'Hủy': 'statusHuy',
     };
     return statusMap[status] || 'statusChoduyet';
   };
@@ -385,9 +513,10 @@ function AuctionAsset() {
           <select className={styles.filterSelect} value={categoryFilter} onChange={handleCategoryFilterChange}>
             <option value="">Tất cả danh mục</option>
             <option value="1">Bất động sản</option>
-            <option value="2">Ô tô</option>
+            <option value="2">Xe cộ</option>
             <option value="3">Đồ cổ</option>
             <option value="4">Nghệ thuật</option>
+            <option value="5">Thiết bị điện tử</option>
           </select>
         </div>
         <button className={styles.addBtn} onClick={() => openAssetModal('add')}>
@@ -455,6 +584,7 @@ function AuctionAsset() {
                   placeholder="Nhập mã tài sản (VD: TS001)"
                   value={assetForm.code}
                   onChange={handleFormChange}
+                  disabled={modalMode === 'edit'}
                 />
               </div>
               <div>
@@ -478,9 +608,10 @@ function AuctionAsset() {
                 >
                   <option value="">Chọn danh mục</option>
                   <option value="1">Bất động sản</option>
-                  <option value="2">Ô tô</option>
+                  <option value="2">Xe cộ</option>
                   <option value="3">Đồ cổ</option>
                   <option value="4">Nghệ thuật</option>
+                  <option value="5">Thiết bị điện tử</option>
                 </select>
               </div>
               <div>
@@ -570,7 +701,7 @@ function AuctionAsset() {
               <p><strong>Mô tả:</strong> {selectedAsset.description}</p>
               <p><strong>URL ảnh:</strong> <a href={selectedAsset.imageUrl} target="_blank" rel="noopener noreferrer">{selectedAsset.imageUrl}</a></p>
               <div className={styles.orderHistory}>
-                <h3>Lịch sử lượt bid (demo)</h3>
+                <h3>Lịch sử lượt bid</h3>
                 <table className={styles.orderTable}>
                   <thead>
                     <tr>
@@ -581,18 +712,20 @@ function AuctionAsset() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>BID001</td>
-                      <td>User 1</td>
-                      <td>2.600.000.000đ</td>
-                      <td>2025-10-02 10:00</td>
-                    </tr>
-                    <tr>
-                      <td>BID002</td>
-                      <td>User 2</td>
-                      <td>2.700.000.000đ</td>
-                      <td>2025-10-02 11:00</td>
-                    </tr>
+                    {bidHistory.length > 0 ? (
+                      bidHistory.map(bid => (
+                        <tr key={bid.id}>
+                          <td>{bid.id}</td>
+                          <td>{bid.user_name}</td>
+                          <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(bid.amount)}</td>
+                          <td>{new Date(bid.created_at).toLocaleString('vi-VN')}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4">Không có lịch sử bid</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

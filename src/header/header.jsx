@@ -75,7 +75,7 @@ function Header() {
             </a>
           </li>
           <li>
-            <a href="#">
+            <a href="/auction-session">
               <i className="fa fa-gavel" aria-hidden="true"></i> ĐẤU GIÁ TRỰC TUYẾN
             </a>
           </li>
@@ -90,7 +90,7 @@ function Header() {
             </a>
           </li>
           <li>
-            <a href="#">
+            <a href="/contact">
               <i className="fa fa-phone" aria-hidden="true"></i> LIÊN HỆ BÁN TÀI SẢN
             </a>
           </li>

@@ -1,132 +1,100 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Profile.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import axios from 'axios';
 
 function Profile() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [userFilter, setUserFilter] = useState('');
-  const [itemFilter, setItemFilter] = useState('');
+  const [sessionFilter, setSessionFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
+  const [modalMode, setModalMode] = useState('add');
   const [selectedProfile, setSelectedProfile] = useState(null);
+  const [profiles, setProfiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [profileForm, setProfileForm] = useState({
     user: '',
     item: '',
     documentUrl: '',
     depositAmount: '',
-    status: 'ChoDuyet'
+    status: 'ChoDuyet',
   });
 
   const itemsPerPage = 5;
 
-  const profiles = [
-    {
-      id: '#HS-001',
-      user: 'Nguyễn Văn A (ID: 2)',
-      userId: '2',
-      item: '#TS-001 - Bất động sản quận 1',
-      itemId: 'TS001',
-      documentUrl: 'https://example.com/doc1.pdf',
-      depositAmount: '250.000.000đ',
-      depositAmountValue: 250000000,
-      status: 'Đã duyệt',
-      statusClass: 'statusDaduyet',
-      createdDate: '2025-09-30 10:00'
-    },
-    {
-      id: '#HS-002',
-      user: 'Trần Thị B (ID: 3)',
-      userId: '3',
-      item: '#TS-002 - Xe hơi Mercedes',
-      itemId: 'TS002',
-      documentUrl: 'https://example.com/doc2.pdf',
-      depositAmount: '120.000.000đ',
-      depositAmountValue: 120000000,
-      status: 'Chờ duyệt',
-      statusClass: 'statusChoduyet',
-      createdDate: '2025-09-29 14:30'
-    },
-    {
-      id: '#HS-003',
-      user: 'Lê Văn C (ID: 4)',
-      userId: '4',
-      item: '#TS-003 - Đồng hồ Rolex',
-      itemId: 'TS003',
-      documentUrl: 'https://example.com/doc3.pdf',
-      depositAmount: '15.000.000đ',
-      depositAmountValue: 15000000,
-      status: 'Bị từ chối',
-      statusClass: 'statusBituchoi',
-      createdDate: '2025-09-28 16:45'
-    },
-    {
-      id: '#HS-004',
-      user: 'Nguyễn Văn A (ID: 2)',
-      userId: '2',
-      item: '#TS-004 - Tranh nghệ thuật',
-      itemId: 'TS004',
-      documentUrl: 'https://example.com/doc4.pdf',
-      depositAmount: '50.000.000đ',
-      depositAmountValue: 50000000,
-      status: 'Chờ duyệt',
-      statusClass: 'statusChoduyet',
-      createdDate: '2025-10-01 09:20'
-    },
-    {
-      id: '#HS-005',
-      user: 'Trần Thị B (ID: 3)',
-      userId: '3',
-      item: '#TS-005 - Máy ảnh Canon',
-      itemId: 'TS005',
-      documentUrl: 'https://example.com/doc5.pdf',
-      depositAmount: '5.000.000đ',
-      depositAmountValue: 5000000,
-      status: 'Đã duyệt',
-      statusClass: 'statusDaduyet',
-      createdDate: '2025-09-27 12:15'
-    },
-    {
-      id: '#HS-006',
-      user: 'Lê Văn C (ID: 4)',
-      userId: '4',
-      item: '#TS-006 - Điện thoại iPhone',
-      itemId: 'TS006',
-      documentUrl: 'https://example.com/doc6.pdf',
-      depositAmount: '3.000.000đ',
-      depositAmountValue: 3000000,
-      status: 'Chờ duyệt',
-      statusClass: 'statusChoduyet',
-      createdDate: '2025-09-26 17:40'
-    },
-    {
-      id: '#HS-007',
-      user: 'Nguyễn Văn A (ID: 2)',
-      userId: '2',
-      item: '#TS-007 - Đất nền ngoại ô',
-      itemId: 'TS007',
-      documentUrl: 'https://example.com/doc7.pdf',
-      depositAmount: '80.000.000đ',
-      depositAmountValue: 80000000,
-      status: 'Bị từ chối',
-      statusClass: 'statusBituchoi',
-      createdDate: '2025-09-25 08:50'
-    },
-  ];
+  const statusMap = {
+    ChoDuyet: 'Chờ duyệt',
+    DaDuyet: 'Đã duyệt',
+    BiTuChoi: 'Bị từ chối',
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(amount);
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}auction-profiles`
+        );
+        const apiProfiles = response.data.profiles.map((profile) => ({
+          id: `#HS-${String(profile.profile_id).padStart(3, '0')}`,
+          user: `${profile.user.full_name} (ID: ${profile.user_id})`,
+          userId: String(profile.user_id),
+          item: profile.item
+            ? `#TS-${String(profile.item.item_id).padStart(3, '0')} - ${profile.item.name}`
+            : `Phiên đấu giá ${profile.session_id}`,
+          itemId: profile.item ? `TS${String(profile.item.item_id).padStart(3, '0')}` : `S${profile.session_id}`,
+          documentUrl: profile.document_url,
+          depositAmount: formatCurrency(profile.deposit_amount),
+          depositAmountValue: parseFloat(profile.deposit_amount),
+          status: statusMap[profile.status] || profile.status,
+          statusClass: getStatusClass(statusMap[profile.status] || profile.status),
+          createdDate: formatDate(profile.created_at),
+          rawProfileId: profile.profile_id, // Store raw profile_id for API calls
+        }));
+        setProfiles(apiProfiles);
+        setLoading(false);
+      } catch (err) {
+        setError('Không thể tải danh sách hồ sơ.');
+        setLoading(false);
+      }
+    };
+    fetchProfiles();
+  }, []);
 
   const applyFilters = () => {
-    return profiles.filter(profile => {
+    return profiles.filter((profile) => {
       const searchMatch =
         profile.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
         profile.item.toLowerCase().includes(searchTerm.toLowerCase()) ||
         profile.documentUrl.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const statusMatch = !statusFilter || profile.status.toLowerCase().includes(statusFilter.toLowerCase());
+      const statusMatch =
+        !statusFilter || profile.status.toLowerCase().includes(statusFilter.toLowerCase());
       const userMatch = !userFilter || profile.userId.toLowerCase().includes(userFilter.toLowerCase());
-      const itemMatch = !itemFilter || profile.itemId.toLowerCase().includes(itemFilter.toLowerCase());
-      return searchMatch && statusMatch && userMatch && itemMatch;
+      const sessionMatch = !sessionFilter || profile.itemId.toLowerCase().includes(sessionFilter.toLowerCase());
+      return searchMatch && statusMatch && userMatch && sessionMatch;
     });
   };
 
@@ -138,7 +106,7 @@ function Profile() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, userFilter, itemFilter]);
+  }, [searchTerm, statusFilter, userFilter, sessionFilter]);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -152,8 +120,8 @@ function Profile() {
     setUserFilter(e.target.value);
   };
 
-  const handleItemFilterChange = (e) => {
-    setItemFilter(e.target.value);
+  const handleSessionFilterChange = (e) => {
+    setSessionFilter(e.target.value);
   };
 
   const handlePageChange = (page) => {
@@ -180,20 +148,24 @@ function Profile() {
         </button>
       );
     }
-
     return pages;
   };
 
   const openProfileModal = (mode, profile = null) => {
     setModalMode(mode);
+    setSelectedProfile(profile);
     if (profile) {
       setProfileForm({
         user: profile.userId,
         item: profile.itemId,
         documentUrl: profile.documentUrl,
         depositAmount: profile.depositAmountValue.toString(),
-        status: profile.status === 'Chờ duyệt' ? 'ChoDuyet' :
-                profile.status === 'Đã duyệt' ? 'DaDuyet' : 'BiTuChoi'
+        status:
+          profile.status === 'Chờ duyệt'
+            ? 'ChoDuyet'
+            : profile.status === 'Đã duyệt'
+            ? 'DaDuyet'
+            : 'BiTuChoi',
       });
     } else {
       setProfileForm({
@@ -201,7 +173,7 @@ function Profile() {
         item: '',
         documentUrl: '',
         depositAmount: '',
-        status: 'ChoDuyet'
+        status: 'ChoDuyet',
       });
     }
     setShowProfileModal(true);
@@ -209,6 +181,7 @@ function Profile() {
 
   const closeProfileModal = () => {
     setShowProfileModal(false);
+    setSelectedProfile(null);
   };
 
   const openViewModal = (profile) => {
@@ -218,24 +191,86 @@ function Profile() {
 
   const closeViewModal = () => {
     setShowViewModal(false);
+    setSelectedProfile(null);
   };
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setProfileForm(prev => ({
+    setProfileForm((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleSaveProfile = () => {
-    alert('Chức năng lưu chỉ là demo, không lưu thực tế.');
-    closeProfileModal();
+  const handleSaveProfile = async () => {
+    try {
+      if (modalMode === 'edit' && selectedProfile) {
+        // Edit mode: Update existing profile status
+        const profileId = selectedProfile.rawProfileId;
+        if (!profileId) {
+          throw new Error('Không tìm thấy ID hồ sơ.');
+        }
+        await axios.put(
+          `${process.env.REACT_APP_API_URL}auction-profiles/${profileId}/status`,
+          { status: profileForm.status }
+        );
+        alert('Cập nhật trạng thái thành công!');
+      } else if (modalMode === 'add') {
+        // Add mode: Create new profile (assuming POST endpoint exists)
+        const newProfile = {
+          user_id: profileForm.user,
+          session_id: profileForm.item.startsWith('S') ? profileForm.item.slice(1) : null,
+          item_id: profileForm.item.startsWith('TS') ? profileForm.item.slice(2) : null,
+          document_url: profileForm.documentUrl,
+          deposit_amount: parseFloat(profileForm.depositAmount),
+          status: profileForm.status,
+        };
+        await axios.post(
+          `${process.env.REACT_APP_API_URL}auction-profiles`,
+          newProfile
+        );
+        alert('Thêm hồ sơ thành công!');
+      }
+
+      // Refresh profiles
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}auction-profiles`
+      );
+      const apiProfiles = response.data.profiles.map((profile) => ({
+        id: `#HS-${String(profile.profile_id).padStart(3, '0')}`,
+        user: `${profile.user.full_name} (ID: ${profile.user_id})`,
+        userId: String(profile.user_id),
+        item: profile.item
+          ? `#TS-${String(profile.item.item_id).padStart(3, '0')} - ${profile.item.name}`
+          : `Phiên đấu giá ${profile.session_id}`,
+        itemId: profile.item ? `TS${String(profile.item.item_id).padStart(3, '0')}` : `S${profile.session_id}`,
+        documentUrl: profile.document_url,
+        depositAmount: formatCurrency(profile.deposit_amount),
+        depositAmountValue: parseFloat(profile.deposit_amount),
+        status: statusMap[profile.status] || profile.status,
+        statusClass: getStatusClass(statusMap[profile.status] || profile.status),
+        createdDate: formatDate(profile.created_at),
+        rawProfileId: profile.profile_id,
+      }));
+      setProfiles(apiProfiles);
+      closeProfileModal();
+    } catch (err) {
+      alert(`Lỗi: ${err.message}`);
+    }
   };
 
-  const handleDeleteProfile = (profile) => {
+  const handleDeleteProfile = async (profile) => {
     if (window.confirm('Bạn có chắc muốn xóa hồ sơ này?')) {
-      alert('Chức năng xóa chỉ là demo, không xóa thực tế.');
+      try {
+        const profileId = profile.rawProfileId;
+        await axios.delete(
+          `${process.env.REACT_APP_API_URL}auction-profiles/${profileId}`
+        );
+        alert('Xóa hồ sơ thành công!');
+        setProfiles(profiles.filter((p) => p.id !== profile.id));
+      } catch (err) {
+        alert('Xóa thất bại: ' + err.message);
+      }
     }
   };
 
@@ -243,32 +278,45 @@ function Profile() {
     const statusMap = {
       'Chờ duyệt': 'statusChoduyet',
       'Đã duyệt': 'statusDaduyet',
-      'Bị từ chối': 'statusBituchoi'
+      'Bị từ chối': 'statusBituchoi',
     };
     return statusMap[status] || 'statusChoduyet';
   };
 
   const getActionButtons = (profile) => {
     const buttons = [];
-
     buttons.push(
-      <button key="edit" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openProfileModal('edit', profile)}>
+      <button
+        key="edit"
+        className={`${styles.btn} ${styles.btnPrimary}`}
+        onClick={() => openProfileModal('edit', profile)}
+      >
         <i className="fa fa-pencil" aria-hidden="true"></i>
       </button>
     );
     buttons.push(
-      <button key="delete" className={`${styles.btn} ${styles.btnDanger}`} onClick={() => handleDeleteProfile(profile)}>
+      <button
+        key="delete"
+        className={`${styles.btn} ${styles.btnDanger}`}
+        onClick={() => handleDeleteProfile(profile)}
+      >
         <i className="fa fa-trash" aria-hidden="true"></i>
       </button>
     );
     buttons.push(
-      <button key="view" className={`${styles.btn} ${styles.btnSuccess}`} onClick={() => openViewModal(profile)}>
+      <button
+        key="view"
+        className={`${styles.btn} ${styles.btnSuccess}`}
+        onClick={() => openViewModal(profile)}
+      >
         <i className="fa fa-eye" aria-hidden="true"></i>
       </button>
     );
-
     return buttons;
   };
+
+  if (loading) return <div>Đang tải...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <div className={styles.mainContent}>
@@ -295,30 +343,45 @@ function Profile() {
 
       <div className={styles.actionsBar}>
         <div className={styles.filters}>
-          <select className={styles.filterSelect} value={statusFilter} onChange={handleStatusFilterChange}>
+          <select
+            className={styles.filterSelect}
+            value={statusFilter}
+            onChange={handleStatusFilterChange}
+          >
             <option value="">Tất cả trạng thái</option>
             <option value="Chờ duyệt">Chờ duyệt</option>
             <option value="Đã duyệt">Đã duyệt</option>
             <option value="Bị từ chối">Bị từ chối</option>
           </select>
-          <select className={styles.filterSelect} value={userFilter} onChange={handleUserFilterChange}>
+          <select
+            className={styles.filterSelect}
+            value={userFilter}
+            onChange={handleUserFilterChange}
+          >
             <option value="">Tất cả người dùng</option>
-            <option value="2">Nguyễn Văn A (ID: 2)</option>
-            <option value="3">Trần Thị B (ID: 3)</option>
-            <option value="4">Lê Văn C (ID: 4)</option>
+            {[...new Set(profiles.map((p) => p.userId))].map((userId) => (
+              <option key={userId} value={userId}>
+                {profiles.find((p) => p.userId === userId).user}
+              </option>
+            ))}
           </select>
-          <select className={styles.filterSelect} value={itemFilter} onChange={handleItemFilterChange}>
-            <option value="">Tất cả tài sản</option>
-            <option value="TS001">#TS-001 - Bất động sản quận 1</option>
-            <option value="TS002">#TS-002 - Xe hơi Mercedes</option>
-            <option value="TS003">#TS-003 - Đồng hồ Rolex</option>
-            <option value="TS004">#TS-004 - Tranh nghệ thuật</option>
-            <option value="TS005">#TS-005 - Máy ảnh Canon</option>
-            <option value="TS006">#TS-006 - Điện thoại iPhone</option>
-            <option value="TS007">#TS-007 - Đất nền ngoại ô</option>
+          <select
+            className={styles.filterSelect}
+            value={sessionFilter}
+            onChange={handleSessionFilterChange}
+          >
+            <option value="">Tất cả phiên đấu giá</option>
+            {[...new Set(profiles.map((p) => p.itemId))].map((itemId) => (
+              <option key={itemId} value={itemId}>
+                {profiles.find((p) => p.itemId === itemId).item}
+              </option>
+            ))}
           </select>
         </div>
-        <button className={styles.addBtn} onClick={() => openProfileModal('add')}>
+        <button
+          className={styles.addBtn}
+          onClick={() => openProfileModal('add')}
+        >
           <i className="fas fa-plus"></i>
           Thêm hồ sơ mới
         </button>
@@ -329,7 +392,7 @@ function Profile() {
           <tr>
             <th>Mã HS</th>
             <th>Người dùng (ID)</th>
-            <th>Tài sản (ID)</th>
+            <th>Phiên đấu giá</th>
             <th>URL tài liệu</th>
             <th>Tiền đặt cọc</th>
             <th>Trạng thái</th>
@@ -338,17 +401,27 @@ function Profile() {
           </tr>
         </thead>
         <tbody>
-          {currentProfiles.map(profile => (
+          {currentProfiles.map((profile) => (
             <tr key={profile.id}>
               <td data-label="Mã HS">{profile.id}</td>
               <td data-label="Người dùng (ID)">{profile.user}</td>
-              <td data-label="Tài sản (ID)">{profile.item}</td>
+              <td data-label="Phiên đấu giá">{profile.item}</td>
               <td data-label="URL tài liệu">
-                <a href={profile.documentUrl} target="_blank" rel="noopener noreferrer">doc{profile.id.split('-')[1]}.pdf</a>
+                <a
+                  href={profile.documentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  doc{profile.id.split('-')[1]}.pdf
+                </a>
               </td>
               <td data-label="Tiền đặt cọc">{profile.depositAmount}</td>
               <td data-label="Trạng thái">
-                <span className={`${styles.statusBadge} ${styles[getStatusClass(profile.status)]}`}>{profile.status}</span>
+                <span
+                  className={`${styles.statusBadge} ${styles[profile.statusClass]}`}
+                >
+                  {profile.status}
+                </span>
               </td>
               <td data-label="Ngày tạo">{profile.createdDate}</td>
               <td data-label="Hành động">
@@ -361,19 +434,23 @@ function Profile() {
         </tbody>
       </table>
 
-      <div className={styles.pagination}>
-        {renderPagination()}
-      </div>
+      <div className={styles.pagination}>{renderPagination()}</div>
 
-      {/* Add/Edit Profile Modal */}
       {showProfileModal && (
         <div className={styles.modal} onClick={closeProfileModal}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>
-                {modalMode === 'edit' ? 'Chỉnh sửa hồ sơ đấu giá' : 'Thêm hồ sơ đấu giá mới'}
+                {modalMode === 'edit'
+                  ? 'Chỉnh sửa hồ sơ đấu giá'
+                  : 'Thêm hồ sơ đấu giá mới'}
               </h2>
-              <span className={styles.modalClose} onClick={closeProfileModal}>×</span>
+              <span className={styles.modalClose} onClick={closeProfileModal}>
+                ×
+              </span>
             </div>
             <div className={styles.modalBody}>
               <div>
@@ -385,30 +462,27 @@ function Profile() {
                   onChange={handleFormChange}
                 >
                   <option value="">Chọn người dùng</option>
-                  <option value="2">Nguyễn Văn A (ID: 2)</option>
-                  <option value="3">Trần Thị B (ID: 3)</option>
-                  <option value="4">Lê Văn C (ID: 4)</option>
-                  <option value="5">Phạm Thị D (ID: 5)</option>
-                  <option value="6">Hoàng Văn E (ID: 6)</option>
-                  <option value="7">Vũ Thị F (ID: 7)</option>
+                  {[...new Set(profiles.map((p) => p.userId))].map((userId) => (
+                    <option key={userId} value={userId}>
+                      {profiles.find((p) => p.userId === userId).user}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
-                <label htmlFor="item">Tài sản (ID)</label>
+                <label htmlFor="item">Phiên đấu giá</label>
                 <select
                   id="item"
                   name="item"
                   value={profileForm.item}
                   onChange={handleFormChange}
                 >
-                  <option value="">Chọn tài sản</option>
-                  <option value="TS001">#TS-001 - Bất động sản quận 1</option>
-                  <option value="TS002">#TS-002 - Xe hơi Mercedes</option>
-                  <option value="TS003">#TS-003 - Đồng hồ Rolex</option>
-                  <option value="TS004">#TS-004 - Tranh nghệ thuật</option>
-                  <option value="TS005">#TS-005 - Máy ảnh Canon</option>
-                  <option value="TS006">#TS-006 - Điện thoại iPhone</option>
-                  <option value="TS007">#TS-007 - Đất nền ngoại ô</option>
+                  <option value="">Chọn phiên đấu giá</option>
+                  {[...new Set(profiles.map((p) => p.itemId))].map((itemId) => (
+                    <option key={itemId} value={itemId}>
+                      {profiles.find((p) => p.itemId === itemId).item}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -449,29 +523,64 @@ function Profile() {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSaveProfile}>Lưu</button>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeProfileModal}>Hủy</button>
+              <button
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={handleSaveProfile}
+              >
+                Lưu
+              </button>
+              <button
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={closeProfileModal}
+              >
+                Hủy
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* View Profile Modal */}
       {showViewModal && selectedProfile && (
         <div className={styles.modal} onClick={closeViewModal}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>Chi Tiết Hồ Sơ Đấu Giá</h2>
-              <span className={styles.modalClose} onClick={closeViewModal}>×</span>
+              <span className={styles.modalClose} onClick={closeViewModal}>
+                ×
+              </span>
             </div>
             <div className={styles.modalBody}>
-              <p><strong>Mã hồ sơ:</strong> {selectedProfile.id}</p>
-              <p><strong>Người dùng:</strong> {selectedProfile.user}</p>
-              <p><strong>Tài sản:</strong> {selectedProfile.item}</p>
-              <p><strong>URL tài liệu:</strong> <a href={selectedProfile.documentUrl} target="_blank" rel="noopener noreferrer">doc{selectedProfile.id.split('-')[1]}.pdf</a></p>
-              <p><strong>Tiền đặt cọc:</strong> {selectedProfile.depositAmount}</p>
-              <p><strong>Trạng thái:</strong> {selectedProfile.status}</p>
-              <p><strong>Ngày tạo:</strong> {selectedProfile.createdDate}</p>
+              <p>
+                <strong>Mã hồ sơ:</strong> {selectedProfile.id}
+              </p>
+              <p>
+                <strong>Người dùng:</strong> {selectedProfile.user}
+              </p>
+              <p>
+                <strong>Phiên đấu giá:</strong> {selectedProfile.item}
+              </p>
+              <p>
+                <strong>URL tài liệu:</strong>{' '}
+                <a
+                  href={selectedProfile.documentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  doc{selectedProfile.id.split('-')[1]}.pdf
+                </a>
+              </p>
+              <p>
+                <strong>Tiền đặt cọc:</strong> {selectedProfile.depositAmount}
+              </p>
+              <p>
+                <strong>Trạng thái:</strong> {selectedProfile.status}
+              </p>
+              <p>
+                <strong>Ngày tạo:</strong> {selectedProfile.createdDate}
+              </p>
               <div className={styles.orderHistory}>
                 <h3>Lịch sử duyệt hồ sơ (demo)</h3>
                 <table className={styles.orderTable}>
@@ -501,7 +610,12 @@ function Profile() {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeViewModal}>Đóng</button>
+              <button
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={closeViewModal}
+              >
+                Đóng
+              </button>
             </div>
           </div>
         </div>
