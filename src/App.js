@@ -37,6 +37,7 @@ function App (){
             <Route path = '/login' element = {<Login />} />
             <Route path = '/auction' element = {<Auction />} /> 
             <Route path = '/auction-session' element = {<AuctionSessionPageUser />} />
+            <Route path='/auction-session/:id' element={<Detail/>} /> {/* Changed to match Link in Home */}
             <Route path = '/contact' element = {<ContactPage />} />
             <Route path = '/admin/settings' element = {<AdminSettings />} />
             <Route path = '/admin/dashboard' element = {<Admindashboard />} />
