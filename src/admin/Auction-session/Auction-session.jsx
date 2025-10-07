@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styles from './Auction-session.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import { useUser } from '../../UserContext'; // Import useUser
 
 function AuctionSession() {
+  const { token } = useUser(); // Lấy token từ UserContext
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [itemFilter, setItemFilter] = useState('');
@@ -30,7 +32,7 @@ function AuctionSession() {
     bidEnd: '',
     bidStep: '',
     highestBid: '',
-    currentWinnerId: '',
+    currentWinnerId: '', // Giữ để tương thích nhưng không hiển thị trong UI
   });
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -38,7 +40,11 @@ function AuctionSession() {
   const itemsPerPage = 5;
 
   const API_URL = process.env.REACT_APP_API_URL;
-  const token = localStorage.getItem('authToken');
+
+  // Log token để debug
+  useEffect(() => {
+    console.log('Initial Auth Token:', token);
+  }, [token]);
 
   const transformSession = (session) => {
     const winnerProfile = session.profiles.find(profile => profile.user.user_id === session.current_winner_id);
@@ -77,6 +83,9 @@ function AuctionSession() {
 
   const fetchBids = async (sessionId) => {
     try {
+      if (!token) {
+        throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
+      }
       const response = await axios.get(`${API_URL}bids/${sessionId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -103,6 +112,12 @@ function AuctionSession() {
       return [];
     } catch (error) {
       console.error('Error fetching bids:', error);
+      if (error.response && error.response.status === 401) {
+        alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
+        window.location.href = '/login';
+      } else if (error.response && error.response.status === 403) {
+        alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator).');
+      }
       return [];
     }
   };
@@ -111,6 +126,9 @@ function AuctionSession() {
     setLoading(true);
     setError(null);
     try {
+      if (!token) {
+        throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
+      }
       const response = await axios.get(`${API_URL}auction-sessions`, {
         params: { search: searchTerm, status: statusFilter, item: itemFilter },
         headers: { Authorization: `Bearer ${token}` },
@@ -127,8 +145,14 @@ function AuctionSession() {
       }
     } catch (error) {
       console.error('Error fetching sessions:', error);
-      setSessions([]);
-      setError('Không thể tải danh sách phiên đấu giá.');
+      if (error.response && error.response.status === 401) {
+        alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
+        window.location.href = '/login';
+      } else if (error.response && error.response.status === 403) {
+        alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator).');
+      } else {
+        setError('Không thể tải danh sách phiên đấu giá: ' + (error.response?.data?.message || error.message));
+      }
     } finally {
       setLoading(false);
     }
@@ -137,26 +161,43 @@ function AuctionSession() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
+      if (!token) {
+        throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
+      }
       const response = await axios.get(`${API_URL}products`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.data && Array.isArray(response.data.data)) {
-        setProducts(response.data.data);
+        // Filter products with status 'DangDauGia'
+        const filteredProducts = response.data.data.filter(product => product.status === 'ChoDauGia');
+        setProducts(filteredProducts);
       } else {
         setError('Dữ liệu sản phẩm không đúng định dạng.');
       }
     } catch (error) {
       console.error('Error fetching products:', error);
-      setError('Không thể tải danh sách sản phẩm.');
+      if (error.response && error.response.status === 401) {
+        alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
+        window.location.href = '/login';
+      } else if (error.response && error.response.status === 403) {
+        alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator).');
+      } else {
+        setError('Không thể tải danh sách sản phẩm: ' + (error.response?.data?.message || error.message));
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSessions();
-    fetchProducts();
-  }, [searchTerm, statusFilter, itemFilter]);
+    if (token) {
+      fetchSessions();
+      fetchProducts();
+    } else {
+      setError('Vui lòng đăng nhập để xem danh sách phiên đấu giá.');
+      window.location.href = '/login';
+    }
+  }, [searchTerm, statusFilter, itemFilter, token]);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentSessions = sessions.slice(startIndex, startIndex + itemsPerPage);
@@ -204,9 +245,13 @@ function AuctionSession() {
   };
 
   const openSessionModal = (mode, session = null) => {
-    // THAY ĐỔI MỚI: Ngăn edit nếu phiên đã kết thúc
-    if (mode === 'edit' && session && session.status === 'Kết thúc') {
-      alert('Không thể chỉnh sửa phiên đấu giá đã kết thúc.');
+    if (mode === 'edit' && session && session.status !== 'Mở') {
+      alert('Chỉ có thể chỉnh sửa phiên đấu giá ở trạng thái Mở.');
+      return;
+    }
+    if (!token) {
+      alert('Vui lòng đăng nhập để thực hiện hành động này.');
+      window.location.href = '/login';
       return;
     }
     setModalMode(mode);
@@ -226,9 +271,9 @@ function AuctionSession() {
         checkinTime: session.checkinTime.replace(' ', 'T'),
         bidStart: session.bidStart.replace(' ', 'T'),
         bidEnd: session.bidEnd.replace(' ', 'T'),
-        bidStep: session.bidStep,
-        highestBid: session.highestBid.replace('.00', ''),
-        currentWinnerId: session.currentWinnerId,
+        bidStep: session.bidStep.replace(/[^\d]/g, ''), // Loại bỏ định dạng số
+        highestBid: session.highestBid.replace(/[^\d]/g, ''),
+        currentWinnerId: '', // Không cho phép nhập trong UI
       });
       setSelectedSession(session);
     } else {
@@ -262,6 +307,9 @@ function AuctionSession() {
   const openViewModal = async (sessionId) => {
     setLoading(true);
     try {
+      if (!token) {
+        throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
+      }
       const [sessionResponse, bidsResponse] = await Promise.all([
         axios.get(`${API_URL}auction-sessions/${sessionId}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -280,7 +328,14 @@ function AuctionSession() {
       }
     } catch (error) {
       console.error('Error fetching session details or bids:', error);
-      setError('Không thể tải chi tiết phiên đấu giá hoặc lượt bid.');
+      if (error.response && error.response.status === 401) {
+        alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
+        window.location.href = '/login';
+      } else if (error.response && error.response.status === 403) {
+        alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator).');
+      } else {
+        setError('Không thể tải chi tiết phiên đấu giá hoặc lượt bid: ' + (error.response?.data?.message || error.message));
+      }
     } finally {
       setLoading(false);
     }
@@ -301,6 +356,30 @@ function AuctionSession() {
   const handleSaveSession = async () => {
     setLoading(true);
     try {
+      if (!token) {
+        throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
+      }
+      console.log('Auth Token:', token);
+      console.log('Request URL:', modalMode === 'edit' && selectedSession ? `${API_URL}auction-sessions/${selectedSession.id}` : `${API_URL}auction-sessions`);
+      console.log('Request Data:', {
+        item_id: sessionForm.item,
+        created_by: sessionForm.creator,
+        start_time: sessionForm.startTime,
+        end_time: sessionForm.endTime,
+        regulation: sessionForm.regulation,
+        status: sessionForm.status,
+        method: sessionForm.method,
+        auction_org_id: sessionForm.auctionOrgId,
+        register_start: sessionForm.registerStart,
+        register_end: sessionForm.registerEnd,
+        checkin_time: sessionForm.checkinTime,
+        bid_start: sessionForm.bidStart,
+        bid_end: sessionForm.bidEnd,
+        bid_step: sessionForm.bidStep,
+        highest_bid: sessionForm.highestBid || null,
+        current_winner_id: null,
+      });
+
       const formData = {
         item_id: sessionForm.item,
         created_by: sessionForm.creator,
@@ -317,16 +396,17 @@ function AuctionSession() {
         bid_end: sessionForm.bidEnd,
         bid_step: sessionForm.bidStep,
         highest_bid: sessionForm.highestBid || null,
-        current_winner_id: sessionForm.currentWinnerId || null,
+        current_winner_id: null, // Luôn gửi null vì không nhập trong UI
       };
 
+      let response;
       if (modalMode === 'edit' && selectedSession) {
-        await axios.put(`${API_URL}auction-sessions/${selectedSession.id}`, formData, {
+        response = await axios.put(`${API_URL}auction-sessions/${selectedSession.id}`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
         alert('Cập nhật phiên đấu giá thành công!');
       } else {
-        await axios.post(`${API_URL}auction-sessions`, formData, {
+        response = await axios.post(`${API_URL}auction-sessions`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
         alert('Tạo phiên đấu giá thành công!');
@@ -335,7 +415,15 @@ function AuctionSession() {
       closeSessionModal();
     } catch (error) {
       console.error('Error saving session:', error);
-      alert('Có lỗi xảy ra khi lưu phiên đấu giá.');
+      console.error('Error Response:', error.response?.data);
+      if (error.response && error.response.status === 401) {
+        alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
+        window.location.href = '/login';
+      } else if (error.response && error.response.status === 403) {
+        alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator). Vai trò hiện tại của bạn có thể không được cấp phép.');
+      } else {
+        alert('Có lỗi xảy ra khi lưu phiên đấu giá: ' + (error.response?.data?.message || error.message));
+      }
     } finally {
       setLoading(false);
     }
@@ -345,6 +433,11 @@ function AuctionSession() {
     if (window.confirm('Bạn có chắc muốn xóa phiên này?')) {
       setLoading(true);
       try {
+        if (!token) {
+          throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
+        }
+        console.log('Auth Token for Delete:', token);
+        console.log('Delete URL:', `${API_URL}auction-sessions/${sessionId}`);
         await axios.delete(`${API_URL}auction-sessions/${sessionId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -352,7 +445,15 @@ function AuctionSession() {
         fetchSessions();
       } catch (error) {
         console.error('Error deleting session:', error);
-        alert('Có lỗi xảy ra khi xóa phiên đấu giá.');
+        console.error('Error Response:', error.response?.data);
+        if (error.response && error.response.status === 401) {
+          alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
+          window.location.href = '/login';
+        } else if (error.response && error.response.status === 403) {
+          alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator).');
+        } else {
+          alert('Có lỗi xảy ra khi xóa phiên đấu giá: ' + (error.response?.data?.message || error.message));
+        }
       } finally {
         setLoading(false);
       }
@@ -370,8 +471,7 @@ function AuctionSession() {
 
   const getActionButtons = (session) => {
     const buttons = [];
-    // THAY ĐỔI MỚI: Chỉ hiển thị nút Edit nếu trạng thái không phải Kết thúc
-    if (session.status !== 'Kết thúc') {
+    if (session.status === 'Mở') {
       buttons.push(
         <button
           key="edit"
@@ -444,7 +544,7 @@ function AuctionSession() {
           </select>
         </div>
         <button className={styles.addBtn} onClick={() => openSessionModal('add')}>
-          <i className="fas fa-plus"></i>
+          <i className="fa fa-plus"></i>
           Thêm phiên mới
         </button>
       </div>
@@ -488,7 +588,9 @@ function AuctionSession() {
                 </td>
                 <td data-label="Phương thức">{session.method}</td>
                 <td data-label="Giá cao nhất">{session.highestBid}</td>
-                <td data-label="Người thắng">{session.currentWinnerId === 'Chưa có' ? 'Chưa có' : session.winnerName}</td>
+                <td data-label="Người thắng">
+                  {session.status === 'Kết thúc' && session.currentWinnerId !== 'Chưa có' ? session.winnerName : 'Chưa có'}
+                </td>
                 <td data-label="Hành động">
                   <div className={styles.actionButtons}>{getActionButtons(session)}</div>
                 </td>
@@ -649,7 +751,6 @@ function AuctionSession() {
                   onChange={handleFormChange}
                 />
               </div>
-              {/* THAY ĐỔI: Chỉ hiển thị highestBid khi chỉnh sửa */}
               {modalMode === 'edit' && (
                 <div>
                   <label htmlFor="highestBid">Giá cao nhất (VND)</label>
@@ -659,20 +760,6 @@ function AuctionSession() {
                     name="highestBid"
                     placeholder="Nhập giá cao nhất"
                     value={sessionForm.highestBid}
-                    onChange={handleFormChange}
-                  />
-                </div>
-              )}
-              {/* THAY ĐỔI: Chỉ hiển thị currentWinnerId khi chỉnh sửa */}
-              {modalMode === 'edit' && (
-                <div>
-                  <label htmlFor="currentWinnerId">ID Người thắng</label>
-                  <input
-                    type="number"
-                    id="currentWinnerId"
-                    name="currentWinnerId"
-                    placeholder="Nhập ID người thắng"
-                    value={sessionForm.currentWinnerId}
                     onChange={handleFormChange}
                   />
                 </div>
@@ -715,7 +802,9 @@ function AuctionSession() {
               <p><strong>Thời gian đấu giá kết thúc:</strong> {selectedSession.bidEnd}</p>
               <p><strong>Bước giá:</strong> {selectedSession.bidStep} VND</p>
               <p><strong>Giá cao nhất:</strong> {selectedSession.highestBid} VND</p>
-              <p><strong>Người thắng:</strong> {selectedSession.currentWinnerId === 'Chưa có' ? 'Chưa có' : selectedSession.winnerName}</p>
+              {selectedSession.status === 'Kết thúc' && (
+                <p><strong>Người thắng:</strong> {selectedSession.currentWinnerId === 'Chưa có' ? 'Chưa có' : selectedSession.winnerName}</p>
+              )}
               <p><strong>Quy định:</strong> {selectedSession.regulation}</p>
               <div className={styles.orderHistory}>
                 <h3>Hồ sơ đấu giá</h3>
