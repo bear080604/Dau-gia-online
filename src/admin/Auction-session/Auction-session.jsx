@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import styles from './Auction-session.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
@@ -9,145 +10,170 @@ function AuctionSession() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
+  const [modalMode, setModalMode] = useState('add');
   const [selectedSession, setSelectedSession] = useState(null);
+  const [sessions, setSessions] = useState([]);
+  const [products, setProducts] = useState([]);
   const [sessionForm, setSessionForm] = useState({
     item: '',
-    creator: '1',
+    creator: '',
     startTime: '',
     endTime: '',
     regulation: '',
-    status: 'Mo'
+    status: 'Mo',
+    method: 'Đấu giá tự do',
+    auctionOrgId: '',
+    registerStart: '',
+    registerEnd: '',
+    checkinTime: '',
+    bidStart: '',
+    bidEnd: '',
+    bidStep: '',
+    highestBid: '',
+    currentWinnerId: '',
   });
-
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const itemsPerPage = 5;
 
-  const sessions = [
-    {
-      id: '#PH-001',
-      item: '#TS-001 - Bất động sản quận 1',
-      itemId: 'TS001',
-      creator: 'Admin QT',
-      creatorId: '1',
-      startTime: '2025-10-03 09:00',
-      endTime: '2025-10-03 17:00',
-      regulation: 'Đấu giá trực tuyến, bước nhảy 100.000đ',
-      regulationFull: 'Quy định đầy đủ: Đấu giá trực tuyến, bước nhảy tối thiểu 100.000đ, thời gian gia hạn 5 phút nếu có bid cuối.',
-      status: 'Đang diễn ra',
-      statusClass: 'statusDangdienra'
-    },
-    {
-      id: '#PH-002',
-      item: '#TS-002 - Xe hơi Mercedes',
-      itemId: 'TS002',
-      creator: 'Admin QT',
-      creatorId: '1',
-      startTime: '2025-10-04 10:00',
-      endTime: '2025-10-04 18:00',
-      regulation: 'Đấu giá kín, đặt cọc trước',
-      regulationFull: 'Quy định đầy đủ: Đấu giá kín, yêu cầu đặt cọc 10% giá khởi điểm trước khi tham gia.',
-      status: 'Mở',
-      statusClass: 'statusMo'
-    },
-    {
-      id: '#PH-003',
-      item: '#TS-003 - Đồng hồ Rolex',
-      itemId: 'TS003',
-      creator: 'Admin QT',
-      creatorId: '1',
-      startTime: '2025-10-01 14:00',
-      endTime: '2025-10-01 16:00',
-      regulation: 'Đấu giá mở, không giới hạn',
-      regulationFull: 'Quy định đầy đủ: Đấu giá mở, không giới hạn số lượt bid, công bố kết quả ngay sau kết thúc.',
-      status: 'Kết thúc',
-      statusClass: 'statusKetthuc'
-    },
-    {
-      id: '#PH-004',
-      item: '#TS-004 - Tranh nghệ thuật',
-      itemId: 'TS004',
-      creator: 'Admin QT',
-      creatorId: '1',
-      startTime: '2025-10-05 08:00',
-      endTime: '2025-10-05 12:00',
-      regulation: 'Đấu giá đặc biệt',
-      regulationFull: 'Quy định đầy đủ: Đấu giá đặc biệt cho nghệ thuật, kiểm tra chuyên viên trước.',
-      status: 'Mở',
-      statusClass: 'statusMo'
-    },
-    {
-      id: '#PH-005',
-      item: '#TS-005 - Máy ảnh Canon',
-      itemId: 'TS005',
-      creator: 'Admin QT',
-      creatorId: '1',
-      startTime: '2025-10-06 11:00',
-      endTime: '2025-10-06 15:00',
-      regulation: 'Đấu giá tiêu chuẩn',
-      regulationFull: 'Quy định đầy đủ: Đấu giá tiêu chuẩn, bước nhảy 50.000đ.',
-      status: 'Đang diễn ra',
-      statusClass: 'statusDangdienra'
-    },
-    {
-      id: '#PH-006',
-      item: '#TS-006 - Điện thoại iPhone',
-      itemId: 'TS006',
-      creator: 'Admin QT',
-      creatorId: '1',
-      startTime: '2025-10-07 13:00',
-      endTime: '2025-10-07 17:00',
-      regulation: 'Đấu giá nhanh',
-      regulationFull: 'Quy định đầy đủ: Đấu giá nhanh, thời gian ngắn 4 giờ.',
-      status: 'Mở',
-      statusClass: 'statusMo'
-    },
-    {
-      id: '#PH-007',
-      item: '#TS-007 - Đất nền ngoại ô',
-      itemId: 'TS007',
-      creator: 'Admin QT',
-      creatorId: '1',
-      startTime: '2025-09-30 09:00',
-      endTime: '2025-09-30 13:00',
-      regulation: 'Đấu giá bất động sản',
-      regulationFull: 'Quy định đầy đủ: Đấu giá bất động sản, kiểm tra pháp lý trước.',
-      status: 'Kết thúc',
-      statusClass: 'statusKetthuc'
-    },
-  ];
+  const API_URL = process.env.REACT_APP_API_URL;
+  const token = localStorage.getItem('authToken');
 
-  const applyFilters = () => {
-    return sessions.filter(session => {
-      const searchMatch =
-        session.item.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        session.creator.toLowerCase().includes(searchTerm.toLowerCase());
+  const transformSession = (session) => {
+    const winnerProfile = session.profiles.find(profile => profile.user.user_id === session.current_winner_id);
+    const winnerName = winnerProfile ? winnerProfile.user.full_name : 'Chưa có';
+    const highestBid = session.highest_bid ? Number(session.highest_bid).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : 'Chưa có';
+    const bidStep = session.bid_step ? Number(session.bid_step).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : 'Chưa có';
 
-      const statusMatch = !statusFilter || session.status.toLowerCase().includes(statusFilter.toLowerCase());
-      const itemMatch = !itemFilter || session.itemId.toLowerCase().includes(itemFilter.toLowerCase());
-      return searchMatch && statusMatch && itemMatch;
-    });
+    return {
+      id: session.session_id,
+      item: session.item.name,
+      itemId: session.item_id,
+      creator: session.auction_org.full_name,
+      creatorId: session.created_by,
+      startTime: session.start_time.replace('T', ' ').slice(0, 16),
+      endTime: session.end_time.replace('T', ' ').slice(0, 16),
+      regulation: session.regulation,
+      status: session.status === 'Mo' ? 'Mở' :
+              session.status === 'DangDienRa' ? 'Đang diễn ra' : 'Kết thúc',
+      statusClass: session.status === 'Mo' ? 'statusMo' :
+                   session.status === 'DangDienRa' ? 'statusDangdienra' : 'statusKetthuc',
+      method: session.method,
+      auctionOrgId: session.auction_org_id,
+      registerStart: session.register_start.replace('T', ' ').slice(0, 16),
+      registerEnd: session.register_end.replace('T', ' ').slice(0, 16),
+      checkinTime: session.checkin_time.replace('T', ' ').slice(0, 16),
+      bidStart: session.bid_start.replace('T', ' ').slice(0, 16),
+      bidEnd: session.bid_end.replace('T', ' ').slice(0, 16),
+      bidStep,
+      highestBid,
+      currentWinnerId: session.current_winner_id || 'Chưa có',
+      auctionOrgName: session.auction_org.full_name,
+      winnerName,
+      profiles: session.profiles,
+    };
   };
 
-  const filteredSessions = applyFilters();
-  const totalPages = Math.ceil(filteredSessions.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentSessions = filteredSessions.slice(startIndex, endIndex);
+  const fetchBids = async (sessionId) => {
+    try {
+      const response = await axios.get(`${API_URL}bids/${sessionId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.data && response.data.status && Array.isArray(response.data.bids)) {
+        const sessionResponse = await axios.get(`${API_URL}auction-sessions/${sessionId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const profiles = sessionResponse.data.session.profiles || [];
+
+        const bidsWithNames = await Promise.all(response.data.bids.map(async (bid) => {
+          const profile = profiles.find(p => p.user_id === bid.user_id);
+          const userName = profile ? profile.user.full_name : 'Không xác định';
+          return {
+            id: bid.id,
+            userId: bid.user_id,
+            amount: Number(bid.amount).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+            createdAt: bid.bid_time ? bid.bid_time.replace('T', ' ').slice(0, 16) : 'Không có thời gian',
+            userName: userName,
+            originalAmount: Number(bid.amount),
+          };
+        }));
+        return bidsWithNames.sort((a, b) => b.originalAmount - a.originalAmount);
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching bids:', error);
+      return [];
+    }
+  };
+
+  const fetchSessions = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`${API_URL}auction-sessions`, {
+        params: { search: searchTerm, status: statusFilter, item: itemFilter },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.data && Array.isArray(response.data.sessions)) {
+        const transformedSessions = response.data.sessions.map(transformSession);
+        setSessions(transformedSessions);
+        setTotalPages(Math.ceil(transformedSessions.length / itemsPerPage));
+      } else {
+        console.error('Unexpected API response structure:', response.data);
+        setSessions([]);
+        setError('Dữ liệu từ API không đúng định dạng.');
+      }
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      setSessions([]);
+      setError('Không thể tải danh sách phiên đấu giá.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${API_URL}products`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.data && Array.isArray(response.data.data)) {
+        setProducts(response.data.data);
+      } else {
+        setError('Dữ liệu sản phẩm không đúng định dạng.');
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setError('Không thể tải danh sách sản phẩm.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setCurrentPage(1);
+    fetchSessions();
+    fetchProducts();
   }, [searchTerm, statusFilter, itemFilter]);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentSessions = sessions.slice(startIndex, startIndex + itemsPerPage);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
+    setCurrentPage(1);
   };
 
   const handleStatusFilterChange = (e) => {
     setStatusFilter(e.target.value);
+    setCurrentPage(1);
   };
 
   const handleItemFilterChange = (e) => {
     setItemFilter(e.target.value);
+    setCurrentPage(1);
   };
 
   const handlePageChange = (page) => {
@@ -174,11 +200,15 @@ function AuctionSession() {
         </button>
       );
     }
-
     return pages;
   };
 
   const openSessionModal = (mode, session = null) => {
+    // THAY ĐỔI MỚI: Ngăn edit nếu phiên đã kết thúc
+    if (mode === 'edit' && session && session.status === 'Kết thúc') {
+      alert('Không thể chỉnh sửa phiên đấu giá đã kết thúc.');
+      return;
+    }
     setModalMode(mode);
     if (session) {
       setSessionForm({
@@ -186,19 +216,41 @@ function AuctionSession() {
         creator: session.creatorId,
         startTime: session.startTime.replace(' ', 'T'),
         endTime: session.endTime.replace(' ', 'T'),
-        regulation: session.regulationFull,
+        regulation: session.regulation,
         status: session.status === 'Mở' ? 'Mo' :
-                session.status === 'Đang diễn ra' ? 'DangDienRa' : 'KetThuc'
+                session.status === 'Đang diễn ra' ? 'DangDienRa' : 'KetThuc',
+        method: session.method,
+        auctionOrgId: session.auctionOrgId,
+        registerStart: session.registerStart.replace(' ', 'T'),
+        registerEnd: session.registerEnd.replace(' ', 'T'),
+        checkinTime: session.checkinTime.replace(' ', 'T'),
+        bidStart: session.bidStart.replace(' ', 'T'),
+        bidEnd: session.bidEnd.replace(' ', 'T'),
+        bidStep: session.bidStep,
+        highestBid: session.highestBid.replace('.00', ''),
+        currentWinnerId: session.currentWinnerId,
       });
+      setSelectedSession(session);
     } else {
       setSessionForm({
         item: '',
-        creator: '1',
+        creator: '',
         startTime: '',
         endTime: '',
         regulation: '',
-        status: 'Mo'
+        status: 'Mo',
+        method: 'Đấu giá tự do',
+        auctionOrgId: '',
+        registerStart: '',
+        registerEnd: '',
+        checkinTime: '',
+        bidStart: '',
+        bidEnd: '',
+        bidStep: '',
+        highestBid: '',
+        currentWinnerId: '',
       });
+      setSelectedSession(null);
     }
     setShowSessionModal(true);
   };
@@ -207,9 +259,31 @@ function AuctionSession() {
     setShowSessionModal(false);
   };
 
-  const openViewModal = (session) => {
-    setSelectedSession(session);
-    setShowViewModal(true);
+  const openViewModal = async (sessionId) => {
+    setLoading(true);
+    try {
+      const [sessionResponse, bidsResponse] = await Promise.all([
+        axios.get(`${API_URL}auction-sessions/${sessionId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetchBids(sessionId),
+      ]);
+
+      if (sessionResponse.data && sessionResponse.data.status && sessionResponse.data.session) {
+        const session = sessionResponse.data.session;
+        const transformedSession = transformSession(session);
+        transformedSession.bids = bidsResponse;
+        setSelectedSession(transformedSession);
+        setShowViewModal(true);
+      } else {
+        setError('Không tìm thấy phiên đấu giá hoặc dữ liệu không hợp lệ.');
+      }
+    } catch (error) {
+      console.error('Error fetching session details or bids:', error);
+      setError('Không thể tải chi tiết phiên đấu giá hoặc lượt bid.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const closeViewModal = () => {
@@ -218,20 +292,70 @@ function AuctionSession() {
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setSessionForm(prev => ({
+    setSessionForm((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleSaveSession = () => {
-    alert('Chức năng lưu chỉ là demo, không lưu thực tế.');
-    closeSessionModal();
+  const handleSaveSession = async () => {
+    setLoading(true);
+    try {
+      const formData = {
+        item_id: sessionForm.item,
+        created_by: sessionForm.creator,
+        start_time: sessionForm.startTime,
+        end_time: sessionForm.endTime,
+        regulation: sessionForm.regulation,
+        status: sessionForm.status,
+        method: sessionForm.method,
+        auction_org_id: sessionForm.auctionOrgId,
+        register_start: sessionForm.registerStart,
+        register_end: sessionForm.registerEnd,
+        checkin_time: sessionForm.checkinTime,
+        bid_start: sessionForm.bidStart,
+        bid_end: sessionForm.bidEnd,
+        bid_step: sessionForm.bidStep,
+        highest_bid: sessionForm.highestBid || null,
+        current_winner_id: sessionForm.currentWinnerId || null,
+      };
+
+      if (modalMode === 'edit' && selectedSession) {
+        await axios.put(`${API_URL}auction-sessions/${selectedSession.id}`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        alert('Cập nhật phiên đấu giá thành công!');
+      } else {
+        await axios.post(`${API_URL}auction-sessions`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        alert('Tạo phiên đấu giá thành công!');
+      }
+      fetchSessions();
+      closeSessionModal();
+    } catch (error) {
+      console.error('Error saving session:', error);
+      alert('Có lỗi xảy ra khi lưu phiên đấu giá.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteSession = (session) => {
+  const handleDeleteSession = async (sessionId) => {
     if (window.confirm('Bạn có chắc muốn xóa phiên này?')) {
-      alert('Chức năng xóa chỉ là demo, không xóa thực tế.');
+      setLoading(true);
+      try {
+        await axios.delete(`${API_URL}auction-sessions/${sessionId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        alert('Xóa phiên đấu giá thành công!');
+        fetchSessions();
+      } catch (error) {
+        console.error('Error deleting session:', error);
+        alert('Có lỗi xảy ra khi xóa phiên đấu giá.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -239,30 +363,43 @@ function AuctionSession() {
     const statusMap = {
       'Mở': 'statusMo',
       'Đang diễn ra': 'statusDangdienra',
-      'Kết thúc': 'statusKetthuc'
+      'Kết thúc': 'statusKetthuc',
     };
     return statusMap[status] || 'statusMo';
   };
 
   const getActionButtons = (session) => {
     const buttons = [];
-
+    // THAY ĐỔI MỚI: Chỉ hiển thị nút Edit nếu trạng thái không phải Kết thúc
+    if (session.status !== 'Kết thúc') {
+      buttons.push(
+        <button
+          key="edit"
+          className={`${styles.btn} ${styles.btnPrimary}`}
+          onClick={() => openSessionModal('edit', session)}
+        >
+          <i className="fa fa-pencil" aria-hidden="true"></i>
+        </button>
+      );
+    }
     buttons.push(
-      <button key="edit" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openSessionModal('edit', session)}>
-        <i className="fa fa-pencil" aria-hidden="true"></i>
-      </button>
-    );
-    buttons.push(
-      <button key="delete" className={`${styles.btn} ${styles.btnDanger}`} onClick={() => handleDeleteSession(session)}>
+      <button
+        key="delete"
+        className={`${styles.btn} ${styles.btnDanger}`}
+        onClick={() => handleDeleteSession(session.id)}
+      >
         <i className="fa fa-trash" aria-hidden="true"></i>
       </button>
     );
     buttons.push(
-      <button key="view" className={`${styles.btn} ${styles.btnSuccess}`} onClick={() => openViewModal(session)}>
+      <button
+        key="view"
+        className={`${styles.btn} ${styles.btnSuccess}`}
+        onClick={() => openViewModal(session.id)}
+      >
         <i className="fa fa-eye" aria-hidden="true"></i>
       </button>
     );
-
     return buttons;
   };
 
@@ -293,19 +430,17 @@ function AuctionSession() {
         <div className={styles.filters}>
           <select className={styles.filterSelect} value={statusFilter} onChange={handleStatusFilterChange}>
             <option value="">Tất cả trạng thái</option>
-            <option value="Mở">Mở</option>
-            <option value="Đang diễn ra">Đang diễn ra</option>
-            <option value="Kết thúc">Kết thúc</option>
+            <option value="Mo">Mở</option>
+            <option value="DangDienRa">Đang diễn ra</option>
+            <option value="KetThuc">Kết thúc</option>
           </select>
           <select className={styles.filterSelect} value={itemFilter} onChange={handleItemFilterChange}>
             <option value="">Tất cả tài sản</option>
-            <option value="TS001">Bất động sản quận 1</option>
-            <option value="TS002">Xe hơi Mercedes</option>
-            <option value="TS003">Đồng hồ Rolex</option>
-            <option value="TS004">Tranh nghệ thuật</option>
-            <option value="TS005">Máy ảnh Canon</option>
-            <option value="TS006">Điện thoại iPhone</option>
-            <option value="TS007">Đất nền ngoại ô</option>
+            {products.map((product) => (
+              <option key={product.id} value={product.id}>
+                {`${product.id} - ${product.name}`}
+              </option>
+            ))}
           </select>
         </div>
         <button className={styles.addBtn} onClick={() => openSessionModal('add')}>
@@ -314,44 +449,56 @@ function AuctionSession() {
         </button>
       </div>
 
-      <table className={styles.dataTable}>
-        <thead>
-          <tr>
-            <th>Mã Phiên</th>
-            <th>Tài sản</th>
-            <th>Người tạo</th>
-            <th>Thời gian bắt đầu</th>
-            <th>Thời gian kết thúc</th>
-            <th>Quy định</th>
-            <th>Trạng thái</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentSessions.map(session => (
-            <tr key={session.id}>
-              <td data-label="Mã Phiên">{session.id}</td>
-              <td data-label="Tài sản">{session.item}</td>
-              <td data-label="Người tạo">{session.creator}</td>
-              <td data-label="Thời gian bắt đầu">{session.startTime}</td>
-              <td data-label="Thời gian kết thúc">{session.endTime}</td>
-              <td data-label="Quy định">{session.regulation}</td>
-              <td data-label="Trạng thái">
-                <span className={`${styles.statusBadge} ${styles[getStatusClass(session.status)]}`}>{session.status}</span>
-              </td>
-              <td data-label="Hành động">
-                <div className={styles.actionButtons}>
-                  {getActionButtons(session)}
-                </div>
-              </td>
+      {loading ? (
+        <p>Đang tải dữ liệu...</p>
+      ) : error ? (
+        <p className={styles.error}>{error}</p>
+      ) : currentSessions.length === 0 ? (
+        <p>Không có phiên đấu giá nào.</p>
+      ) : (
+        <table className={styles.dataTable}>
+          <thead>
+            <tr>
+              <th>Mã Phiên</th>
+              <th>Tài sản</th>
+              <th>Người tạo</th>
+              <th>Thời gian bắt đầu</th>
+              <th>Thời gian kết thúc</th>
+              <th>Quy định</th>
+              <th>Trạng thái</th>
+              <th>Phương thức</th>
+              <th>Giá cao nhất</th>
+              <th>Người thắng</th>
+              <th>Hành động</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {currentSessions.map((session) => (
+              <tr key={session.id}>
+                <td data-label="Mã Phiên">{session.id}</td>
+                <td data-label="Tài sản">{session.item}</td>
+                <td data-label="Người tạo">{session.creator}</td>
+                <td data-label="Thời gian bắt đầu">{session.startTime}</td>
+                <td data-label="Thời gian kết thúc">{session.endTime}</td>
+                <td data-label="Quy định">{session.regulation}</td>
+                <td data-label="Trạng thái">
+                  <span className={`${styles.statusBadge} ${styles[session.statusClass]}`}>
+                    {session.status}
+                  </span>
+                </td>
+                <td data-label="Phương thức">{session.method}</td>
+                <td data-label="Giá cao nhất">{session.highestBid}</td>
+                <td data-label="Người thắng">{session.currentWinnerId === 'Chưa có' ? 'Chưa có' : session.winnerName}</td>
+                <td data-label="Hành động">
+                  <div className={styles.actionButtons}>{getActionButtons(session)}</div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
-      <div className={styles.pagination}>
-        {renderPagination()}
-      </div>
+      <div className={styles.pagination}>{renderPagination()}</div>
 
       {/* Add/Edit Session Modal */}
       {showSessionModal && (
@@ -366,24 +513,17 @@ function AuctionSession() {
             <div className={styles.modalBody}>
               <div>
                 <label htmlFor="item">Tài sản (ID)</label>
-                <select
-                  id="item"
-                  name="item"
-                  value={sessionForm.item}
-                  onChange={handleFormChange}
-                >
+                <select id="item" name="item" value={sessionForm.item} onChange={handleFormChange}>
                   <option value="">Chọn tài sản</option>
-                  <option value="TS001">TS001 - Bất động sản quận 1</option>
-                  <option value="TS002">TS002 - Xe hơi Mercedes</option>
-                  <option value="TS003">TS003 - Đồng hồ Rolex</option>
-                  <option value="TS004">TS004 - Tranh nghệ thuật</option>
-                  <option value="TS005">TS005 - Máy ảnh Canon</option>
-                  <option value="TS006">TS006 - Điện thoại iPhone</option>
-                  <option value="TS007">TS007 - Đất nền ngoại ô</option>
+                  {products.map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {`${product.id} - ${product.name}`}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
-                <label htmlFor="creator">Người tạo (ID User)</label>
+                <label htmlFor="creator">Người tạo (ID)</label>
                 <input
                   type="number"
                   id="creator"
@@ -391,7 +531,6 @@ function AuctionSession() {
                   placeholder="Nhập ID người tạo"
                   value={sessionForm.creator}
                   onChange={handleFormChange}
-                  readOnly
                 />
               </div>
               <div>
@@ -426,21 +565,126 @@ function AuctionSession() {
               </div>
               <div>
                 <label htmlFor="status">Trạng thái</label>
-                <select
-                  id="status"
-                  name="status"
-                  value={sessionForm.status}
-                  onChange={handleFormChange}
-                >
+                <select id="status" name="status" value={sessionForm.status} onChange={handleFormChange}>
                   <option value="Mo">Mở</option>
                   <option value="DangDienRa">Đang diễn ra</option>
                   <option value="KetThuc">Kết thúc</option>
                 </select>
               </div>
+              <div>
+                <label htmlFor="method">Phương thức</label>
+                <select id="method" name="method" value={sessionForm.method} onChange={handleFormChange}>
+                  <option value="Đấu giá tự do">Đấu giá tự do</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="auctionOrgId">ID Tổ chức đấu giá</label>
+                <input
+                  type="number"
+                  id="auctionOrgId"
+                  name="auctionOrgId"
+                  placeholder="Nhập ID tổ chức"
+                  value={sessionForm.auctionOrgId}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="registerStart">Thời gian đăng ký bắt đầu</label>
+                <input
+                  type="datetime-local"
+                  id="registerStart"
+                  name="registerStart"
+                  value={sessionForm.registerStart}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="registerEnd">Thời gian đăng ký kết thúc</label>
+                <input
+                  type="datetime-local"
+                  id="registerEnd"
+                  name="registerEnd"
+                  value={sessionForm.registerEnd}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="checkinTime">Thời gian check-in</label>
+                <input
+                  type="datetime-local"
+                  id="checkinTime"
+                  name="checkinTime"
+                  value={sessionForm.checkinTime}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="bidStart">Thời gian đấu giá bắt đầu</label>
+                <input
+                  type="datetime-local"
+                  id="bidStart"
+                  name="bidStart"
+                  value={sessionForm.bidStart}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="bidEnd">Thời gian đấu giá kết thúc</label>
+                <input
+                  type="datetime-local"
+                  id="bidEnd"
+                  name="bidEnd"
+                  value={sessionForm.bidEnd}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="bidStep">Bước giá (VND)</label>
+                <input
+                  type="number"
+                  id="bidStep"
+                  name="bidStep"
+                  placeholder="Nhập bước giá"
+                  value={sessionForm.bidStep}
+                  onChange={handleFormChange}
+                />
+              </div>
+              {/* THAY ĐỔI: Chỉ hiển thị highestBid khi chỉnh sửa */}
+              {modalMode === 'edit' && (
+                <div>
+                  <label htmlFor="highestBid">Giá cao nhất (VND)</label>
+                  <input
+                    type="number"
+                    id="highestBid"
+                    name="highestBid"
+                    placeholder="Nhập giá cao nhất"
+                    value={sessionForm.highestBid}
+                    onChange={handleFormChange}
+                  />
+                </div>
+              )}
+              {/* THAY ĐỔI: Chỉ hiển thị currentWinnerId khi chỉnh sửa */}
+              {modalMode === 'edit' && (
+                <div>
+                  <label htmlFor="currentWinnerId">ID Người thắng</label>
+                  <input
+                    type="number"
+                    id="currentWinnerId"
+                    name="currentWinnerId"
+                    placeholder="Nhập ID người thắng"
+                    value={sessionForm.currentWinnerId}
+                    onChange={handleFormChange}
+                  />
+                </div>
+              )}
             </div>
             <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSaveSession}>Lưu</button>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeSessionModal}>Hủy</button>
+              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSaveSession}>
+                Lưu
+              </button>
+              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeSessionModal}>
+                Hủy
+              </button>
             </div>
           </div>
         </div>
@@ -458,40 +702,74 @@ function AuctionSession() {
               <p><strong>Mã phiên:</strong> {selectedSession.id}</p>
               <p><strong>Tài sản:</strong> {selectedSession.item}</p>
               <p><strong>Người tạo:</strong> {selectedSession.creator}</p>
+              <p><strong>Tổ chức đấu giá:</strong> {selectedSession.auctionOrgName}</p>
               <p><strong>Thời gian bắt đầu:</strong> {selectedSession.startTime}</p>
               <p><strong>Thời gian kết thúc:</strong> {selectedSession.endTime}</p>
               <p><strong>Trạng thái:</strong> {selectedSession.status}</p>
-              <p><strong>Quy định:</strong> {selectedSession.regulationFull}</p>
+              <p><strong>Phương thức:</strong> {selectedSession.method}</p>
+              <p><strong>ID Tổ chức đấu giá:</strong> {selectedSession.auctionOrgId}</p>
+              <p><strong>Thời gian đăng ký bắt đầu:</strong> {selectedSession.registerStart}</p>
+              <p><strong>Thời gian đăng ký kết thúc:</strong> {selectedSession.registerEnd}</p>
+              <p><strong>Thời gian check-in:</strong> {selectedSession.checkinTime}</p>
+              <p><strong>Thời gian đấu giá bắt đầu:</strong> {selectedSession.bidStart}</p>
+              <p><strong>Thời gian đấu giá kết thúc:</strong> {selectedSession.bidEnd}</p>
+              <p><strong>Bước giá:</strong> {selectedSession.bidStep} VND</p>
+              <p><strong>Giá cao nhất:</strong> {selectedSession.highestBid} VND</p>
+              <p><strong>Người thắng:</strong> {selectedSession.currentWinnerId === 'Chưa có' ? 'Chưa có' : selectedSession.winnerName}</p>
+              <p><strong>Quy định:</strong> {selectedSession.regulation}</p>
               <div className={styles.orderHistory}>
-                <h3>Lịch sử lượt bid (demo)</h3>
+                <h3>Hồ sơ đấu giá</h3>
                 <table className={styles.orderTable}>
                   <thead>
                     <tr>
-                      <th>Mã bid</th>
-                      <th>Người bid</th>
-                      <th>Giá bid</th>
+                      <th>Mã hồ sơ</th>
+                      <th>Người tham gia</th>
+                      <th>Số tiền đặt cọc</th>
                       <th>Thời gian</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>BID001</td>
-                      <td>User 1</td>
-                      <td>2.600.000.000đ</td>
-                      <td>2025-10-03 10:00</td>
-                    </tr>
-                    <tr>
-                      <td>BID002</td>
-                      <td>User 2</td>
-                      <td>2.700.000.000đ</td>
-                      <td>2025-10-03 11:00</td>
-                    </tr>
+                    {selectedSession.profiles.map((profile, index) => (
+                      <tr key={index}>
+                        <td>HS{profile.profile_id}</td>
+                        <td>{profile.user.full_name}</td>
+                        <td>{Number(profile.deposit_amount).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} VND</td>
+                        <td>{profile.created_at.replace('T', ' ').slice(0, 16)}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
+              {selectedSession.bids && selectedSession.bids.length > 0 && (
+                <div className={styles.orderHistory}>
+                  <h3>Lượt đấu giá</h3>
+                  <table className={styles.orderTable}>
+                    <thead>
+                      <tr>
+                        <th>Mã lượt bid</th>
+                        <th>Người đấu giá</th>
+                        <th>Giá bid</th>
+                        <th>Thời gian</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedSession.bids.map((bid, index) => (
+                        <tr key={index}>
+                          <td>BID{bid.id}</td>
+                          <td>{bid.userName}</td>
+                          <td>{bid.amount} VND</td>
+                          <td>{bid.createdAt}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
             <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeViewModal}>Đóng</button>
+              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeViewModal}>
+                Đóng
+              </button>
             </div>
           </div>
         </div>

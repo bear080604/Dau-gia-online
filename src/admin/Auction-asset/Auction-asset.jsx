@@ -28,7 +28,7 @@ function AuctionAsset() {
   });
 
   const itemsPerPage = 5;
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/';
 
   // Fetch assets from API
   useEffect(() => {
@@ -171,7 +171,12 @@ function AuctionAsset() {
   const openViewModal = async (asset) => {
     setSelectedAsset(asset);
     try {
-      const response = await axios.get(`${API_URL}auction-profiles/${asset.id.replace('#TS-', '')}/bids`);
+      // Giả sử có endpoint để lấy lịch sử bid, bạn cần kiểm tra backend có hỗ trợ không
+      const response = await axios.get(`${API_URL}auction-items/${asset.id.replace('#TS-', '')}/bids`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
       setBidHistory(response.data.data);
     } catch (error) {
       console.error('Lỗi khi lấy lịch sử bid:', error.response?.data || error);
@@ -237,15 +242,23 @@ function AuctionAsset() {
       };
 
       if (modalMode === 'edit') {
-        await axios.put(`${API_URL}/auction-profiles/${assetForm.code.replace('#TS-', '')}`, assetData);
+        await axios.put(`${API_URL}auction-items/${assetForm.code.replace('#TS-', '')}`, assetData, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
         alert('Cập nhật tài sản thành công!');
       } else {
-        await axios.post(`${API_URL}/auction-profiles`, assetData);
+        await axios.post(`${API_URL}auction-items`, assetData, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
         alert('Thêm tài sản thành công!');
       }
 
       // Refresh assets
-      const response = await axios.get(`${API_URL}/auction-profiles`);
+      const response = await axios.get(`${API_URL}products`);
       const formattedAssets = response.data.data.map(asset => ({
         id: `#TS-${asset.id.toString().padStart(3, '0')}`,
         name: asset.name,
@@ -284,9 +297,13 @@ function AuctionAsset() {
   const handleDeleteAsset = async (asset) => {
     if (window.confirm('Bạn có chắc muốn xóa tài sản này?')) {
       try {
-        await axios.delete(`${API_URL}/auction-profiles/${asset.id.replace('#TS-', '')}`);
+        await axios.delete(`${API_URL}auction-items/${asset.id.replace('#TS-', '')}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
         alert('Xóa tài sản thành công!');
-        const response = await axios.get(`${API_URL}/auction-profiles`);
+        const response = await axios.get(`${API_URL}products`);
         const formattedAssets = response.data.data.map(asset => ({
           id: `#TS-${asset.id.toString().padStart(3, '0')}`,
           name: asset.name,
@@ -324,11 +341,15 @@ function AuctionAsset() {
 
   const handleApproveAsset = async (asset) => {
     try {
-      await axios.put(`${API_URL}/auction-profiles/${asset.id.replace('#TS-', '')}/status`, {
+      await axios.put(`${API_URL}auction-items/${asset.id.replace('#TS-', '')}`, {
         status: 'ChoDauGia',
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
       alert('Duyệt tài sản thành công!');
-      const response = await axios.get(`${API_URL}/auction-profiles`);
+      const response = await axios.get(`${API_URL}products`);
       const formattedAssets = response.data.data.map(asset => ({
         id: `#TS-${asset.id.toString().padStart(3, '0')}`,
         name: asset.name,
@@ -369,13 +390,17 @@ function AuctionAsset() {
       return;
     }
     try {
-      await axios.put(`${API_URL}/auction-profiles/${selectedAsset.id.replace('#TS-', '')}/status`, {
+      await axios.put(`${API_URL}auction-items/${selectedAsset.id.replace('#TS-', '')}`, {
         status: 'Huy',
         reject_reason: rejectReason,
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
       alert(`Từ chối tài sản thành công với lý do: ${rejectReason}`);
       closeRejectModal();
-      const response = await axios.get(`${API_URL}/auction-profiles`);
+      const response = await axios.get(`${API_URL}products`);
       const formattedAssets = response.data.data.map(asset => ({
         id: `#TS-${asset.id.toString().padStart(3, '0')}`,
         name: asset.name,

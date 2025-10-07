@@ -1,13 +1,13 @@
-# TODO List for Login and Header Update
+# Upgrade WebSocket to Socket.IO in Detail Page
 
-- [x] Create UserContext for global user state management
-- [x] Wrap App with UserProvider
-- [x] Update login.jsx to set user on successful login and redirect to home
-- [x] Update header.jsx to conditionally show user name and logout link when logged in
-- [x] Test the functionality (login, redirect, header update, logout)
-
-## Notes
-- Assumed API returns { user: { name: '...', email: '...' } } on login
-- Logout calls /logout API and clears user state
-- Header shows "Xin chào, [name or email]" and "Đăng Xuất" when logged in
-- Links updated to /login and /register
+## Tasks
+- [x] Import Socket.IO client in detai.jsx
+- [x] Replace native WebSocket with Socket.IO connection
+- [x] Join auction room on connection
+- [x] Listen for 'bid_update' and 'status_update' events
+- [x] Update currentBidPrice and auctionItem status on events
+- [x] Add connection status updates
+- [x] Handle disconnections and reconnections
+- [x] Remove old WebSocket code
+- [x] Update status_update to handle full auctionItem updates
+- [ ] Test the implementation

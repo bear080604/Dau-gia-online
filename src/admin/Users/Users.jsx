@@ -8,7 +8,7 @@ function Users() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
+  const [modalMode, setModalMode] = useState('add');
   const [selectedUser, setSelectedUser] = useState(null);
   const [userForm, setUserForm] = useState({
     name: '',
@@ -17,91 +17,44 @@ function Users() {
     password: '',
     role: 'User'
   });
+  const [users, setUsers] = useState([]); // Khởi tạo là mảng rỗng
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const itemsPerPage = 5;
 
-  const users = [
-    {
-      id: 1,
-      name: 'Admin QT',
-      email: 'admin@example.com',
-      phone: '0123456789',
-      role: 'Administrator',
-      roleClass: 'roleAdmin',
-      createdDate: '2025-09-01 09:00',
-      password: 'hashed_password_1',
-      deletedAt: 'NULL'
-    },
-    {
-      id: 2,
-      name: 'Nguyễn Văn A',
-      email: 'nva@example.com',
-      phone: '0987654321',
-      role: 'Customer',
-      roleClass: 'roleCustomer',
-      createdDate: '2025-09-15 14:30',
-      password: 'hashed_password_2',
-      deletedAt: 'NULL'
-    },
-    {
-      id: 3,
-      name: 'Trần Thị B',
-      email: 'ttb@example.com',
-      phone: '0976543210',
-      role: 'User',
-      roleClass: 'roleUser',
-      createdDate: '2025-09-20 11:15',
-      password: 'hashed_password_3',
-      deletedAt: 'NULL'
-    },
-    {
-      id: 4,
-      name: 'Lê Văn C',
-      email: 'lvc@example.com',
-      phone: '0967534209',
-      role: 'Chuyên viên thẩm định',
-      roleClass: 'roleChuyenvienttc',
-      createdDate: '2025-09-25 16:45',
-      password: 'hashed_password_4',
-      deletedAt: 'NULL'
-    },
-    {
-      id: 5,
-      name: 'Phạm Thị D',
-      email: 'ptd@example.com',
-      phone: '0958526310',
-      role: 'Đấu giá viên',
-      roleClass: 'roleDaugiavien',
-      createdDate: '2025-09-28 13:20',
-      password: 'hashed_password_5',
-      deletedAt: 'NULL'
-    },
-    {
-      id: 6,
-      name: 'Hoàng Văn E',
-      email: 'hve@example.com',
-      phone: '0947515421',
-      role: 'Customer',
-      roleClass: 'roleCustomer',
-      createdDate: '2025-10-01 10:10',
-      password: 'hashed_password_6',
-      deletedAt: 'NULL'
-    },
-    {
-      id: 7,
-      name: 'Vũ Thị F',
-      email: 'vtf@example.com',
-      phone: '0936504632',
-      role: 'Đơn vị thực hiện',
-      roleClass: 'roleDonvithuc',
-      createdDate: '2025-10-01 15:55',
-      password: 'hashed_password_7',
-      deletedAt: 'NULL'
-    },
-  ];
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}user`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+
+        const data = await response.json();
+        // Đảm bảo data là mảng trước khi set
+        setUsers(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const applyFilters = () => {
-    return users.filter(user => {
+    // Kiểm tra nếu users là mảng, nếu không thì trả về mảng rỗng
+    const validUsers = Array.isArray(users) ? users : [];
+    return validUsers.filter(user => {
       const searchMatch =
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -200,14 +153,58 @@ function Users() {
     }));
   };
 
-  const handleSaveUser = () => {
-    alert('Chức năng lưu chỉ là demo, không lưu thực tế.');
-    closeUserModal();
+  const handleSaveUser = async () => {
+    try {
+      const url = modalMode === 'add' ? `${process.env.REACT_APP_API_URL}/register` : `${process.env.REACT_APP_API_URL}/users/${selectedUser.id}`;
+      const method = modalMode === 'add' ? 'POST' : 'PUT';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: userForm.name,
+          email: userForm.email,
+          phone: userForm.phone,
+          password: userForm.password || undefined,
+          role: userForm.role,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save user');
+      }
+
+      const data = await response.json();
+      alert('Người dùng đã được lưu thành công!');
+      setUsers(prevUsers => modalMode === 'add' ? [...prevUsers, data] : prevUsers.map(u => u.id === data.id ? data : u));
+      closeUserModal();
+    } catch (err) {
+      alert('Lỗi khi lưu người dùng: ' + err.message);
+    }
   };
 
-  const handleDeleteUser = (user) => {
+  const handleDeleteUser = async (user) => {
     if (window.confirm('Bạn có chắc muốn xóa người dùng này?')) {
-      alert('Chức năng xóa chỉ là demo, không xóa thực tế.');
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/users/${user.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete user');
+        }
+
+        setUsers(prevUsers => prevUsers.filter(u => u.id !== user.id));
+        alert('Người dùng đã được xóa thành công!');
+      } catch (err) {
+        alert('Lỗi khi xóa người dùng: ' + err.message);
+      }
     }
   };
 
@@ -223,6 +220,9 @@ function Users() {
     };
     return roleMap[role] || 'roleUser';
   };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className={styles.mainContent}>
@@ -405,7 +405,7 @@ function Users() {
               <p><strong>Số điện thoại:</strong> {selectedUser.phone}</p>
               <p><strong>Vai trò:</strong> {selectedUser.role}</p>
               <p><strong>Ngày tạo:</strong> {selectedUser.createdDate}</p>
-              <p><strong>Trạng thái xóa:</strong> {selectedUser.deletedAt}</p>
+              <p><strong>Trạng thái xóa:</strong> {selectedUser.deletedAt || 'Chưa xóa'}</p>
             </div>
             <div className={styles.modalFooter}>
               <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeViewModal}>Đóng</button>

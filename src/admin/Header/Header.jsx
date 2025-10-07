@@ -1,13 +1,18 @@
-// Sidebar.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Giữ nguyên từ trước
-import styles from './Header.module.css'; // Assuming CSS module file
+import { useNavigate } from 'react-router-dom';
+import { useUser } from '../../UserContext';
+import styles from './Header.module.css';
 
 const Sidebar = () => {
-  const [activeItem, setActiveItem] = useState('settings'); // Default active is settings
-  const navigate = useNavigate(); // Giữ nguyên
+  const { user } = useUser();
+  const [activeItem, setActiveItem] = useState('settings');
+  const navigate = useNavigate();
 
-  // Helper function để thêm prefix "/admin" nếu href không phải '#'
+  // Kiểm tra nếu user không phải Administrator, không render sidebar
+  if (!user || user.role !== 'Administrator') {
+    return null;
+  }
+
   const addAdminPrefix = (href) => {
     if (href === '#') return href;
     return `/admin${href.startsWith('/') ? href : `/${href}`}`;
@@ -24,31 +29,22 @@ const Sidebar = () => {
     { id: 'notifications', icon: 'fas fa-bell', label: 'Thông báo', href: addAdminPrefix('/notification') },
     { id: 'payments', icon: 'fas fa-money-bill-wave', label: 'Thanh toán', href: addAdminPrefix('/payment') },
     { id: 'econtracts', icon: 'fas fa-file-signature', label: 'Hợp đồng điện tử', href: addAdminPrefix('/econtract') },
-    { id: 'settings', icon: 'fas fa-cog', label: 'Cài đặt', href: addAdminPrefix('/settings'), active: true },
-    { id: 'support', icon: 'fas fa-headset', label: 'Hỗ trợ', href: '#' }, // Giữ nguyên
-    { id: 'security', icon: 'fas fa-shield-alt', label: 'Bảo mật', href: '#' }, // Giữ nguyên
+    { id: 'settings', icon: 'fas fa-cog', label: 'Cài đặt', href: addAdminPrefix('/settings') },
+    { id: 'support', icon: 'fas fa-headset', label: 'Hỗ trợ', href: '#' },
+    { id: 'security', icon: 'fas fa-shield-alt', label: 'Bảo mật', href: '#' },
     { id: 'logs', icon: 'fas fa-history', label: 'Lịch sử log', href: addAdminPrefix('/history') },
   ];
 
   const sections = [
-    {
-      title: 'Bảng điều khiển',
-      items: sidebarItems.slice(0, 5),
-    },
-    {
-      title: 'Công cụ',
-      items: sidebarItems.slice(5, 10),
-    },
-    {
-      title: 'Hệ thống',
-      items: sidebarItems.slice(10),
-    },
+    { title: 'Bảng điều khiển', items: sidebarItems.slice(0, 5) },
+    { title: 'Công cụ', items: sidebarItems.slice(5, 10) },
+    { title: 'Hệ thống', items: sidebarItems.slice(10) },
   ];
 
   const handleItemClick = (id, href) => {
     setActiveItem(id);
     if (href !== '#') {
-      navigate(href); // Sử dụng href đã có prefix
+      navigate(href);
     }
   };
 

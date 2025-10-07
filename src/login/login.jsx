@@ -24,37 +24,38 @@ function LoginForm() {
     setRememberMe(e.target.checked);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const formDataToSend = new FormData();
-    formDataToSend.append('email', formData.email);
-    formDataToSend.append('password', formData.password);
-    if (rememberMe) {
-      formDataToSend.append('rememberMe', 'true');
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const formDataToSend = new FormData();
+  formDataToSend.append('email', formData.email);
+  formDataToSend.append('password', formData.password);
+  if (rememberMe) {
+    formDataToSend.append('rememberMe', 'true');
+  }
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}login`, {
-        method: 'POST',
-        body: formDataToSend,
-        credentials: 'include',
-      });
+  try {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}login`, {
+      method: 'POST',
+      body: formDataToSend,
+      credentials: 'include',
+    });
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Đăng nhập thành công:', result);
-        if (result && result.user) {
-          const token = result.token || null;
-          login(result.user, token);
-          window.location.href = '/';
-        }
-      } else {
-        console.error('Lỗi đăng nhập:', response.statusText);
+    if (response.ok) {
+      const result = await response.json();
+      console.log('Đăng nhập thành công:', result);
+      if (result && result.user) {
+        const token = result.token || null;
+        login(result.user, token);
+        // Chuyển hướng dựa trên role
+        window.location.href = result.user.role === 'Administrator' ? '/admin' : '/';
       }
-    } catch (err) {
-      console.error('Lỗi API:', err);
+    } else {
+      console.error('Lỗi đăng nhập:', response.statusText);
     }
-  };
+  } catch (err) {
+    console.error('Lỗi API:', err);
+  }
+};
 
   return (
     <div className={styles.container}>
