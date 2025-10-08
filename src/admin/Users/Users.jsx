@@ -17,7 +17,7 @@ function Users() {
     password: '',
     role: 'User'
   });
-  const [users, setUsers] = useState([]); // Khởi tạo là mảng rỗng
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -26,7 +26,7 @@ function Users() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}user`, {
+        const response = await fetch('http://127.0.0.1:8000/api/showuser', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -35,12 +35,21 @@ function Users() {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch users');
+          throw new Error('Không thể lấy danh sách người dùng');
         }
 
         const data = await response.json();
-        // Đảm bảo data là mảng trước khi set
-        setUsers(Array.isArray(data) ? data : []);
+        // Ánh xạ dữ liệu từ API để khớp với cấu trúc template
+        const mappedUsers = Array.isArray(data.users) ? data.users.map(user => ({
+          id: user.user_id,
+          name: user.full_name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          createdDate: user.created_at,
+          deletedAt: user.deleted_at
+        })) : [];
+        setUsers(mappedUsers);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -52,7 +61,6 @@ function Users() {
   }, []);
 
   const applyFilters = () => {
-    // Kiểm tra nếu users là mảng, nếu không thì trả về mảng rỗng
     const validUsers = Array.isArray(users) ? users : [];
     return validUsers.filter(user => {
       const searchMatch =
@@ -120,6 +128,7 @@ function Users() {
         password: '',
         role: user.role
       });
+      setSelectedUser(user);
     } else {
       setUserForm({
         name: '',
@@ -128,6 +137,7 @@ function Users() {
         password: '',
         role: 'User'
       });
+      setSelectedUser(null);
     }
     setShowUserModal(true);
   };
@@ -155,7 +165,8 @@ function Users() {
 
   const handleSaveUser = async () => {
     try {
-      const url = modalMode === 'add' ? `${process.env.REACT_APP_API_URL}/register` : `${process.env.REACT_APP_API_URL}/users/${selectedUser.id}`;
+      // Cần cập nhật URL và logic cho API thêm/sửa người dùng
+      const url = modalMode === 'add' ? 'http://127.0.0.1:8000/api/register' : `http://127.0.0.1:8000/api/users/${selectedUser.id}`;
       const method = modalMode === 'add' ? 'POST' : 'PUT';
 
       const response = await fetch(url, {
@@ -165,7 +176,7 @@ function Users() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: userForm.name,
+          full_name: userForm.name, // Ánh xạ với API
           email: userForm.email,
           phone: userForm.phone,
           password: userForm.password || undefined,
@@ -174,12 +185,23 @@ function Users() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save user');
+        throw new Error('Lỗi khi lưu người dùng');
       }
 
       const data = await response.json();
+      // Ánh xạ dữ liệu trả về để khớp với template
+      const newUser = {
+        id: data.user_id,
+        name: data.full_name,
+        email: data.email,
+        phone: data.phone,
+        role: data.role,
+        createdDate: data.created_at,
+        deletedAt: data.deleted_at
+      };
+
       alert('Người dùng đã được lưu thành công!');
-      setUsers(prevUsers => modalMode === 'add' ? [...prevUsers, data] : prevUsers.map(u => u.id === data.id ? data : u));
+      setUsers(prevUsers => modalMode === 'add' ? [...prevUsers, newUser] : prevUsers.map(u => u.id === newUser.id ? newUser : u));
       closeUserModal();
     } catch (err) {
       alert('Lỗi khi lưu người dùng: ' + err.message);
@@ -189,7 +211,7 @@ function Users() {
   const handleDeleteUser = async (user) => {
     if (window.confirm('Bạn có chắc muốn xóa người dùng này?')) {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/users/${user.id}`, {
+        const response = await fetch(`http://127.0.0.1:8000/api/users/${user.id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -197,7 +219,7 @@ function Users() {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to delete user');
+          throw new Error('Lỗi khi xóa người dùng');
         }
 
         setUsers(prevUsers => prevUsers.filter(u => u.id !== user.id));
@@ -221,8 +243,8 @@ function Users() {
     return roleMap[role] || 'roleUser';
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) return <div>Đang tải...</div>;
+  if (error) return <div>Lỗi: {error}</div>;
 
   return (
     <div className={styles.mainContent}>
