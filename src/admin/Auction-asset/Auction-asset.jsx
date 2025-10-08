@@ -19,11 +19,12 @@ function AuctionAsset() {
   const [assetForm, setAssetForm] = useState({
     name: '',
     category: '',
-    owner: '', // Initialize as empty string
+    owner: '',
     startingPrice: '',
     description: '',
-    images: [], // Store files for upload
-    imageUrls: [], // Store URLs for edit mode or preview
+    images: [],
+    imageUrls: [],
+    removedImageUrls: [], // Track removed images for edit mode
     status: 'ChoDuyet',
   });
 
@@ -43,74 +44,106 @@ function AuctionAsset() {
   };
 
   // Fetch assets from API
-useEffect(() => {
-  const fetchAssets = async () => {
-    try {
-      const response = await axios.get(`${API_URL}products`);
-      const formattedAssets = response.data.data
-        .map(asset => ({
-          id: `#TS-${asset.id.toString().padStart(3, '0')}`,
-          name: asset.name,
-          category: asset.category,
-          categoryId: asset.category === 'Bất động sản' ? '1' :
-                      asset.category === 'Xe cộ' ? '2' :
-                      asset.category === 'Đồ cổ' ? '3' :
-                      asset.category === 'Nghệ thuật' ? '4' : '5',
-          owner: asset.owner.name,
-          ownerId: asset.owner.id.toString(),
-          startingPrice: new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND',
-          }).format(asset.starting_price),
-          startingPriceValue: parseFloat(asset.starting_price),
-          status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
-                  asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
-                  asset.status === 'DangDauGia' ? 'Đang đấu giá' :
-                  asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
-          statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
-                       asset.status === 'ChoDauGia' ? 'statusChodau' :
-                       asset.status === 'DangDauGia' ? 'statusDangdau' :
-                       asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
-          createdDate: asset.created_at ? new Date(asset.created_at).toLocaleDateString('vi-VN') : 'Không xác định',
-          description: asset.description,
-          imageUrls: asset.image_url ? (Array.isArray(asset.image_url) ? asset.image_url : [asset.image_url]) : ['https://example.com/placeholder.jpg'],
-          rawCreatedAt: asset.created_at,
-        }))
-        .sort((a, b) => {
-          const idA = parseInt(a.id.replace('#TS-', ''));
-          const idB = parseInt(b.id.replace('#TS-', ''));
-          return idB - idA; // Sắp xếp giảm dần (mới nhất lên đầu)
-        });
-      setAssets(formattedAssets);
-    } catch (error) {
-      console.error('Lỗi khi lấy dữ liệu tài sản:', error.response?.data || error);
-      alert(`Không thể tải dữ liệu tài sản: ${error.response?.data?.message || 'Vui lòng thử lại.'}`);
-    }
-  };
+  useEffect(() => {
+    const fetchAssets = async () => {
+      try {
+        const response = await axios.get(`${API_URL}products`);
+        const formattedAssets = response.data.data
+          .map((asset) => ({
+            id: `#TS-${asset.id.toString().padStart(3, '0')}`,
+            name: asset.name,
+            category: asset.category,
+            categoryId:
+              asset.category === 'Bất động sản'
+                ? '1'
+                : asset.category === 'Xe cộ'
+                ? '2'
+                : asset.category === 'Đồ cổ'
+                ? '3'
+                : asset.category === 'Nghệ thuật'
+                ? '4'
+                : '5',
+            owner: asset.owner.name,
+            ownerId: asset.owner.id.toString(),
+            startingPrice: new Intl.NumberFormat('vi-VN', {
+              style: 'currency',
+              currency: 'VND',
+            }).format(asset.starting_price),
+            startingPriceValue: parseFloat(asset.starting_price),
+            status:
+              asset.status === 'ChoDauGia'
+                ? 'Chờ đấu giá'
+                : asset.status === 'ChoDuyet'
+                ? 'Chờ duyệt'
+                : asset.status === 'DangDauGia'
+                ? 'Đang đấu giá'
+                : asset.status === 'DaBan'
+                ? 'Đã bán'
+                : 'Hủy',
+            statusClass:
+              asset.status === 'ChoDuyet'
+                ? 'statusChoduyet'
+                : asset.status === 'ChoDauGia'
+                ? 'statusChodau'
+                : asset.status === 'DangDauGia'
+                ? 'statusDangdau'
+                : asset.status === 'DaBan'
+                ? 'statusDaban'
+                : 'statusHuy',
+            createdDate: asset.created_at
+              ? new Date(asset.created_at).toLocaleDateString('vi-VN')
+              : 'Không xác định',
+            description: asset.description,
+            imageUrls: asset.image_url
+              ? Array.isArray(asset.image_url)
+                ? asset.image_url
+                : [asset.image_url]
+              : ['https://example.com/placeholder.jpg'],
+            rawCreatedAt: asset.created_at,
+          }))
+          .sort((a, b) => {
+            const idA = parseInt(a.id.replace('#TS-', ''));
+            const idB = parseInt(b.id.replace('#TS-', ''));
+            return idB - idA; // Sort descending (newest first)
+          });
+        setAssets(formattedAssets);
+      } catch (error) {
+        console.error('Lỗi khi lấy dữ liệu tài sản:', error.response?.data || error);
+        alert(
+          `Không thể tải dữ liệu tài sản: ${
+            error.response?.data?.message || 'Vui lòng thử lại.'
+          }`
+        );
+      }
+    };
 
-  fetchAssets();
-}, []);
+    fetchAssets();
+  }, []);
 
   // Set initial owner from local storage
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
       const parsedUser = JSON.parse(userData);
-      setAssetForm(prev => ({
+      setAssetForm((prev) => ({
         ...prev,
-        owner: parsedUser['user_id'] || '', // Use the user_id from the parsed object
+        owner: parsedUser['user_id'] || '',
       }));
     }
   }, []);
 
   // Apply filters
   const applyFilters = () => {
-    return assets.filter(asset => {
+    return assets.filter((asset) => {
       const searchMatch =
         asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.owner.toLowerCase().includes(searchTerm.toLowerCase());
-      const statusMatch = !statusFilter || asset.status.toLowerCase().includes(statusFilter.toLowerCase());
-      const categoryMatch = !categoryFilter || asset.categoryId.toLowerCase().includes(categoryFilter.toLowerCase());
+      const statusMatch =
+        !statusFilter ||
+        asset.status.toLowerCase().includes(statusFilter.toLowerCase());
+      const categoryMatch =
+        !categoryFilter ||
+        asset.categoryId.toLowerCase().includes(categoryFilter.toLowerCase());
       return searchMatch && statusMatch && categoryMatch;
     });
   };
@@ -154,7 +187,9 @@ useEffect(() => {
       pages.push(
         <button
           key={i}
-          className={`${styles.paginationBtn} ${currentPage === i ? styles.paginationBtnActive : ''}`}
+          className={`${styles.paginationBtn} ${
+            currentPage === i ? styles.paginationBtnActive : ''
+          }`}
           onClick={() => handlePageChange(i)}
         >
           {i}
@@ -165,7 +200,9 @@ useEffect(() => {
   };
 
   const openAssetModal = (mode, asset = null) => {
+    console.log('Opening modal in mode:', mode, 'with asset:', asset);
     setModalMode(mode);
+    setSelectedAsset(asset); // Ensure selectedAsset is set
     if (asset) {
       setAssetForm({
         name: asset.name,
@@ -173,12 +210,19 @@ useEffect(() => {
         owner: asset.ownerId,
         startingPrice: formatNumber(asset.startingPriceValue.toString()),
         description: asset.description,
-        images: [], // Reset for edit mode, backend URLs are in imageUrls
+        images: [],
         imageUrls: asset.imageUrls,
-        status: asset.status === 'Chờ duyệt' ? 'ChoDuyet' :
-                asset.status === 'Chờ đấu giá' ? 'ChoDauGia' :
-                asset.status === 'Đang đấu giá' ? 'DangDauGia' :
-                asset.status === 'Đã bán' ? 'DaBan' : 'Huy',
+        removedImageUrls: [], // Reset removed images
+        status:
+          asset.status === 'Chờ duyệt'
+            ? 'ChoDuyet'
+            : asset.status === 'Chờ đấu giá'
+            ? 'ChoDauGia'
+            : asset.status === 'Đang đấu giá'
+            ? 'DangDauGia'
+            : asset.status === 'Đã bán'
+            ? 'DaBan'
+            : 'Huy',
       });
     } else {
       const userData = localStorage.getItem('user');
@@ -191,6 +235,7 @@ useEffect(() => {
         description: '',
         images: [],
         imageUrls: [],
+        removedImageUrls: [],
         status: 'ChoDuyet',
       });
     }
@@ -199,16 +244,20 @@ useEffect(() => {
 
   const closeAssetModal = () => {
     setShowAssetModal(false);
+    setSelectedAsset(null); // Reset selectedAsset
   };
 
   const openViewModal = async (asset) => {
     setSelectedAsset(asset);
     try {
-      const response = await axios.get(`${API_URL}auction-items/${asset.id.replace('#TS-', '')}/bids`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      const response = await axios.get(
+        `${API_URL}auction-items/${asset.id.replace('#TS-', '')}/bids`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
       setBidHistory(response.data.data);
     } catch (error) {
       console.error('Lỗi khi lấy lịch sử bid:', error.response?.data || error);
@@ -220,6 +269,7 @@ useEffect(() => {
   const closeViewModal = () => {
     setShowViewModal(false);
     setBidHistory([]);
+    setSelectedAsset(null);
   };
 
   const openRejectModal = (asset) => {
@@ -230,18 +280,19 @@ useEffect(() => {
 
   const closeRejectModal = () => {
     setShowRejectModal(false);
+    setSelectedAsset(null);
   };
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     if (name === 'startingPrice') {
       const formattedValue = formatNumber(value);
-      setAssetForm(prev => ({
+      setAssetForm((prev) => ({
         ...prev,
         [name]: formattedValue,
       }));
     } else {
-      setAssetForm(prev => ({
+      setAssetForm((prev) => ({
         ...prev,
         [name]: value,
       }));
@@ -250,8 +301,8 @@ useEffect(() => {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    const newImageUrls = files.map(file => URL.createObjectURL(file));
-    setAssetForm(prev => ({
+    const newImageUrls = files.map((file) => URL.createObjectURL(file));
+    setAssetForm((prev) => ({
       ...prev,
       images: [...prev.images, ...files],
       imageUrls: [...prev.imageUrls, ...newImageUrls],
@@ -259,10 +310,14 @@ useEffect(() => {
   };
 
   const handleRemoveImage = (index) => {
-    setAssetForm(prev => ({
+    setAssetForm((prev) => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
       imageUrls: prev.imageUrls.filter((_, i) => i !== index),
+      removedImageUrls:
+        modalMode === 'edit'
+          ? [...(prev.removedImageUrls || []), prev.imageUrls[index]]
+          : prev.removedImageUrls,
     }));
   };
 
@@ -297,18 +352,40 @@ useEffect(() => {
       assetForm.images.forEach((image, index) => {
         formData.append(`images[${index}]`, image);
       });
-      if (modalMode === 'edit') {
-        formData.append('image_urls', JSON.stringify(assetForm.imageUrls));
+
+      if (modalMode === 'edit' && assetForm.imageUrls.length > 0) {
+        assetForm.imageUrls.forEach((url, index) => {
+          formData.append(`image_urls[${index}]`, url);
+        });
+      }
+      if (modalMode === 'edit' && assetForm.removedImageUrls?.length > 0) {
+        formData.append(
+          'removed_image_urls',
+          JSON.stringify(assetForm.removedImageUrls)
+        );
+      }
+
+      // Log FormData for debugging
+      for (let pair of formData.entries()) {
+        console.log(`${pair[0]}: ${pair[1]}`);
       }
 
       let response;
       if (modalMode === 'edit') {
-        response = await axios.put(`${API_URL}auction-items/${selectedAsset.id.replace('#TS-', '')}`, formData, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        if (!selectedAsset?.id) {
+          throw new Error('selectedAsset is not defined');
+        }
+        const assetId = selectedAsset.id.replace('#TS-', '');
+        response = await axios.put(
+          `${API_URL}auction-items/${assetId}`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
         alert('Cập nhật tài sản thành công!');
       } else {
         response = await axios.post(`${API_URL}auction-items`, formData, {
@@ -323,14 +400,20 @@ useEffect(() => {
       // Refresh assets
       response = await axios.get(`${API_URL}products`);
       const formattedAssets = response.data.data
-        .map(asset => ({
+        .map((asset) => ({
           id: `#TS-${asset.id.toString().padStart(3, '0')}`,
           name: asset.name,
           category: asset.category,
-          categoryId: asset.category === 'Bất động sản' ? '1' :
-                      asset.category === 'Xe cộ' ? '2' :
-                      asset.category === 'Đồ cổ' ? '3' :
-                      asset.category === 'Nghệ thuật' ? '4' : '5',
+          categoryId:
+            asset.category === 'Bất động sản'
+              ? '1'
+              : asset.category === 'Xe cộ'
+              ? '2'
+              : asset.category === 'Đồ cổ'
+              ? '3'
+              : asset.category === 'Nghệ thuật'
+              ? '4'
+              : '5',
           owner: asset.owner.name,
           ownerId: asset.owner.id.toString(),
           startingPrice: new Intl.NumberFormat('vi-VN', {
@@ -338,17 +421,35 @@ useEffect(() => {
             currency: 'VND',
           }).format(asset.starting_price),
           startingPriceValue: parseFloat(asset.starting_price),
-          status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
-                  asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
-                  asset.status === 'DangDauGia' ? 'Đang đấu giá' :
-                  asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
-          statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
-                       asset.status === 'ChoDauGia' ? 'statusChodau' :
-                       asset.status === 'DangDauGia' ? 'statusDangdau' :
-                       asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
-          createdDate: asset.created_at ? new Date(asset.created_at).toLocaleDateString('vi-VN') : 'Không xác định',
+          status:
+            asset.status === 'ChoDauGia'
+              ? 'Chờ đấu giá'
+              : asset.status === 'ChoDuyet'
+              ? 'Chờ duyệt'
+              : asset.status === 'DangDauGia'
+              ? 'Đang đấu giá'
+              : asset.status === 'DaBan'
+              ? 'Đã bán'
+              : 'Hủy',
+          statusClass:
+            asset.status === 'ChoDuyet'
+              ? 'statusChoduyet'
+              : asset.status === 'ChoDauGia'
+              ? 'statusChodau'
+              : asset.status === 'DangDauGia'
+              ? 'statusDangdau'
+              : asset.status === 'DaBan'
+              ? 'statusDaban'
+              : 'statusHuy',
+          createdDate: asset.created_at
+            ? new Date(asset.created_at).toLocaleDateString('vi-VN')
+            : 'Không xác định',
           description: asset.description,
-          imageUrls: asset.image_url ? (Array.isArray(asset.image_url) ? asset.image_url : [asset.image_url]) : ['https://example.com/placeholder.jpg'],
+          imageUrls: asset.image_url
+            ? Array.isArray(asset.image_url)
+              ? asset.image_url
+              : [asset.image_url]
+            : ['https://example.com/placeholder.jpg'],
           rawCreatedAt: asset.created_at,
         }))
         .sort((a, b) => new Date(b.rawCreatedAt) - new Date(a.rawCreatedAt));
@@ -356,7 +457,11 @@ useEffect(() => {
       closeAssetModal();
     } catch (error) {
       console.error('Lỗi khi lưu tài sản:', error.response?.data || error);
-      alert(`Lỗi khi lưu tài sản: ${error.response?.data?.message || 'Vui lòng kiểm tra lại thông tin và thử lại.'}`);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'Vui lòng kiểm tra lại thông tin và thử lại.';
+      alert(`Lỗi khi lưu tài sản: ${errorMessage}`);
     }
   };
 
@@ -371,14 +476,20 @@ useEffect(() => {
         alert('Xóa tài sản thành công!');
         const response = await axios.get(`${API_URL}products`);
         const formattedAssets = response.data.data
-          .map(asset => ({
+          .map((asset) => ({
             id: `#TS-${asset.id.toString().padStart(3, '0')}`,
             name: asset.name,
             category: asset.category,
-            categoryId: asset.category === 'Bất động sản' ? '1' :
-                        asset.category === 'Xe cộ' ? '2' :
-                        asset.category === 'Đồ cổ' ? '3' :
-                        asset.category === 'Nghệ thuật' ? '4' : '5',
+            categoryId:
+              asset.category === 'Bất động sản'
+                ? '1'
+                : asset.category === 'Xe cộ'
+                ? '2'
+                : asset.category === 'Đồ cổ'
+                ? '3'
+                : asset.category === 'Nghệ thuật'
+                ? '4'
+                : '5',
             owner: asset.owner.name,
             ownerId: asset.owner.id.toString(),
             startingPrice: new Intl.NumberFormat('vi-VN', {
@@ -386,48 +497,80 @@ useEffect(() => {
               currency: 'VND',
             }).format(asset.starting_price),
             startingPriceValue: parseFloat(asset.starting_price),
-            status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
-                    asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
-                    asset.status === 'DangDauGia' ? 'Đang đấu giá' :
-                    asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
-            statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
-                         asset.status === 'ChoDauGia' ? 'statusChodau' :
-                         asset.status === 'DangDauGia' ? 'statusDangdau' :
-                         asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
-            createdDate: asset.created_at ? new Date(asset.created_at).toLocaleDateString('vi-VN') : 'Không xác định',
+            status:
+              asset.status === 'ChoDauGia'
+                ? 'Chờ đấu giá'
+                : asset.status === 'ChoDuyet'
+                ? 'Chờ duyệt'
+                : asset.status === 'DangDauGia'
+                ? 'Đang đấu giá'
+                : asset.status === 'DaBan'
+                ? 'Đã bán'
+                : 'Hủy',
+            statusClass:
+              asset.status === 'ChoDuyet'
+                ? 'statusChoduyet'
+                : asset.status === 'ChoDauGia'
+                ? 'statusChodau'
+                : asset.status === 'DangDauGia'
+                ? 'statusDangdau'
+                : asset.status === 'DaBan'
+                ? 'statusDaban'
+                : 'statusHuy',
+            createdDate: asset.created_at
+              ? new Date(asset.created_at).toLocaleDateString('vi-VN')
+              : 'Không xác định',
             description: asset.description,
-            imageUrls: asset.image_url ? (Array.isArray(asset.image_url) ? asset.image_url : [asset.image_url]) : ['https://example.com/placeholder.jpg'],
+            imageUrls: asset.image_url
+              ? Array.isArray(asset.image_url)
+                ? asset.image_url
+                : [asset.image_url]
+              : ['https://example.com/placeholder.jpg'],
             rawCreatedAt: asset.created_at,
           }))
           .sort((a, b) => new Date(b.rawCreatedAt) - new Date(a.rawCreatedAt));
         setAssets(formattedAssets);
       } catch (error) {
         console.error('Lỗi khi xóa tài sản:', error.response?.data || error);
-        alert(`Lỗi khi xóa tài sản: ${error.response?.data?.message || 'Vui lòng thử lại.'}`);
+        alert(
+          `Lỗi khi xóa tài sản: ${
+            error.response?.data?.message || 'Vui lòng thử lại.'
+          }`
+        );
       }
     }
   };
 
   const handleApproveAsset = async (asset) => {
     try {
-      await axios.put(`${API_URL}auction-items/${asset.id.replace('#TS-', '')}`, {
-        status: 'ChoDauGia',
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+      await axios.put(
+        `${API_URL}auction-items/${asset.id.replace('#TS-', '')}`,
+        {
+          status: 'ChoDauGia',
         },
-      });
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
       alert('Duyệt tài sản thành công!');
       const response = await axios.get(`${API_URL}products`);
       const formattedAssets = response.data.data
-        .map(asset => ({
+        .map((asset) => ({
           id: `#TS-${asset.id.toString().padStart(3, '0')}`,
           name: asset.name,
           category: asset.category,
-          categoryId: asset.category === 'Bất động sản' ? '1' :
-                      asset.category === 'Xe cộ' ? '2' :
-                      asset.category === 'Đồ cổ' ? '3' :
-                      asset.category === 'Nghệ thuật' ? '4' : '5',
+          categoryId:
+            asset.category === 'Bất động sản'
+              ? '1'
+              : asset.category === 'Xe cộ'
+              ? '2'
+              : asset.category === 'Đồ cổ'
+              ? '3'
+              : asset.category === 'Nghệ thuật'
+              ? '4'
+              : '5',
           owner: asset.owner.name,
           ownerId: asset.owner.id.toString(),
           startingPrice: new Intl.NumberFormat('vi-VN', {
@@ -435,24 +578,46 @@ useEffect(() => {
             currency: 'VND',
           }).format(asset.starting_price),
           startingPriceValue: parseFloat(asset.starting_price),
-          status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
-                  asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
-                  asset.status === 'DangDauGia' ? 'Đang đấu giá' :
-                  asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
-          statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
-                       asset.status === 'ChoDauGia' ? 'statusChodau' :
-                       asset.status === 'DangDauGia' ? 'statusDangdau' :
-                       asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
-          createdDate: asset.created_at ? new Date(asset.created_at).toLocaleDateString('vi-VN') : 'Không xác định',
+          status:
+            asset.status === 'ChoDauGia'
+              ? 'Chờ đấu giá'
+              : asset.status === 'ChoDuyet'
+              ? 'Chờ duyệt'
+              : asset.status === 'DangDauGia'
+              ? 'Đang đấu giá'
+              : asset.status === 'DaBan'
+              ? 'Đã bán'
+              : 'Hủy',
+          statusClass:
+            asset.status === 'ChoDuyet'
+              ? 'statusChoduyet'
+              : asset.status === 'ChoDauGia'
+              ? 'statusChodau'
+              : asset.status === 'DangDauGia'
+              ? 'statusDangdau'
+              : asset.status === 'DaBan'
+              ? 'statusDaban'
+              : 'statusHuy',
+          createdDate: asset.created_at
+            ? new Date(asset.created_at).toLocaleDateString('vi-VN')
+            : 'Không xác định',
           description: asset.description,
-          imageUrls: asset.image_url ? (Array.isArray(asset.image_url) ? asset.image_url : [asset.image_url]) : ['https://example.com/placeholder.jpg'],
+          imageUrls: asset.image_url
+            ? Array.isArray(asset.image_url)
+              ? asset.image_url
+              : [asset.image_url]
+            : ['https://example.com/placeholder.jpg'],
           rawCreatedAt: asset.created_at,
         }))
         .sort((a, b) => new Date(b.rawCreatedAt) - new Date(a.rawCreatedAt));
       setAssets(formattedAssets);
     } catch (error) {
       console.error('Lỗi khi duyệt tài sản:', error.response?.data || error);
-      alert(`Lỗi khi duyệt tài sản: ${error.response?.data?.message || 'Vui lòng thử lại.'}`);
+      alert(
+        `Lỗi khi duyệt tài sản: ${
+          error.response?.data?.message || 'Vui lòng thử lại.'
+        }`
+      );
     }
   };
 
@@ -462,26 +627,36 @@ useEffect(() => {
       return;
     }
     try {
-      await axios.put(`${API_URL}auction-items/${selectedAsset.id.replace('#TS-', '')}`, {
-        status: 'Huy',
-        reject_reason: rejectReason,
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+      await axios.put(
+        `${API_URL}auction-items/${selectedAsset.id.replace('#TS-', '')}`,
+        {
+          status: 'Huy',
+          reject_reason: rejectReason,
         },
-      });
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
       alert(`Từ chối tài sản thành công với lý do: ${rejectReason}`);
       closeRejectModal();
       const response = await axios.get(`${API_URL}products`);
       const formattedAssets = response.data.data
-        .map(asset => ({
+        .map((asset) => ({
           id: `#TS-${asset.id.toString().padStart(3, '0')}`,
           name: asset.name,
           category: asset.category,
-          categoryId: asset.category === 'Bất động sản' ? '1' :
-                      asset.category === 'Xe cộ' ? '2' :
-                      asset.category === 'Đồ cổ' ? '3' :
-                      asset.category === 'Nghệ thuật' ? '4' : '5',
+          categoryId:
+            asset.category === 'Bất động sản'
+              ? '1'
+              : asset.category === 'Xe cộ'
+              ? '2'
+              : asset.category === 'Đồ cổ'
+              ? '3'
+              : asset.category === 'Nghệ thuật'
+              ? '4'
+              : '5',
           owner: asset.owner.name,
           ownerId: asset.owner.id.toString(),
           startingPrice: new Intl.NumberFormat('vi-VN', {
@@ -489,24 +664,46 @@ useEffect(() => {
             currency: 'VND',
           }).format(asset.starting_price),
           startingPriceValue: parseFloat(asset.starting_price),
-          status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
-                  asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
-                  asset.status === 'DangDauGia' ? 'Đang đấu giá' :
-                  asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
-          statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
-                       asset.status === 'ChoDauGia' ? 'statusChodau' :
-                       asset.status === 'DangDauGia' ? 'statusDangdau' :
-                       asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
-          createdDate: asset.created_at ? new Date(asset.created_at).toLocaleDateString('vi-VN') : 'Không xác định',
+          status:
+            asset.status === 'ChoDauGia'
+              ? 'Chờ đấu giá'
+              : asset.status === 'ChoDuyet'
+              ? 'Chờ duyệt'
+              : asset.status === 'DangDauGia'
+              ? 'Đang đấu giá'
+              : asset.status === 'DaBan'
+              ? 'Đã bán'
+              : 'Hủy',
+          statusClass:
+            asset.status === 'ChoDuyet'
+              ? 'statusChoduyet'
+              : asset.status === 'ChoDauGia'
+              ? 'statusChodau'
+              : asset.status === 'DangDauGia'
+              ? 'statusDangdau'
+              : asset.status === 'DaBan'
+              ? 'statusDaban'
+              : 'statusHuy',
+          createdDate: asset.created_at
+            ? new Date(asset.created_at).toLocaleDateString('vi-VN')
+            : 'Không xác định',
           description: asset.description,
-          imageUrls: asset.image_url ? (Array.isArray(asset.image_url) ? asset.image_url : [asset.image_url]) : ['https://example.com/placeholder.jpg'],
+          imageUrls: asset.image_url
+            ? Array.isArray(asset.image_url)
+              ? asset.image_url
+              : [asset.image_url]
+            : ['https://example.com/placeholder.jpg'],
           rawCreatedAt: asset.created_at,
         }))
         .sort((a, b) => new Date(b.rawCreatedAt) - new Date(a.rawCreatedAt));
       setAssets(formattedAssets);
     } catch (error) {
       console.error('Lỗi khi từ chối tài sản:', error.response?.data || error);
-      alert(`Lỗi khi từ chối tài sản: ${error.response?.data?.message || 'Vui lòng thử lại.'}`);
+      alert(
+        `Lỗi khi từ chối tài sản: ${
+          error.response?.data?.message || 'Vui lòng thử lại.'
+        }`
+      );
     }
   };
 
@@ -530,46 +727,78 @@ useEffect(() => {
 
     if (asset.status === 'Chờ duyệt') {
       buttons.push(
-        <button key="approve" className={`${styles.btn} ${styles.btnSuccess}`} onClick={() => handleApproveAsset(asset)}>
+        <button
+          key="approve"
+          className={`${styles.btn} ${styles.btnSuccess}`}
+          onClick={() => handleApproveAsset(asset)}
+        >
           <i className="fa fa-check" aria-hidden="true"></i>
         </button>
       );
       buttons.push(
-        <button key="reject" className={`${styles.btn} ${styles.btnDanger}`} onClick={() => openRejectModal(asset)}>
+        <button
+          key="reject"
+          className={`${styles.btn} ${styles.btnDanger}`}
+          onClick={() => openRejectModal(asset)}
+        >
           <i className="fa fa-times" aria-hidden="true"></i>
         </button>
       );
     } else if (asset.status === 'Chờ đấu giá') {
       buttons.push(
-        <button key="create-auction" className={`${styles.btn} ${styles.btnWarning}`} onClick={() => handleCreateAuction(asset)}>
+        <button
+          key="create-auction"
+          className={`${styles.btn} ${styles.btnWarning}`}
+          onClick={() => handleCreateAuction(asset)}
+        >
           <i className="fa fa-gavel" aria-hidden="true"></i>
         </button>
       );
       buttons.push(
-        <button key="edit" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openAssetModal('edit', asset)}>
+        <button
+          key="edit"
+          className={`${styles.btn} ${styles.btnPrimary}`}
+          onClick={() => openAssetModal('edit', asset)}
+        >
           <i className="fa fa-pencil" aria-hidden="true"></i>
         </button>
       );
       buttons.push(
-        <button key="delete" className={`${styles.btn} ${styles.btnDanger}`} onClick={() => handleDeleteAsset(asset)}>
+        <button
+          key="delete"
+          className={`${styles.btn} ${styles.btnDanger}`}
+          onClick={() => handleDeleteAsset(asset)}
+        >
           <i className="fa fa-trash" aria-hidden="true"></i>
         </button>
       );
     } else {
       buttons.push(
-        <button key="edit" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openAssetModal('edit', asset)}>
+        <button
+          key="edit"
+          className={`${styles.btn} ${styles.btnPrimary}`}
+          onClick={() => openAssetModal('edit', asset)}
+        >
           <i className="fa fa-pencil" aria-hidden="true"></i>
         </button>
       );
       buttons.push(
-        <button key="delete" className={`${styles.btn} ${styles.btnDanger}`} onClick={() => handleDeleteAsset(asset)}>
+        <button
+          key="delete"
+          className={`${styles.btn} ${styles.btnDanger}`}
+          onClick={() => handleDeleteAsset(asset)}
+        >
           <i className="fa fa-trash" aria-hidden="true"></i>
         </button>
       );
     }
 
     buttons.push(
-      <button key="view" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openViewModal(asset)}>
+      <button
+        key="view"
+        className={`${styles.btn} ${styles.btnPrimary}`}
+        onClick={() => openViewModal(asset)}
+      >
         <i className="fa fa-eye" aria-hidden="true"></i>
       </button>
     );
@@ -598,11 +827,17 @@ useEffect(() => {
       </div>
 
       <h1 className={styles.pageTitle}>Quản Lý Tài Sản Đấu Giá</h1>
-      <p className={styles.pageSubtitle}>Quản lý và theo dõi các tài sản được đưa ra đấu giá</p>
+      <p className={styles.pageSubtitle}>
+        Quản lý và theo dõi các tài sản được đưa ra đấu giá
+      </p>
 
       <div className={styles.actionsBar}>
         <div className={styles.filters}>
-          <select className={styles.filterSelect} value={statusFilter} onChange={handleStatusFilterChange}>
+          <select
+            className={styles.filterSelect}
+            value={statusFilter}
+            onChange={handleStatusFilterChange}
+          >
             <option value="">Tất cả trạng thái</option>
             <option value="Chờ duyệt">Chờ duyệt</option>
             <option value="Chờ đấu giá">Chờ đấu giá</option>
@@ -610,7 +845,11 @@ useEffect(() => {
             <option value="Đã bán">Đã bán</option>
             <option value="Hủy">Hủy</option>
           </select>
-          <select className={styles.filterSelect} value={categoryFilter} onChange={handleCategoryFilterChange}>
+          <select
+            className={styles.filterSelect}
+            value={categoryFilter}
+            onChange={handleCategoryFilterChange}
+          >
             <option value="">Tất cả danh mục</option>
             <option value="1">Bất động sản</option>
             <option value="2">Xe cộ</option>
@@ -619,7 +858,10 @@ useEffect(() => {
             <option value="5">Thiết bị điện tử</option>
           </select>
         </div>
-        <button className={styles.addBtn} onClick={() => openAssetModal('add')}>
+        <button
+          className={styles.addBtn}
+          onClick={() => openAssetModal('add')}
+        >
           <i className="fas fa-plus"></i>
           Thêm tài sản mới
         </button>
@@ -639,7 +881,7 @@ useEffect(() => {
           </tr>
         </thead>
         <tbody>
-          {currentAssets.map(asset => (
+          {currentAssets.map((asset) => (
             <tr key={asset.id}>
               <td data-label="Mã TS">{asset.id}</td>
               <td data-label="Tên tài sản">{asset.name}</td>
@@ -647,7 +889,11 @@ useEffect(() => {
               <td data-label="Chủ sở hữu">{asset.owner}</td>
               <td data-label="Giá khởi điểm">{asset.startingPrice}</td>
               <td data-label="Trạng thái">
-                <span className={`${styles.statusBadge} ${styles[getStatusClass(asset.status)]}`}>{asset.status}</span>
+                <span
+                  className={`${styles.statusBadge} ${styles[getStatusClass(asset.status)]}`}
+                >
+                  {asset.status}
+                </span>
               </td>
               <td data-label="Ngày tạo">{asset.createdDate}</td>
               <td data-label="Hành động">
@@ -660,19 +906,22 @@ useEffect(() => {
         </tbody>
       </table>
 
-      <div className={styles.pagination}>
-        {renderPagination()}
-      </div>
+      <div className={styles.pagination}>{renderPagination()}</div>
 
       {/* Add/Edit Asset Modal */}
       {showAssetModal && (
         <div className={styles.modal} onClick={closeAssetModal}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>
                 {modalMode === 'edit' ? 'Chỉnh sửa tài sản' : 'Thêm tài sản mới'}
               </h2>
-              <span className={styles.modalClose} onClick={closeAssetModal}>×</span>
+              <span className={styles.modalClose} onClick={closeAssetModal}>
+                ×
+              </span>
             </div>
             <div className={styles.modalBody}>
               <div>
@@ -746,7 +995,11 @@ useEffect(() => {
                 <div className={styles.imagePreview}>
                   {assetForm.imageUrls.map((url, index) => (
                     <div key={index} className={styles.imageContainer}>
-                      <img src={url} alt={`Preview ${index}`} className={styles.previewImage} />
+                      <img
+                        src={url}
+                        alt={`Preview ${index}`}
+                        className={styles.previewImage}
+                      />
                       <button
                         type="button"
                         className={styles.removeImageBtn}
@@ -775,8 +1028,18 @@ useEffect(() => {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSaveAsset}>Lưu</button>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeAssetModal}>Hủy</button>
+              <button
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={handleSaveAsset}
+              >
+                Lưu
+              </button>
+              <button
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={closeAssetModal}
+              >
+                Hủy
+              </button>
             </div>
           </div>
         </div>
@@ -785,25 +1048,51 @@ useEffect(() => {
       {/* View Asset Modal */}
       {showViewModal && selectedAsset && (
         <div className={styles.modal} onClick={closeViewModal}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>Chi Tiết Tài Sản</h2>
-              <span className={styles.modalClose} onClick={closeViewModal}>×</span>
+              <span className={styles.modalClose} onClick={closeViewModal}>
+                ×
+              </span>
             </div>
             <div className={styles.modalBody}>
-              <p><strong>Mã tài sản:</strong> {selectedAsset.id}</p>
-              <p><strong>Tên tài sản:</strong> {selectedAsset.name}</p>
-              <p><strong>Danh mục:</strong> {selectedAsset.category}</p>
-              <p><strong>Chủ sở hữu:</strong> {selectedAsset.owner}</p>
-              <p><strong>Giá khởi điểm:</strong> {selectedAsset.startingPrice}</p>
-              <p><strong>Trạng thái:</strong> {selectedAsset.status}</p>
-              <p><strong>Ngày tạo:</strong> {selectedAsset.createdDate}</p>
-              <p><strong>Mô tả:</strong> {selectedAsset.description}</p>
+              <p>
+                <strong>Mã tài sản:</strong> {selectedAsset.id}
+              </p>
+              <p>
+                <strong>Tên tài sản:</strong> {selectedAsset.name}
+              </p>
+              <p>
+                <strong>Danh mục:</strong> {selectedAsset.category}
+              </p>
+              <p>
+                <strong>Chủ sở hữu:</strong> {selectedAsset.owner}
+              </p>
+              <p>
+                <strong>Giá khởi điểm:</strong> {selectedAsset.startingPrice}
+              </p>
+              <p>
+                <strong>Trạng thái:</strong> {selectedAsset.status}
+              </p>
+              <p>
+                <strong>Ngày tạo:</strong> {selectedAsset.createdDate}
+              </p>
+              <p>
+                <strong>Mô tả:</strong> {selectedAsset.description}
+              </p>
               <div>
                 <strong>Hình ảnh:</strong>
                 <div className={styles.imagePreview}>
                   {selectedAsset.imageUrls.map((url, index) => (
-                    <img key={index} src={url} alt={`Asset ${index}`} className={styles.previewImage} />
+                    <img
+                      key={index}
+                      src={url}
+                      alt={`Asset ${index}`}
+                      className={styles.previewImage}
+                    />
                   ))}
                 </div>
               </div>
@@ -820,12 +1109,19 @@ useEffect(() => {
                   </thead>
                   <tbody>
                     {bidHistory.length > 0 ? (
-                      bidHistory.map(bid => (
+                      bidHistory.map((bid) => (
                         <tr key={bid.id}>
                           <td>{bid.id}</td>
                           <td>{bid.user_name}</td>
-                          <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(bid.amount)}</td>
-                          <td>{new Date(bid.created_at).toLocaleString('vi-VN')}</td>
+                          <td>
+                            {new Intl.NumberFormat('vi-VN', {
+                              style: 'currency',
+                              currency: 'VND',
+                            }).format(bid.amount)}
+                          </td>
+                          <td>
+                            {new Date(bid.created_at).toLocaleString('vi-VN')}
+                          </td>
                         </tr>
                       ))
                     ) : (
@@ -838,7 +1134,12 @@ useEffect(() => {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeViewModal}>Đóng</button>
+              <button
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={closeViewModal}
+              >
+                Đóng
+              </button>
             </div>
           </div>
         </div>
@@ -847,13 +1148,20 @@ useEffect(() => {
       {/* Reject Asset Modal */}
       {showRejectModal && selectedAsset && (
         <div className={styles.modal} onClick={closeRejectModal}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>Từ Chối Tài Sản</h2>
-              <span className={styles.modalClose} onClick={closeRejectModal}>×</span>
+              <span className={styles.modalClose} onClick={closeRejectModal}>
+                ×
+              </span>
             </div>
             <div className={styles.modalBody}>
-              <p>Bạn đang từ chối tài sản: <strong>{selectedAsset.name}</strong></p>
+              <p>
+                Bạn đang từ chối tài sản: <strong>{selectedAsset.name}</strong>
+              </p>
               <div>
                 <label htmlFor="rejectReason">Lý do từ chối</label>
                 <textarea
@@ -865,8 +1173,18 @@ useEffect(() => {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnDanger}`} onClick={handleRejectAsset}>Xác nhận từ chối</button>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeRejectModal}>Hủy</button>
+              <button
+                className={`${styles.btn} ${styles.btnDanger}`}
+                onClick={handleRejectAsset}
+              >
+                Xác nhận từ chối
+              </button>
+              <button
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={closeRejectModal}
+              >
+                Hủy
+              </button>
             </div>
           </div>
         </div>
@@ -875,4 +1193,4 @@ useEffect(() => {
   );
 }
 
-export default AuctionAsset;
+export default AuctionAsset;  
