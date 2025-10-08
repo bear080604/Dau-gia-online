@@ -45,7 +45,9 @@ function Header() {
       <header className="header-main">
         <div className="logo">
           <div className="logo-img">
+            <a href="/">
             <img src="/assets/img/logo.jpg" alt="Logo" />
+            </a>
           </div>
         </div>
 
@@ -69,10 +71,15 @@ function Header() {
               <i className="fa fa-info" aria-hidden="true"></i> GIỚI THIỆU
             </a>
           </li>
-          <li>
+          <li className="categories">
             <a href="#">
               <i className="fa fa-bars" aria-hidden="true"></i> DANH MỤC TÀI SẢN
             </a>
+            <ul className="category-hidden">
+              <li>category1</li>
+              <li>category2</li>
+              <li>category3</li>
+            </ul>
           </li>
           <li>
             <a href="/auction-session">

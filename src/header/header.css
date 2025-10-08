@@ -194,4 +194,74 @@
                 margin: 0 20px;
             }
         }
+        .categories {
+  position: relative;
+  list-style: none;
+}
+
+.categories > a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 10px 15px;
+  transition: background-color 0.3s ease;
+}
+
+/* .categories > a:hover {
+  background-color: #f5f5f5;
+  color: #007bff;
+} */
+
+.category-hidden {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  margin-top: 5px;
+  padding: 8px 0;
+  z-index: 10;
+  animation: fadeIn 0.3s ease;
+}
+
+.category-hidden li {
+  list-style: none;
+}
+
+.category-hidden li a,
+.category-hidden li {
+  display: block;
+  color: #333;
+  text-decoration: none;
+  padding: 10px 16px;
+  transition: background 0.3s, color 0.3s;
+  cursor: pointer;
+}
+
+/* .category-hidden li:hover {
+  background-color: #f0f8ff;
+  color: #007bff;
+} */
+
+.categories:hover .category-hidden {
+  display: block;
+}
+
+/* Hiệu ứng fade-in nhẹ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
 

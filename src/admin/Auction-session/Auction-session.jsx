@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styles from './Auction-session.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import { useUser } from '../../UserContext'; // Import useUser
+import { useUser } from '../../UserContext';
 
 function AuctionSession() {
-  const { token } = useUser(); // Lấy token từ UserContext
+  const { token } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [itemFilter, setItemFilter] = useState('');
@@ -32,7 +32,7 @@ function AuctionSession() {
     bidEnd: '',
     bidStep: '',
     highestBid: '',
-    currentWinnerId: '', // Giữ để tương thích nhưng không hiển thị trong UI
+    currentWinnerId: '',
   });
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -46,11 +46,37 @@ function AuctionSession() {
     console.log('Initial Auth Token:', token);
   }, [token]);
 
+  const getAuctionStatus = (session) => {
+    if (!session || !session.bid_start || !session.bid_end) {
+      return "Chưa bắt đầu";
+    }
+
+    const now = new Date();
+    const bidStart = new Date(session.bid_start);
+    const bidEnd = new Date(session.bid_end);
+
+    console.log('Debug - Now:', now);
+    console.log('Debug - Bid Start:', bidStart);
+    console.log('Debug - Bid End:', bidEnd);
+
+    if (now < bidStart) {
+      return "Chưa bắt đầu";
+    } else if (now >= bidStart && now <= bidEnd) {
+      return "Đang diễn ra";
+    } else {
+      return "Kết thúc";
+    }
+  };
+
   const transformSession = (session) => {
     const winnerProfile = session.profiles.find(profile => profile.user.user_id === session.current_winner_id);
     const winnerName = winnerProfile ? winnerProfile.user.full_name : 'Chưa có';
     const highestBid = session.highest_bid ? Number(session.highest_bid).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : 'Chưa có';
     const bidStep = session.bid_step ? Number(session.bid_step).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : 'Chưa có';
+
+    const status = getAuctionStatus(session);
+    const statusClass = status === 'Chưa bắt đầu' ? 'Mo' :
+                       status === 'Đang diễn ra' ? 'Dangdienra' : 'Ketthuc';
 
     return {
       id: session.session_id,
@@ -61,10 +87,8 @@ function AuctionSession() {
       startTime: session.start_time.replace('T', ' ').slice(0, 16),
       endTime: session.end_time.replace('T', ' ').slice(0, 16),
       regulation: session.regulation,
-      status: session.status === 'Mo' ? 'Mở' :
-              session.status === 'DangDienRa' ? 'Đang diễn ra' : 'Kết thúc',
-      statusClass: session.status === 'Mo' ? 'statusMo' :
-                   session.status === 'DangDienRa' ? 'statusDangdienra' : 'statusKetthuc',
+      status,
+      statusClass,
       method: session.method,
       auctionOrgId: session.auction_org_id,
       registerStart: session.register_start.replace('T', ' ').slice(0, 16),
@@ -168,7 +192,6 @@ function AuctionSession() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.data && Array.isArray(response.data.data)) {
-        // Filter products with status 'DangDauGia'
         const filteredProducts = response.data.data.filter(product => product.status === 'ChoDauGia');
         setProducts(filteredProducts);
       } else {
@@ -245,8 +268,8 @@ function AuctionSession() {
   };
 
   const openSessionModal = (mode, session = null) => {
-    if (mode === 'edit' && session && session.status !== 'Mở') {
-      alert('Chỉ có thể chỉnh sửa phiên đấu giá ở trạng thái Mở.');
+    if (mode === 'edit' && session && session.status !== 'Chưa bắt đầu') {
+      alert('Chỉ có thể chỉnh sửa phiên đấu giá ở trạng thái Chưa bắt đầu.');
       return;
     }
     if (!token) {
@@ -262,7 +285,7 @@ function AuctionSession() {
         startTime: session.startTime.replace(' ', 'T'),
         endTime: session.endTime.replace(' ', 'T'),
         regulation: session.regulation,
-        status: session.status === 'Mở' ? 'Mo' :
+        status: session.status === 'Chưa bắt đầu' ? 'Mo' :
                 session.status === 'Đang diễn ra' ? 'DangDienRa' : 'KetThuc',
         method: session.method,
         auctionOrgId: session.auctionOrgId,
@@ -271,9 +294,9 @@ function AuctionSession() {
         checkinTime: session.checkinTime.replace(' ', 'T'),
         bidStart: session.bidStart.replace(' ', 'T'),
         bidEnd: session.bidEnd.replace(' ', 'T'),
-        bidStep: session.bidStep.replace(/[^\d]/g, ''), // Loại bỏ định dạng số
+        bidStep: session.bidStep.replace(/[^\d]/g, ''),
         highestBid: session.highestBid.replace(/[^\d]/g, ''),
-        currentWinnerId: '', // Không cho phép nhập trong UI
+        currentWinnerId: '',
       });
       setSelectedSession(session);
     } else {
@@ -396,7 +419,7 @@ function AuctionSession() {
         bid_end: sessionForm.bidEnd,
         bid_step: sessionForm.bidStep,
         highest_bid: sessionForm.highestBid || null,
-        current_winner_id: null, // Luôn gửi null vì không nhập trong UI
+        current_winner_id: null,
       };
 
       let response;
@@ -462,7 +485,7 @@ function AuctionSession() {
 
   const getStatusClass = (status) => {
     const statusMap = {
-      'Mở': 'statusMo',
+      'Chưa bắt đầu': 'statusMo',
       'Đang diễn ra': 'statusDangdienra',
       'Kết thúc': 'statusKetthuc',
     };
@@ -471,7 +494,7 @@ function AuctionSession() {
 
   const getActionButtons = (session) => {
     const buttons = [];
-    if (session.status === 'Mở') {
+    if (session.status === 'Chưa bắt đầu') {
       buttons.push(
         <button
           key="edit"
@@ -530,7 +553,7 @@ function AuctionSession() {
         <div className={styles.filters}>
           <select className={styles.filterSelect} value={statusFilter} onChange={handleStatusFilterChange}>
             <option value="">Tất cả trạng thái</option>
-            <option value="Mo">Mở</option>
+            <option value="Mo">Chưa bắt đầu</option>
             <option value="DangDienRa">Đang diễn ra</option>
             <option value="KetThuc">Kết thúc</option>
           </select>
@@ -602,7 +625,6 @@ function AuctionSession() {
 
       <div className={styles.pagination}>{renderPagination()}</div>
 
-      {/* Add/Edit Session Modal */}
       {showSessionModal && (
         <div className={styles.modal} onClick={closeSessionModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -668,7 +690,7 @@ function AuctionSession() {
               <div>
                 <label htmlFor="status">Trạng thái</label>
                 <select id="status" name="status" value={sessionForm.status} onChange={handleFormChange}>
-                  <option value="Mo">Mở</option>
+                  <option value="Mo">Chưa bắt đầu</option>
                   <option value="DangDienRa">Đang diễn ra</option>
                   <option value="KetThuc">Kết thúc</option>
                 </select>
@@ -777,7 +799,6 @@ function AuctionSession() {
         </div>
       )}
 
-      {/* View Session Modal */}
       {showViewModal && selectedSession && (
         <div className={styles.modal} onClick={closeViewModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>

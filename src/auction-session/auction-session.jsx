@@ -10,9 +10,31 @@ function AuctionSession() {
   const [currentPage, setCurrentPage] = useState(1);
   const [auctionItems, setAuctionItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [startDate, setStartDate] = useState(''); // ✅ thêm
-  const [endDate, setEndDate] = useState(''); // ✅ thêm
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const itemsPerPage = 6;
+
+  const getAuctionStatus = (session) => {
+    if (!session || !session.bid_start || !session.bid_end) {
+      return "Chưa bắt đầu";
+    }
+
+    const now = new Date();
+    const bidStart = new Date(session.bid_start);
+    const bidEnd = new Date(session.bid_end);
+
+    console.log('Debug - Now:', now);
+    console.log('Debug - Bid Start:', bidStart);
+    console.log('Debug - Bid End:', bidEnd);
+
+    if (now < bidStart) {
+      return "Chưa bắt đầu";
+    } else if (now >= bidStart && now <= bidEnd) {
+      return "Đang diễn ra";
+    } else {
+      return "Kết thúc";
+    }
+  };
 
   useEffect(() => {
     const fetchData = () => {
@@ -20,12 +42,9 @@ function AuctionSession() {
         .get(`${process.env.REACT_APP_API_URL}products`)
         .then((res) => {
           const products = res.data.data || [];
-
-          // ✅ Lọc sản phẩm có sessions
           const productsWithSessions = products.filter(
             (p) => Array.isArray(p.sessions) && p.sessions.length > 0
           );
-
           setAuctionItems(productsWithSessions);
         })
         .catch((err) => {
@@ -39,13 +58,11 @@ function AuctionSession() {
     fetchData();
   }, []);
 
-  // ✅ Lọc + sắp xếp danh sách
   const filterAndSortItems = () => {
     let filtered = auctionItems.filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
 
-      // ✅ Lọc theo thời gian đăng ký
       const session = item.sessions[0];
       const registerStart = new Date(session?.register_start);
       const registerEnd = new Date(session?.register_end);
@@ -84,7 +101,6 @@ function AuctionSession() {
     return d.toLocaleString('vi-VN');
   };
 
-  // ✅ Loading UI
   if (loading) {
     return (
       <div className={styles.container}>
@@ -97,7 +113,6 @@ function AuctionSession() {
 
   return (
     <div className={styles.container}>
-      {/* Bộ lọc bên trái */}
       <div className={styles.leftPanel}>
         <section className={styles.searchSection}>
           <div className={styles.searchBox}>
@@ -129,7 +144,6 @@ function AuctionSession() {
               </select>
             </div>
 
-            {/* ✅ Bộ lọc theo thời gian đăng ký */}
             <div className={styles.filterGroup}>
               <label>Lọc theo thời gian đăng ký:</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -171,7 +185,6 @@ function AuctionSession() {
         </section>
       </div>
 
-      {/* Danh sách sản phẩm bên phải */}
       <div className={styles.rightPanel}>
         <div className={styles.resultsInfo}>
           <span>
@@ -188,7 +201,8 @@ function AuctionSession() {
             </div>
           ) : (
             currentItems.map((item) => {
-              const session = item.sessions[0]; // Lấy phiên đầu tiên
+              const session = item.sessions[0];
+              const status = getAuctionStatus(session); // Sử dụng getAuctionStatus
               return (
                 <div key={item.id} className={styles.auctionItem}>
                   <div className={styles.itemImage}>
@@ -199,10 +213,9 @@ function AuctionSession() {
                     />
                   </div>
                   <a
-                      href={`/auction-session/${session?.id}`}
-                      style={{ textDecoration: 'none', width: '100%' }}
-                    >
-
+                    href={`/auction-session/${session?.id}`}
+                    style={{ textDecoration: 'none', width: '100%' }}
+                  >
                     <div className={styles.itemDetails}>
                       <div className={styles.itemHeader}>
                         <div className={styles.itemTitle}>{item.name}</div>
@@ -223,8 +236,7 @@ function AuctionSession() {
                         </div>
                         <br />
                         <div style={{ fontSize: '13px', color: '#555' }}>
-                          <b>Trạng thái:</b>
-                          {session?.status}
+                          <b>Trạng thái:</b> {status}
                         </div>
                       </div>
                     </div>
@@ -235,7 +247,6 @@ function AuctionSession() {
           )}
         </div>
 
-        {/* Phân trang */}
         {totalPages > 1 && (
           <div className={styles.pagination}>
             <button

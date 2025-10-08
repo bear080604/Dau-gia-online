@@ -65,10 +65,9 @@ const Sidebar = () => {
   return (
     <div className={styles.sidebar}>
       <div className={styles.sidebarHeader}>
-        <h2>
-          <i className="fas fa-gavel"></i>
-          <span>DauGia Online</span>
-        </h2>
+        <div className='logo'>
+          <img className='logo-img' src="/assets/img/logo.jpg" alt="Logo" />
+        </div>
       </div>
       {sections.map((section, index) => (
         section.items.length > 0 && (

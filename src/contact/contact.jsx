@@ -272,7 +272,7 @@ const Contact = () => {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1 className={styles.headerTitle}>TẠO SẢN PHẨM ĐẤU GIÁ</h1>
+        <h1 className={styles.headerTitle}>GỬI YÊU CẦU ĐẤU GIÁ TÀI SẢN</h1>
       </header>
 
       <div className={styles.content}>
@@ -399,10 +399,10 @@ const Contact = () => {
             </div>
 
             <button type="submit" className={`${styles.btnSubmit} ${loading ? styles.disabled : ''}`} disabled={loading}>
-              {loading ? 'Đang tạo...' : 'Tạo Sản Phẩm'}
+              {loading ? 'Đang tạo...' : 'Gửi yêu cầu'}
             </button>
           </form>
-          {loading && <div className={styles.loading}><i className="fas fa-spinner fa-spin"></i> Đang tạo sản phẩm...</div>}
+          {loading && <div className={styles.loading}><i className="fas fa-spinner fa-spin"></i> Đang gửi yêu cầu...</div>}
           {globalError && (
             <div className={styles.error}>
               {globalError}

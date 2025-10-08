@@ -15,7 +15,8 @@ function Users() {
     email: '',
     phone: '',
     password: '',
-    role: 'User'
+    password_confirmation: '',
+    role: 'User',
   });
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,16 +40,17 @@ function Users() {
         }
 
         const data = await response.json();
-        // Ánh xạ dữ liệu từ API để khớp với cấu trúc template
-        const mappedUsers = Array.isArray(data.users) ? data.users.map(user => ({
-          id: user.user_id,
-          name: user.full_name,
-          email: user.email,
-          phone: user.phone,
-          role: user.role,
-          createdDate: user.created_at,
-          deletedAt: user.deleted_at
-        })) : [];
+        const mappedUsers = Array.isArray(data.users)
+          ? data.users.map(user => ({
+              id: user.user_id,
+              name: user.full_name,
+              email: user.email,
+              phone: user.phone,
+              role: user.role,
+              createdDate: user.created_at,
+              deletedAt: user.deleted_at,
+            }))
+          : [];
         setUsers(mappedUsers);
       } catch (err) {
         setError(err.message);
@@ -66,7 +68,6 @@ function Users() {
       const searchMatch =
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-
       const roleMatch = !roleFilter || user.role.toLowerCase().includes(roleFilter.toLowerCase());
       return searchMatch && roleMatch;
     });
@@ -126,7 +127,8 @@ function Users() {
         email: user.email,
         phone: user.phone,
         password: '',
-        role: user.role
+        password_confirmation: '',
+        role: user.role,
       });
       setSelectedUser(user);
     } else {
@@ -135,7 +137,8 @@ function Users() {
         email: '',
         phone: '',
         password: '',
-        role: 'User'
+        password_confirmation: '',
+        role: 'User',
       });
       setSelectedUser(null);
     }
@@ -159,52 +162,73 @@ function Users() {
     const { name, value } = e.target;
     setUserForm(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSaveUser = async () => {
     try {
-      // Cần cập nhật URL và logic cho API thêm/sửa người dùng
-      const url = modalMode === 'add' ? 'http://127.0.0.1:8000/api/register' : `http://127.0.0.1:8000/api/users/${selectedUser.id}`;
+      if (modalMode === 'add' && (!userForm.name || !userForm.email || !userForm.password)) {
+        alert('Vui lòng nhập đầy đủ họ tên, email và mật khẩu!');
+        return;
+      }
+      if (modalMode === 'add' && userForm.password !== userForm.password_confirmation) {
+        alert('Mật khẩu và xác nhận mật khẩu không khớp!');
+        return;
+      }
+
+      const url = modalMode === 'add' ? 'http://127.0.0.1:8000/api/register' : `http://127.0.0.1:8000/api/update`;
       const method = modalMode === 'add' ? 'POST' : 'PUT';
+
+      const payload = {
+        full_name: userForm.name,
+        email: userForm.email,
+        phone: userForm.phone || undefined,
+        password: userForm.password || undefined,
+        password_confirmation: userForm.password_confirmation || undefined,
+        role: userForm.role || 'User',
+      };
 
       const response = await fetch(url, {
         method,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          ...(modalMode === 'add' ? {} : { 'Authorization': `Bearer ${localStorage.getItem('token')}` }),
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        body: JSON.stringify({
-          full_name: userForm.name, // Ánh xạ với API
-          email: userForm.email,
-          phone: userForm.phone,
-          password: userForm.password || undefined,
-          role: userForm.role,
-        }),
+        body: JSON.stringify(payload),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Lỗi khi lưu người dùng');
+        if (data.errors) {
+          const errorMessages = Object.values(data.errors).flat().join(', ');
+          throw new Error(errorMessages);
+        }
+        throw new Error(data.message || 'Lỗi khi lưu người dùng');
       }
 
-      const data = await response.json();
-      // Ánh xạ dữ liệu trả về để khớp với template
       const newUser = {
-        id: data.user_id,
-        name: data.full_name,
-        email: data.email,
-        phone: data.phone,
-        role: data.role,
-        createdDate: data.created_at,
-        deletedAt: data.deleted_at
+        id: data.user.user_id,
+        name: data.user.full_name,
+        email: data.user.email,
+        phone: data.user.phone,
+        role: data.user.role,
+        createdDate: data.user.created_at,
+        deletedAt: data.user.deleted_at || null,
       };
 
+      setUsers(prevUsers =>
+        modalMode === 'add'
+          ? [...prevUsers, newUser]
+          : prevUsers.map(u => (u.id === newUser.id ? newUser : u))
+      );
+
       alert('Người dùng đã được lưu thành công!');
-      setUsers(prevUsers => modalMode === 'add' ? [...prevUsers, newUser] : prevUsers.map(u => u.id === newUser.id ? newUser : u));
       closeUserModal();
     } catch (err) {
-      alert('Lỗi khi lưu người dùng: ' + err.message);
+      alert('Lỗi khi lưu người dùng: ' + (err.message || JSON.stringify(err)));
     }
   };
 
@@ -232,13 +256,13 @@ function Users() {
 
   const getRoleClass = (role) => {
     const roleMap = {
-      'User': 'roleUser',
-      'Administrator': 'roleAdmin',
-      'Customer': 'roleCustomer',
+      User: 'roleUser',
+      Administrator: 'roleAdmin',
+      Customer: 'roleCustomer',
       'Chuyên viên thẩm định': 'roleChuyenvienttc',
       'Đấu giá viên': 'roleDaugiavien',
       'Đơn vị thực hiện': 'roleDonvithuc',
-      'Tổ chức đấu giá': 'roleTochucdaugia'
+      'Tổ chức đấu giá': 'roleTochucdaugia',
     };
     return roleMap[role] || 'roleUser';
   };
@@ -308,17 +332,28 @@ function Users() {
               <td data-label="Email">{user.email}</td>
               <td data-label="Số điện thoại">{user.phone}</td>
               <td data-label="Vai trò">
-                <span className={`${styles.statusBadge} ${styles[getRoleClass(user.role)]}`}>{user.role}</span>
+                <span className={`${styles.statusBadge} ${styles[getRoleClass(user.role)]}`}>
+                  {user.role}
+                </span>
               </td>
               <td data-label="Ngày tạo">{user.createdDate}</td>
               <td data-label="Hành động">
-                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openUserModal('edit', user)}>
+                <button
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                  onClick={() => openUserModal('edit', user)}
+                >
                   <i className="fa fa-pencil" aria-hidden="true"></i>
                 </button>
-                <button className={`${styles.btn} ${styles.btnDanger}`} onClick={() => handleDeleteUser(user)}>
+                <button
+                  className={`${styles.btn} ${styles.btnDanger}`}
+                  onClick={() => handleDeleteUser(user)}
+                >
                   <i className="fa fa-trash" aria-hidden="true"></i>
                 </button>
-                <button className={`${styles.btn} ${styles.btnSuccess}`} onClick={() => openViewModal(user)}>
+                <button
+                  className={`${styles.btn} ${styles.btnSuccess}`}
+                  onClick={() => openViewModal(user)}
+                >
                   <i className="fa fa-eye" aria-hidden="true"></i>
                 </button>
               </td>
@@ -327,19 +362,19 @@ function Users() {
         </tbody>
       </table>
 
-      <div className={styles.pagination}>
-        {renderPagination()}
-      </div>
+      <div className={styles.pagination}>{renderPagination()}</div>
 
       {/* Add/Edit User Modal */}
       {showUserModal && (
         <div className={styles.modal} onClick={closeUserModal}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>
                 {modalMode === 'edit' ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}
               </h2>
-              <span className={styles.modalClose} onClick={closeUserModal}>×</span>
+              <span className={styles.modalClose} onClick={closeUserModal}>
+                ×
+              </span>
             </div>
             <div className={styles.modalBody}>
               <div>
@@ -387,6 +422,17 @@ function Users() {
                 />
               </div>
               <div>
+                <label htmlFor="password_confirmation">Xác nhận mật khẩu</label>
+                <input
+                  type="password"
+                  id="password_confirmation"
+                  name="password_confirmation"
+                  placeholder="Xác nhận mật khẩu"
+                  value={userForm.password_confirmation}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div>
                 <label htmlFor="role">Vai trò</label>
                 <select
                   id="role"
@@ -405,8 +451,18 @@ function Users() {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSaveUser}>Lưu</button>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeUserModal}>Hủy</button>
+              <button
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={handleSaveUser}
+              >
+                Lưu
+              </button>
+              <button
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={closeUserModal}
+              >
+                Hủy
+              </button>
             </div>
           </div>
         </div>
@@ -415,22 +471,43 @@ function Users() {
       {/* View User Modal */}
       {showViewModal && selectedUser && (
         <div className={styles.modal} onClick={closeViewModal}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>Chi Tiết Người Dùng</h2>
-              <span className={styles.modalClose} onClick={closeViewModal}>×</span>
+              <span className={styles.modalClose} onClick={closeViewModal}>
+                ×
+              </span>
             </div>
             <div className={styles.modalBody}>
-              <p><strong>ID:</strong> {selectedUser.id}</p>
-              <p><strong>Họ và tên:</strong> {selectedUser.name}</p>
-              <p><strong>Email:</strong> {selectedUser.email}</p>
-              <p><strong>Số điện thoại:</strong> {selectedUser.phone}</p>
-              <p><strong>Vai trò:</strong> {selectedUser.role}</p>
-              <p><strong>Ngày tạo:</strong> {selectedUser.createdDate}</p>
-              <p><strong>Trạng thái xóa:</strong> {selectedUser.deletedAt || 'Chưa xóa'}</p>
+              <p>
+                <strong>ID:</strong> {selectedUser.id}
+              </p>
+              <p>
+                <strong>Họ và tên:</strong> {selectedUser.name}
+              </p>
+              <p>
+                <strong>Email:</strong> {selectedUser.email}
+              </p>
+              <p>
+                <strong>Số điện thoại:</strong> {selectedUser.phone}
+              </p>
+              <p>
+                <strong>Vai trò:</strong> {selectedUser.role}
+              </p>
+              <p>
+                <strong>Ngày tạo:</strong> {selectedUser.createdDate}
+              </p>
+              <p>
+                <strong>Trạng thái xóa:</strong> {selectedUser.deletedAt || 'Đang hoạt động'}
+              </p>
             </div>
             <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeViewModal}>Đóng</button>
+              <button
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={closeViewModal}
+              >
+                Đóng
+              </button>
             </div>
           </div>
         </div>
