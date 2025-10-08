@@ -17,25 +17,38 @@ function AuctionAsset() {
   const [assets, setAssets] = useState([]);
   const [bidHistory, setBidHistory] = useState([]);
   const [assetForm, setAssetForm] = useState({
-    code: '',
     name: '',
     category: '',
-    owner: '',
+    owner: '', // Initialize as empty string
     startingPrice: '',
     description: '',
-    imageUrl: '',
+    images: [], // Store files for upload
+    imageUrls: [], // Store URLs for edit mode or preview
     status: 'ChoDuyet',
   });
 
   const itemsPerPage = 5;
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/';
 
+  // Format number with thousand separators
+  const formatNumber = (value) => {
+    if (!value) return '';
+    const cleaned = value.replace(/[^\d]/g, '');
+    return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  // Parse formatted number back to raw value
+  const parseNumber = (value) => {
+    return value.replace(/\./g, '');
+  };
+
   // Fetch assets from API
-  useEffect(() => {
-    const fetchAssets = async () => {
-      try {
-        const response = await axios.get(`${API_URL}products`);
-        const formattedAssets = response.data.data.map(asset => ({
+useEffect(() => {
+  const fetchAssets = async () => {
+    try {
+      const response = await axios.get(`${API_URL}products`);
+      const formattedAssets = response.data.data
+        .map(asset => ({
           id: `#TS-${asset.id.toString().padStart(3, '0')}`,
           name: asset.name,
           category: asset.category,
@@ -58,18 +71,36 @@ function AuctionAsset() {
                        asset.status === 'ChoDauGia' ? 'statusChodau' :
                        asset.status === 'DangDauGia' ? 'statusDangdau' :
                        asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
-          createdDate: asset.created_at ? new Date(asset.created_at).toISOString().split('T')[0] : 'N/A',
+          createdDate: asset.created_at ? new Date(asset.created_at).toLocaleDateString('vi-VN') : 'Không xác định',
           description: asset.description,
-          imageUrl: asset.image_url || 'https://example.com/placeholder.jpg',
-        }));
-        setAssets(formattedAssets);
-      } catch (error) {
-        console.error('Lỗi khi lấy dữ liệu tài sản:', error.response?.data || error);
-        alert(`Không thể tải dữ liệu tài sản: ${error.response?.data?.message || 'Vui lòng thử lại.'}`);
-      }
-    };
+          imageUrls: asset.image_url ? (Array.isArray(asset.image_url) ? asset.image_url : [asset.image_url]) : ['https://example.com/placeholder.jpg'],
+          rawCreatedAt: asset.created_at,
+        }))
+        .sort((a, b) => {
+          const idA = parseInt(a.id.replace('#TS-', ''));
+          const idB = parseInt(b.id.replace('#TS-', ''));
+          return idB - idA; // Sắp xếp giảm dần (mới nhất lên đầu)
+        });
+      setAssets(formattedAssets);
+    } catch (error) {
+      console.error('Lỗi khi lấy dữ liệu tài sản:', error.response?.data || error);
+      alert(`Không thể tải dữ liệu tài sản: ${error.response?.data?.message || 'Vui lòng thử lại.'}`);
+    }
+  };
 
-    fetchAssets();
+  fetchAssets();
+}, []);
+
+  // Set initial owner from local storage
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setAssetForm(prev => ({
+        ...prev,
+        owner: parsedUser['user_id'] || '', // Use the user_id from the parsed object
+      }));
+    }
   }, []);
 
   // Apply filters
@@ -137,27 +168,29 @@ function AuctionAsset() {
     setModalMode(mode);
     if (asset) {
       setAssetForm({
-        code: asset.id,
         name: asset.name,
         category: asset.categoryId,
         owner: asset.ownerId,
-        startingPrice: asset.startingPriceValue.toString(),
+        startingPrice: formatNumber(asset.startingPriceValue.toString()),
         description: asset.description,
-        imageUrl: asset.imageUrl,
+        images: [], // Reset for edit mode, backend URLs are in imageUrls
+        imageUrls: asset.imageUrls,
         status: asset.status === 'Chờ duyệt' ? 'ChoDuyet' :
                 asset.status === 'Chờ đấu giá' ? 'ChoDauGia' :
                 asset.status === 'Đang đấu giá' ? 'DangDauGia' :
                 asset.status === 'Đã bán' ? 'DaBan' : 'Huy',
       });
     } else {
+      const userData = localStorage.getItem('user');
+      const parsedUser = userData ? JSON.parse(userData) : null;
       setAssetForm({
-        code: '',
         name: '',
         category: '',
-        owner: '',
+        owner: parsedUser ? parsedUser['user_id'] || '' : '',
         startingPrice: '',
         description: '',
-        imageUrl: '',
+        images: [],
+        imageUrls: [],
         status: 'ChoDuyet',
       });
     }
@@ -171,7 +204,6 @@ function AuctionAsset() {
   const openViewModal = async (asset) => {
     setSelectedAsset(asset);
     try {
-      // Giả sử có endpoint để lấy lịch sử bid, bạn cần kiểm tra backend có hỗ trợ không
       const response = await axios.get(`${API_URL}auction-items/${asset.id.replace('#TS-', '')}/bids`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -202,109 +234,96 @@ function AuctionAsset() {
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'startingPrice') {
+      const formattedValue = formatNumber(value);
+      setAssetForm(prev => ({
+        ...prev,
+        [name]: formattedValue,
+      }));
+    } else {
+      setAssetForm(prev => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    const newImageUrls = files.map(file => URL.createObjectURL(file));
     setAssetForm(prev => ({
       ...prev,
-      [name]: value,
+      images: [...prev.images, ...files],
+      imageUrls: [...prev.imageUrls, ...newImageUrls],
+    }));
+  };
+
+  const handleRemoveImage = (index) => {
+    setAssetForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+      imageUrls: prev.imageUrls.filter((_, i) => i !== index),
     }));
   };
 
   const handleSaveAsset = async () => {
-    // Client-side validation
     if (!assetForm.name.trim()) {
       alert('Tên tài sản không được để trống!');
       return;
     }
-    if (!assetForm.category) {
-      alert('Vui lòng chọn danh mục!');
+    if (!assetForm.category || isNaN(parseInt(assetForm.category))) {
+      alert('Vui lòng chọn danh mục hợp lệ!');
       return;
     }
-    if (!assetForm.owner || isNaN(parseInt(assetForm.owner))) {
-      alert('ID chủ sở hữu không hợp lệ!');
+    const ownerId = parseInt(assetForm.owner);
+    if (!ownerId || isNaN(ownerId)) {
+      alert('ID chủ sở hữu không hợp lệ! Vui lòng đăng nhập lại.');
       return;
     }
-    if (!assetForm.startingPrice || isNaN(parseFloat(assetForm.startingPrice)) || parseFloat(assetForm.startingPrice) <= 0) {
+    const rawPrice = parseNumber(assetForm.startingPrice);
+    if (!rawPrice || isNaN(parseFloat(rawPrice)) || parseFloat(rawPrice) <= 0) {
       alert('Giá khởi điểm phải là số dương!');
       return;
     }
 
     try {
-      const assetData = {
-        name: assetForm.name,
-        description: assetForm.description,
-        starting_price: parseFloat(assetForm.startingPrice),
-        status: assetForm.status,
-        category: assetForm.category === '1' ? 'Bất động sản' :
-                  assetForm.category === '2' ? 'Xe cộ' :
-                  assetForm.category === '3' ? 'Đồ cổ' :
-                  assetForm.category === '4' ? 'Nghệ thuật' : 'Thiết bị điện tử',
-        owner_id: parseInt(assetForm.owner),
-        image_url: assetForm.imageUrl,
-      };
-
+      const formData = new FormData();
+      formData.append('name', assetForm.name);
+      formData.append('description', assetForm.description);
+      formData.append('starting_price', parseFloat(rawPrice));
+      formData.append('status', assetForm.status);
+      formData.append('category_id', parseInt(assetForm.category));
+      formData.append('owner_id', ownerId);
+      assetForm.images.forEach((image, index) => {
+        formData.append(`images[${index}]`, image);
+      });
       if (modalMode === 'edit') {
-        await axios.put(`${API_URL}auction-items/${assetForm.code.replace('#TS-', '')}`, assetData, {
+        formData.append('image_urls', JSON.stringify(assetForm.imageUrls));
+      }
+
+      let response;
+      if (modalMode === 'edit') {
+        response = await axios.put(`${API_URL}auction-items/${selectedAsset.id.replace('#TS-', '')}`, formData, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'multipart/form-data',
           },
         });
         alert('Cập nhật tài sản thành công!');
       } else {
-        await axios.post(`${API_URL}auction-items`, assetData, {
+        response = await axios.post(`${API_URL}auction-items`, formData, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'multipart/form-data',
           },
         });
         alert('Thêm tài sản thành công!');
       }
 
       // Refresh assets
-      const response = await axios.get(`${API_URL}products`);
-      const formattedAssets = response.data.data.map(asset => ({
-        id: `#TS-${asset.id.toString().padStart(3, '0')}`,
-        name: asset.name,
-        category: asset.category,
-        categoryId: asset.category === 'Bất động sản' ? '1' :
-                    asset.category === 'Xe cộ' ? '2' :
-                    asset.category === 'Đồ cổ' ? '3' :
-                    asset.category === 'Nghệ thuật' ? '4' : '5',
-        owner: asset.owner.name,
-        ownerId: asset.owner.id.toString(),
-        startingPrice: new Intl.NumberFormat('vi-VN', {
-          style: 'currency',
-          currency: 'VND',
-        }).format(asset.starting_price),
-        startingPriceValue: parseFloat(asset.starting_price),
-        status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
-                asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
-                asset.status === 'DangDauGia' ? 'Đang đấu giá' :
-                asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
-        statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
-                     asset.status === 'ChoDauGia' ? 'statusChodau' :
-                     asset.status === 'DangDauGia' ? 'statusDangdau' :
-                     asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
-        createdDate: asset.created_at ? new Date(asset.created_at).toISOString().split('T')[0] : 'N/A',
-        description: asset.description,
-        imageUrl: asset.image_url || 'https://example.com/placeholder.jpg',
-      }));
-      setAssets(formattedAssets);
-      closeAssetModal();
-    } catch (error) {
-      console.error('Lỗi khi lưu tài sản:', error.response?.data || error);
-      alert(`Lỗi khi lưu tài sản: ${error.response?.data?.message || 'Vui lòng thử lại.'}`);
-    }
-  };
-
-  const handleDeleteAsset = async (asset) => {
-    if (window.confirm('Bạn có chắc muốn xóa tài sản này?')) {
-      try {
-        await axios.delete(`${API_URL}auction-items/${asset.id.replace('#TS-', '')}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        alert('Xóa tài sản thành công!');
-        const response = await axios.get(`${API_URL}products`);
-        const formattedAssets = response.data.data.map(asset => ({
+      response = await axios.get(`${API_URL}products`);
+      const formattedAssets = response.data.data
+        .map(asset => ({
           id: `#TS-${asset.id.toString().padStart(3, '0')}`,
           name: asset.name,
           category: asset.category,
@@ -327,10 +346,60 @@ function AuctionAsset() {
                        asset.status === 'ChoDauGia' ? 'statusChodau' :
                        asset.status === 'DangDauGia' ? 'statusDangdau' :
                        asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
-          createdDate: asset.created_at ? new Date(asset.created_at).toISOString().split('T')[0] : 'N/A',
+          createdDate: asset.created_at ? new Date(asset.created_at).toLocaleDateString('vi-VN') : 'Không xác định',
           description: asset.description,
-          imageUrl: asset.image_url || 'https://example.com/placeholder.jpg',
-        }));
+          imageUrls: asset.image_url ? (Array.isArray(asset.image_url) ? asset.image_url : [asset.image_url]) : ['https://example.com/placeholder.jpg'],
+          rawCreatedAt: asset.created_at,
+        }))
+        .sort((a, b) => new Date(b.rawCreatedAt) - new Date(a.rawCreatedAt));
+      setAssets(formattedAssets);
+      closeAssetModal();
+    } catch (error) {
+      console.error('Lỗi khi lưu tài sản:', error.response?.data || error);
+      alert(`Lỗi khi lưu tài sản: ${error.response?.data?.message || 'Vui lòng kiểm tra lại thông tin và thử lại.'}`);
+    }
+  };
+
+  const handleDeleteAsset = async (asset) => {
+    if (window.confirm('Bạn có chắc muốn xóa tài sản này?')) {
+      try {
+        await axios.delete(`${API_URL}auction-items/${asset.id.replace('#TS-', '')}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        alert('Xóa tài sản thành công!');
+        const response = await axios.get(`${API_URL}products`);
+        const formattedAssets = response.data.data
+          .map(asset => ({
+            id: `#TS-${asset.id.toString().padStart(3, '0')}`,
+            name: asset.name,
+            category: asset.category,
+            categoryId: asset.category === 'Bất động sản' ? '1' :
+                        asset.category === 'Xe cộ' ? '2' :
+                        asset.category === 'Đồ cổ' ? '3' :
+                        asset.category === 'Nghệ thuật' ? '4' : '5',
+            owner: asset.owner.name,
+            ownerId: asset.owner.id.toString(),
+            startingPrice: new Intl.NumberFormat('vi-VN', {
+              style: 'currency',
+              currency: 'VND',
+            }).format(asset.starting_price),
+            startingPriceValue: parseFloat(asset.starting_price),
+            status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
+                    asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
+                    asset.status === 'DangDauGia' ? 'Đang đấu giá' :
+                    asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
+            statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
+                         asset.status === 'ChoDauGia' ? 'statusChodau' :
+                         asset.status === 'DangDauGia' ? 'statusDangdau' :
+                         asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
+            createdDate: asset.created_at ? new Date(asset.created_at).toLocaleDateString('vi-VN') : 'Không xác định',
+            description: asset.description,
+            imageUrls: asset.image_url ? (Array.isArray(asset.image_url) ? asset.image_url : [asset.image_url]) : ['https://example.com/placeholder.jpg'],
+            rawCreatedAt: asset.created_at,
+          }))
+          .sort((a, b) => new Date(b.rawCreatedAt) - new Date(a.rawCreatedAt));
         setAssets(formattedAssets);
       } catch (error) {
         console.error('Lỗi khi xóa tài sản:', error.response?.data || error);
@@ -350,33 +419,36 @@ function AuctionAsset() {
       });
       alert('Duyệt tài sản thành công!');
       const response = await axios.get(`${API_URL}products`);
-      const formattedAssets = response.data.data.map(asset => ({
-        id: `#TS-${asset.id.toString().padStart(3, '0')}`,
-        name: asset.name,
-        category: asset.category,
-        categoryId: asset.category === 'Bất động sản' ? '1' :
-                    asset.category === 'Xe cộ' ? '2' :
-                    asset.category === 'Đồ cổ' ? '3' :
-                    asset.category === 'Nghệ thuật' ? '4' : '5',
-        owner: asset.owner.name,
-        ownerId: asset.owner.id.toString(),
-        startingPrice: new Intl.NumberFormat('vi-VN', {
-          style: 'currency',
-          currency: 'VND',
-        }).format(asset.starting_price),
-        startingPriceValue: parseFloat(asset.starting_price),
-        status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
-                asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
-                asset.status === 'DangDauGia' ? 'Đang đấu giá' :
-                asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
-        statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
-                     asset.status === 'ChoDauGia' ? 'statusChodau' :
-                     asset.status === 'DangDauGia' ? 'statusDangdau' :
-                     asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
-        createdDate: asset.created_at ? new Date(asset.created_at).toISOString().split('T')[0] : 'N/A',
-        description: asset.description,
-        imageUrl: asset.image_url || 'https://example.com/placeholder.jpg',
-      }));
+      const formattedAssets = response.data.data
+        .map(asset => ({
+          id: `#TS-${asset.id.toString().padStart(3, '0')}`,
+          name: asset.name,
+          category: asset.category,
+          categoryId: asset.category === 'Bất động sản' ? '1' :
+                      asset.category === 'Xe cộ' ? '2' :
+                      asset.category === 'Đồ cổ' ? '3' :
+                      asset.category === 'Nghệ thuật' ? '4' : '5',
+          owner: asset.owner.name,
+          ownerId: asset.owner.id.toString(),
+          startingPrice: new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+          }).format(asset.starting_price),
+          startingPriceValue: parseFloat(asset.starting_price),
+          status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
+                  asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
+                  asset.status === 'DangDauGia' ? 'Đang đấu giá' :
+                  asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
+          statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
+                       asset.status === 'ChoDauGia' ? 'statusChodau' :
+                       asset.status === 'DangDauGia' ? 'statusDangdau' :
+                       asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
+          createdDate: asset.created_at ? new Date(asset.created_at).toLocaleDateString('vi-VN') : 'Không xác định',
+          description: asset.description,
+          imageUrls: asset.image_url ? (Array.isArray(asset.image_url) ? asset.image_url : [asset.image_url]) : ['https://example.com/placeholder.jpg'],
+          rawCreatedAt: asset.created_at,
+        }))
+        .sort((a, b) => new Date(b.rawCreatedAt) - new Date(a.rawCreatedAt));
       setAssets(formattedAssets);
     } catch (error) {
       console.error('Lỗi khi duyệt tài sản:', error.response?.data || error);
@@ -401,33 +473,36 @@ function AuctionAsset() {
       alert(`Từ chối tài sản thành công với lý do: ${rejectReason}`);
       closeRejectModal();
       const response = await axios.get(`${API_URL}products`);
-      const formattedAssets = response.data.data.map(asset => ({
-        id: `#TS-${asset.id.toString().padStart(3, '0')}`,
-        name: asset.name,
-        category: asset.category,
-        categoryId: asset.category === 'Bất động sản' ? '1' :
-                    asset.category === 'Xe cộ' ? '2' :
-                    asset.category === 'Đồ cổ' ? '3' :
-                    asset.category === 'Nghệ thuật' ? '4' : '5',
-        owner: asset.owner.name,
-        ownerId: asset.owner.id.toString(),
-        startingPrice: new Intl.NumberFormat('vi-VN', {
-          style: 'currency',
-          currency: 'VND',
-        }).format(asset.starting_price),
-        startingPriceValue: parseFloat(asset.starting_price),
-        status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
-                asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
-                asset.status === 'DangDauGia' ? 'Đang đấu giá' :
-                asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
-        statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
-                     asset.status === 'ChoDauGia' ? 'statusChodau' :
-                     asset.status === 'DangDauGia' ? 'statusDangdau' :
-                     asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
-        createdDate: asset.created_at ? new Date(asset.created_at).toISOString().split('T')[0] : 'N/A',
-        description: asset.description,
-        imageUrl: asset.image_url || 'https://example.com/placeholder.jpg',
-      }));
+      const formattedAssets = response.data.data
+        .map(asset => ({
+          id: `#TS-${asset.id.toString().padStart(3, '0')}`,
+          name: asset.name,
+          category: asset.category,
+          categoryId: asset.category === 'Bất động sản' ? '1' :
+                      asset.category === 'Xe cộ' ? '2' :
+                      asset.category === 'Đồ cổ' ? '3' :
+                      asset.category === 'Nghệ thuật' ? '4' : '5',
+          owner: asset.owner.name,
+          ownerId: asset.owner.id.toString(),
+          startingPrice: new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+          }).format(asset.starting_price),
+          startingPriceValue: parseFloat(asset.starting_price),
+          status: asset.status === 'ChoDauGia' ? 'Chờ đấu giá' :
+                  asset.status === 'ChoDuyet' ? 'Chờ duyệt' :
+                  asset.status === 'DangDauGia' ? 'Đang đấu giá' :
+                  asset.status === 'DaBan' ? 'Đã bán' : 'Hủy',
+          statusClass: asset.status === 'ChoDuyet' ? 'statusChoduyet' :
+                       asset.status === 'ChoDauGia' ? 'statusChodau' :
+                       asset.status === 'DangDauGia' ? 'statusDangdau' :
+                       asset.status === 'DaBan' ? 'statusDaban' : 'statusHuy',
+          createdDate: asset.created_at ? new Date(asset.created_at).toLocaleDateString('vi-VN') : 'Không xác định',
+          description: asset.description,
+          imageUrls: asset.image_url ? (Array.isArray(asset.image_url) ? asset.image_url : [asset.image_url]) : ['https://example.com/placeholder.jpg'],
+          rawCreatedAt: asset.created_at,
+        }))
+        .sort((a, b) => new Date(b.rawCreatedAt) - new Date(a.rawCreatedAt));
       setAssets(formattedAssets);
     } catch (error) {
       console.error('Lỗi khi từ chối tài sản:', error.response?.data || error);
@@ -601,18 +676,6 @@ function AuctionAsset() {
             </div>
             <div className={styles.modalBody}>
               <div>
-                <label htmlFor="code">Mã tài sản</label>
-                <input
-                  type="text"
-                  id="code"
-                  name="code"
-                  placeholder="Nhập mã tài sản (VD: TS001)"
-                  value={assetForm.code}
-                  onChange={handleFormChange}
-                  disabled={modalMode === 'edit'}
-                />
-              </div>
-              <div>
                 <label htmlFor="name">Tên tài sản</label>
                 <input
                   type="text"
@@ -645,19 +708,17 @@ function AuctionAsset() {
                   type="number"
                   id="owner"
                   name="owner"
-                  placeholder="Nhập ID chủ sở hữu"
                   value={assetForm.owner}
-                  onChange={handleFormChange}
+                  disabled
                 />
               </div>
               <div>
                 <label htmlFor="startingPrice">Giá khởi điểm (VND)</label>
                 <input
-                  type="number"
+                  type="text"
                   id="startingPrice"
                   name="startingPrice"
-                  placeholder="Nhập giá khởi điểm"
-                  step="0.01"
+                  placeholder="Nhập giá khởi điểm (VD: 1.000.000)"
                   value={assetForm.startingPrice}
                   onChange={handleFormChange}
                 />
@@ -673,15 +734,29 @@ function AuctionAsset() {
                 ></textarea>
               </div>
               <div>
-                <label htmlFor="imageUrl">URL ảnh</label>
+                <label htmlFor="images">Hình ảnh</label>
                 <input
-                  type="url"
-                  id="imageUrl"
-                  name="imageUrl"
-                  placeholder="Nhập URL ảnh"
-                  value={assetForm.imageUrl}
-                  onChange={handleFormChange}
+                  type="file"
+                  id="images"
+                  name="images"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
                 />
+                <div className={styles.imagePreview}>
+                  {assetForm.imageUrls.map((url, index) => (
+                    <div key={index} className={styles.imageContainer}>
+                      <img src={url} alt={`Preview ${index}`} className={styles.previewImage} />
+                      <button
+                        type="button"
+                        className={styles.removeImageBtn}
+                        onClick={() => handleRemoveImage(index)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
               <div>
                 <label htmlFor="status">Trạng thái</label>
@@ -724,7 +799,14 @@ function AuctionAsset() {
               <p><strong>Trạng thái:</strong> {selectedAsset.status}</p>
               <p><strong>Ngày tạo:</strong> {selectedAsset.createdDate}</p>
               <p><strong>Mô tả:</strong> {selectedAsset.description}</p>
-              <p><strong>URL ảnh:</strong> <a href={selectedAsset.imageUrl} target="_blank" rel="noopener noreferrer">{selectedAsset.imageUrl}</a></p>
+              <div>
+                <strong>Hình ảnh:</strong>
+                <div className={styles.imagePreview}>
+                  {selectedAsset.imageUrls.map((url, index) => (
+                    <img key={index} src={url} alt={`Asset ${index}`} className={styles.previewImage} />
+                  ))}
+                </div>
+              </div>
               <div className={styles.orderHistory}>
                 <h3>Lịch sử lượt bid</h3>
                 <table className={styles.orderTable}>
