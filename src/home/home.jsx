@@ -115,6 +115,33 @@ const Home = () => {
             );
           })}
         </Swiper>
+        <section>
+          <div className='section-title'>
+            <p>DANH SÁCH TÀI SẢN ĐẤU GIÁ TRỰC TUYẾN</p> 
+          </div>
+
+          <div className='head'>
+            <div className='input-search'>
+            <input className='input' type="text" name="" id="" placeholder='Tìm kiếm ...' />
+            </div>
+            <div className='select-cate'>
+              <select name="" id="">
+                <option value="">Tất cả</option>
+              </select>
+            </div>
+            <div className='method'>
+              <select name="" id="">
+                <option value="">Tất cả</option>
+              </select>
+            </div>
+            <div className='sort'>
+              <p>Sắp xếp: </p>
+              <select name="" id="">
+                <option value="">Tat ca</option>
+              </select>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   );
