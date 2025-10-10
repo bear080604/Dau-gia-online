@@ -488,7 +488,7 @@ label {
   font-weight: bold;
 }
 
-input {
+.detailsp-input {
   width: 100%;
   padding: 8px;
   border: 1px solid #ccc;

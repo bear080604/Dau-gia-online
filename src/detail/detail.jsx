@@ -973,6 +973,7 @@ async function handleCheckin() {
                   type="file"
                   accept=".pdf,.doc,.docx"
                   onChange={handleFileChange}
+                  className='detailsp-input'
                 />
                 <small>Chọn 1 file để upload (bắt buộc, max 2MB)</small>
                 <p>
@@ -991,6 +992,7 @@ async function handleCheckin() {
                       value={deposit}
                       onChange={handleDepositInput}
                       placeholder="Nhập số tiền đặt cọc (ví dụ: 100000000)"
+                      className='detailsp-input'
                       required
                     />
                     
