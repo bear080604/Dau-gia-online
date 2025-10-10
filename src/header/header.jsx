@@ -1,110 +1,308 @@
-import React, { useState, useEffect } from "react"; // Thêm useState, useEffect cho clock
-import "./header.css";
-import { useUser } from "../UserContext";
+import React, { useState, useEffect } from 'react';
+import './header.css';
 
-function Header() {
-  const { user, logout } = useUser();
-  const [currentTime, setCurrentTime] = useState(new Date().toLocaleString('vi-VN'));
+const Header = () => {
+  const [currentTime, setCurrentTime] = useState('');
+  const [countdown, setCountdown] = useState('23:59:59');
+  const [isMobileSearchActive, setIsMobileSearchActive] = useState(false);
+  const [isMobileNavActive, setIsMobileNavActive] = useState(false);
+  const [isMobileCategoryActive, setIsMobileCategoryActive] = useState(false);
+  const [user, setUser] = useState(null);
 
+  // Logo base64
+  const logoBase64 = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwIiBoZWlnaHQ9IjE2MCIgdmlld0JveD0iMCAwIDE2MCAxNjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNjAiIGhlaWdodD0iMTYwIiByeD0iMTIiIGZpbGw9IiMyNzcyQkEiLz4KPHN2ZyB4PSI0MCIgeT0iNDAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiPgo8cGF0aCBkPSJNMTIgMTNWMTRNMTIgNlYxMk0xMiAxMkgyMU0zIDNIOUw5LjUgMjFIMi41TDMgM1oiLz4KPC9zdmc+Cjwvc3ZnPgo=";
+
+  // Update clock
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date().toLocaleString('vi-VN'));
-    }, 1000);
+    const updateClock = () => {
+      const now = new Date();
+      setCurrentTime(now.toLocaleString('vi-VN'));
+    };
+
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Countdown timer
+  useEffect(() => {
+    const headTargetTimeStr = "23:59";
+
+    const getNextTargetDate = (timeStr) => {
+      const [hh, mm] = timeStr.split(':').map(Number);
+      const now = new Date();
+      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0);
+      if (target <= now) target.setDate(target.getDate() + 1);
+      return target;
+    };
+
+    const formatCountdown = (ms) => {
+      if (ms <= 0) return "Hết thời gian";
+      const totalSec = Math.floor(ms / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
+
+    const updateCountdown = () => {
+      const target = getNextTargetDate(headTargetTimeStr);
+      const now = new Date();
+      const diff = target - now;
+      const formatted = formatCountdown(diff);
+      setCountdown(formatted);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // User authentication
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem('user')) || null;
+    setUser(userData);
   }, []);
 
   const handleLogout = (e) => {
     e.preventDefault();
-    logout();
+    localStorage.removeItem('user');
+    setUser(null);
+    window.location.reload();
   };
+
+  // Mobile search handlers
+  const toggleMobileSearch = () => {
+    setIsMobileSearchActive(!isMobileSearchActive);
+  };
+
+  const handleClickOutsideSearch = (e) => {
+    if (isMobileSearchActive && 
+        !e.target.closest('.uheader-mobile-search-box') && 
+        !e.target.closest('.uheader-mobile-search-toggle')) {
+      setIsMobileSearchActive(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('click', handleClickOutsideSearch);
+    return () => document.removeEventListener('click', handleClickOutsideSearch);
+  }, [isMobileSearchActive]);
+
+  // Mobile navigation handlers
+  const openMobileNav = () => {
+    setIsMobileNavActive(true);
+    setIsMobileSearchActive(false);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeMobileNav = () => {
+    setIsMobileNavActive(false);
+    setIsMobileCategoryActive(false);
+    document.body.style.overflow = '';
+  };
+
+  const toggleMobileCategory = () => {
+    setIsMobileCategoryActive(!isMobileCategoryActive);
+  };
+
+  // Navigation menu items
+  const navItems = [
+    { icon: 'fa-info-circle', text: 'GIỚI THIỆU', href: '#' },
+    { 
+      icon: 'fa-th-list', 
+      text: 'DANH MỤC TÀI SẢN', 
+      href: '#',
+      isCategory: true,
+      subItems: [
+        { icon: 'fa-home', text: 'Bất động sản', href: '#' },
+        { icon: 'fa-car', text: 'Xe cộ', href: '#' },
+        { icon: 'fa-gem', text: 'Đồ cổ & Quý hiếm', href: '#' },
+        { icon: 'fa-laptop', text: 'Thiết bị công nghệ', href: '#' }
+      ]
+    },
+    { icon: 'fa-gavel', text: 'ĐẤU GIÁ TRỰC TUYẾN', href: 'auction-session' },
+    { icon: 'fa-newspaper', text: 'TIN TỨC - THÔNG BÁO', href: '#' },
+    { icon: 'fa-book', text: 'HƯỚNG DẪN SỬ DỤNG', href: '#' },
+    { icon: 'fa-phone', text: 'LIÊN HỆ BÁN TÀI SẢN', href: 'contact' }
+  ];
 
   return (
     <>
       {/* Top Bar */}
-      <div className="top-bar">
-        <div className="hotline">
-          <i className="fa fa-phone" aria-hidden="true"></i> HOTLINE: (028) 39406853 - (028) 62561989
+      <div className="uheader-top-bar">
+        <div className="uheader-hotline">
+          <i aria-hidden="true" className="fa fa-phone"></i>
+          HOTLINE: (028) 39406853 - (028) 62561989
         </div>
-        <div className="auth-links">
+        <div className="uheader-auth-links">
           {user ? (
             <>
               <span>Xin chào, {user.name || user.email}</span>
-              <a href="/" onClick={handleLogout}>Đăng Xuất</a>
+              <a href="#" onClick={handleLogout}>Đăng Xuất</a>
             </>
           ) : (
             <>
-              <a href="/login">Đăng Nhập</a>
+              <a href="login">Đăng Nhập</a>
               <a href="#">|</a>
-              <a href="/register">Đăng Ký</a>
+              <a href="register">Đăng Ký</a>
             </>
           )}
         </div>
       </div>
 
       {/* Header Main */}
-      <header className="header-main">
-        <div className="logo">
-          <div className="logo-img">
+      <header className="uheader-header-main">
+        <div className="uheader-logo">
+          <div className="uheader-logo-img">
             <a href="/">
-            <img src="/assets/img/logo.jpg" alt="Logo" />
+              <img
+                alt="Logo Đấu Giá"
+                src={logoBase64}
+              />
             </a>
           </div>
         </div>
 
-        <div className="search-container">
-          <form action="" method="GET" className="search-box">
-            <input type="text" name="q" placeholder="Nhập tên tài sản cần tìm ..." />
+        {/* Desktop Search */}
+        <div className="uheader-search-container">
+          <form action="#" className="uheader-search-box" method="GET">
+            <input
+              name="q"
+              placeholder="Nhập tên tài sản cần tìm ..."
+              type="text"
+            />
             <button type="submit">
-              <i className="fa fa-search" aria-hidden="true"></i>
+              <i aria-hidden="true" className="fa fa-search"></i>
             </button>
           </form>
         </div>
 
-        <div className="datetime">{currentTime}</div> {/* Render clock */}
+        {/* Mobile Search */}
+        <div className="uheader-mobile-search-container">
+          <button
+            className="uheader-mobile-search-toggle"
+            onClick={toggleMobileSearch}
+          >
+            <i aria-hidden="true" className="fa fa-search"></i>
+          </button>
+          <div className={`uheader-mobile-search-box ${isMobileSearchActive ? 'active' : ''}`}>
+            <input placeholder="Nhập tên tài sản..." type="text" />
+            <button type="submit">
+              <i aria-hidden="true" className="fa fa-search"></i>
+            </button>
+          </div>
+        </div>
+
+        <div className="uheader-header-right">
+          <a href="#" style={{ textDecoration: 'none' }}>
+            <div
+              aria-live="polite"
+              className="uheader-head-contract-box"
+              role="status"
+            >
+              <div aria-hidden="true" className="uheader-head-icon">HD</div>
+              <div className="uheader-head-content">
+                <div className="uheader-head-title">Hợp đồng cần thanh toán</div>
+                <div className="uheader-head-due-time">
+                  Còn lại: {countdown}
+                </div>
+              </div>
+            </div>
+          </a>
+          <div className="uheader-datetime">{currentTime}</div>
+        </div>
       </header>
 
-      {/* Navigation Bar */}
-      <nav className="nav-bar">
-        <ul className="nav-menu">
-          <li>
-            <a href="#">
-              <i className="fa fa-info" aria-hidden="true"></i> GIỚI THIỆU
-            </a>
-          </li>
-          <li className="categories">
-            <a href="#">
-              <i className="fa fa-bars" aria-hidden="true"></i> DANH MỤC TÀI SẢN
-            </a>
-            <ul className="category-hidden">
-              <li>category1</li>
-              <li>category2</li>
-              <li>category3</li>
-            </ul>
-          </li>
-          <li>
-            <a href="/auction-session">
-              <i className="fa fa-gavel" aria-hidden="true"></i> ĐẤU GIÁ TRỰC TUYẾN
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i className="fa fa-book" aria-hidden="true"></i> TIN TỨC - THÔNG BÁO
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i className="fa fa-book" aria-hidden="true"></i> HƯỚNG DẪN SỬ DỤNG
-            </a>
-          </li>
-          <li>
-            <a href="/contact">
-              <i className="fa fa-phone" aria-hidden="true"></i> LIÊN HỆ BÁN TÀI SẢN
-            </a>
-          </li>
+      {/* Desktop Navigation Bar */}
+      <nav className="uheader-nav-bar">
+        <ul className="uheader-nav-menu">
+          {navItems.map((item, index) => (
+            <li key={index} className={item.isCategory ? 'uheader-categories' : ''}>
+              <a href={item.href}>
+                <i aria-hidden="true" className={`fa ${item.icon}`}></i>
+                <span>{item.text}</span>
+              </a>
+              {item.isCategory && item.subItems && (
+                <ul className="uheader-category-hidden">
+                  {item.subItems.map((subItem, subIndex) => (
+                    <li key={subIndex}>
+                      <a href={subItem.href}>
+                        {subItem.text}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
         </ul>
       </nav>
+
+      {/* Mobile Navigation Toggle Button */}
+      <button
+        aria-label="Mở menu"
+        className={`uheader-mobile-nav-toggle ${isMobileNavActive ? 'active' : ''}`}
+        onClick={openMobileNav}
+      >
+        <i className="fa fa-bars"></i>
+      </button>
+
+      {/* Mobile Navigation Overlay */}
+      <div 
+        className={`uheader-mobile-nav-overlay ${isMobileNavActive ? 'active' : ''}`}
+        onClick={closeMobileNav}
+      ></div>
+
+      {/* Mobile Navigation Sidebar */}
+      <div className={`uheader-mobile-nav-sidebar ${isMobileNavActive ? 'active' : ''}`}>
+        <div className="uheader-mobile-nav-header">
+          <h3>Menu Điều Hướng</h3>
+          <button
+            aria-label="Đóng menu"
+            className="uheader-mobile-nav-close"
+            onClick={closeMobileNav}
+          >
+            <i className="fa fa-times"></i>
+          </button>
+        </div>
+        <ul className="uheader-mobile-nav-menu">
+          {navItems.map((item, index) => (
+            <li key={index}>
+              {item.isCategory ? (
+                <>
+                  <button
+                    className={`uheader-mobile-category-toggle ${isMobileCategoryActive ? 'active' : ''}`}
+                    onClick={toggleMobileCategory}
+                  >
+                    <div>
+                      <i aria-hidden="true" className={`fa ${item.icon}`}></i>
+                      {item.text}
+                    </div>
+                    <i aria-hidden="true" className={`fa fa-chevron-down uheader-arrow`}></i>
+                  </button>
+                  <ul className={`uheader-mobile-category-menu ${isMobileCategoryActive ? 'active' : ''}`}>
+                    {item.subItems.map((subItem, subIndex) => (
+                      <li key={subIndex}>
+                        <a href={subItem.href}>
+                          <i className={`fa ${subItem.icon}`}></i> {subItem.text}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <a href={item.href} onClick={closeMobileNav}>
+                  <i aria-hidden="true" className={`fa ${item.icon}`}></i>
+                  {item.text}
+                </a>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
     </>
   );
-}
+};
 
 export default Header;
