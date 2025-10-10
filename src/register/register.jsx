@@ -1,245 +1,146 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
-import styles from './register.module.css'; // Import CSS Modules
-import { Eye, EyeOff } from 'lucide-react';
+import React, { useState } from "react";
+import axios from "axios";
 
-export default function RegisterForm() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState({}); // State để lưu lỗi từng field
-  const [successMessage, setSuccessMessage] = useState(''); // State để lưu thông báo thành công
-  const navigate = useNavigate(); // Khởi tạo useNavigate
-
+function Register() {
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    role: 'User' // Mặc định 'User' (chữ hoa, như code gốc)
+    full_name: "",
+    email: "",
+    phone: "",
+    address: "",
+    password: "",
+    password_confirmation: "",
+    bank_name: "",
+    bank_account: "",
   });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear error cho field này khi user nhập
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
-    }
+  const [idCardFront, setIdCardFront] = useState(null);
+  const [idCardBack, setIdCardBack] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [successMsg, setSuccessMsg] = useState("");
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
-    setSuccessMessage('');
+    setSuccessMsg("");
 
-    // Client-side validation
-    if (formData.password !== formData.confirmPassword) {
-      setErrors({ confirmPassword: 'Mật khẩu và nhập lại mật khẩu không khớp' });
-      return;
+    const data = new FormData();
+    for (let key in formData) {
+      data.append(key, formData[key]);
     }
-
-    const phoneRegex = /^0[0-9]{9}$/;
-    if (!phoneRegex.test(formData.phone)) {
-      setErrors({ phone: 'Số điện thoại phải bắt đầu bằng 0 và có 10 số.' });
-      return;
-    }
-
-    const dataToSend = {
-      full_name: formData.fullName.trim(),
-      email: formData.email.trim(),
-      phone: formData.phone.trim(),
-      password: formData.password,
-      password_confirmation: formData.confirmPassword,
-      role: formData.role // Gửi 'User' như code gốc
-    };
+    if (idCardFront) data.append("id_card_front", idCardFront);
+    if (idCardBack) data.append("id_card_back", idCardBack);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(dataToSend),
+      const res = await axios.post("http://localhost:8000/api/register", data, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        setSuccessMessage('Đăng ký thành công! Đang chuyển hướng đến trang đăng nhập...');
-        setFormData({
-          fullName: '',
-          email: '',
-          phone: '',
-          password: '',
-          confirmPassword: '',
-          role: 'User'
-        });
-        // Chuyển hướng sau 2 giây
-        setTimeout(() => {
-          navigate('/login');
-        }, 2000);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        const fieldErrors = {};
-        if (errorData.errors) {
-          if (errorData.errors.full_name) fieldErrors.fullName = errorData.errors.full_name[0];
-          if (errorData.errors.email) fieldErrors.email = errorData.errors.email[0];
-          if (errorData.errors.phone) fieldErrors.phone = errorData.errors.phone[0];
-          if (errorData.errors.password) fieldErrors.password = errorData.errors.password[0];
-          if (errorData.errors.password_confirmation) fieldErrors.confirmPassword = errorData.errors.password_confirmation[0];
-          if (errorData.errors.role) fieldErrors.role = errorData.errors.role[0];
-        }
-        setErrors(fieldErrors);
-
-        if (Object.keys(fieldErrors).length === 0) {
-          setErrors({ general: errorData.message || 'Lỗi đăng ký không xác định' });
-        }
-      }
+      setSuccessMsg("Đăng ký thành công!");
+      console.log(res.data);
     } catch (err) {
-      setErrors({ general: 'Lỗi kết nối. Vui lòng thử lại.' });
+      if (err.response && err.response.data.errors) {
+        setErrors(err.response.data.errors);
+      } else {
+        alert("Lỗi kết nối API");
+      }
     }
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.wrapper}>
-        {/* Header */}
-        <div className={styles.header}>
-          <h1 className={styles.title}>
-            ĐĂNG KÝ TÀI KHOẢN ĐẤU GIÁ TRỰC TUYẾN
-          </h1>
-          <div className={styles.divider}>
-            <div className={styles.line}></div>
-            <div className={styles.symbol}>❈</div>
-            <div className={styles.line}></div>
-          </div>
-        </div>
+    <div style={{ maxWidth: 500, margin: "auto", padding: 20 }}>
+      <h2>Đăng ký tài khoản</h2>
+      {successMsg && <p style={{ color: "green" }}>{successMsg}</p>}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <p className={styles.introText}>Vui lòng cung cấp chính xác các thông tin dưới đây:</p>
+      <form onSubmit={handleSubmit} encType="multipart/form-data">
+        <label>Họ tên</label>
+        <input
+          type="text"
+          name="full_name"
+          value={formData.full_name}
+          onChange={handleChange}
+        />
+        {errors.full_name && <p className="error">{errors.full_name[0]}</p>}
 
-          {successMessage && (
-            <div className={styles.successMessage}>
-              {successMessage}
-            </div>
-          )}
+        <label>Email</label>
+        <input
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+        />
+        {errors.email && <p className="error">{errors.email[0]}</p>}
 
-          {errors.general && (
-            <div className={styles.errorMessage}>
-              {errors.general}
-            </div>
-          )}
+        <label>Số điện thoại</label>
+        <input
+          type="text"
+          name="phone"
+          value={formData.phone}
+          onChange={handleChange}
+        />
 
-          {/* Họ và tên */}
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Họ và tên <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleInputChange}
-              className={`${styles.input} ${errors.fullName ? styles.inputError : ''}`}
-              required
-            />
-            {errors.fullName && <span className={styles.fieldError}>{errors.fullName}</span>}
-          </div>
+        <label>Địa chỉ</label>
+        <input
+          type="text"
+          name="address"
+          value={formData.address}
+          onChange={handleChange}
+        />
 
-          {/* Thư điện tử */}
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Thư điện tử <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
-              required
-            />
-            {errors.email && <span className={styles.fieldError}>{errors.email}</span>}
-          </div>
+        <label>Mật khẩu</label>
+        <input
+          type="password"
+          name="password"
+          value={formData.password}
+          onChange={handleChange}
+        />
+        {errors.password && <p className="error">{errors.password[0]}</p>}
 
-          {/* Số điện thoại */}
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Số điện thoại <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              className={`${styles.input} ${errors.phone ? styles.inputError : ''}`}
-              required
-            />
-            {errors.phone && <span className={styles.fieldError}>{errors.phone}</span>}
-          </div>
+        <label>Nhập lại mật khẩu</label>
+        <input
+          type="password"
+          name="password_confirmation"
+          value={formData.password_confirmation}
+          onChange={handleChange}
+        />
 
-          {/* Mật khẩu */}
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Mật khẩu <span className={styles.required}>*</span>
-            </label>
-            <div className={styles.passwordContainer}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className={styles.eyeButton}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-            {errors.password && <span className={styles.fieldError}>{errors.password}</span>}
-          </div>
+        <label>Ngân hàng</label>
+        <input
+          type="text"
+          name="bank_name"
+          value={formData.bank_name}
+          onChange={handleChange}
+        />
 
-          {/* Nhập lại mật khẩu */}
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Nhập lại mật khẩu <span className={styles.required}>*</span>
-            </label>
-            <div className={styles.passwordContainer}>
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ''}`}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className={styles.eyeButton}
-              >
-                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-            {errors.confirmPassword && <span className={styles.fieldError}>{errors.confirmPassword}</span>}
-          </div>
+        <label>Số tài khoản</label>
+        <input
+          type="text"
+          name="bank_account"
+          value={formData.bank_account}
+          onChange={handleChange}
+        />
 
-          {/* Submit Button */}
-          <div className={styles.submitContainer}>
-            <button type="submit" className={styles.submitButton}>
-              Đăng ký
-            </button>
-          </div>
-        </form>
-      </div>
+        <label>CCCD mặt trước</label>
+        <input
+          type="file"
+          onChange={(e) => setIdCardFront(e.target.files[0])}
+        />
+
+        <label>CCCD mặt sau</label>
+        <input type="file" onChange={(e) => setIdCardBack(e.target.files[0])} />
+
+        <button type="submit" style={{ marginTop: 15 }}>
+          Đăng ký
+        </button>
+      </form>
     </div>
   );
 }
+
+export default Register;

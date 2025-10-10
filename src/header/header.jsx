@@ -29,7 +29,7 @@ function Header() {
           {user ? (
             <>
               <span>Xin chào, {user.name || user.email}</span>
-              <a href="#" onClick={handleLogout}>Đăng Xuất</a>
+              <a href="/" onClick={handleLogout}>Đăng Xuất</a>
             </>
           ) : (
             <>

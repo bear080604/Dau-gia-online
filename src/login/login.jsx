@@ -26,17 +26,16 @@ function LoginForm() {
 
 const handleSubmit = async (e) => {
   e.preventDefault();
-  const formDataToSend = new FormData();
-  formDataToSend.append('email', formData.email);
-  formDataToSend.append('password', formData.password);
-  if (rememberMe) {
-    formDataToSend.append('rememberMe', 'true');
-  }
 
   try {
     const response = await fetch(`${process.env.REACT_APP_API_URL}login`, {
       method: 'POST',
-      body: formDataToSend,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password,
+        rememberMe: rememberMe ? true : false
+      }),
       credentials: 'include',
     });
 
@@ -46,16 +45,17 @@ const handleSubmit = async (e) => {
       if (result && result.user) {
         const token = result.token || null;
         login(result.user, token);
-        // Chuyển hướng dựa trên role
         window.location.href = result.user.role === 'Administrator' ? '/admin' : '/';
       }
     } else {
-      console.error('Lỗi đăng nhập:', response.statusText);
+      const error = await response.json();
+      console.error('Lỗi đăng nhập:', error.message);
     }
   } catch (err) {
     console.error('Lỗi API:', err);
   }
 };
+
 
   return (
     <div className={styles.container}>
