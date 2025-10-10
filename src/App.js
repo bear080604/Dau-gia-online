@@ -20,6 +20,8 @@ import AdminNotification from './pages/AdminNotification';
 import AdminAuctionAsset from './pages/AdminAuctionAsset';
 import AdminProfile from './pages/AdminProfile';
 import AuctionSessionPage from './pages/AdminAuction-session';
+import ProfilePage from './pages/profile';
+
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { UserProvider } from './UserContext';
@@ -42,6 +44,7 @@ function App (){
             <Route path = '/contact' element = {<ContactPage />} />
             <Route path = '/contract' element = {<ContractPage />} />
             <Route path = '/payment' element = {<PaymentPage />} />
+            <Route path = '/profile' element = {<ProfilePage/>} />
             <Route path = '/admin/settings' element = {<AdminSettings />} />
             <Route path = '/admin/dashboard' element = {<Admindashboard />} />
             <Route path = '/admin' element = {<Admindashboard />} />
