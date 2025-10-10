@@ -47,7 +47,22 @@ const Home = () => {
             (p) => Array.isArray(p.sessions) && p.sessions.length > 0
           );
 
-          setAuctionItems(productsWithSessions);
+          // 🔽 Sắp xếp theo trạng thái phiên đấu giá
+          const sortedProducts = productsWithSessions.sort((a, b) => {
+            const statusOrder = {
+              "Đang diễn ra": 1,
+              "Chưa bắt đầu": 2,
+              "Kết thúc": 3,
+            };
+
+            // Lấy trạng thái đầu tiên của mỗi sản phẩm
+            const statusA = getAuctionStatus(a.sessions[0]);
+            const statusB = getAuctionStatus(b.sessions[0]);
+
+            return statusOrder[statusA] - statusOrder[statusB];
+          });
+
+          setAuctionItems(sortedProducts);
         })
         .catch((err) => {
           console.error("Lỗi API:", err);
@@ -55,11 +70,10 @@ const Home = () => {
     };
 
     fetchData(); // gọi lần đầu khi mount
-
     const interval = setInterval(fetchData, 3000); // gọi lại mỗi 3 giây
-
     return () => clearInterval(interval); // cleanup khi component unmount
   }, []);
+
 
   return (
     <div className="home-container">
@@ -126,18 +140,18 @@ const Home = () => {
             </div>
             <div className='select-cate'>
               <select name="" id="">
-                <option value="">Tất cả</option>
+                <option value="">Tất cả danh mục</option>
               </select>
             </div>
             <div className='method'>
               <select name="" id="">
-                <option value="">Tất cả</option>
+                <option value="">Phương thức đấu giá</option>
               </select>
             </div>
             <div className='sort'>
               <p>Sắp xếp: </p>
-              <select name="" id="">
-                <option value="">Tat ca</option>
+              <select className='select' name="" id="">
+                <option value="">Mặc định</option>
               </select>
             </div>
           </div>

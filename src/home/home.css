@@ -71,7 +71,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;    
-    gap: 10px;
+    gap: 45px;
     margin-top: 20px;
 }
 .input-search ,.select-cate ,.method{
@@ -86,5 +86,27 @@
 }
 .sort{
     display: flex;
+    align-items: center;
     width: 25%;
+    gap: 10px;
 }
+.sort .select{
+    width: 70%;
+}
+@media (max-width: 768px) {
+      .head{
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .input-search ,.select-cate ,.method{
+            width: 100%;
+        }
+        .sort{
+            width: 100%;
+            justify-content: space-between;
+        }
+        .sort .select{
+            width: 75%;
+        }
+    }
