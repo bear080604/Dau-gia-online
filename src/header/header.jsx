@@ -48,7 +48,7 @@ function Header() {
         <div className="auth-links">
           {user ? (
             <>
-              <span>Xin chào, {user.name || user.email}</span>
+              <span>Xin chào, <a href="/profile"> {user.name || user.email}</a></span>
               <a href="/" onClick={handleLogout}>Đăng Xuất</a>
             </>
           ) : (

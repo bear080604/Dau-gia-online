@@ -6,6 +6,8 @@ import Login from './pages/login';
 import Auction from './pages/Auction';  
 import  AuctionSessionPageUser  from './pages/AuctionSession'; 
 import  ContactPage  from './pages/contact';
+import  ContractPage  from './pages/contract';
+import  PaymentPage  from './pages/payment';
 import AdminSettings from './pages/AdminSettings';
 import Admindashboard from './pages/AdminDashboard';
 import AdminReport from './pages/AdminReport';
@@ -18,6 +20,8 @@ import AdminNotification from './pages/AdminNotification';
 import AdminAuctionAsset from './pages/AdminAuctionAsset';
 import AdminProfile from './pages/AdminProfile';
 import AuctionSessionPage from './pages/AdminAuction-session';
+import ProfilePage from './pages/profile';
+
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { UserProvider } from './UserContext';
@@ -38,6 +42,9 @@ function App (){
             <Route path = '/auction-session' element = {<AuctionSessionPageUser />} />
             <Route path='/auction-session/:id' element={<Detail/>} /> {/* Changed to match Link in Home */}
             <Route path = '/contact' element = {<ContactPage />} />
+            <Route path = '/contract' element = {<ContractPage />} />
+            <Route path = '/payment' element = {<PaymentPage />} />
+            <Route path = '/profile' element = {<ProfilePage/>} />
             <Route path = '/admin/settings' element = {<AdminSettings />} />
             <Route path = '/admin/dashboard' element = {<Admindashboard />} />
             <Route path = '/admin' element = {<Admindashboard />} />

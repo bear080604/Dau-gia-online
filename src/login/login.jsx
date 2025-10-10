@@ -24,38 +24,41 @@ function LoginForm() {
     setRememberMe(e.target.checked);
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  try {
-    const response = await fetch(`${process.env.REACT_APP_API_URL}login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: formData.email,
-        password: formData.password,
-        rememberMe: rememberMe ? true : false
-      }),
-      credentials: 'include',
-    });
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          rememberMe: rememberMe ? true : false
+        }),
+        credentials: 'include',
+      });
 
-    if (response.ok) {
-      const result = await response.json();
-      console.log('Đăng nhập thành công:', result);
-      if (result && result.user) {
-        const token = result.token || null;
-        login(result.user, token);
-        window.location.href = result.user.role === 'Administrator' ? '/admin' : '/';
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Đăng nhập thành công:', result);
+        if (result && result.user) {
+          const token = result.token || null;
+          // Lưu token vào localStorage
+          if (token) {
+            localStorage.setItem('authToken', token);
+          }
+          login(result.user, token);
+          window.location.href = result.user.role === 'Administrator' ? '/admin' : '/';
+        }
+      } else {
+        const error = await response.json();
+        console.error('Lỗi đăng nhập:', error.message);
       }
-    } else {
-      const error = await response.json();
-      console.error('Lỗi đăng nhập:', error.message);
+    } catch (err) {
+      console.error('Lỗi API:', err);
     }
-  } catch (err) {
-    console.error('Lỗi API:', err);
-  }
-};
-
+  };
 
   return (
     <div className={styles.container}>

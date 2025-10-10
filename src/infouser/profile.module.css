@@ -1,0 +1,681 @@
+.container {
+  max-width: 1200px;
+  margin: 20px auto;
+  display: flex;
+  gap: 20px;
+}
+
+.sidebar {
+  width: 280px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  overflow: hidden;
+}
+
+.userInfo {
+  background: #2c3e50;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #34495e;
+  margin: 0 auto 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #ecf0f1;
+}
+
+.username {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.accountType {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.sidebarMenu {
+  list-style: none;
+  padding: 10px 0;
+}
+
+.sidebarMenu li {
+  margin: 0;
+}
+
+.sidebarMenu a {
+  display: block;
+  padding: 15px 20px;
+  color: #555;
+  text-decoration: none;
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.sidebarMenu a:hover {
+  background: #f8f9fa;
+  color: #3498db;
+}
+
+.sidebarMenu a.active {
+  background: #e3f2fd;
+  color: #3498db;
+  border-left-color: #3498db;
+}
+
+.mainContent {
+  flex: 1;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.contentHeader {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.contentTitle {
+  font-size: 22px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.tabContent {
+  padding: 20px;
+}
+
+.tabPane {
+  display: block;
+}
+
+.infoSection {
+  margin-bottom: 30px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #3498db;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.infoItem {
+  margin-bottom: 15px;
+}
+
+.infoLabel {
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.infoValue {
+  color: #333;
+  padding: 10px 15px;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.bankAccount {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  border: 1px solid #e0e0e0;
+}
+
+.bankHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.bankName {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.accountNumber {
+  font-size: 16px;
+  font-weight: bold;
+  color: #e74c3c;
+}
+
+.accountHolder {
+  color: #666;
+  margin-top: 5px;
+}
+
+.btn {
+  padding: 10px 20px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s ease;
+}
+
+.btn:hover {
+  background: #2980b9;
+}
+
+.btnEdit {
+  background: #27ae60;
+}
+
+.btnEdit:hover {
+  background: #219653;
+}
+
+.btnDelete {
+  background: #e74c3c;
+}
+
+.btnDelete:hover {
+  background: #c0392b;
+}
+
+.bankActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formLabel {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #555;
+}
+
+.formControl {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.formControl:focus {
+  border-color: #3498db;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.photoSection {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.photoItem {
+  text-align: center;
+}
+
+.photoLabel {
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.photoPlaceholder {
+  width: 200px;
+  height: 120px;
+  background: #e0e0e0;
+  border: 1px dashed #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.photoPlaceholder:hover {
+  border-color: #3498db;
+  color: #3498db;
+}
+
+/* Popup Styles */
+.popupOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.popupOverlay.active {
+  display: flex;
+}
+
+.popup {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.popupHeader {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.popupTitle {
+  font-size: 20px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.popupClose {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.popupBody {
+  padding: 20px;
+}
+
+.popupFooter {
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.bankForm {
+  margin-bottom: 20px;
+}
+
+/* Payment History Styles */
+.paymentHistory {
+  margin-top: 20px;
+}
+
+.paymentFilters {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filterLabel {
+  font-weight: 600;
+  color: #555;
+  font-size: 14px;
+}
+
+.paymentTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.paymentTable th {
+  background-color: #f8f9fa;
+  padding: 12px 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #2c3e50;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.paymentTable td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.paymentTable tr:hover {
+  background-color: #f8f9fa;
+}
+
+.paymentId {
+  font-weight: 600;
+  color: #3498db;
+}
+
+.paymentAmount {
+  font-weight: 600;
+  color: #27ae60;
+}
+
+.paymentStatus {
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  display: inline-block;
+}
+
+.statusCompleted {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.statusPending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.statusFailed {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.paymentMethod {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.paymentMethodIcon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 4px;
+  color: #3498db;
+}
+
+.paymentActions {
+  display: flex;
+  gap: 5px;
+}
+
+.actionBtn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.actionBtn.view {
+  background: #3498db;
+  color: white;
+}
+
+.actionBtn.view:hover {
+  background: #2980b9;
+}
+
+.actionBtn.receipt {
+  background: #27ae60;
+  color: white;
+}
+
+.actionBtn.receipt:hover {
+  background: #219653;
+}
+
+.paymentSummary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.summaryCard {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  text-align: center;
+}
+
+.summaryValue {
+  font-size: 24px;
+  font-weight: bold;
+  color: #2c3e50;
+  margin: 10px 0;
+}
+
+.summaryLabel {
+  font-size: 14px;
+  color: #666;
+}
+
+.totalPayments {
+  border-top: 3px solid #3498db;
+}
+
+.completedPayments {
+  border-top: 3px solid #27ae60;
+}
+
+.pendingPayments {
+  border-top: 3px solid #f39c12;
+}
+
+.failedPayments {
+  border-top: 3px solid #e74c3c;
+}
+
+/* Contract Styles */
+.contractTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.contractTable th {
+  background-color: #f8f9fa;
+  padding: 12px 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #2c3e50;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.contractTable td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.contractTable tr:hover {
+  background-color: #f8f9fa;
+}
+
+.contractId {
+  font-weight: 600;
+  color: #3498db;
+}
+
+.contractPrice {
+  font-weight: 600;
+  color: #27ae60;
+}
+
+.contractStatus {
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  display: inline-block;
+}
+
+.statusWaiting {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.statusPaid {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.contractActions {
+  display: flex;
+  gap: 5px;
+}
+
+.actionBtn.payment {
+  background: #3498db;
+  color: white;
+}
+
+.actionBtn.payment:hover {
+  background: #2980b9;
+}
+
+.actionBtn.details {
+  background: #6c757d;
+  color: white;
+}
+
+.actionBtn.details:hover {
+  background: #5a6268;
+}
+
+.paymentItem {
+  display: flex;
+  gap: 20px;
+  border: 1px solid rgb(190, 190, 190);
+  margin-bottom: 10px;
+  border-radius: 10px;
+  padding: 15px;
+}
+
+.image {
+  width: 25%;
+}
+
+.image .img {
+  max-width: 100%;
+  height: auto;
+}
+
+.paymentInfo {
+  width: 75%;
+}
+
+.paymentInfo h2 {
+  margin-bottom: 10px;
+  color: #2c3e50;
+}
+
+.paymentInfo span {
+  display: inline-block;
+  margin-bottom: 5px;
+  color: #555;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+  }
+  
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .photoSection {
+    flex-direction: column;
+  }
+  
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+  
+  .paymentFilters {
+    flex-direction: column;
+  }
+  
+  .paymentTable {
+    display: block;
+    overflow-x: auto;
+  }
+  
+  .paymentSummary {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .contractTable {
+    display: block;
+    overflow-x: auto;
+  }
+  
+  .paymentItem {
+    flex-direction: column;
+  }
+  
+  .image {
+    width: 100%;
+  }
+  
+  .paymentInfo {
+    width: 100%;
+  }
+}
