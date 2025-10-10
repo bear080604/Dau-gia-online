@@ -23,10 +23,6 @@ const Home = () => {
     const bidStart = new Date(session.bid_start);
     const bidEnd = new Date(session.bid_end);
 
-    console.log('Debug - Now:', now);
-    console.log('Debug - Bid Start:', bidStart);
-    console.log('Debug - Bid End:', bidEnd);
-
     if (now < bidStart) {
       return "Chưa bắt đầu";
     } else if (now >= bidStart && now <= bidEnd) {

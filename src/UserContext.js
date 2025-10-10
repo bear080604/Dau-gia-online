@@ -11,7 +11,7 @@ export const useUser = () => {
 };
 
 export const UserProvider = ({ children }) => {
-  console.log('🟢 UserProvider MOUNTED!');
+ 
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('user');
@@ -25,8 +25,7 @@ export const UserProvider = ({ children }) => {
   const [token, setToken] = useState(() => {
     return localStorage.getItem('token') || null;
   });
- console.log('👤 Current user state:', user);
- console.log('🔑 Current token:', token);
+ 
   const login = (userData, tokenData) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
