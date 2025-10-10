@@ -1,16 +1,36 @@
-import React, { useState, useEffect } from "react"; // Thêm useState, useEffect cho clock
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import "./header.css";
 import { useUser } from "../UserContext";
 
 function Header() {
   const { user, logout } = useUser();
-  const [currentTime, setCurrentTime] = useState(new Date().toLocaleString('vi-VN'));
+  const [currentTime, setCurrentTime] = useState(new Date().toLocaleString("vi-VN"));
+  const [categories, setCategories] = useState([]); // lưu danh mục từ API
 
+  // Cập nhật đồng hồ
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTime(new Date().toLocaleString('vi-VN'));
+      setCurrentTime(new Date().toLocaleString("vi-VN"));
     }, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Gọi API lấy danh mục
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get("http://127.0.0.1:8000/api/categories");
+        if (res.data.status && Array.isArray(res.data.data)) {
+          setCategories(res.data.data);
+        } else {
+          console.error("Không có danh mục hợp lệ:", res.data);
+        }
+      } catch (error) {
+        console.error("Lỗi khi tải danh mục:", error);
+      }
+    };
+    fetchCategories();
   }, []);
 
   const handleLogout = (e) => {
@@ -46,7 +66,7 @@ function Header() {
         <div className="logo">
           <div className="logo-img">
             <a href="/">
-            <img src="/assets/img/logo.jpg" alt="Logo" />
+              <img src="/assets/img/logo.jpg" alt="Logo" />
             </a>
           </div>
         </div>
@@ -60,7 +80,7 @@ function Header() {
           </form>
         </div>
 
-        <div className="datetime">{currentTime}</div> {/* Render clock */}
+        <div className="datetime">{currentTime}</div>
       </header>
 
       {/* Navigation Bar */}
@@ -71,16 +91,24 @@ function Header() {
               <i className="fa fa-info" aria-hidden="true"></i> GIỚI THIỆU
             </a>
           </li>
+
           <li className="categories">
             <a href="#">
               <i className="fa fa-bars" aria-hidden="true"></i> DANH MỤC TÀI SẢN
             </a>
             <ul className="category-hidden">
-              <li>category1</li>
-              <li>category2</li>
-              <li>category3</li>
+              {categories.length > 0 ? (
+                categories.map((cat) => (
+                  <li key={cat.category_id}>
+                    {cat.name}
+                  </li>
+                ))
+              ) : (
+                <li>Đang tải...</li>
+              )}
             </ul>
           </li>
+
           <li>
             <a href="/auction-session">
               <i className="fa fa-gavel" aria-hidden="true"></i> ĐẤU GIÁ TRỰC TUYẾN

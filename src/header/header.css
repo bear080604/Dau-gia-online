@@ -222,14 +222,15 @@
   width: 100%;
   background-color: #fff;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  margin-top: 5px;
+  /* margin-top: 5px; */
   padding: 8px 0;
-  z-index: 10;
+  z-index: 99;
   animation: fadeIn 0.3s ease;
 }
 
 .category-hidden li {
   list-style: none;
+  border-bottom: 1px solid gray;
 }
 
 .category-hidden li a,
