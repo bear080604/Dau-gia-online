@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import './header.css';
 
 const Header = () => {
@@ -8,9 +9,116 @@ const Header = () => {
   const [isMobileNavActive, setIsMobileNavActive] = useState(false);
   const [isMobileCategoryActive, setIsMobileCategoryActive] = useState(false);
   const [user, setUser] = useState(null);
+  const [latestUnpaidContract, setLatestUnpaidContract] = useState(null);
 
   // Logo base64
   const logoBase64 = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwIiBoZWlnaHQ9IjE2MCIgdmlld0JveD0iMCAwIDE2MCAxNjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNjAiIGhlaWdodD0iMTYwIiByeD0iMTIiIGZpbGw9IiMyNzcyQkEiLz4KPHN2ZyB4PSI0MCIgeT0iNDAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiPgo8cGF0aCBkPSJNMTIgMTNWMTRNMTIgNlYxMk0xMiAxMkgyMU0zIDNIOUw5LjUgMjFIMi41TDMgM1oiLz4KPC9zdmc+Cjwvc3ZnPgo=";
+
+  // Sample contract data (in real app, this would come from an API)
+  const contractData = {
+    status: true,
+    contracts: [
+      {
+        contract_id: 12,
+        session_id: 23,
+        winner_id: 32,
+        final_price: "20000.00",
+        signed_date: "2025-10-10 16:40:01",
+        status: "ChoThanhToan",
+        session: {
+          item: { name: "Văn Mạnh Sầm" }
+        }
+      },
+      {
+        contract_id: 11,
+        session_id: 23,
+        winner_id: 32,
+        final_price: "20000.00",
+        signed_date: "2025-10-10 16:23:01",
+        status: "ChoThanhToan",
+        session: {
+          item: { name: "Văn Mạnh Sầm" }
+        }
+      },
+      {
+        contract_id: 10,
+        session_id: 19,
+        winner_id: 16,
+        final_price: "2300000.00",
+        signed_date: "2025-10-07 17:24:21",
+        status: "DaThanhToan",
+        session: {
+          item: { name: "17" }
+        }
+      },
+      {
+        contract_id: 9,
+        session_id: 18,
+        winner_id: 15,
+        final_price: "2200000.00",
+        signed_date: "2025-10-07 16:09:20",
+        status: "ChoThanhToan",
+        session: {
+          item: { name: "17" }
+        }
+      },
+      {
+        contract_id: 8,
+        session_id: 17,
+        winner_id: 13,
+        final_price: "5000000000.00",
+        signed_date: "2025-10-07 16:06:21",
+        status: "ChoThanhToan",
+        session: {
+          item: { name: "17" }
+        }
+      },
+      {
+        contract_id: 7,
+        session_id: 17,
+        winner_id: 13,
+        final_price: "5000000000.00",
+        signed_date: "2025-10-07 16:01:22",
+        status: "ChoThanhToan",
+        session: {
+          item: { name: "17" }
+        }
+      },
+      {
+        contract_id: 5,
+        session_id: 16,
+        winner_id: 15,
+        final_price: "15000000.00",
+        signed_date: "2025-10-07 08:36:47",
+        status: "ChoThanhToan",
+        session: {
+          item: { name: "17" }
+        }
+      },
+      {
+        contract_id: 4,
+        session_id: 16,
+        winner_id: 15,
+        final_price: "15000000.00",
+        signed_date: "2025-10-05 03:44:02",
+        status: "ChoThanhToan",
+        session: {
+          item: { name: "17" }
+        }
+      },
+      {
+        contract_id: 1,
+        session_id: 1,
+        winner_id: 1,
+        final_price: "2200000000.00",
+        signed_date: "2025-10-01 13:00:00",
+        status: "ChoThanhToan",
+        session: {
+          item: { name: "nam like ăn cứt chho ăn lollol" }
+        }
+      }
+    ]
+  };
 
   // Update clock
   useEffect(() => {
@@ -24,16 +132,36 @@ const Header = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Countdown timer
+  // User authentication and contract filtering
   useEffect(() => {
-    const headTargetTimeStr = "23:59";
+    const userData = JSON.parse(localStorage.getItem('user')) || null;
+    setUser(userData);
 
-    const getNextTargetDate = (timeStr) => {
-      const [hh, mm] = timeStr.split(':').map(Number);
-      const now = new Date();
-      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0);
-      if (target <= now) target.setDate(target.getDate() + 1);
-      return target;
+    if (userData && contractData.status && contractData.contracts.length > 0) {
+      const userContracts = contractData.contracts
+        .filter(
+          (contract) =>
+            contract.winner_id === userData.user_id &&
+            contract.status === 'ChoThanhToan' &&
+            new Date(contract.signed_date).getTime() + 24 * 60 * 60 * 1000 >= new Date().getTime()
+        )
+        .sort((a, b) => new Date(b.signed_date) - new Date(a.signed_date));
+
+      setLatestUnpaidContract(userContracts[0] || null);
+    }
+  }, []);
+
+  // Countdown timer for the latest unpaid contract
+  useEffect(() => {
+    if (!latestUnpaidContract) {
+      setCountdown('Không có hợp đồng');
+      return;
+    }
+
+    const getTargetDate = (signedDate) => {
+      const signed = new Date(signedDate);
+      signed.setHours(signed.getHours() + 24); // 24-hour payment window
+      return signed;
     };
 
     const formatCountdown = (ms) => {
@@ -46,29 +174,66 @@ const Header = () => {
     };
 
     const updateCountdown = () => {
-      const target = getNextTargetDate(headTargetTimeStr);
+      const target = getTargetDate(latestUnpaidContract.signed_date);
       const now = new Date();
       const diff = target - now;
-      const formatted = formatCountdown(diff);
-      setCountdown(formatted);
+      setCountdown(formatCountdown(diff));
     };
 
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [latestUnpaidContract]);
 
-  // User authentication
-  useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem('user')) || null;
-    setUser(userData);
-  }, []);
-
-  const handleLogout = (e) => {
+  // User logout using API
+  const handleLogout = async (e) => {
     e.preventDefault();
-    localStorage.removeItem('user');
-    setUser(null);
-    window.location.reload();
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      localStorage.removeItem('user');
+      setUser(null);
+      setLatestUnpaidContract(null);
+      alert('Đăng xuất thành công');
+      window.location.href = '/login';
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:8000/api/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
+          setUser(null);
+          setLatestUnpaidContract(null);
+          alert('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+          window.location.href = '/login';
+          return;
+        }
+        throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.status) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        setUser(null);
+        setLatestUnpaidContract(null);
+        alert('Đăng xuất thành công');
+        window.location.href = '/login';
+      } else {
+        throw new Error(data.message || 'Lỗi đăng xuất');
+      }
+    } catch (err) {
+      alert('Lỗi đăng xuất: ' + err.message);
+    }
   };
 
   // Mobile search handlers
@@ -77,9 +242,11 @@ const Header = () => {
   };
 
   const handleClickOutsideSearch = (e) => {
-    if (isMobileSearchActive && 
-        !e.target.closest('.uheader-mobile-search-box') && 
-        !e.target.closest('.uheader-mobile-search-toggle')) {
+    if (
+      isMobileSearchActive &&
+      !e.target.closest('.uheader-mobile-search-box') &&
+      !e.target.closest('.uheader-mobile-search-toggle')
+    ) {
       setIsMobileSearchActive(false);
     }
   };
@@ -109,9 +276,9 @@ const Header = () => {
   // Navigation menu items
   const navItems = [
     { icon: 'fa-info-circle', text: 'GIỚI THIỆU', href: '#' },
-    { 
-      icon: 'fa-th-list', 
-      text: 'DANH MỤC TÀI SẢN', 
+    {
+      icon: 'fa-th-list',
+      text: 'DANH MỤC TÀI SẢN',
       href: '#',
       isCategory: true,
       subItems: [
@@ -138,14 +305,16 @@ const Header = () => {
         <div className="uheader-auth-links">
           {user ? (
             <>
-              <span>Xin chào, {user.name || user.email}</span>
-              <a href="#" onClick={handleLogout}>Đăng Xuất</a>
+              <a href="/profile"><span>Xin chào, {user.name || user.email}</span></a>
+              <a href="#" onClick={handleLogout}>
+                Đăng Xuất
+              </a>
             </>
           ) : (
             <>
-              <a href="login">Đăng Nhập</a>
+              <a href="/login">Đăng Nhập</a>
               <a href="#">|</a>
-              <a href="register">Đăng Ký</a>
+              <a href="/register">Đăng Ký</a>
             </>
           )}
         </div>
@@ -156,10 +325,7 @@ const Header = () => {
         <div className="uheader-logo">
           <div className="uheader-logo-img">
             <a href="/">
-              <img
-                alt="Logo Đấu Giá"
-                src={logoBase64}
-              />
+              <img alt="Logo Đấu Giá" src={logoBase64} />
             </a>
           </div>
         </div>
@@ -186,7 +352,11 @@ const Header = () => {
           >
             <i aria-hidden="true" className="fa fa-search"></i>
           </button>
-          <div className={`uheader-mobile-search-box ${isMobileSearchActive ? 'active' : ''}`}>
+          <div
+            className={`uheader-mobile-search-box ${
+              isMobileSearchActive ? 'active' : ''
+            }`}
+          >
             <input placeholder="Nhập tên tài sản..." type="text" />
             <button type="submit">
               <i aria-hidden="true" className="fa fa-search"></i>
@@ -195,21 +365,27 @@ const Header = () => {
         </div>
 
         <div className="uheader-header-right">
-          <a href="#" style={{ textDecoration: 'none' }}>
-            <div
-              aria-live="polite"
-              className="uheader-head-contract-box"
-              role="status"
-            >
-              <div aria-hidden="true" className="uheader-head-icon">HD</div>
-              <div className="uheader-head-content">
-                <div className="uheader-head-title">Hợp đồng cần thanh toán</div>
-                <div className="uheader-head-due-time">
-                  Còn lại: {countdown}
+          {user && latestUnpaidContract && (
+            <Link to={`/contract`} style={{ textDecoration: 'none' }}>
+              <div
+                aria-live="polite"
+                className="uheader-head-contract-box"
+                role="status"
+              >
+                <div aria-hidden="true" className="uheader-head-icon">
+                  HD
+                </div>
+                <div className="uheader-head-content">
+                  <div className="uheader-head-title">
+                    Hợp đồng: {latestUnpaidContract.session.item.name}
+                  </div>
+                  <div className="uheader-head-due-time">
+                    Còn lại: {countdown}
+                  </div>
                 </div>
               </div>
-            </div>
-          </a>
+            </Link>
+          )}
           <div className="uheader-datetime">{currentTime}</div>
         </div>
       </header>
@@ -218,7 +394,10 @@ const Header = () => {
       <nav className="uheader-nav-bar">
         <ul className="uheader-nav-menu">
           {navItems.map((item, index) => (
-            <li key={index} className={item.isCategory ? 'uheader-categories' : ''}>
+            <li
+              key={index}
+              className={item.isCategory ? 'uheader-categories' : ''}
+            >
               <a href={item.href}>
                 <i aria-hidden="true" className={`fa ${item.icon}`}></i>
                 <span>{item.text}</span>
@@ -227,9 +406,7 @@ const Header = () => {
                 <ul className="uheader-category-hidden">
                   {item.subItems.map((subItem, subIndex) => (
                     <li key={subIndex}>
-                      <a href={subItem.href}>
-                        {subItem.text}
-                      </a>
+                      <a href={subItem.href}>{subItem.text}</a>
                     </li>
                   ))}
                 </ul>
@@ -242,20 +419,28 @@ const Header = () => {
       {/* Mobile Navigation Toggle Button */}
       <button
         aria-label="Mở menu"
-        className={`uheader-mobile-nav-toggle ${isMobileNavActive ? 'active' : ''}`}
+        className={`uheader-mobile-nav-toggle ${
+          isMobileNavActive ? 'active' : ''
+        }`}
         onClick={openMobileNav}
       >
         <i className="fa fa-bars"></i>
       </button>
 
       {/* Mobile Navigation Overlay */}
-      <div 
-        className={`uheader-mobile-nav-overlay ${isMobileNavActive ? 'active' : ''}`}
+      <div
+        className={`uheader-mobile-nav-overlay ${
+          isMobileNavActive ? 'active' : ''
+        }`}
         onClick={closeMobileNav}
       ></div>
 
       {/* Mobile Navigation Sidebar */}
-      <div className={`uheader-mobile-nav-sidebar ${isMobileNavActive ? 'active' : ''}`}>
+      <div
+        className={`uheader-mobile-nav-sidebar ${
+          isMobileNavActive ? 'active' : ''
+        }`}
+      >
         <div className="uheader-mobile-nav-header">
           <h3>Menu Điều Hướng</h3>
           <button
@@ -272,16 +457,25 @@ const Header = () => {
               {item.isCategory ? (
                 <>
                   <button
-                    className={`uheader-mobile-category-toggle ${isMobileCategoryActive ? 'active' : ''}`}
+                    className={`uheader-mobile-category-toggle ${
+                      isMobileCategoryActive ? 'active' : ''
+                    }`}
                     onClick={toggleMobileCategory}
                   >
                     <div>
                       <i aria-hidden="true" className={`fa ${item.icon}`}></i>
                       {item.text}
                     </div>
-                    <i aria-hidden="true" className={`fa fa-chevron-down uheader-arrow`}></i>
+                    <i
+                      aria-hidden="true"
+                      className={`fa fa-chevron-down uheader-arrow`}
+                    ></i>
                   </button>
-                  <ul className={`uheader-mobile-category-menu ${isMobileCategoryActive ? 'active' : ''}`}>
+                  <ul
+                    className={`uheader-mobile-category-menu ${
+                      isMobileCategoryActive ? 'active' : ''
+                    }`}
+                  >
                     {item.subItems.map((subItem, subIndex) => (
                       <li key={subIndex}>
                         <a href={subItem.href}>
