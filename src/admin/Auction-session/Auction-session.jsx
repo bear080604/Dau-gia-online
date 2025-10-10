@@ -38,9 +38,18 @@ function AuctionSession() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [now, setNow] = useState(moment.tz('Asia/Ho_Chi_Minh')); // Thêm state cho now
   const itemsPerPage = 5;
 
   const API_URL = process.env.REACT_APP_API_URL;
+
+  // Cập nhật thời gian hiện tại mỗi giây
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(moment.tz('Asia/Ho_Chi_Minh'));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Log token để debug
   useEffect(() => {
@@ -69,37 +78,48 @@ function AuctionSession() {
     }
   };
 
+  const parseDateToVN = (dateString) => {
+    if (!dateString) return null;
+    console.log('Parsing date:', dateString); // Debug định dạng đầu vào
+    if (dateString.endsWith('Z') || /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(dateString)) {
+      return moment.utc(dateString).tz('Asia/Ho_Chi_Minh');
+    }
+    // Hỗ trợ nhiều định dạng thời gian
+    return moment.tz(dateString, ['YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DD HH:mm'], 'Asia/Ho_Chi_Minh');
+  };
+
   const transformSession = (session) => {
+    console.log('Raw bid_start:', session.bid_start); // Debug dữ liệu thô từ backend
+    console.log('Raw bid_end:', session.bid_end);
     const winnerProfile = session.profiles.find(profile => profile.user.user_id === session.current_winner_id);
     const winnerName = winnerProfile ? winnerProfile.user.full_name : 'Chưa có';
     const highestBid = session.highest_bid ? Number(session.highest_bid).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : 'Chưa có';
     const bidStep = session.bid_step ? Number(session.bid_step).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : 'Chưa có';
 
-    // Convert UTC timestamps to UTC+7
-    const startTime = moment.tz(session.start_time, 'UTC').tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm');
-    const endTime = moment.tz(session.end_time, 'UTC').tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm');
-    const registerStart = moment.tz(session.register_start, 'UTC').tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm');
-    const registerEnd = moment.tz(session.register_end, 'UTC').tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm');
-    const checkinTime = moment.tz(session.checkin_time, 'UTC').tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm');
-    const bidStart = moment.tz(session.bid_start, 'UTC').tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm');
-    const bidEnd = moment.tz(session.bid_end, 'UTC').tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm');
+    const startTime = session.start_time ? parseDateToVN(session.start_time).format('YYYY-MM-DD HH:mm') : 'Chưa có';
+    const endTime = session.end_time ? parseDateToVN(session.end_time).format('YYYY-MM-DD HH:mm') : 'Chưa có';
+    const registerStart = session.register_start ? parseDateToVN(session.register_start).format('YYYY-MM-DD HH:mm') : 'Chưa có';
+    const registerEnd = session.register_end ? parseDateToVN(session.register_end).format('YYYY-MM-DD HH:mm') : 'Chưa có';
+    const checkinTime = session.checkin_time ? parseDateToVN(session.checkin_time).format('YYYY-MM-DD HH:mm') : 'Chưa có';
+    const bidStart = session.bid_start ? parseDateToVN(session.bid_start).format('YYYY-MM-DD HH:mm') : 'Chưa có';
+    const bidEnd = session.bid_end ? parseDateToVN(session.bid_end).format('YYYY-MM-DD HH:mm') : 'Chưa có';
 
-    const status = getAuctionStatus({ ...session, bid_start: bidStart, bid_end: bidEnd });
+    const status = getAuctionStatus({ ...session, bid_start: session.bid_start, bid_end: session.bid_end });
     const statusClass = status === 'Chưa bắt đầu' ? 'Mo' :
                        status === 'Đang diễn ra' ? 'Dangdienra' : 'Ketthuc';
 
     return {
       id: session.session_id,
-      item: session.item.name,
+      item: session.item?.name || 'Chưa có',
       itemId: session.item_id,
-      creator: session.auction_org.full_name,
+      creator: session.auction_org?.full_name || 'Chưa có',
       creatorId: session.created_by,
       startTime,
       endTime,
-      regulation: session.regulation,
+      regulation: session.regulation || 'Chưa có',
       status,
       statusClass,
-      method: session.method,
+      method: session.method || 'Đấu giá tự do',
       auctionOrgId: session.auction_org_id,
       registerStart,
       registerEnd,
@@ -109,9 +129,9 @@ function AuctionSession() {
       bidStep,
       highestBid,
       currentWinnerId: session.current_winner_id || 'Chưa có',
-      auctionOrgName: session.auction_org.full_name,
+      auctionOrgName: session.auction_org?.full_name || 'Chưa có',
       winnerName,
-      profiles: session.profiles,
+      profiles: session.profiles || [],
     };
   };
 
@@ -137,7 +157,7 @@ function AuctionSession() {
             userId: bid.user_id,
             amount: Number(bid.amount).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
             createdAt: bid.bid_time
-              ? moment.tz(bid.bid_time, 'UTC').tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm')
+              ? parseDateToVN(bid.bid_time).format('YYYY-MM-DD HH:mm')
               : 'Không có thời gian',
             userName,
             originalAmount: Number(bid.amount),
@@ -294,20 +314,20 @@ function AuctionSession() {
       setSessionForm({
         item: session.itemId,
         creator: session.creatorId,
-        startTime: moment.tz(session.startTime, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DDTHH:mm'),
-        endTime: moment.tz(session.endTime, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DDTHH:mm'),
+        startTime: session.startTime ? moment.tz(session.startTime, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DDTHH:mm') : '',
+        endTime: session.endTime ? moment.tz(session.endTime, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DDTHH:mm') : '',
         regulation: session.regulation,
         status: session.status === 'Chưa bắt đầu' ? 'Mo' :
                 session.status === 'Đang diễn ra' ? 'DangDienRa' : 'KetThuc',
         method: session.method,
         auctionOrgId: session.auctionOrgId,
-        registerStart: moment.tz(session.registerStart, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DDTHH:mm'),
-        registerEnd: moment.tz(session.registerEnd, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DDTHH:mm'),
-        checkinTime: moment.tz(session.checkinTime, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DDTHH:mm'),
-        bidStart: moment.tz(session.bidStart, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DDTHH:mm'),
-        bidEnd: moment.tz(session.bidEnd, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DDTHH:mm'),
-        bidStep: session.bidStep.replace(/[^\d]/g, ''),
-        highestBid: session.highestBid.replace(/[^\d]/g, ''),
+        registerStart: session.registerStart ? moment.tz(session.registerStart, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DDTHH:mm') : '',
+        registerEnd: session.registerEnd ? moment.tz(session.registerEnd, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DDTHH:mm') : '',
+        checkinTime: session.checkinTime ? moment.tz(session.checkinTime, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DDTHH:mm') : '',
+        bidStart: session.bidStart ? moment.tz(session.bidStart, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DDTHH:mm') : '',
+        bidEnd: session.bidEnd ? moment.tz(session.bidEnd, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DDTHH:mm') : '',
+        bidStep: session.bidStep.replace(/[^\d]/g, '') || '',
+        highestBid: session.highestBid.replace(/[^\d]/g, '') || '',
         currentWinnerId: '',
       });
       setSelectedSession(session);
@@ -396,26 +416,39 @@ function AuctionSession() {
       }
       console.log('Auth Token:', token);
       console.log('Request URL:', modalMode === 'edit' && selectedSession ? `${API_URL}auction-sessions/${selectedSession.id}` : `${API_URL}auction-sessions`);
+
       const formData = {
         item_id: sessionForm.item,
         created_by: sessionForm.creator,
-        start_time: moment.tz(sessionForm.startTime, 'Asia/Ho_Chi_Minh').toISOString(),
-        end_time: moment.tz(sessionForm.endTime, 'Asia/Ho_Chi_Minh').toISOString(),
+        start_time: sessionForm.startTime ? moment.tz(sessionForm.startTime, 'Asia/Ho_Chi_Minh').toISOString() : null,
+        end_time: sessionForm.endTime ? moment.tz(sessionForm.endTime, 'Asia/Ho_Chi_Minh').toISOString() : null,
         regulation: sessionForm.regulation,
         status: sessionForm.status,
         method: sessionForm.method,
         auction_org_id: sessionForm.auctionOrgId,
-        register_start: moment.tz(sessionForm.registerStart, 'Asia/Ho_Chi_Minh').toISOString(),
-        register_end: moment.tz(sessionForm.registerEnd, 'Asia/Ho_Chi_Minh').toISOString(),
-        checkin_time: moment.tz(sessionForm.checkinTime, 'Asia/Ho_Chi_Minh').toISOString(),
-        bid_start: moment.tz(sessionForm.bidStart, 'Asia/Ho_Chi_Minh').toISOString(),
-        bid_end: moment.tz(sessionForm.bidEnd, 'Asia/Ho_Chi_Minh').toISOString(),
-        bid_step: sessionForm.bidStep,
-        highest_bid: sessionForm.highestBid || null,
+        register_start: sessionForm.registerStart ? moment.tz(sessionForm.registerStart, 'Asia/Ho_Chi_Minh').toISOString() : null,
+        register_end: sessionForm.registerEnd ? moment.tz(sessionForm.registerEnd, 'Asia/Ho_Chi_Minh').toISOString() : null,
+        checkin_time: sessionForm.checkinTime ? moment.tz(sessionForm.checkinTime, 'Asia/Ho_Chi_Minh').toISOString() : null,
+        bid_start: sessionForm.bidStart ? moment.tz(sessionForm.bidStart, 'Asia/Ho_Chi_Minh').toISOString() : null,
+        bid_end: sessionForm.bidEnd ? moment.tz(sessionForm.bidEnd, 'Asia/Ho_Chi_Minh').toISOString() : null,
+        bid_step: sessionForm.bidStep ? Number(sessionForm.bidStep) : null,
+        highest_bid: sessionForm.highestBid ? Number(sessionForm.highestBid) : null,
         current_winner_id: null,
       };
 
       console.log('Request Data:', formData);
+
+      if (!formData.start_time || !formData.end_time || !formData.bid_start || !formData.bid_end) {
+        throw new Error('Vui lòng nhập đầy đủ các thời gian bắt buộc.');
+      }
+
+      if (moment(formData.end_time).isBefore(formData.start_time)) {
+        throw new Error('Thời gian kết thúc phải sau thời gian bắt đầu.');
+      }
+
+      if (moment(formData.bid_end).isBefore(formData.bid_start)) {
+        throw new Error('Thời gian đấu giá kết thúc phải sau thời gian đấu giá bắt đầu.');
+      }
 
       let response;
       if (modalMode === 'edit' && selectedSession) {
@@ -438,7 +471,7 @@ function AuctionSession() {
         alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
         window.location.href = '/login';
       } else if (error.response && error.response.status === 403) {
-        alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator). Vai trò hiện tại của bạn có thể không được cấp phép.');
+        alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator).');
       } else {
         alert('Có lỗi xảy ra khi lưu phiên đấu giá: ' + (error.response?.data?.message || error.message));
       }
@@ -542,6 +575,7 @@ function AuctionSession() {
       </div>
 
       <h1 className={styles.pageTitle}>Quản Lý Phiên Đấu Giá</h1>
+      <p className={styles.pageSubtitle}>Thời gian hiện tại: {now.format('YYYY-MM-DD HH:mm:ss Z')}</p> {/* Hiển thị now */}
       <p className={styles.pageSubtitle}>Quản lý và theo dõi các phiên đấu giá đang diễn ra</p>
 
       <div className={styles.actionsBar}>
@@ -580,6 +614,7 @@ function AuctionSession() {
               <th>Mã Phiên</th>
               <th>Tài sản</th>
               <th>Người tạo</th>
+              <th>Thời gian hiện tại</th> {/* Thêm cột cho now */}
               <th>Thời gian bắt đầu</th>
               <th>Thời gian kết thúc</th>
               <th>Quy định</th>
@@ -596,6 +631,7 @@ function AuctionSession() {
                 <td data-label="Mã Phiên">{session.id}</td>
                 <td data-label="Tài sản">{session.item}</td>
                 <td data-label="Người tạo">{session.creator}</td>
+                <td data-label="Thời gian hiện tại">{now.format('YYYY-MM-DD HH:mm:ss Z')}</td> {/* Hiển thị now */}
                 <td data-label="Thời gian bắt đầu">{session.startTime}</td>
                 <td data-label="Thời gian kết thúc">{session.endTime}</td>
                 <td data-label="Quy định">{session.regulation}</td>
@@ -802,6 +838,7 @@ function AuctionSession() {
               <span className={styles.modalClose} onClick={closeViewModal}>×</span>
             </div>
             <div className={styles.modalBody}>
+              <p><strong>Thời gian hiện tại:</strong> {now.format('YYYY-MM-DD HH:mm:ss Z')}</p> {/* Hiển thị now */}
               <p><strong>Mã phiên:</strong> {selectedSession.id}</p>
               <p><strong>Tài sản:</strong> {selectedSession.item}</p>
               <p><strong>Người tạo:</strong> {selectedSession.creator}</p>
@@ -839,7 +876,7 @@ function AuctionSession() {
                         <td>HS{profile.profile_id}</td>
                         <td>{profile.user.full_name}</td>
                         <td>{Number(profile.deposit_amount).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} VND</td>
-                        <td>{moment.tz(profile.created_at, 'UTC').tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm')}</td>
+                        <td>{parseDateToVN(profile.created_at)?.format('YYYY-MM-DD HH:mm') || 'Chưa có'}</td>
                       </tr>
                     ))}
                   </tbody>
