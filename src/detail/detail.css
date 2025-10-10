@@ -5,12 +5,6 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f5f5f5;
-  color: #333;
-}
-
 .detailsp-container {
   max-width: 1400px;
   margin: 20px auto;
@@ -482,7 +476,7 @@ body {
   transform: none;
 }
 
-label {
+.detailsp-label {
   display: block;
   margin-bottom: 5px;
   font-weight: bold;

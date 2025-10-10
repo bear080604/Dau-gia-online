@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useParams } from "react-router-dom";
 import './detail.css';
 
 const Detail = () => {
   // Constants
   const API_BASE = "http://localhost:8000/api";
-  const DEFAULT_SESSION_ID = 21;
+  const { id } = useParams();
+  const DEFAULT_SESSION_ID = parseInt(id, 10);
   const REFETCH_INTERVAL = 3000; 
   const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
   const ALLOWED_FILE_TYPES = [
@@ -968,7 +970,7 @@ async function handleCheckin() {
             <h3>Form Đăng Ký Dự Đấu Giá</h3>
             <form onSubmit={(e) => { e.preventDefault(); submitProfile(); }}>
               <div className="detailsp-form-group">
-                <label>Tài Liệu Pháp Lý (Upload 1 file PDF/DOC/DOCX):</label>
+                <label className='detailsp-label'>Tài Liệu Pháp Lý (Upload 1 file PDF/DOC/DOCX):</label>
                 <input
                   type="file"
                   accept=".pdf,.doc,.docx"
@@ -985,7 +987,7 @@ async function handleCheckin() {
               
               {profile.status !== "DaHoanTat" && (
                 <div className="detailsp-form-group">
-                  <label>Đặt Cọc (VNĐ):</label>
+                  <label className='detailsp-label'>Đặt Cọc (VNĐ):</label>
                   <div className="detailsp-deposit-wrapper">
                     <input
                       type="text"
