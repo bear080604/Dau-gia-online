@@ -285,7 +285,7 @@
     <script>
         // Lấy session_id từ URL params
         const urlParams = new URLSearchParams(window.location.search);
-        const sessionId = urlParams.get('session_id') || 16;
+        const sessionId = urlParams.get('session_id') || 21;
         const SESSION_API_URL = `http://localhost:8000/api/auction-sessions/${sessionId}`;
         const BIDS_API_URL = `http://localhost:8000/api/bids/${sessionId}`;
 
