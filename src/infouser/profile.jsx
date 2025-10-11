@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useUser } from '../UserContext';
 import styles from './profile.module.css';
 
 const Profile = () => {
+  const { user, token, logout } = useUser();
   const [activeTab, setActiveTab] = useState('profile');
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showBankPopup, setShowBankPopup] = useState(false);
@@ -29,7 +31,6 @@ const Profile = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
     if (!token) {
       setError('Vui lòng đăng nhập để xem thông tin cá nhân');
       navigate('/login');
@@ -39,7 +40,7 @@ const Profile = () => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:8000/api/user', {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}user`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -49,7 +50,7 @@ const Profile = () => {
 
         if (!response.ok) {
           if (response.status === 401) {
-            localStorage.removeItem('authToken');
+            localStorage.removeItem('token');
             setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
             navigate('/login');
             return;
@@ -91,7 +92,7 @@ const Profile = () => {
     };
 
     fetchUserData();
-  }, [navigate]);
+  }, [navigate, token]);
 
   useEffect(() => {
     const fetchContracts = async () => {
@@ -101,14 +102,7 @@ const Profile = () => {
       }
       try {
         setLoading(true);
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-          setError('Vui lòng đăng nhập để xem hợp đồng');
-          navigate('/login');
-          return;
-        }
-
-        const response = await fetch('http://localhost:8000/api/contracts', {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}contracts`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -118,7 +112,7 @@ const Profile = () => {
 
         if (!response.ok) {
           if (response.status === 401) {
-            localStorage.removeItem('authToken');
+            localStorage.removeItem('token');
             setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
             navigate('/login');
             return;
@@ -161,7 +155,7 @@ const Profile = () => {
     };
 
     fetchContracts();
-  }, [userData.id, navigate]);
+  }, [userData.id, navigate, token]);
 
   const handleTabChange = (tab) => setActiveTab(tab);
   const openProfilePopup = () => setShowProfilePopup(true);
@@ -196,57 +190,12 @@ const Profile = () => {
 
   const handleLogout = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      setError('Không tìm thấy token. Vui lòng đăng nhập lại.');
-      navigate('/login');
-      return;
-    }
-
     try {
-      const response = await fetch('http://localhost:8000/api/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('authToken');
-          setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-          navigate('/login');
-          return;
-        }
-        throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      if (data.status) {
-        localStorage.removeItem('authToken');
-        setUserData({
-          id: null,
-          fullName: '',
-          username: '',
-          accountType: '',
-          email: '',
-          phone: '',
-          address: '',
-          idCardFront: '',
-          idCardBack: '',
-          bankName: '',
-          bankAccount: '',
-          createdAt: '',
-          emailVerifiedAt: ''
-        });
-        alert('Đăng xuất thành công');
-        navigate('/login');
-      } else {
-        throw new Error(data.message || 'Lỗi đăng xuất');
-      }
+      await logout();
+      alert('Đăng xuất thành công');
+      navigate('/login');
     } catch (err) {
-      setError(err.message);
+      setError('Lỗi đăng xuất: ' + err.message);
       alert('Lỗi đăng xuất: ' + err.message);
     }
   };
@@ -325,7 +274,7 @@ const Profile = () => {
                       <span className={styles.photoLabel}>Mặt trước</span>
                       <div className={styles.photoPlaceholder} onClick={() => handleUploadImage('front')}>
                         {userData.idCardFront ? (
-                          <img src={`http://localhost:8000/${userData.idCardFront}`} alt="ID Front" style={{ maxWidth: '100px' }} />
+                          <img src={`${process.env.REACT_APP_API_URL}/${userData.idCardFront}`} alt="ID Front" style={{ maxWidth: '100px' }} />
                         ) : (
                           '[Ảnh mặt trước]'
                         )}
@@ -335,7 +284,7 @@ const Profile = () => {
                       <span className={styles.photoLabel}>Mặt sau</span>
                       <div className={styles.photoPlaceholder} onClick={() => handleUploadImage('back')}>
                         {userData.idCardBack ? (
-                          <img src={`http://localhost:8000/${userData.idCardBack}`} alt="ID Back" style={{ maxWidth: '100px' }} />
+                          <img src={`${process.env.REACT_APP_API_URL}/${userData.idCardBack}`} alt="ID Back" style={{ maxWidth: '100px' }} />
                         ) : (
                           '[Ảnh mặt sau]'
                         )}
@@ -563,6 +512,14 @@ const Profile = () => {
           </li>
           <li><a href="#">Đấu giá của tôi</a></li>
           <li><a href="#">Lịch sử đấu giá</a></li>
+          <li>
+            <a
+              href="#"
+              onClick={handleLogout}
+            >
+              Đăng xuất
+            </a>
+          </li>
         </ul>
       </div>
       <div className={styles.mainContent}>
