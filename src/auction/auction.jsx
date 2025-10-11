@@ -32,6 +32,7 @@ const AuctionPage = () => {
   const [auctionItem, setAuctionItem] = useState(null);
   const [bidders, setBidders] = useState([]);
   const [bids, setBids] = useState([]);
+  const [categories, setCategories] = useState([]); // State mới để lưu danh sách danh mục
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -92,17 +93,54 @@ const AuctionPage = () => {
     }
   }, [id, token]);
 
-  // Fetch bidders
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const fullUrl = `${API_URL}categories`;
+        const response = await axios.get(fullUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = response.data;
+        if (data.status && data.data) {
+          setCategories(data.data);
+        } else {
+          throw new Error(data.message || 'Không thể lấy danh sách danh mục');
+        }
+      } catch (err) {
+        console.error('Fetch categories error:', err);
+        setCategories([]);
+        showToast('Không thể tải danh sách danh mục', 'error');
+      }
+    };
+
+    if (token) {
+      fetchCategories();
+    }
+  }, [token]);
+
+  // Hàm ánh xạ category_id với tên danh mục
+  const getCategoryName = (categoryId) => {
+    const category = categories.find(cat => cat.category_id === categoryId);
+    return category ? category.name : 'N/A';
+  };
+
   const fetchBidders = async () => {
     if (!id || !token) return;
+    console.log('Fetching bidders for session_id:', id);
     try {
       const fullUrl = `${API_URL}auction-profiles?session_id=${id}`;
       const response = await axios.get(fullUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = response.data;
+      console.log('API response:', data);
       const profiles = data.profiles || [];
-      const filteredBidders = profiles.filter(p => p.status === 'DaDuyet' || p.status === 'pending');
+      const filteredBidders = profiles.filter(p => 
+        (p.status === 'DaDuyet' || p.status === 'pending') && 
+        p.session_id === parseInt(id)
+      );
+      console.log('Filtered bidders:', filteredBidders);
       setBidders(filteredBidders);
     } catch (err) {
       console.error('Fetch bidders error:', err);
@@ -248,7 +286,6 @@ const AuctionPage = () => {
       return;
     }
 
-    // Show custom modal
     setPendingBid(currentBidValue);
     setShowConfirmModal(true);
   };
@@ -317,7 +354,6 @@ const AuctionPage = () => {
     <div className={styles.container}>
       <div className={styles.header}>Phiên đấu giá {item.name}</div>
       
-      {/* Countdown Timer */}
       <div className={styles['lot-numbers']}>
         {countdown.status === 'not_started' ? (
           <div className={styles['countdown-label']}>Thời gian còn lại để bắt đầu:</div>
@@ -342,7 +378,7 @@ const AuctionPage = () => {
           </div>
           <div className={styles['info-row']}>
             <div className={styles['info-label']}>Tên loại tài sản:</div>
-            <div className={styles['info-value']}>{item.category_id === 1 ? 'Bất động sản' : 'N/A'}</div>
+            <div className={styles['info-value']}>{getCategoryName(item.category_id)}</div>
           </div>
           <div className={styles['info-row']}>
             <div className={styles['info-label']}>Người có tài sản:</div>
@@ -456,38 +492,6 @@ const AuctionPage = () => {
       </div>
 
       <div className={styles['participants-table']}>
-        <div className={styles['table-title']}>DANH SÁCH NGƯỜI ĐĂNG KÝ ĐẤU GIÁ</div>
-        <table>
-          <thead>
-            <tr>
-              <th>STT</th>
-              <th></th>
-              <th>Họ và Tên</th>
-              <th>Tiền đặt trước</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bidders.length > 0 ? (
-              bidders.map((bidder, index) => (
-                <tr key={bidder.profile_id || index}>
-                  <td>{index + 1}</td>
-                  <td>
-                    <span className={`${styles['user-icon']} ${styles.pink}`}></span>
-                  </td>
-                  <td>{bidder.user?.full_name || bidder.full_name || 'N/A'}</td>
-                  <td>{formatPrice(bidder.deposit_amount)}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="4">Chưa có người đăng ký</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className={styles['participants-table']}>
         <div className={styles['table-title']}>DANH SÁCH LƯỢT ĐẶT GIÁ</div>
         <table>
           <thead>
@@ -515,6 +519,38 @@ const AuctionPage = () => {
             ) : (
               <tr>
                 <td colSpan="5">Chưa có lượt đặt giá</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      
+      <div className={styles['participants-table']}>
+        <div className={styles['table-title']}>DANH SÁCH NGƯỜI ĐĂNG KÝ ĐẤU GIÁ</div>
+        <table>
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th></th>
+              <th>Họ và Tên</th>
+              <th>Tiền đặt trước</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bidders.length > 0 ? (
+              bidders.map((bidder, index) => (
+                <tr key={bidder.profile_id || index}>
+                  <td>{index + 1}</td>
+                  <td>
+                    <span className={`${styles['user-icon']} ${styles.pink}`}></span>
+                  </td>
+                  <td>{bidder.user?.full_name || bidder.full_name || 'N/A'}</td>
+                  <td>{formatPrice(bidder.deposit_amount)}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4">Chưa có người đăng ký</td>
               </tr>
             )}
           </tbody>
