@@ -138,8 +138,8 @@ const Header = () => {
         <div className="uheader-auth-links">
           {user ? (
             <>
-              <span>Xin chào, {user.name || user.email}</span>
-              <a href="#" onClick={handleLogout}>Đăng Xuất</a>
+              <span>Xin chào, <a href="/profile">{user.full_name}</a></span>
+              <a href="#" onClick={handleLogout}>Đăng Xuất <i class="fa fa-sign-out" aria-hidden="true"></i></a>
             </>
           ) : (
             <>
@@ -156,10 +156,7 @@ const Header = () => {
         <div className="uheader-logo">
           <div className="uheader-logo-img">
             <a href="/">
-              <img
-                alt="Logo Đấu Giá"
-                src={logoBase64}
-              />
+              <img alt="Logo Đấu Giá" src="/assets/img/logo.jpg" />
             </a>
           </div>
         </div>

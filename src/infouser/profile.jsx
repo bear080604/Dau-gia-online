@@ -511,34 +511,6 @@ const Profile = () => {
           </li>
           <li><a href="#">Đấu giá của tôi</a></li>
           <li><a href="#">Lịch sử đấu giá</a></li>
-          <li>
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                localStorage.removeItem('authToken');
-                setUserData({
-                  id: null,
-                  fullName: '',
-                  username: '',
-                  accountType: '',
-                  email: '',
-                  phone: '',
-                  address: '',
-                  idCardFront: '',
-                  idCardBack: '',
-                  bankName: '',
-                  bankAccount: '',
-                  createdAt: '',
-                  emailVerifiedAt: ''
-                });
-                navigate('/login');
-                alert('Đã đăng xuất');
-              }}
-            >
-              Đăng xuất
-            </a>
-          </li>
         </ul>
       </div>
       <div className={styles.mainContent}>

@@ -136,7 +136,7 @@ select {
 
 .itemImage {
   width: 200px;
-  height: 160px;
+  height:200px;
   background-color: #eee;
   display: flex;
   align-items: center;
@@ -162,7 +162,7 @@ select {
 }
 
 .itemTitle {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 600;
   color: #2c3e50;
   flex: 1;
@@ -185,7 +185,6 @@ select {
 .itemFooter {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   margin-top: 10px;
 }
 

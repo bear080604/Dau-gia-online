@@ -147,17 +147,39 @@ function AuctionSession() {
             <div className={styles.filterGroup}>
               <label>Lọc theo thời gian đăng ký:</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
+  <input
+    type="date"
+    value={startDate}
+    onChange={(e) => setStartDate(e.target.value)}
+    style={{
+      padding: '10px 12px',
+      borderRadius: '5px',
+      border: '1px solid #ccc',
+      fontSize: '14px',
+      outline: 'none',
+      transition: 'all 0.2s',
+    }}
+    onFocus={(e) => (e.target.style.border = '1px solid #007bff')}
+    onBlur={(e) => (e.target.style.border = '1px solid #ccc')}
+  />
+
+  <input
+    type="date"
+    value={endDate}
+    onChange={(e) => setEndDate(e.target.value)}
+    style={{
+      padding: '10px 12px',
+      borderRadius: '5px',
+      border: '1px solid #ccc',
+      fontSize: '14px',
+      outline: 'none',
+      transition: 'all 0.2s',
+    }}
+    onFocus={(e) => (e.target.style.border = '1px solid #007bff')}
+    onBlur={(e) => (e.target.style.border = '1px solid #ccc')}
+  />
+</div>
+
             </div>
 
             <div className={styles.filterGroup}>
