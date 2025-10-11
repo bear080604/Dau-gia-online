@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import styles from './profile.module.css';
 
 const Profile = () => {
@@ -30,7 +30,6 @@ const Profile = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
-    console.log('Token from localStorage:', token); // Debug token
     if (!token) {
       setError('Vui lòng đăng nhập để xem thông tin cá nhân');
       navigate('/login');
@@ -48,10 +47,8 @@ const Profile = () => {
           }
         });
 
-        console.log('API Response Status:', response.status); // Debug status
         if (!response.ok) {
           if (response.status === 401) {
-            console.log('401 Error - Invalid token');
             localStorage.removeItem('authToken');
             setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
             navigate('/login');
@@ -61,18 +58,17 @@ const Profile = () => {
         }
 
         const data = await response.json();
-        console.log('API Response Data:', data); // Debug data
         if (data.status && data.user) {
           setUserData({
             id: data.user.user_id || null,
             fullName: data.user.full_name || 'Chưa cập nhật',
             username: data.user.email ? data.user.email.split('@')[0] : 'Chưa cập nhật',
             accountType: data.user.role === 'User' ? 'Cá nhân' :
-                         data.user.role === 'Administrator' ? 'Quản trị viên' :
-                         data.user.role === 'ToChucDauGia' ? 'Tổ chức đấu giá' :
-                         data.user.role === 'DauGiaVien' ? 'Đấu giá viên' :
-                         data.user.role === 'ChuyenVienTTC' ? 'Chuyên viên TTC' :
-                         data.user.role === 'DonViThuc' ? 'Đơn vị thực' : 'Chưa xác định',
+                        data.user.role === 'Administrator' ? 'Quản trị viên' :
+                        data.user.role === 'ToChucDauGia' ? 'Tổ chức đấu giá' :
+                        data.user.role === 'DauGiaVien' ? 'Đấu giá viên' :
+                        data.user.role === 'ChuyenVienTTC' ? 'Chuyên viên TTC' :
+                        data.user.role === 'DonViThuc' ? 'Đơn vị thực' : 'Chưa xác định',
             email: data.user.email || 'Chưa cập nhật',
             phone: data.user.phone || 'Chưa cập nhật',
             address: data.user.address || 'Chưa cập nhật',
@@ -198,9 +194,60 @@ const Profile = () => {
     closeProfilePopup();
   };
 
-  const handleMakePayment = (contractId) => {
-    if (window.confirm(`Bạn có chắc chắn muốn thanh toán hợp đồng #${contractId}?`)) {
-      alert(`Đang chuyển hướng đến trang thanh toán cho hợp đồng #${contractId}`);
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      setError('Không tìm thấy token. Vui lòng đăng nhập lại.');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:8000/api/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+          navigate('/login');
+          return;
+        }
+        throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.status) {
+        localStorage.removeItem('authToken');
+        setUserData({
+          id: null,
+          fullName: '',
+          username: '',
+          accountType: '',
+          email: '',
+          phone: '',
+          address: '',
+          idCardFront: '',
+          idCardBack: '',
+          bankName: '',
+          bankAccount: '',
+          createdAt: '',
+          emailVerifiedAt: ''
+        });
+        alert('Đăng xuất thành công');
+        navigate('/login');
+      } else {
+        throw new Error(data.message || 'Lỗi đăng xuất');
+      }
+    } catch (err) {
+      setError(err.message);
+      alert('Lỗi đăng xuất: ' + err.message);
     }
   };
 
@@ -362,9 +409,14 @@ const Profile = () => {
                         </td>
                         <td>
                           <div className={styles.contractActions}>
-                            <button className={`${styles.actionBtn} ${styles.payment}`} onClick={() => handleMakePayment(contract.id)}>
-                              <i className="fas fa-comment-dollar"></i> Thanh Toán
-                            </button>
+                            {contract.status === 'Chờ Thanh Toán' && (
+                              <Link
+                                to={`/payment?contract_id=${contract.id}`}
+                                className={`${styles.actionBtn} ${styles.payment}`}
+                              >
+                                <i className="fas fa-comment-dollar"></i> Thanh Toán
+                              </Link>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -399,7 +451,7 @@ const Profile = () => {
                   </select>
                 </div>
                 <div className={styles.filterGroup}>
-                  <label className={styles.filterLabel}>Phương thức</label>
+                  <label className={styles.formLabel}>Phương thức</label>
                   <select className={styles.formControl} id="methodFilter">
                     <option value="">Tất cả</option>
                     <option value="bank">Chuyển khoản</option>
