@@ -30,8 +30,6 @@ const AuctionPage = () => {
   const navigate = useNavigate();
   const { user, token } = useContext(UserContext);
   const [auctionItem, setAuctionItem] = useState(null);
-  const [paused, setPaused] = useState(false);
-  const [pausedTime, setPausedTime] = useState(null);
   const [bidders, setBidders] = useState([]);
   const [bids, setBids] = useState([]);
   const [categories, setCategories] = useState([]); // State mới để lưu danh sách danh mục
@@ -46,28 +44,19 @@ const AuctionPage = () => {
 
   const API_URL = process.env.REACT_APP_API_URL;
 
-  const now = paused ? pausedTime : currentTime;
   const bidStart = auctionItem?.bid_start ? new Date(auctionItem.bid_start) : null;
   const bidEnd = auctionItem?.bid_end ? new Date(auctionItem.bid_end) : null;
-  const isBiddingOngoing = bidStart && bidEnd && now >= bidStart && now <= bidEnd;
-  const isAuctionEnded = bidEnd && now > bidEnd;
-  const isAuctionNotStarted = bidStart && now < bidStart;
+  const isBiddingOngoing = bidStart && bidEnd && currentTime >= bidStart && currentTime <= bidEnd;
+  const isAuctionEnded = bidEnd && currentTime > bidEnd;
+  const isAuctionNotStarted = bidStart && currentTime < bidStart;
 
   // Update time every second
   useEffect(() => {
-    let interval;
-
-    if (!paused) {
-      interval = setInterval(() => {
-        setCurrentTime((prevTime) => new Date());
-      }, 1000);
-    } else {
-      // Khi bị pause, lưu lại thời gian hiện tại và không cho đồng hồ chạy nữa
-      setPausedTime(new Date());
-    }
-
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
     return () => clearInterval(interval);
-  }, [paused]);
+  }, []);
 
   // Fetch auction item
   useEffect(() => {
@@ -87,7 +76,6 @@ const AuctionPage = () => {
         if (!session) {
           throw new Error(`Không tìm thấy phiên đấu giá với ID: ${id}`);
         }
-        setPaused(session.paused ?? false);
         setAuctionItem(session);
       } catch (err) {
         console.error('Fetch error:', err);
@@ -104,41 +92,6 @@ const AuctionPage = () => {
       setLoading(false);
     }
   }, [id, token]);
-
-  // 🔁 Tự động cập nhật trạng thái phiên đấu giá (paused, thời gian, vv) mỗi 5 giây
-  useEffect(() => {
-    if (!id || !token) return;
-
-    const interval = setInterval(async () => {
-      try {
-        const fullUrl = `${API_URL}auction-sessions/${id}`;
-        const response = await axios.get(fullUrl, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const session = response.data.session;
-        if (session) {
-          // Nếu trạng thái paused thay đổi thì cập nhật lại
-          if (session.paused !== paused) {
-            setPaused(session.paused ?? false);
-            if (!session.paused) {
-              setPausedTime(null);
-            }
-            showToast(
-              session.paused
-                ? '🔴 Phiên đấu giá đã bị tạm dừng!'
-                : '🟢 Phiên đấu giá đã được tiếp tục!',
-              session.paused ? 'warning' : 'success'
-            );
-          }
-          setAuctionItem(session);
-        }
-      } catch (err) {
-        console.error('Error refreshing auction session:', err);
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [id, token, paused]);
 
   // Fetch categories
   useEffect(() => {
@@ -272,12 +225,11 @@ const AuctionPage = () => {
 
   // Calculate countdown
   const getCountdownParts = () => {
-    const now = paused ? pausedTime : currentTime; // Dừng đồng hồ khi paused
     if (isAuctionEnded) {
       return { hours: '00', minutes: '00', seconds: '00', status: 'ended' };
     }
     if (isAuctionNotStarted) {
-      const diff = bidStart - now;
+      const diff = bidStart - currentTime;
       if (diff <= 0) return { hours: '00', minutes: '00', seconds: '00', status: 'starting' };
       const hours = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
@@ -285,7 +237,7 @@ const AuctionPage = () => {
       return { hours, minutes, seconds, status: 'not_started' };
     }
     if (isBiddingOngoing) {
-      const diff = bidEnd - now;
+      const diff = bidEnd - currentTime;
       if (diff <= 0) return { hours: '00', minutes: '00', seconds: '00', status: 'ended' };
       const hours = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
@@ -309,10 +261,6 @@ const AuctionPage = () => {
 
   // Handle place bid with custom modal
   const handlePlaceBid = async () => {
-    if (paused) {
-      showToast('Phiên đấu giá đang tạm dừng, không thể đặt giá!', 'error');
-      return;
-    }
     if (!user || !token) {
       showToast('Vui lòng đăng nhập để đấu giá', 'error');
       navigate('/login');
@@ -405,12 +353,6 @@ const AuctionPage = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>Phiên đấu giá {item.name}</div>
-      
-      {paused && (
-        <div className={styles.pausedNotice}>
-          ⏸ Phiên đấu giá đang tạm dừng — Vui lòng chờ đấu giá viên tiếp tục!
-        </div>
-      )}
       
       <div className={styles['lot-numbers']}>
         {countdown.status === 'not_started' ? (
@@ -516,7 +458,6 @@ const AuctionPage = () => {
                     onBlur={handleBlur}
                     placeholder="Nhập số tiền lớn hơn giá hiện tại"
                     className={styles['bid-input']}
-                    disabled={paused || isAuctionEnded || !isBiddingOngoing}
                     style={{ marginBottom: '10px', padding: '8px', width: '100%', border: '1px solid #ccc', borderRadius: '4px' }}
                   />
                   <div className={styles['bid-amount']}>
@@ -526,12 +467,8 @@ const AuctionPage = () => {
                     Số tiền đấu giá = Giá hiện tại ({formatNumber(currentPrice)} VNĐ) + {n} x Bước giá ({formatNumber(bidStep)} VNĐ)
                   </div>
                 </div>
-                <button 
-                  className={styles['bid-button']} 
-                  onClick={handlePlaceBid}
-                  disabled={paused || isAuctionEnded || !isBiddingOngoing}
-                >
-                  {paused ? 'Tạm dừng' : 'Đấu giá'}
+                <button className={styles['bid-button']} onClick={handlePlaceBid}>
+                  Đấu giá
                 </button>
               </>
             ) : isAuctionEnded ? (
