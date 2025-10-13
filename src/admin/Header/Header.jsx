@@ -20,6 +20,7 @@ const Sidebar = () => {
       { id: 'assets', icon: 'fas fa-box-open', label: 'Tài sản đấu giá', href: addAdminPrefix('/auction-asset') },
       { id: 'auctions', icon: 'fas fa-clock', label: 'Phiên đấu giá', href: addAdminPrefix('/auction-session') },
       { id: 'contracts', icon: 'fas fa-file-contract', label: 'Hợp đồng', href: addAdminPrefix('/contract') },
+      { id: 'register-auction', icon: 'fa fa-ticket', label: 'Đăng ký đấu giá', href: addAdminPrefix('/register-auction') },
       { id: 'reports', icon: 'fas fa-chart-bar', label: 'Báo cáo', href: addAdminPrefix('/report') },
       { id: 'users', icon: 'fas fa-users', label: 'Quản lý người dùng', href: addAdminPrefix('/users') },
       { id: 'bids', icon: 'fas fa-file-alt', label: 'Hồ sơ đấu giá', href: addAdminPrefix('/profile') },
@@ -36,9 +37,9 @@ const Sidebar = () => {
       case 'Administrator':
         return allItems;
       case 'ChuyenVienTTC':
-        return allItems.filter(item => ['dashboard', 'auctions', 'reports', 'bids', 'payments', 'econtracts'].includes(item.id));
+        return allItems.filter(item => ['dashboard', 'auctions', 'reports', 'bids', 'payments', 'econtracts', 'register-auction'].includes(item.id));
       case 'DauGiaVien':
-        return allItems.filter(item => ['dashboard', 'assets', 'auctions', 'contracts', 'reports', 'bids', 'notifications', 'payments', 'econtracts'].includes(item.id));
+        return allItems.filter(item => ['dashboard', 'assets', 'auctions', 'contracts', 'reports', 'bids', 'notifications', 'payments', 'econtracts', 'register-auction'].includes(item.id));
       case 'DonViThuc':
         return allItems.filter(item => ['dashboard', 'auctions', 'contracts', 'reports', 'payments', 'econtracts'].includes(item.id));
       case 'ToChucDauGia':
@@ -66,7 +67,7 @@ const Sidebar = () => {
     <div className={styles.sidebar}>
       <div className={styles.sidebarHeader}>
         <div className="logo">
-          <img className="logo-img" src="" alt="Logo" />
+          {/* <img className="logo-img" src="\assets\img\logo.jpg" alt="Logo" /> */}
         </div>
       </div>
 

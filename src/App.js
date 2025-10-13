@@ -26,6 +26,7 @@ import AuctionSessionPage from './pages/AdminAuction-session';
 import ProfilePage from './pages/profile';
 import AccessDenied from './AccessDenied';
 import { ToastContainer } from 'react-toastify';
+import RegisterAuctionPage from './pages/AdminRegisterAuction';
 
 function App() {
   return (
@@ -168,6 +169,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AuctionSessionPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/register-auction"
+              element={
+                <ProtectedRoute>
+                  <RegisterAuctionPage />
                 </ProtectedRoute>
               }
             />
