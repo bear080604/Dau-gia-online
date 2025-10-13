@@ -60,6 +60,13 @@
       color: white;
     }
 
+    .kick-btn {
+      background: #f97316;
+      color: white;
+      width: 100%;
+      margin-top: 10px;
+    }
+
     button:hover {
       opacity: 0.9;
     }
@@ -75,6 +82,15 @@
       border-radius: 8px;
       padding: 10px;
     }
+
+    input {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      width: 100%;
+      font-size: 14px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -86,6 +102,9 @@
     <button id="pauseBtn" class="pause-btn">⏸ Dừng</button>
     <button id="resumeBtn" class="resume-btn" disabled>▶ Tiếp tục</button>
 
+    <input type="number" id="kickUserId" placeholder="Nhập ID người bị kích">
+    <button id="kickBtn" class="kick-btn">🚫 Kích người</button>
+
     <div class="log" id="log"></div>
   </div>
 
@@ -94,7 +113,7 @@
     // ⚙️ CONFIG
     // ===============================
     const API_BASE = "http://127.0.0.1:8000/api";
-    const token = localStorage.getItem("auth_token"); // phải có token hợp lệ từ login API
+    const token = localStorage.getItem("auth_token"); // token hợp lệ từ login API
     const sessionId = 21; // ID phiên cần điều khiển
 
     const timerTxt = document.getElementById("timerTxt");
@@ -102,6 +121,8 @@
     const pauseBtn = document.getElementById("pauseBtn");
     const resumeBtn = document.getElementById("resumeBtn");
     const logBox = document.getElementById("log");
+    const kickBtn = document.getElementById("kickBtn");
+    const kickUserIdInput = document.getElementById("kickUserId");
 
     let countdownInterval = null;
     let remainingSeconds = 0;
@@ -185,33 +206,23 @@
     // ⏸ PAUSE
     // ===============================
     pauseBtn.onclick = async () => {
-      if (!token) {
-        alert("Vui lòng đăng nhập lại để có token hợp lệ!");
-        return;
-      }
+      if (!token) return alert("Vui lòng đăng nhập lại để có token hợp lệ!");
       try {
         const res = await fetch(`${API_BASE}/auction-sessions/${sessionId}/pause`, {
           method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
         });
-
         const text = await res.text();
         let data = {};
         try { data = JSON.parse(text); } catch {}
-
         if (res.ok) {
           clearInterval(countdownInterval);
           statusTxt.textContent = "⏸ Đang tạm dừng";
           pauseBtn.disabled = true;
           resumeBtn.disabled = false;
           log(`⏸ Đã tạm dừng phiên (${data.remaining_seconds || "?"} giây còn lại)`);
-        } else {
-          log(`❌ Lỗi dừng phiên: ${data.message || text}`);
-        }
-      } catch (err) {
+        } else log(`❌ Lỗi dừng phiên: ${data.message || text}`);
+      } catch {
         log("❌ Lỗi kết nối khi dừng phiên");
       }
     };
@@ -220,38 +231,50 @@
     // ▶ RESUME
     // ===============================
     resumeBtn.onclick = async () => {
-      if (!token) {
-        alert("Vui lòng đăng nhập lại để có token hợp lệ!");
-        return;
-      }
+      if (!token) return alert("Vui lòng đăng nhập lại để có token hợp lệ!");
       try {
         const res = await fetch(`${API_BASE}/auction-sessions/${sessionId}/resume`, {
           method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
         });
-
         const text = await res.text();
         let data = {};
         try { data = JSON.parse(text); } catch {}
-
         if (res.ok) {
           const newEnd = new Date(data.new_bid_end);
           const now = new Date();
           const secondsLeft = Math.max(0, Math.floor((newEnd - now) / 1000));
-
           startCountdown(secondsLeft);
           statusTxt.textContent = "🟢 Đang diễn ra";
           pauseBtn.disabled = false;
           resumeBtn.disabled = true;
           log(`▶ Tiếp tục phiên — còn lại ${secondsLeft} giây`);
-        } else {
-          log(`❌ Lỗi tiếp tục phiên: ${data.message || text}`);
-        }
-      } catch (err) {
+        } else log(`❌ Lỗi tiếp tục phiên: ${data.message || text}`);
+      } catch {
         log("❌ Lỗi kết nối khi tiếp tục phiên");
+      }
+    };
+
+    // ===============================
+    // 🚫 KICK USER
+    // ===============================
+    kickBtn.onclick = async () => {
+      const userId = kickUserIdInput.value.trim();
+      if (!userId) return alert("Vui lòng nhập ID người cần kích!");
+      if (!confirm(`Bạn chắc chắn muốn kích user ID ${userId} khỏi phiên này?`)) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/auction-sessions/${sessionId}/kick/${userId}`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        });
+        const text = await res.text();
+        let data = {};
+        try { data = JSON.parse(text); } catch {}
+        if (res.ok) log(`🚫 Đã kích user ID ${userId} khỏi phiên.`);
+        else log(`❌ Lỗi kích user: ${data.message || text}`);
+      } catch {
+        log("❌ Lỗi kết nối khi kích user.");
       }
     };
 
