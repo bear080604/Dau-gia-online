@@ -17,7 +17,7 @@ const Header = () => {
   // Sample contract data (in real app, this would come from an API)
   const contractData = {
     status: true,
-    contracts: [
+    contracts: [ 
       {
         contract_id: 12,
         session_id: 23,
