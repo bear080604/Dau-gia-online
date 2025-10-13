@@ -34,7 +34,7 @@ const ProtectedRoute = ({ children, restrictIfLoggedIn = false }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (user.role !== 'DauGiaVien') {
+  if (user.role !== 'Administrator') {
     console.warn('Access denied: User is not a DauGiaVien');
     return <Navigate to="/access-denied" replace />;
   }

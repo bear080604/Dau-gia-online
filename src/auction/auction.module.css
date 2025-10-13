@@ -318,3 +318,13 @@
 .cancelButton:hover {
   background-color: #c82333; /* Darker red on hover */
 }
+.pausedNotice {
+  color: #b91c1c;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  padding: 10px 15px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
