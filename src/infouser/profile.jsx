@@ -21,8 +21,10 @@ const Profile = () => {
     email: '',
     phone: '',
     address: '',
-    idCardFront: '',
-    idCardBack: '',
+    idCardFront: null,
+    idCardFrontUrl: null,
+    idCardBack: null,
+    idCardBackUrl: null,
     bankName: '',
     bankAccount: '',
     createdAt: '',
@@ -95,8 +97,10 @@ const Profile = () => {
             email: data.user.email || 'Chưa cập nhật',
             phone: data.user.phone || 'Chưa cập nhật',
             address: data.user.address || 'Chưa cập nhật',
-            idCardFront: data.user.id_card_front || '',
-            idCardBack: data.user.id_card_back || '',
+            idCardFront: data.user.id_card_front || null,
+            idCardFrontUrl: data.user.id_card_front_url || null,
+            idCardBack: data.user.id_card_back || null,
+            idCardBackUrl: data.user.id_card_back_url || null,
             bankName: data.user.bank_name || 'Chưa cập nhật',
             bankAccount: data.user.bank_account || 'Chưa cập nhật',
             createdAt: data.user.created_at || 'Chưa cập nhật',
@@ -253,6 +257,10 @@ const Profile = () => {
           email: data.user.email || prev.email,
           phone: data.user.phone || prev.phone,
           address: data.user.address || prev.address,
+          idCardFront: data.user.id_card_front || prev.idCardFront,
+          idCardFrontUrl: data.user.id_card_front_url || prev.idCardFrontUrl,
+          idCardBack: data.user.id_card_back || prev.idCardBack,
+          idCardBackUrl: data.user.id_card_back_url || prev.idCardBackUrl,
         }));
         alert('Cập nhật thông tin cá nhân thành công!');
         closeProfilePopup();
@@ -327,21 +335,27 @@ const Profile = () => {
     input.onchange = async (e) => {
       if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
-        const formData = new FormData();
-        formData.append(side === 'front' ? 'id_card_front' : 'id_card_back', file);
+        const formDataUpload = new FormData();
+        formDataUpload.append(side === 'front' ? 'id_card_front' : 'id_card_back', file);
 
         try {
-          const response = await fetch(`${process.env.REACT_APP_API_URL}user/upload-id-card`, {
-            method: 'POST',
+          const response = await fetch(`${process.env.REACT_APP_API_URL}user/update`, {
+            method: 'PUT',
             headers: {
               'Authorization': `Bearer ${token}`,
             },
-            body: formData,
+            body: formDataUpload,
           });
 
           const data = await response.json();
 
           if (!response.ok) {
+            if (response.status === 401) {
+              localStorage.removeItem('token');
+              setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+              navigate('/login');
+              return;
+            }
             throw new Error(data.message || 'Lỗi khi tải ảnh');
           }
 
@@ -349,6 +363,7 @@ const Profile = () => {
             setUserData((prev) => ({
               ...prev,
               [side === 'front' ? 'idCardFront' : 'idCardBack']: data.user[side === 'front' ? 'id_card_front' : 'id_card_back'],
+              [side === 'front' ? 'idCardFrontUrl' : 'idCardBackUrl']: data.user[side === 'front' ? 'id_card_front_url' : 'id_card_back_url'],
             }));
             alert(`Tải ảnh mặt ${side === 'front' ? 'trước' : 'sau'} thành công`);
           }
@@ -433,21 +448,77 @@ const Profile = () => {
                   <div className={styles.photoSection}>
                     <div className={styles.photoItem}>
                       <span className={styles.photoLabel}>Mặt trước</span>
-                      <div className={styles.photoPlaceholder} onClick={() => handleUploadImage('front')}>
-                        {userData.idCardFront ? (
-                          <img src={`${process.env.REACT_APP_API_URL}/${userData.idCardFront}`} alt="ID Front" style={{ maxWidth: '100px' }} />
+                      <div 
+                        className={styles.photoPlaceholder} 
+                        onClick={() => handleUploadImage('front')}
+                        style={{ cursor: 'pointer', position: 'relative' }}
+                      >
+                        {userData.idCardFrontUrl ? (
+                          <img 
+                            src={userData.idCardFrontUrl} 
+                            alt="CCCD Mặt trước" 
+                            style={{ 
+                              maxWidth: '100px', 
+                              maxHeight: '150px', 
+                              objectFit: 'contain',
+                              border: '1px solid #ddd',
+                              borderRadius: '4px'
+                            }} 
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
                         ) : (
-                          '[Ảnh mặt trước]'
+                          <div 
+                            className={styles.placeholderText} 
+                            style={{ 
+                              padding: '50px 10px', 
+                              textAlign: 'center', 
+                              color: '#999', 
+                              border: '2px dashed #ccc',
+                              borderRadius: '4px',
+                              backgroundColor: '#f9f9f9'
+                            }}
+                          >
+                            [Ảnh mặt trước]<br />
+                            <small>Click để tải lên</small>
+                          </div>
                         )}
                       </div>
                     </div>
                     <div className={styles.photoItem}>
                       <span className={styles.photoLabel}>Mặt sau</span>
-                      <div className={styles.photoPlaceholder} onClick={() => handleUploadImage('back')}>
-                        {userData.idCardBack ? (
-                          <img src={`${process.env.REACT_APP_API_URL}/${userData.idCardBack}`} alt="ID Back" style={{ maxWidth: '100px' }} />
+                      <div 
+                        className={styles.photoPlaceholder} 
+                        onClick={() => handleUploadImage('back')}
+                        style={{ cursor: 'pointer', position: 'relative' }}
+                      >
+                        {userData.idCardBackUrl ? (
+                          <img 
+                            src={userData.idCardBackUrl} 
+                            alt="CCCD Mặt sau" 
+                            style={{ 
+                              maxWidth: '100px', 
+                              maxHeight: '150px', 
+                              objectFit: 'contain',
+                              border: '1px solid #ddd',
+                              borderRadius: '4px'
+                            }} 
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
                         ) : (
-                          '[Ảnh mặt sau]'
+                          <div 
+                            className={styles.placeholderText} 
+                            style={{ 
+                              padding: '50px 10px', 
+                              textAlign: 'center', 
+                              color: '#999', 
+                              border: '2px dashed #ccc',
+                              borderRadius: '4px',
+                              backgroundColor: '#f9f9f9'
+                            }}
+                          >
+                            [Ảnh mặt sau]<br />
+                            <small>Click để tải lên</small>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -785,14 +856,78 @@ const Profile = () => {
                 <div className={styles.photoSection}>
                   <div className={styles.photoItem}>
                     <span className={styles.photoLabel}>Mặt trước</span>
-                    <div className={styles.photoPlaceholder} onClick={() => handleUploadImage('front')}>
-                      Tải lên ảnh mặt trước
+                    <div 
+                      className={styles.photoPlaceholder} 
+                      onClick={() => handleUploadImage('front')}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      {userData.idCardFrontUrl ? (
+                        <img 
+                          src={userData.idCardFrontUrl} 
+                          alt="CCCD Mặt trước" 
+                          style={{ 
+                            maxWidth: '100px', 
+                            maxHeight: '150px', 
+                            objectFit: 'contain',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px'
+                          }} 
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div 
+                          className={styles.placeholderText} 
+                          style={{ 
+                            padding: '50px 10px', 
+                            textAlign: 'center', 
+                            color: '#999', 
+                            border: '2px dashed #ccc',
+                            borderRadius: '4px',
+                            backgroundColor: '#f9f9f9'
+                          }}
+                        >
+                          [Ảnh mặt trước]<br />
+                          <small>Click để tải lên</small>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className={styles.photoItem}>
                     <span className={styles.photoLabel}>Mặt sau</span>
-                    <div className={styles.photoPlaceholder} onClick={() => handleUploadImage('back')}>
-                      Tải lên ảnh mặt sau
+                    <div 
+                      className={styles.photoPlaceholder} 
+                      onClick={() => handleUploadImage('back')}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      {userData.idCardBackUrl ? (
+                        <img 
+                          src={userData.idCardBackUrl} 
+                          alt="CCCD Mặt sau" 
+                          style={{ 
+                            maxWidth: '100px', 
+                            maxHeight: '150px', 
+                            objectFit: 'contain',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px'
+                          }} 
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div 
+                          className={styles.placeholderText} 
+                          style={{ 
+                            padding: '50px 10px', 
+                            textAlign: 'center', 
+                            color: '#999', 
+                            border: '2px dashed #ccc',
+                            borderRadius: '4px',
+                            backgroundColor: '#f9f9f9'
+                          }}
+                        >
+                          [Ảnh mặt sau]<br />
+                          <small>Click để tải lên</small>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

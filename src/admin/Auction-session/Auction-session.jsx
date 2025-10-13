@@ -4,6 +4,7 @@ import styles from './Auction-session.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { useUser } from '../../UserContext';
 import moment from 'moment-timezone';
+import { Link } from "react-router-dom";
 
 function AuctionSession() {
   const { token } = useUser();
@@ -611,27 +612,39 @@ function AuctionSession() {
               <th>Hành động</th>
             </tr>
           </thead>
-          <tbody>
-            {currentSessions.map((session) => (
-              <tr key={session.id}>
-                <td data-label="Mã Phiên">{session.id}</td>
-                <td data-label="Tài sản">{session.item}</td>
-                <td data-label="Người tạo">{session.creator}</td>
-                <td data-label="Thời gian hiện tại">{now.format('YYYY-MM-DD HH:mm:ss')}</td>
-                <td data-label="Thời gian bắt đầu">{session.startTime}</td>
-                <td data-label="Thời gian kết thúc">{session.endTime}</td>
-                <td data-label="Trạng thái">
-                  <span className={`${styles.statusBadge} ${styles[session.statusClass]}`}>
-                    {session.status}
-                  </span>
-                </td>
-                <td data-label="Phương thức">{session.method}</td>
-                <td data-label="Hành động">
-                  <div className={styles.actionButtons}>{getActionButtons(session)}</div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
+  <tbody>
+  {currentSessions.map((session) => (
+    <tr key={session.id}>
+      <td data-label="Mã Phiên">{session.id}</td>
+      <td data-label="Tài sản">{session.item}</td>
+      <td data-label="Người tạo">{session.creator}</td>
+      <td data-label="Thời gian hiện tại">{now.format('YYYY-MM-DD HH:mm:ss')}</td>
+      <td data-label="Thời gian bắt đầu">{session.startTime}</td>
+      <td data-label="Thời gian kết thúc">{session.endTime}</td>
+      <td data-label="Trạng thái">
+        <span className={`${styles.statusBadge} ${styles[session.statusClass]}`}>
+          {session.status}
+        </span>
+      </td>
+      <td data-label="Phương thức">{session.method}</td>
+      <td data-label="Hành động">
+        <div className={styles.actionButtons}>
+          {getActionButtons(session)}
+
+          {/* Hiển thị nút xem đấu giá nếu trạng thái là "Đang diễn ra" */}
+          {session.status === "Đang diễn ra" && (
+            <Link to={`../admin/showauction/${session.id}`} style={{ textDecoration: 'none' }}>
+              <button>
+                <i className="fa fa-gavel" aria-hidden="true"></i> Xem đấu giá
+              </button>
+            </Link>
+          )}
+        </div>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
         </table>
       )}
 

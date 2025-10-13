@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import './adshowauction.css';
-
+import { useParams } from 'react-router-dom';
 // Tách Countdown thành component riêng
 const CountdownDisplay = React.memo(({ 
   timer, 
@@ -60,8 +60,8 @@ const ControlSection = React.memo(({
 const AdShowAuction = () => {
     // Constants
     const API_URL = 'http://localhost:8000/api/';
-    const id = 21;
-    
+    const { id } = useParams(); // Lấy id từ URL
+
     // State management
     const [token] = useState(localStorage.getItem('token'));
     const [auctionItem, setAuctionItem] = useState(null);
