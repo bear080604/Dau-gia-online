@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Phiên Đấu Giá</title>
+    <style>
+        /* Tối ưu CSS: Gộp selectors, sử dụng CSS variables, thêm responsive */
+        :root {
+            --adviewdg-primary-color: #2772BA;
+            --adviewdg-secondary-bg: #FFF4E6;
+            --adviewdg-text-primary: #333;
+            --adviewdg-text-secondary: #555;
+            --adviewdg-danger: #ef4444;
+            --adviewdg-success: #10b981;
+            --adviewdg-warning: #f97316;
+            --adviewdg-border: #ddd;
+            --adviewdg-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            ----adviewdg-hover-bg: #f0f8ff;
+            ----adviewdg-even-row: #f9f9f9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding: 10px;
+        }
+
+        .adviewdg-container {
+            max-width: 1290px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--adviewdg-shadow);
+        }
+
+        .adviewdg-header {
+            background-color: var(--adviewdg-primary-color);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .adviewdg-pausedNotice {
+            color: #b91c1c;
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 0 20px 15px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .adviewdg-lot-numbers {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background-color: #f8f9fa;
+        }
+
+        .adviewdg-countdown-label {
+            font-weight: bold;
+            margin-right: 20px;
+            white-space: nowrap;
+        }
+
+        .adviewdg-lot-number {
+            background-color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: bold;
+            border: 1px solid var(--adviewdg-border);
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .adviewdg-content {
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .adviewdg-left-section,
+        .adviewdg-participants-section,
+        .adviewdg-control-section {
+            background-color: var(--adviewdg-secondary-bg);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .adviewdg-left-section {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 500px;
+        }
+
+        .adviewdg-section-title {
+            background-color: var(--adviewdg-primary-color);
+            color: white;
+            padding: 10px;
+            margin: -20px -20px 15px -20px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .adviewdg-info-row {
+            display: flex;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+            align-items: center;
+        }
+
+        .adviewdg-info-label {
+            flex: 0 0 180px;
+            font-weight: normal;
+            color: var(--adviewdg-text-primary);
+            font-size: 14px;
+        }
+
+        .adviewdg-info-value {
+            flex: 1;
+            color: var(--adviewdg-text-secondary);
+            font-size: 14px;
+            word-wrap: break-word;
+        }
+
+        .adviewdg-right-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .adviewdg-control-section {
+            text-align: center;
+        }
+
+        .adviewdg-control-section h3 {
+            margin-top: 0;
+            color: var(--adviewdg-text-primary);
+        }
+
+        .adviewdg-status {
+            margin: 10px 0;
+            font-weight: bold;
+            color: var(--adviewdg-text-primary);
+            font-size: 16px;
+        }
+
+        .adviewdg-timer {
+            font-size: 38px;
+            color: #007bff;
+            margin: 20px 0;
+        }
+
+        .adviewdg-button {
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin: 5px;
+        }
+
+        .adviewdg-pause-btn {
+            background: var(--adviewdg-danger);
+            color: white;
+        }
+
+        .adviewdg-resume-btn {
+            background: var(--adviewdg-success);
+            color: white;
+        }
+
+        .adviewdg-kick-btn {
+            background: var(--adviewdg-warning);
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .adviewdg-button:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+
+        .adviewdg-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .adviewdg-input {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            width: 100%;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .adviewdg-log {
+            margin-top: 20px;
+            color: #475569;
+            font-size: 14px;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .adviewdg-table-wrapper {
+            margin: 20px;
+            overflow-x: auto;
+        }
+
+        .adviewdg-table-title {
+            background-color: var(--adviewdg-primary-color);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .adviewdg-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 0 0 4px 4px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .adviewdg-th,
+        .adviewdg-td {
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid var(--adviewdg-border);
+            font-size: 14px;
+        }
+
+        .adviewdg-th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: var(--adviewdg-text-primary);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .adviewdg-tbody tr:nth-child(even) {
+            background-color: var(----adviewdg-even-row);
+        }
+
+        .adviewdg-tbody tr:hover {
+            background-color: var(----adviewdg-hover-bg);
+        }
+
+        .adviewdg-current-winner {
+            background-color: #d4edda !important;
+            font-weight: bold;
+        }
+
+        /* Modal CSS */
+        .adviewdg-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .adviewdg-modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .adviewdg-modal-content h3 {
+            margin-bottom: 10px;
+            color: var(--adviewdg-text-primary);
+        }
+        .adviewdg-modal-content p {
+            margin-bottom: 10px;
+            color: var(--adviewdg-text-secondary);
+        }
+        .adviewdg-modal-content textarea {
+            width: 100%;
+            height: 60px;
+            margin: 10px 0;
+            padding: 8px;
+            border: 1px solid var(--adviewdg-border);
+            border-radius: 4px;
+            resize: vertical;
+            font-size: 14px;
+        }
+        .adviewdg-modal-content div {
+            text-align: right;
+            margin-top: 15px;
+        }
+        .adviewdg-modal-content button {
+            margin-left: 10px;
+            padding: 8px 16px;
+        }
+        #adviewdg-modalCancel {
+            background: #6b7280;
+            color: white;
+        }
+        #adviewdg-modalConfirm {
+            background: var(--adviewdg-danger);
+            color: white;
+        }
+
+        /* Responsive: Stack columns on mobile */
+        @media (max-width: 768px) {
+            .adviewdg-content {
+                flex-direction: column;
+            }
+
+            .adviewdg-info-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .adviewdg-info-label {
+                flex: none;
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+
+            .adviewdg-lot-numbers {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .adviewdg-countdown-label {
+                margin-right: 0;
+                margin-bottom: 10px;
+                order: 2;
+            }
+
+            .adviewdg-log {
+                max-height: 100px;
+            }
+
+            .adviewdg-timer {
+                font-size: 28px;
+            }
+        }
+
+        /* Ẩn pausedNotice trên mobile nếu cần, nhưng giữ nguyên */
+    </style>
+</head>
+<body>
+    <div id="adviewdg-container" class="adviewdg-container">
+        <div class="adviewdg-header" id="adviewdg-header">Phiên đấu giá <span id="adviewdg-itemName">Loading...</span> (ID: <span id="adviewdg-sessionIdTxt">21</span>)</div>
+        
+        <div class="adviewdg-pausedNotice" id="adviewdg-pausedNotice">
+            ⏸ Phiên đấu giá đang tạm dừng — Vui lòng chờ đấu giá viên tiếp tục!
+        </div>
+        
+        <div class="adviewdg-lot-numbers">
+            <div class="adviewdg-countdown-label" id="adviewdg-countdownLabel">Thời gian không xác định</div>
+            <div class="adviewdg-lot-number" id="adviewdg-hours">00</div>
+            <div class="adviewdg-lot-number" id="adviewdg-minutes">00</div>
+            <div class="adviewdg-lot-number" id="adviewdg-seconds">00</div>
+        </div>
+
+        <div class="adviewdg-content">
+            <div class="adviewdg-left-section">
+                <div class="adviewdg-section-title">THÔNG TIN SẢN PHẨM</div>
+                <div class="adviewdg-info-row">
+                    <div class="adviewdg-info-label">Tên sản phẩm:</div>
+                    <div class="adviewdg-info-value" id="adviewdg-productName">N/A</div>
+                </div>
+                <div class="adviewdg-info-row">
+                    <div class="adviewdg-info-label">Tên loại tài sản:</div>
+                    <div class="adviewdg-info-value" id="adviewdg-categoryName">N/A</div>
+                </div>
+                <div class="adviewdg-info-row">
+                    <div class="adviewdg-info-label">Người có tài sản:</div>
+                    <div class="adviewdg-info-value" id="adviewdg-ownerName">N/A</div>
+                </div>
+                <div class="adviewdg-info-row">
+                    <div class="adviewdg-info-label">Nơi có tài sản:</div>
+                    <div class="adviewdg-info-value">Kho hàng thu mua đồi Gò Dưa phường Tân Quy Q7</div>
+                </div>
+                <div class="adviewdg-info-row">
+                    <div class="adviewdg-info-label">Thời gian xem tài sản:</div>
+                    <div class="adviewdg-info-value">Giờ hành chính các ngày từ 24/12 đến 28/12/2021</div>
+                </div>
+                <div class="adviewdg-info-row">
+                    <div class="adviewdg-info-label">Tổ chức đấu giá:</div>
+                    <div class="adviewdg-info-value" id="adviewdg-auctionOrg">N/A</div>
+                </div>
+                <div class="adviewdg-info-row">
+                    <div class="adviewdg-info-label">Phương thức đấu giá:</div>
+                    <div class="adviewdg-info-value" id="adviewdg-auctionMethod">Trực tiếp</div>
+                </div>
+                <div class="adviewdg-info-row">
+                    <div class="adviewdg-info-label">Thời gian mở đăng ký:</div>
+                    <div class="adviewdg-info-value" id="adviewdg-registerStart">N/A</div>
+                </div>
+                <div class="adviewdg-info-row">
+                    <div class="adviewdg-info-label">Thời gian kết thúc đăng ký:</div>
+                    <div class="adviewdg-info-value" id="adviewdg-registerEnd">N/A</div>
+                </div>
+                <div class="adviewdg-info-row">
+                    <div class="adviewdg-info-label">Thời gian bắt đầu trả giá:</div>
+                    <div class="adviewdg-info-value" id="adviewdg-bidStart">N/A</div>
+                </div>
+                <div class="adviewdg-info-row">
+                    <div class="adviewdg-info-label">Giá khởi điểm:</div>
+                    <div class="adviewdg-info-value" id="adviewdg-startingPrice">N/A</div>
+                </div>
+                <div class="adviewdg-info-row">
+                    <div class="adviewdg-info-label">Giá hiện tại:</div>
+                    <div class="adviewdg-info-value" id="adviewdg-currentPrice">N/A</div>
+                </div>
+            </div>
+
+            <div class="adviewdg-right-section">
+                <div class="adviewdg-participants-section">
+                    <div class="adviewdg-section-title">THÀNH PHẦN THAM DỰ</div>
+                    <div class="adviewdg-info-row">
+                        <div class="adviewdg-info-label">Thư ký phiên đấu giá:</div>
+                        <div class="adviewdg-info-value">Nguyễn Văn A</div>
+                    </div>
+                    <div class="adviewdg-info-row">
+                        <div class="adviewdg-info-label">Đại diện bên có tài sản:</div>
+                        <div class="adviewdg-info-value">Nguyễn Văn B</div>
+                    </div>
+                    <div class="adviewdg-info-row">
+                        <div class="adviewdg-info-label">Đấu giá viên:</div>
+                        <div class="adviewdg-info-value">Nguyễn Văn D</div>
+                    </div>
+                    <div class="adviewdg-info-row">
+                        <div class="adviewdg-info-label">Đại diện người tham gia đấu giá:</div>
+                        <div class="adviewdg-info-value">Nguyễn Văn E</div>
+                    </div>
+                </div>
+
+                <div class="adviewdg-control-section">
+                    <h3>Điều khiển Phiên</h3>
+                    <div class="adviewdg-status">Trạng thái: <span id="adviewdg-statusTxt">Đang diễn ra</span></div>
+                    <div class="adviewdg-timer" id="adviewdg-timerTxt">00:00</div>
+                    <button id="adviewdg-pauseBtn" class="adviewdg-button adviewdg-pause-btn">⏸ Dừng</button>
+                    <button id="adviewdg-resumeBtn" class="adviewdg-button adviewdg-resume-btn" disabled>▶ Tiếp tục</button>
+                    <div class="adviewdg-log" id="adviewdg-log"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="adviewdg-table-wrapper">
+            <div class="adviewdg-table-title">DANH SÁCH LƯỢT ĐẶT GIÁ</div>
+            <table id="adviewdg-bidsTable" class="adviewdg-table">
+                <thead>
+                    <tr>
+                        <th class="adviewdg-th">STT</th>
+                        <th class="adviewdg-th">Người đặt giá</th>
+                        <th class="adviewdg-th">Số tiền</th>
+                        <th class="adviewdg-th">Thời gian</th>
+                    </tr>
+                </thead>
+                <tbody class="adviewdg-tbody">
+                    <tr>
+                        <td colspan="4">Chưa có lượt đặt giá</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="adviewdg-table-wrapper">
+            <div class="adviewdg-table-title">DANH SÁCH NGƯỜI ĐĂNG KÝ ĐẤU GIÁ</div>
+            <table id="adviewdg-biddersTable" class="adviewdg-table">
+                <thead>
+                    <tr>
+                        <th class="adviewdg-th">STT</th>
+                        <th class="adviewdg-th">Họ và Tên</th>
+                        <th class="adviewdg-th">Tiền đặt trước</th>
+                        <th class="adviewdg-th">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="adviewdg-tbody">
+                    <tr>
+                        <td colspan="4">Chưa có người đăng ký</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="adviewdg-actionModal" class="adviewdg-modal">
+        <div class="adviewdg-modal-content">
+            <h3 id="adviewdg-modalTitle">Xác nhận hành động</h3>
+            <p id="adviewdg-modalMessage">Bạn có chắc chắn?</p>
+            <textarea id="adviewdg-modalReason" class="adviewdg-input" placeholder="Nhập lý do..."></textarea>
+            <div>
+                <button id="adviewdg-modalCancel" class="adviewdg-button">Hủy</button>
+                <button id="adviewdg-modalConfirm" class="adviewdg-button">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+<script>
+    // Tối ưu JS: Gộp functions, sử dụng async/await nhất quán, debounce polling nếu cần, sửa conflict ID
+    const API_URL = 'http://localhost:8000/api/'; 
+    const id = 21;
+    let token = localStorage.getItem('token'); 
+    let user = JSON.parse(localStorage.getItem('user')) || null;
+
+    let auctionItem = null;
+    let paused = false;
+    let pausedTime = null;
+    let bidders = [];
+    let bids = [];
+    let categories = [];
+    let loading = true;
+    let error = null;
+    let currentTime = new Date();
+    let currentPrice = 0;
+
+    let timeInterval;  // Interval cho countdown (chạy liên tục, không clear)
+    let pollInterval;  // Interval duy nhất cho tất cả polling
+    let remainingSeconds = 0;
+
+    // Utility functions (giữ nguyên nhưng thêm comments)
+    const formatNumber = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const formatPrice = (priceStr) => {
+        if (!priceStr) return 'N/A';
+        const num = parseFloat(priceStr);
+        return num.toLocaleString('vi-VN') + ' VNĐ';
+    };
+    const formatDateTime = (dateTimeStr) => {
+        if (!dateTimeStr) return 'N/A';
+        return new Date(dateTimeStr).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+    };
+
+    // Log helper
+    function log(message) {
+        const logBox = document.getElementById('adviewdg-log');
+        const time = new Date().toLocaleTimeString();
+        logBox.innerHTML += `[${time}] ${message}<br>`;
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    const getCategoryName = (categoryId) => {
+        const category = categories.find(cat => cat.category_id === categoryId);
+        return category ? category.name : 'N/A';
+    };
+
+    // FIX: Gộp updateCountdown với throttle DOM (chỉ update khi thay đổi)
+    // Giữ remainingSeconds freeze khi paused, không giảm
+    let prevStatus = '';  // Biến track trạng thái trước để throttle
+    let prevTimer = '';   // Track timer trước
+    let prevPausedNotice = false;  // Track paused notice
+
+    const updateCountdown = () => {
+        const now = paused ? pausedTime : currentTime;
+        const bidStart = auctionItem?.bid_start ? new Date(auctionItem.bid_start) : null;
+        const bidEnd = auctionItem?.bid_end ? new Date(auctionItem.bid_end) : null;
+        const isBiddingOngoing = bidStart && bidEnd && now >= bidStart && now <= bidEnd;
+        const isAuctionEnded = bidEnd && now > bidEnd;
+        const isAuctionNotStarted = bidStart && now < bidStart;
+
+        let countdownLabel = document.getElementById('adviewdg-countdownLabel');
+        let status = 'invalid';
+
+        if (isAuctionEnded) {
+            countdownLabel.textContent = 'Phiên đấu giá đã kết thúc';
+            status = 'ended';
+        } else if (isAuctionNotStarted) {
+            countdownLabel.textContent = 'Thời gian còn lại để bắt đầu:';
+            status = 'not_started';
+        } else if (isBiddingOngoing) {
+            countdownLabel.textContent = 'Thời gian đấu giá còn:';
+            status = 'ongoing';
+        } else {
+            countdownLabel.textContent = 'Thời gian không xác định';
+        }
+
+        let hoursEl = document.getElementById('adviewdg-hours');
+        let minutesEl = document.getElementById('adviewdg-minutes');
+        let secondsEl = document.getElementById('adviewdg-seconds');
+        const timerTxt = document.getElementById('adviewdg-timerTxt');
+        const statusTxt = document.getElementById('adviewdg-statusTxt');
+        const pausedNotice = document.getElementById('adviewdg-pausedNotice');
+
+        let diff;
+        if (status === 'not_started') {
+            diff = bidStart - now;
+        } else if (status === 'ongoing') {
+            diff = bidEnd - now;
+        } else {
+            diff = 0;
+        }
+
+        if (diff > 0 && !paused) {  // FIX: Chỉ giảm remainingSeconds nếu không paused
+            remainingSeconds = diff / 1000;
+        }  // Nếu paused, giữ nguyên remainingSeconds
+
+        // Tính display time (dùng remainingSeconds hoặc diff)
+        let displaySeconds = paused ? remainingSeconds : Math.max(0, diff / 1000);
+        const hours = Math.floor(displaySeconds / 3600).toString().padStart(2, '0');
+        const minutes = Math.floor((displaySeconds % 3600) / 60).toString().padStart(2, '0');
+        const seconds = Math.floor(displaySeconds % 60).toString().padStart(2, '0');
+
+        // Throttle: Chỉ update nếu thay đổi
+        if (hoursEl.textContent !== hours) hoursEl.textContent = hours;
+        if (minutesEl.textContent !== minutes) minutesEl.textContent = minutes;
+        if (secondsEl.textContent !== seconds) secondsEl.textContent = seconds;
+
+        const newTimer = `${String(Math.floor(displaySeconds / 60)).padStart(2, "0")}:${String(Math.floor(displaySeconds % 60)).padStart(2, "0")}`;
+        if (timerTxt.textContent !== newTimer) timerTxt.textContent = newTimer;
+
+        // Throttle statusTxt
+        const newStatus = paused ? "⏸ Đang tạm dừng" : (status === 'ended' ? "⏹ Đã kết thúc" : (status === 'ongoing' ? "🟢 Đang diễn ra" : "invalid"));
+        if (statusTxt.textContent !== newStatus) {
+            statusTxt.textContent = newStatus;
+            prevStatus = newStatus;
+        }
+
+        // Throttle pausedNotice
+        const showPaused = paused && status !== 'ended';
+        if (pausedNotice.classList.contains('adviewdg-pausedNotice-hidden') !== !showPaused) {
+            if (showPaused) {
+                pausedNotice.classList.remove('adviewdg-pausedNotice-hidden');
+            } else {
+                pausedNotice.classList.add('adviewdg-pausedNotice-hidden');
+            }
+            prevPausedNotice = showPaused;
+        }
+
+        // Kết thúc auction
+        if (status === 'ended') {
+            document.getElementById('adviewdg-pauseBtn').disabled = true;
+            document.getElementById('adviewdg-resumeBtn').disabled = true;
+        }
+    };
+
+    // FIX: Khởi tạo countdown interval chạy liên tục (không clear/start lại)
+    function startGlobalCountdown() {
+        if (timeInterval) clearInterval(timeInterval);  // Chỉ clear nếu tồn tại
+        timeInterval = setInterval(() => {
+            if (!paused) {
+                currentTime = new Date();
+            }
+            updateCountdown();
+        }, 1000);
+    }
+
+    // FIX: Polling gộp duy nhất (session + bids + bidders)
+    const pollAuctionData = async () => {
+        try {
+            const data = await fetchWithAuth(`auction-sessions/${id}`);
+            const session = data.session;
+            if (session) {
+                if (session.paused !== paused) {
+                    paused = session.paused ?? false;
+                    pausedTime = paused ? new Date() : null;
+                    log(paused ? '🔴 Phiên bị tạm dừng' : '🟢 Phiên tiếp tục');
+                }
+                auctionItem = session;
+                updateUI();  // Update UI sau khi có session mới
+            }
+            // Gộp fetch bids và bidders
+            await Promise.all([fetchBids(), fetchBidders()]);  // Parallel để nhanh hơn
+        } catch (err) {
+            console.error('Poll error:', err);
+            log('⚠️ Lỗi polling dữ liệu');
+        }
+    };
+
+    // API fetch functions (sử dụng async/await nhất quán)
+    const fetchWithAuth = async (url, options = {}) => {
+        const headers = {
+            ...options.headers,
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        };
+        const response = await fetch(`${API_URL}${url}`, { ...options, headers });
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+        return response.json();
+    };
+
+    const fetchAuctionItem = async () => {
+        try {
+            loading = true;
+            error = null;
+            if (!token) {
+                error = 'Vui lòng đăng nhập để xem thông tin đấu giá';
+                return;
+            }
+            const data = await fetchWithAuth(`auction-sessions/${id}`);
+            const session = data.session;
+            if (!session) {
+                throw new Error(`Không tìm thấy phiên đấu giá với ID: ${id}`);
+            }
+            paused = session.paused ?? false;
+            pausedTime = paused ? new Date() : null;
+            auctionItem = session;
+            // Tính remainingSeconds ban đầu
+            const end = new Date(auctionItem.bid_end);
+            const now = new Date();
+            remainingSeconds = Math.max(0, Math.floor((end - now) / 1000));
+            updateUI();
+        } catch (err) {
+            console.error('Fetch error:', err);
+            error = err.message || 'Lỗi không xác định';
+            log(`Lỗi tải thông tin: ${error}`);
+        } finally {
+            loading = false;
+        }
+    };
+
+    const fetchCategories = async () => {
+        try {
+            if (!token) return;
+            const data = await fetchWithAuth('categories');
+            if (data.status && data.data) {
+                categories = data.data;
+            } else {
+                throw new Error(data.message || 'Không thể lấy danh sách danh mục');
+            }
+        } catch (err) {
+            console.error('Fetch categories error:', err);
+            categories = [];
+            log('Không thể tải danh sách danh mục');
+        }
+    };
+
+    const fetchBidders = async () => {
+        if (!id || !token) return;
+        try {
+            const data = await fetchWithAuth(`auction-profiles?session_id=${id}`);
+            console.log("Raw data từ API bidders:", data);
+            bidders = (data.profiles || []).filter(p => 
+                (p.status === 'DaDuyet' || p.status === 'pending') && p.session_id === parseInt(id)
+            );
+            console.log("Danh sách bidders sau filter:", bidders);
+            bidders.forEach((b, i) => {
+                console.log(i+1, "Bidder object:", b);
+                console.log(i+1, "User ID (user.user_id):", b.user?.user_id, "User ID fallback (bidder.id):", b.id);
+                console.log(i+1, "User full_name:", b.user?.full_name || b.full_name, "Deposit:", b.deposit_amount);
+            });
+            updateBiddersTable();
+        } catch (err) {
+            console.error('Fetch bidders error:', err);
+            bidders = [];
+            updateBiddersTable();
+        }
+    };
+
+    const fetchBids = async () => {
+        if (!id || !token) return;
+        try {
+            const data = await fetchWithAuth(`bids/${id}`);
+            bids = data.bids || [];
+            let highest = parseFloat(auctionItem?.item?.starting_price) || 0;
+            if (bids.length > 0) {
+                const maxAmount = Math.max(...bids.map(b => parseFloat(b.amount)));
+                if (maxAmount > highest) highest = maxAmount;
+            }
+            currentPrice = highest;
+            updateBidsTable();
+        } catch (err) {
+            console.error('Fetch bids error:', err);
+            bids = [];
+            updateBidsTable();
+        }
+    };
+
+    const updateUI = () => {
+        if (!auctionItem || !auctionItem.item) return;
+        const item = auctionItem.item;
+        document.getElementById('adviewdg-header').innerHTML = `Phiên đấu giá ${item.name || 'N/A'} (ID: ${id})`;
+        document.getElementById('adviewdg-productName').textContent = item.name || 'N/A';
+        document.getElementById('adviewdg-categoryName').textContent = getCategoryName(item.category_id);
+        document.getElementById('adviewdg-ownerName').textContent = item.owner?.full_name || 'N/A';
+        document.getElementById('adviewdg-auctionOrg').textContent = auctionItem.auction_org?.full_name || 'N/A';
+        document.getElementById('adviewdg-auctionMethod').textContent = auctionItem.method || 'Trực tiếp';
+        document.getElementById('adviewdg-registerStart').textContent = formatDateTime(auctionItem.register_start);
+        document.getElementById('adviewdg-registerEnd').textContent = formatDateTime(auctionItem.register_end);
+        document.getElementById('adviewdg-bidStart').textContent = formatDateTime(auctionItem.bid_start);
+        document.getElementById('adviewdg-startingPrice').textContent = formatPrice(item.starting_price);
+        document.getElementById('adviewdg-currentPrice').textContent = formatPrice(currentPrice);
+        updateCountdown();  // Gọi để sync ngay
+    };
+
+    const updateBidsTable = () => {
+        const tbody = document.querySelector('#adviewdg-bidsTable .adviewdg-tbody');
+        const highestBid = bids.length > 0 ? Math.max(...bids.map(b => parseFloat(b.amount))) : currentPrice;
+        if (bids.length > 0) {
+            tbody.innerHTML = bids.map((bid, index) => `
+                <tr class="${parseFloat(bid.amount) === highestBid ? 'adviewdg-current-winner' : ''}">
+                    <td class="adviewdg-td">${index + 1}</td>
+                    <td class="adviewdg-td">${bid.user?.full_name || 'N/A'}</td>
+                    <td class="adviewdg-td">${formatPrice(bid.amount)}</td>
+                    <td class="adviewdg-td">${formatDateTime(bid.bid_time)}</td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4">Chưa có lượt đặt giá</td></tr>';
+        }
+    };
+
+    const updateBiddersTable = () => {
+        const tbody = document.querySelector('#adviewdg-biddersTable .adviewdg-tbody');
+        if (bidders.length > 0) {
+            console.log("Rendering bidders table với UserID fallback...");
+            bidders.forEach((bidder, index) => {
+                const userId = bidder.user?.user_id || bidder.id || 'unknown';
+                console.log(`STT: ${index + 1}, Name: ${bidder.user?.full_name || bidder.full_name || 'N/A'}, Deposit: ${bidder.deposit_amount}, UserID fallback: ${userId}`);
+            });
+            tbody.innerHTML = bidders.map((bidder, index) => {
+                const userId = bidder.user?.user_id || bidder.id || 'unknown'; // Fix: Sử dụng user.user_id theo cấu trúc user object, fallback bidder.id hoặc 'unknown'
+                console.log(`Creating button for bidder ${index + 1}: data-userid="${userId}"`);
+                return `
+                    <tr>
+                        <td class="adviewdg-td">${index + 1}</td>
+                        <td class="adviewdg-td">${bidder.user?.full_name || bidder.full_name || 'N/A'}</td>
+                        <td class="adviewdg-td">${formatPrice(bidder.deposit_amount)}</td>
+                        <td class="adviewdg-td">
+                            <button class="adviewdg-button adviewdg-kick-btn adviewdg-bidder-kick" data-userid="${userId}">
+                                🚫 Kích
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4">Chưa có người đăng ký</td></tr>';
+        }
+    };
+
+    // Modal logic (giữ nguyên)
+    const actionModal = document.getElementById('adviewdg-actionModal');
+    const modalTitle = document.getElementById('adviewdg-modalTitle');
+    const modalMessage = document.getElementById('adviewdg-modalMessage');
+    const modalReason = document.getElementById('adviewdg-modalReason');
+    const modalCancel = document.getElementById('adviewdg-modalCancel');
+    const modalConfirm = document.getElementById('adviewdg-modalConfirm');
+
+    function showActionModal({title, message, onConfirm}) {
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+        modalReason.value = '';
+        actionModal.style.display = 'flex';
+
+        const confirmHandler = async () => {
+            const reason = modalReason.value.trim();
+            if (!reason) return alert('Vui lòng nhập lý do');
+            try {
+                await onConfirm(reason);
+            } catch (err) {
+                log(`❌ Lỗi: ${err.message}`);
+            }
+            actionModal.style.display = 'none';
+        };
+
+        modalConfirm.onclick = confirmHandler;
+        modalCancel.onclick = () => { actionModal.style.display = 'none'; };
+
+        // Close on outside click
+        actionModal.onclick = (e) => {
+            if (e.target === actionModal) actionModal.style.display = 'none';
+        };
+    }
+
+    // Event listeners for controls
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!id || !token) {
+            log('Vui lòng đăng nhập để xem thông tin đấu giá');
+            return;
+        }
+        fetchAuctionItem();
+        fetchCategories();
+        fetchBids();  // Fetch ban đầu
+        fetchBidders();  // Fetch ban đầu
+
+        // Debug logs
+        console.log("🔑 Token hiện tại:", token);
+        console.log("🧑 User đang đăng nhập:", user?.user_id, user?.full_name);
+        console.log("📋 Danh sách người đăng ký đấu giá:", bidders);
+
+        // FIX: Khởi động countdown global (chạy liên tục)
+        startGlobalCountdown();
+
+        // FIX: Polling gộp duy nhất, bắt đầu sau load ban đầu
+        pollInterval = setInterval(pollAuctionData, 3000);
+        // Poll lần đầu ngay lập tức sau 1s để sync
+        setTimeout(pollAuctionData, 1000);
+
+        // Pause button (FIX: Không clear interval, chỉ toggle paused và poll để sync)
+        document.getElementById('adviewdg-pauseBtn').onclick = async () => {
+            if (!token) return alert("Vui lòng đăng nhập lại để có token hợp lệ!");
+            try {
+                const res = await fetch(`${API_URL}auction-sessions/${id}/pause`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ reason: 'Dừng tạm thời' })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    paused = true;
+                    pausedTime = new Date();
+                    document.getElementById('adviewdg-pauseBtn').disabled = true;
+                    document.getElementById('adviewdg-resumeBtn').disabled = false;
+                    log(`⏸ Phiên đã tạm dừng`);
+                    // Không clear countdownInterval, chỉ update state → countdown freeze tự động
+                    updateCountdown();  // Sync ngay
+                    // Poll sẽ sync server state ở lần sau
+                } else {
+                    throw new Error(data.message || 'Lỗi dừng phiên');
+                }
+            } catch (err) {
+                console.error(err);
+                log(`❌ Lỗi pause: ${err.message}`);
+            }
+        };
+
+        // Resume button (FIX: Toggle paused, không start lại countdown)
+        document.getElementById('adviewdg-resumeBtn').onclick = async () => {
+            if (!token) return alert("Vui lòng đăng nhập lại để có token hợp lệ!");
+            try {
+                const res = await fetch(`${API_URL}auction-sessions/${id}/resume`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ reason: 'Tiếp tục phiên' })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    paused = false;
+                    pausedTime = null;
+                    // Cập nhật remainingSeconds từ server nếu cần (new_bid_end)
+                    if (data.new_bid_end) {
+                        const newEnd = new Date(data.new_bid_end);
+                        const now = new Date();
+                        remainingSeconds = Math.max(0, Math.floor((newEnd - now) / 1000));
+                    }
+                    document.getElementById('adviewdg-pauseBtn').disabled = false;
+                    document.getElementById('adviewdg-resumeBtn').disabled = true;
+                    log(`▶ Phiên đã tiếp tục`);
+                    updateCountdown();  // Sync ngay
+                    // Poll sẽ sync tiếp
+                } else {
+                    throw new Error(data.message || 'Lỗi tiếp tục phiên');
+                }
+            } catch (err) {
+                console.error(err);
+                log(`❌ Lỗi resume: ${err.message}`);
+            }
+        };
+
+        // Event delegation for bidder kick buttons (giữ nguyên, với debug)
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('adviewdg-bidder-kick')) {
+                const userId = e.target.dataset.userid;
+                const userName = e.target.closest('tr').querySelector('.adviewdg-td:nth-child(2)').textContent.trim();
+                console.log("🟢 Click Kích người");
+                console.log("Token:", token);
+                console.log("UserID từ data-userid:", userId);
+                console.log("User Name từ bảng:", userName);
+                console.log("Kích người:", userName, "UserID:", userId, "Token:", token);
+
+                if (!userId || userId === 'unknown') {
+                    console.warn("⚠️ UserID bị undefined hoặc 'unknown'! Kiểm tra cấu trúc bidder.user.user_id hoặc bidder.id");
+                    alert("Không thể kích vì UserID không hợp lệ. Vui lòng kiểm tra console để debug.");
+                    return;
+                }
+
+                showActionModal({
+                    title: 'Kích người tham gia',
+                    message: `Bạn có chắc chắn muốn kích ${userName} (ID: ${userId})?`,
+                    onConfirm: async (reason) => {
+                        console.log("Lý do kick:", reason);
+                        if (!userId || userId === 'unknown') {
+                            console.error("❌ Không thể kick vì UserID undefined hoặc 'unknown'!");
+                            return;
+                        }
+                        if (!token) return alert("Vui lòng đăng nhập lại để có token hợp lệ!");
+                        const res = await fetch(`${API_URL}auction-sessions/${id}/kick/${userId}`, {
+                            method: "POST",
+                            headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                            body: JSON.stringify({ reason })
+                        });
+                        const text = await res.text();
+                        let data = {};
+                        try { data = JSON.parse(text); } catch {}
+                        if (res.ok) {
+                            log(`🚫 Đã kích user ID ${userId}. Lý do: ${reason}`);
+                            fetchBidders(); // Refresh nhanh (không chờ poll)
+                        } else {
+                            throw new Error(data.message || text);
+                        }
+                    }
+                });
+            }
+        });
+    });
+
+    // Cleanup on unload
+    window.addEventListener('beforeunload', () => {
+        clearInterval(timeInterval);
+        clearInterval(pollInterval);
+    });
+</script>
+</body>
+</html>
