@@ -49,7 +49,8 @@ function LoginForm() {
             localStorage.setItem('authToken', token);
           }
           login(result.user, token);
-          window.location.href = result.user.role === 'Administrator' ? '/admin' : '/';
+         window.location.href = result.user.role === 'Administrator' ? '/admin' : 
+                      result.user.role === 'DauGiaVien' ? '/admin' : '/';
         }
       } else {
         const error = await response.json();

@@ -638,6 +638,9 @@ const Profile = () => {
     }
   };
 
+  // Check if user has Administrator or DauGiaVien role
+  const isAdminOrDauGiaVien = userData.accountType === 'Quản trị viên' || userData.accountType === 'Đấu giá viên';
+
   return (
     <div className={styles.container}>
       <div className={styles.sidebar}>
@@ -694,6 +697,13 @@ const Profile = () => {
           </li>
           <li><a href="#">Đấu giá của tôi</a></li>
           <li><a href="#">Lịch sử đấu giá</a></li>
+          {isAdminOrDauGiaVien && (
+            <li>
+              <Link to="/admin" className={activeTab === 'admin' ? styles.active : ''}>
+                Quản trị
+              </Link>
+            </li>
+          )}
           <li>
             <a
               href="#"
