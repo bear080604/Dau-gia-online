@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../UserContext';
-import './header.css';
+import styles from './header.module.css'; // Import CSS module
 
 const Header = () => {
   const { user, logout } = useUser();
@@ -14,10 +14,9 @@ const Header = () => {
   const [contractData, setContractData] = useState(null);
 
   // Logo base64
-  const logoBase64 = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwIiBoZWlnaHQ9IjE2MCIgdmlld0JveD0iMCAwIDE2MCAxNjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNjAiIGhlaWdodD0iMTYwIiByeD0iMTIiIGZpbGw9IiMyNzcyQkEiLz4KPHN2ZyB4PSI0MCIgeT0iNDAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiPgo8cGF0aCBkPSJNMTIgMTNWMTRNMTIgNlYxMk0xMiAxMkgyMU0zIDNIOUw5LjUgMjFIMi41TDMgM1oiLz4KPC9zdmc+Cjwvc3ZnPgo=";
+  
 
   // Fetch contract data from API
-  // Fetch contract data from API using environment variable
   useEffect(() => {
     const fetchContracts = async () => {
       try {
@@ -79,7 +78,7 @@ const Header = () => {
     };
 
     const formatCountdown = (ms) => {
-      if (ms <= 0) return "Hết thời gian";
+      if (ms <= 0) return 'Hết thời gian';
       const totalSec = Math.floor(ms / 1000);
       const h = Math.floor(totalSec / 3600);
       const m = Math.floor((totalSec % 3600) / 60);
@@ -119,8 +118,8 @@ const Header = () => {
   const handleClickOutsideSearch = (e) => {
     if (
       isMobileSearchActive &&
-      !e.target.closest('.uheader-mobile-search-box') &&
-      !e.target.closest('.uheader-mobile-search-toggle')
+      !e.target.closest(`.${styles.mobileSearchBox}`) &&
+      !e.target.closest(`.${styles.mobileSearchToggle}`)
     ) {
       setIsMobileSearchActive(false);
     }
@@ -160,28 +159,42 @@ const Header = () => {
         { icon: 'fa-home', text: 'Bất động sản', href: '#' },
         { icon: 'fa-car', text: 'Xe cộ', href: '#' },
         { icon: 'fa-gem', text: 'Đồ cổ & Quý hiếm', href: '#' },
-        { icon: 'fa-laptop', text: 'Thiết bị công nghệ', href: '#' }
-      ]
+        { icon: 'fa-laptop', text: 'Thiết bị công nghệ', href: '#' },
+      ],
     },
     { icon: 'fa-gavel', text: 'ĐẤU GIÁ TRỰC TUYẾN', href: 'auction-session' },
     { icon: 'fa-newspaper', text: 'TIN TỨC - THÔNG BÁO', href: '#' },
     { icon: 'fa-book', text: 'HƯỚNG DẪN SỬ DỤNG', href: '#' },
-    { icon: 'fa-phone', text: 'LIÊN HỆ BÁN TÀI SẢN', href: 'contact' }
+    { icon: 'fa-phone', text: 'LIÊN HỆ BÁN TÀI SẢN', href: 'contact' },
   ];
 
   return (
     <>
       {/* Top Bar */}
-      <div className="uheader-top-bar">
-        <div className="uheader-hotline">
+      <div className={styles.topBar}>
+        <div className={styles.hotline}>
           <i aria-hidden="true" className="fa fa-phone"></i>
           HOTLINE: (028) 39406853 - (028) 62561989
         </div>
-        <div className="uheader-auth-links">
+        <div className={styles.authLinks}>
           {user ? (
             <>
-              <span>Xin chào, <a href="/profile">{user.full_name}</a></span>
-              <a href="#" onClick={handleLogout}>Đăng Xuất <i className="fa fa-sign-out" aria-hidden="true"></i></a>
+              <span>Xin chào, {user.full_name}</span>
+                <div className={styles.userIconContainer}>
+                  <Link to="/profile" aria-label="Go to profile">
+                    <i className={`fa fa-user ${styles.userIcon}`} aria-hidden="true"></i>
+                  </Link>
+                  {user.role === 'admin' && (
+                    <div className={styles.adminDropdown}>
+                      <Link to="/admin" aria-label="Go to admin panel">
+                        Admin
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              <a href="#" onClick={handleLogout}>
+                Đăng Xuất <i className="fa fa-sign-out" aria-hidden="true"></i>
+              </a>
             </>
           ) : (
             <>
@@ -194,23 +207,19 @@ const Header = () => {
       </div>
 
       {/* Header Main */}
-      <header className="uheader-header-main">
-        <div className="uheader-logo">
-          <div className="uheader-logo-img">
+      <header className={styles.headerMain}>
+        <div className={styles.logo}>
+          <div className={styles.logoImg}>
             <a href="/">
-              <img alt="Logo Đấu Giá" src={logoBase64} />
+              <img src="\assets\img\logo.jpg" alt="Logo" />
             </a>
           </div>
         </div>
 
         {/* Desktop Search */}
-        <div className="uheader-search-container">
-          <form action="#" className="uheader-search-box" method="GET">
-            <input
-              name="q"
-              placeholder="Nhập tên tài sản cần tìm ..."
-              type="text"
-            />
+        <div className={styles.searchContainer}>
+          <form action="#" className={styles.searchBox} method="GET">
+            <input name="q" placeholder="Nhập tên tài sản cần tìm ..." type="text" />
             <button type="submit">
               <i aria-hidden="true" className="fa fa-search"></i>
             </button>
@@ -218,18 +227,11 @@ const Header = () => {
         </div>
 
         {/* Mobile Search */}
-        <div className="uheader-mobile-search-container">
-          <button
-            className="uheader-mobile-search-toggle"
-            onClick={toggleMobileSearch}
-          >
+        <div className={styles.mobileSearchContainer}>
+          <button className={styles.mobileSearchToggle} onClick={toggleMobileSearch}>
             <i aria-hidden="true" className="fa fa-search"></i>
           </button>
-          <div
-            className={`uheader-mobile-search-box ${
-              isMobileSearchActive ? 'active' : ''
-            }`}
-          >
+          <div className={`${styles.mobileSearchBox} ${isMobileSearchActive ? styles.active : ''}`}>
             <input placeholder="Nhập tên tài sản..." type="text" />
             <button type="submit">
               <i aria-hidden="true" className="fa fa-search"></i>
@@ -237,46 +239,35 @@ const Header = () => {
           </div>
         </div>
 
-        <div className="uheader-header-right">
+        <div className={styles.headerRight}>
           {user && latestUnpaidContract && (
             <Link to={`/contract`} style={{ textDecoration: 'none' }}>
-              <div
-                aria-live="polite"
-                className="uheader-head-contract-box"
-                role="status"
-              >
-                <div aria-hidden="true" className="uheader-head-icon">
+              <div aria-live="polite" className={styles.headContractBox} role="status">
+                <div aria-hidden="true" className={styles.headIcon}>
                   HD
                 </div>
-                <div className="uheader-head-content">
-                  <div className="uheader-head-title">
-                    Hợp đồng: {latestUnpaidContract.session.item.name}
-                  </div>
-                  <div className="uheader-head-due-time">
-                    Còn lại: {countdown}
-                  </div>
+                <div className={styles.headContent}>
+                  <div className={styles.headTitle}>Hợp đồng: {latestUnpaidContract.session.item.name}</div>
+                  <div className={styles.headDueTime}>Còn lại: {countdown}</div>
                 </div>
               </div>
             </Link>
           )}
-          <div className="uheader-datetime">{currentTime}</div>
+          <div className={styles.datetime}>{currentTime}</div>
         </div>
       </header>
 
       {/* Desktop Navigation Bar */}
-      <nav className="uheader-nav-bar">
-        <ul className="uheader-nav-menu">
+      <nav className={styles.navBar}>
+        <ul className={styles.navMenu}>
           {navItems.map((item, index) => (
-            <li
-              key={index}
-              className={item.isCategory ? 'uheader-categories' : ''}
-            >
+            <li key={index} className={item.isCategory ? styles.categories : ''}>
               <a href={item.href}>
                 <i aria-hidden="true" className={`fa ${item.icon}`}></i>
                 <span>{item.text}</span>
               </a>
               {item.isCategory && item.subItems && (
-                <ul className="uheader-category-hidden">
+                <ul className={styles.categoryHidden}>
                   {item.subItems.map((subItem, subIndex) => (
                     <li key={subIndex}>
                       <a href={subItem.href}>{subItem.text}</a>
@@ -292,9 +283,7 @@ const Header = () => {
       {/* Mobile Navigation Toggle Button */}
       <button
         aria-label="Mở menu"
-        className={`uheader-mobile-nav-toggle ${
-          isMobileNavActive ? 'active' : ''
-        }`}
+        className={`${styles.mobileNavToggle} ${isMobileNavActive ? styles.active : ''}`}
         onClick={openMobileNav}
       >
         <i className="fa fa-bars"></i>
@@ -302,52 +291,37 @@ const Header = () => {
 
       {/* Mobile Navigation Overlay */}
       <div
-        className={`uheader-mobile-nav-overlay ${
-          isMobileNavActive ? 'active' : ''
-        }`}
+        className={`${styles.mobileNavOverlay} ${isMobileNavActive ? styles.active : ''}`}
         onClick={closeMobileNav}
       ></div>
 
       {/* Mobile Navigation Sidebar */}
       <div
-        className={`uheader-mobile-nav-sidebar ${
-          isMobileNavActive ? 'active' : ''
-        }`}
+        className={`${styles.mobileNavSidebar} ${isMobileNavActive ? styles.active : ''}`}
       >
-        <div className="uheader-mobile-nav-header">
+        <div className={styles.mobileNavHeader}>
           <h3>Menu Điều Hướng</h3>
-          <button
-            aria-label="Đóng menu"
-            className="uheader-mobile-nav-close"
-            onClick={closeMobileNav}
-          >
+          <button aria-label="Đóng menu" className={styles.mobileNavClose} onClick={closeMobileNav}>
             <i className="fa fa-times"></i>
           </button>
         </div>
-        <ul className="uheader-mobile-nav-menu">
+        <ul className={styles.mobileNavMenu}>
           {navItems.map((item, index) => (
             <li key={index}>
               {item.isCategory ? (
                 <>
                   <button
-                    className={`uheader-mobile-category-toggle ${
-                      isMobileCategoryActive ? 'active' : ''
-                    }`}
+                    className={`${styles.mobileCategoryToggle} ${isMobileCategoryActive ? styles.active : ''}`}
                     onClick={toggleMobileCategory}
                   >
                     <div>
                       <i aria-hidden="true" className={`fa ${item.icon}`}></i>
                       {item.text}
                     </div>
-                    <i
-                      aria-hidden="true"
-                      className={`fa fa-chevron-down uheader-arrow`}
-                    ></i>
+                    <i aria-hidden="true" className={`fa fa-chevron-down ${styles.arrow}`}></i>
                   </button>
                   <ul
-                    className={`uheader-mobile-category-menu ${
-                      isMobileCategoryActive ? 'active' : ''
-                    }`}
+                    className={`${styles.mobileCategoryMenu} ${isMobileCategoryActive ? styles.active : ''}`}
                   >
                     {item.subItems.map((subItem, subIndex) => (
                       <li key={subIndex}>
