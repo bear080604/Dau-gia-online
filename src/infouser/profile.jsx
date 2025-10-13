@@ -28,8 +28,30 @@ const Profile = () => {
     createdAt: '',
     emailVerifiedAt: ''
   });
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
+  });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
   const navigate = useNavigate();
 
+  // Đồng bộ formData với userData
+  useEffect(() => {
+    setFormData({
+      fullName: userData.fullName,
+      email: userData.email,
+      phone: userData.phone,
+      address: userData.address,
+    });
+  }, [userData]);
+
+  // Lấy dữ liệu người dùng
   useEffect(() => {
     if (!token) {
       setError('Vui lòng đăng nhập để xem thông tin cá nhân');
@@ -94,6 +116,7 @@ const Profile = () => {
     fetchUserData();
   }, [navigate, token]);
 
+  // Lấy dữ liệu hợp đồng
   useEffect(() => {
     const fetchContracts = async () => {
       if (!userData.id) {
@@ -183,9 +206,159 @@ const Profile = () => {
     closeBankPopup();
   };
 
-  const handleSaveProfile = () => {
-    alert('Thông tin cá nhân đã được cập nhật!');
-    closeProfilePopup();
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const payload = {
+        name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+      };
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}user/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+          navigate('/login');
+          return;
+        }
+        throw new Error(data.message || 'Lỗi khi cập nhật thông tin');
+      }
+
+      if (data.status) {
+        setUserData((prev) => ({
+          ...prev,
+          fullName: data.user.full_name || prev.fullName,
+          email: data.user.email || prev.email,
+          phone: data.user.phone || prev.phone,
+          address: data.user.address || prev.address,
+        }));
+        alert('Cập nhật thông tin cá nhân thành công!');
+        closeProfilePopup();
+      } else {
+        throw new Error(data.message || 'Lỗi từ server');
+      }
+    } catch (err) {
+      setError(err.message);
+      alert(`Lỗi: ${err.message}`);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    try {
+      if (!passwordData.newPassword || !passwordData.confirmPassword) {
+        alert('Vui lòng nhập mật khẩu mới và xác nhận mật khẩu');
+        return;
+      }
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        alert('Mật khẩu mới và xác nhận mật khẩu không khớp');
+        return;
+      }
+      if (passwordData.newPassword.length < 6) {
+        alert('Mật khẩu mới phải có ít nhất 6 ký tự');
+        return;
+      }
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}user/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          password: passwordData.newPassword,
+          password_confirmation: passwordData.confirmPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+          navigate('/login');
+          return;
+        }
+        throw new Error(data.message || 'Lỗi khi đổi mật khẩu');
+      }
+
+      if (data.status) {
+        alert('Đổi mật khẩu thành công!');
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+        });
+      } else {
+        throw new Error(data.message || 'Lỗi từ server');
+      }
+    } catch (err) {
+      setError(err.message);
+      alert(`Lỗi: ${err.message}`);
+    }
+  };
+
+  const handleUploadImage = async (side) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        const formData = new FormData();
+        formData.append(side === 'front' ? 'id_card_front' : 'id_card_back', file);
+
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}user/upload-id-card`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message || 'Lỗi khi tải ảnh');
+          }
+
+          if (data.status) {
+            setUserData((prev) => ({
+              ...prev,
+              [side === 'front' ? 'idCardFront' : 'idCardBack']: data.user[side === 'front' ? 'id_card_front' : 'id_card_back'],
+            }));
+            alert(`Tải ảnh mặt ${side === 'front' ? 'trước' : 'sau'} thành công`);
+          }
+        } catch (err) {
+          setError(err.message);
+          alert(`Lỗi: ${err.message}`);
+        }
+      }
+    };
+    input.click();
   };
 
   const handleLogout = async (e) => {
@@ -198,18 +371,6 @@ const Profile = () => {
       setError('Lỗi đăng xuất: ' + err.message);
       alert('Lỗi đăng xuất: ' + err.message);
     }
-  };
-
-  const handleUploadImage = (side) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (e) => {
-      if (e.target.files && e.target.files[0]) {
-        alert(`Đã tải lên ảnh mặt ${side === 'front' ? 'trước' : 'sau'} CCCD`);
-      }
-    };
-    input.click();
   };
 
   const renderTabContent = () => {
@@ -425,17 +586,38 @@ const Profile = () => {
             <div className={styles.infoSection}>
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>Mật khẩu hiện tại</label>
-                <input type="password" className={styles.formControl} placeholder="Nhập mật khẩu hiện tại" />
+                <input
+                  type="password"
+                  className={styles.formControl}
+                  name="currentPassword"
+                  value={passwordData.currentPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Nhập mật khẩu hiện tại"
+                />
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>Mật khẩu mới</label>
-                <input type="password" className={styles.formControl} placeholder="Nhập mật khẩu mới" />
+                <input
+                  type="password"
+                  className={styles.formControl}
+                  name="newPassword"
+                  value={passwordData.newPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Nhập mật khẩu mới"
+                />
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>Xác nhận mật khẩu mới</label>
-                <input type="password" className={styles.formControl} placeholder="Nhập lại mật khẩu mới" />
+                <input
+                  type="password"
+                  className={styles.formControl}
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Nhập lại mật khẩu mới"
+                />
               </div>
-              <button className={styles.btn}>Đổi mật khẩu</button>
+              <button className={styles.btn} onClick={handleChangePassword}>Đổi mật khẩu</button>
             </div>
           </div>
         );
@@ -547,21 +729,45 @@ const Profile = () => {
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Họ và tên</label>
-                  <input type="text" className={styles.formControl} defaultValue={userData.fullName} />
+                  <input
+                    type="text"
+                    className={styles.formControl}
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
+                  />
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Email</label>
-                  <input type="email" className={styles.formControl} defaultValue={userData.email} />
+                  <input
+                    type="email"
+                    className={styles.formControl}
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                  />
                 </div>
               </div>
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Số điện thoại</label>
-                  <input type="tel" className={styles.formControl} defaultValue={userData.phone} />
+                  <input
+                    type="tel"
+                    className={styles.formControl}
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                  />
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Địa chỉ</label>
-                  <input type="text" className={styles.formControl} defaultValue={userData.address} />
+                  <input
+                    type="text"
+                    className={styles.formControl}
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                  />
                 </div>
               </div>
               <div className={styles.formGroup}>
