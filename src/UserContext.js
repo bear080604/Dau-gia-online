@@ -11,7 +11,6 @@ export const useUser = () => {
 };
 
 export const UserProvider = ({ children }) => {
- 
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('user');
@@ -25,26 +24,40 @@ export const UserProvider = ({ children }) => {
   const [token, setToken] = useState(() => {
     return localStorage.getItem('token') || null;
   });
- 
+
   const login = (userData, tokenData) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
     if (tokenData) {
       setToken(tokenData);
       localStorage.setItem('token', tokenData);
+      // Xóa authToken nếu tồn tại để tránh xung đột
+      localStorage.removeItem('authToken');
     }
   };
 
   const logout = async () => {
+    console.log('Before logout:', { user, token, authToken: localStorage.getItem('authToken') });
     setUser(null);
     setToken(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    localStorage.removeItem('authToken'); // Thêm dòng này để xóa authToken
+    console.log('After logout:', {
+      localStorageToken: localStorage.getItem('token'),
+      localStorageAuthToken: localStorage.getItem('authToken')
+    });
+
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}logout`, { // Thêm / nếu API prefix /api
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/logout`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         credentials: 'include',
       });
+
       if (!response.ok) {
         console.error('Logout API failed:', response.status);
       }
@@ -53,50 +66,55 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // Validate stored user on mount
-useEffect(() => {
-  const validateUser = async () => {
-    const savedUser = localStorage.getItem('user');
+  useEffect(() => {
+    const validateUser = async () => {
+      const savedUser = localStorage.getItem('user');
+      const savedToken = localStorage.getItem('token');
 
-    if (savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser);
-
-        // ✅ Set user TRƯỚC KHI validate API
-        setUser(parsedUser);
-
-        // Optional: Validate với server (nếu có endpoint /user)
+      if (savedUser && savedToken) {
         try {
-          const response = await fetch(`${process.env.REACT_APP_API_URL}user`, {
+          const parsedUser = JSON.parse(savedUser);
+          setUser(parsedUser);
+
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${savedToken}`,
+            },
             credentials: 'include',
           });
 
           if (response.ok) {
             const userData = await response.json();
-            // Update nếu server trả data khác
-            if (JSON.stringify(userData) !== JSON.stringify(parsedUser)) {
-              login(userData);
+            if (userData.status && userData.user) {
+              setUser(userData.user);
+              localStorage.setItem('user', JSON.stringify(userData.user));
+              localStorage.removeItem('authToken'); // Xóa authToken nếu tồn tại
+            } else {
+              throw new Error('Invalid user data from API');
             }
           } else if (response.status === 401) {
-            // ✅ CHỈ xóa nếu 401 (session thực sự hết hạn)
             console.warn('Session expired (401)');
             setUser(null);
+            setToken(null);
             localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            localStorage.removeItem('authToken'); // Xóa authToken nếu token hết hạn
           }
-          // ✅ Với lỗi khác (500, 404, network) → GIỮ user từ localStorage
-        } catch (apiError) {
-          console.error('API validation failed, keeping localStorage user:', apiError);
-          // Giữ user từ localStorage
+        } catch (err) {
+          console.error('Validation error:', err);
+          setUser(null);
+          setToken(null);
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          localStorage.removeItem('authToken'); // Xóa authToken nếu có lỗi
         }
-      } catch (parseError) {
-        console.error('Failed to parse user from localStorage:', parseError);
-        localStorage.removeItem('user');
       }
-    }
-  };
+    };
 
-  validateUser();
-}, []); // Chỉ chạy 1 lần khi mount
+    validateUser();
+  }, []);
 
   return (
     <UserContext.Provider value={{ user, token, login, logout }}>

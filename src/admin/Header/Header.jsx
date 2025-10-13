@@ -66,7 +66,7 @@ const Sidebar = () => {
     <div className={styles.sidebar}>
       <div className={styles.sidebarHeader}>
         <div className="logo">
-          <img className="logo-img" src="/assets/img/logo.jpg" alt="Logo" />
+          <img className="logo-img" src="" alt="Logo" />
         </div>
       </div>
 
