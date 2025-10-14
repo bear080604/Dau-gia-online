@@ -12,9 +12,61 @@ const Header = () => {
   const [isMobileCategoryActive, setIsMobileCategoryActive] = useState(false);
   const [latestUnpaidContract, setLatestUnpaidContract] = useState(null);
   const [contractData, setContractData] = useState(null);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, text: 'Yêu cầu đấu giá đã được phê duyệt', isRead: false, timestamp: new Date('2025-10-13T17:00:00+07:00') },
+    { id: 2, text: 'Phiên đấu giá mới sẽ bắt đầu vào 20:00 hôm nay.', isRead: false, timestamp: new Date('2025-10-13T16:30:00+07:00') },
+  ]);
+  const [categories, setCategories] = useState([]); // Thêm state cho danh mục
 
-  // Logo base64
-  
+  // Fetch danh mục từ API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/categories');
+        if (!response.ok) {
+          throw new Error('Failed to fetch categories');
+        }
+        const result = await response.json();
+        if (result.status && result.data) {
+          // Ánh xạ dữ liệu API thành cấu trúc subItems
+          const mappedCategories = result.data.map(category => ({
+            icon: getIconForCategory(category.name), // Hàm để chọn icon
+            text: category.name,
+            href: `/category/${category.category_id}`, // Tạo href động
+          }));
+          setCategories(mappedCategories);
+        } else {
+          throw new Error('Invalid API response');
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setCategories([]); // Nếu lỗi, đặt danh mục rỗng
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // Hàm ánh xạ tên danh mục với icon (tùy chỉnh theo nhu cầu)
+  const getIconForCategory = (categoryName) => {
+    switch (categoryName) {
+      case 'Bất động sản':
+        return 'fa-home';
+      case 'Xe cộ':
+        return 'fa-car';
+      case 'Đồ cổ':
+        return 'fa-gem';
+      case 'Thiết bị điện tử':
+        return 'fa-laptop';
+      case 'Người yêu':
+        return 'fa-heart';
+      default:
+        return 'fa-folder';
+    }
+  };
+
+  // Fetch contracts
   useEffect(() => {
     const fetchContracts = async () => {
       try {
@@ -71,7 +123,7 @@ const Header = () => {
 
     const getTargetDate = (signedDate) => {
       const signed = new Date(signedDate);
-      signed.setHours(signed.getHours() + 24); // 24-hour payment window
+      signed.setHours(signed.getHours() + 24);
       return signed;
     };
 
@@ -145,6 +197,45 @@ const Header = () => {
     setIsMobileCategoryActive(!isMobileCategoryActive);
   };
 
+  // Toggle notification popup
+  const toggleNotification = () => {
+    setIsNotificationOpen(!isNotificationOpen);
+  };
+
+  const closeNotification = (e) => {
+    if (e.target.className === styles.notificationPopup) {
+      setIsNotificationOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('click', closeNotification);
+    return () => document.removeEventListener('click', closeNotification);
+  }, [isNotificationOpen]);
+
+  // Mark notification as read
+  const markAsRead = (id) => {
+    setNotifications((prev) =>
+      prev.map((notif) =>
+        notif.id === id ? { ...notif, isRead: true } : notif
+      )
+    );
+  };
+
+  // Calculate time ago
+  const getTimeAgo = (timestamp) => {
+    const now = new Date();
+    const diffMs = now - timestamp;
+    const diffMin = Math.floor(diffMs / (1000 * 60));
+
+    if (diffMin < 1) return 'Vừa xong';
+    if (diffMin === 1) return '1 phút trước';
+    if (diffMin < 60) return `${diffMin} phút trước`;
+    const diffHours = Math.floor(diffMin / 60);
+    if (diffHours === 1) return '1 giờ trước';
+    return `${diffHours} giờ trước`;
+  };
+
   // Navigation menu items
   const navItems = [
     { icon: 'fa-info-circle', text: 'GIỚI THIỆU', href: '#' },
@@ -153,15 +244,10 @@ const Header = () => {
       text: 'DANH MỤC TÀI SẢN',
       href: '#',
       isCategory: true,
-      subItems: [
-        { icon: 'fa-home', text: 'Bất động sản', href: '#' },
-        { icon: 'fa-car', text: 'Xe cộ', href: '#' },
-        { icon: 'fa-gem', text: 'Đồ cổ & Quý hiếm', href: '#' },
-        { icon: 'fa-laptop', text: 'Thiết bị công nghệ', href: '#' },
-      ],
+      subItems: categories, // Sử dụng categories từ API
     },
     { icon: 'fa-gavel', text: 'ĐẤU GIÁ TRỰC TUYẾN', href: 'auction-session' },
-    { icon: 'fa-newspaper', text: 'TIN TỨC - THÔNG BÁO', href: '#' },
+    { icon: 'fa-newspaper', text: 'TIN TỨC - THÔNG BÁO', href: 'news' },
     { icon: 'fa-book', text: 'HƯỚNG DẪN SỬ DỤNG', href: '#' },
     { icon: 'fa-phone', text: 'LIÊN HỆ BÁN TÀI SẢN', href: 'contact' },
   ];
@@ -178,18 +264,22 @@ const Header = () => {
           {user ? (
             <>
               <span>Xin chào, {user.full_name}</span>
-                <div className={styles.userIconContainer}>
-                  <Link to="/profile" aria-label="Go to profile">
-                    <i className={`fa fa-user ${styles.userIcon}`} aria-hidden="true"></i>
-                  </Link>
-                  {user.role === 'admin' && (
-                    <div className={styles.adminDropdown}>
-                      <Link to="/admin" aria-label="Go to admin panel">
-                        Admin
-                      </Link>
-                    </div>
-                  )}
-                </div>
+              <div className={styles.userIconContainer}>
+                <Link to="/profile" aria-label="Go to profile">
+                  <i className={`fa fa-user ${styles.userIcon}`} aria-hidden="true"></i>
+                </Link>
+                {user.role === 'admin' && (
+                  <div className={styles.adminDropdown}>
+                    <Link to="/admin" aria-label="Go to admin panel">
+                      Admin
+                    </Link>
+                  </div>
+                )}
+              </div>
+              {/* Notification Bell */}
+              <div className={styles.notifi} onClick={toggleNotification}>
+                <i className="fa fa-bell" aria-hidden="true"></i>
+              </div>
               <a href="#" onClick={handleLogout}>
                 Đăng Xuất <i className="fa fa-sign-out" aria-hidden="true"></i>
               </a>
@@ -203,6 +293,30 @@ const Header = () => {
           )}
         </div>
       </div>
+
+      {/* Notification Popup */}
+      {isNotificationOpen && (
+        <div className={styles.notificationPopup} onClick={closeNotification}>
+          <div className={styles.notificationContent}>
+            <span className={styles.notificationClose} onClick={toggleNotification}>
+              &times;
+            </span>
+            <h3>Thông Báo</h3>
+            <ul>
+              {notifications.map((notif) => (
+                <li
+                  key={notif.id}
+                  className={notif.isRead ? styles.read : styles.unread}
+                  onClick={() => markAsRead(notif.id)}
+                >
+                  {notif.isRead && <span className={styles.readIcon}>✔ </span>}
+                  {notif.text} <span className={styles.timeAgo}>({getTimeAgo(notif.timestamp)})</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* Header Main */}
       <header className={styles.headerMain}>
@@ -300,7 +414,7 @@ const Header = () => {
         <div className={styles.mobileNavHeader}>
           <h3>Menu Điều Hướng</h3>
           <button aria-label="Đóng menu" className={styles.mobileNavClose} onClick={closeMobileNav}>
-            <i className="fa fa-times"></i>
+            <i className="fa fa-times" />
           </button>
         </div>
         <ul className={styles.mobileNavMenu}>

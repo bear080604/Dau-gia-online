@@ -11,6 +11,8 @@ const Profile = () => {
   const [bankPopupMode, setBankPopupMode] = useState('add');
   const [editingBankId, setEditingBankId] = useState(null);
   const [contracts, setContracts] = useState([]);
+  const [auctionHistory, setAuctionHistory] = useState([]);
+  const [myAuctions, setMyAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState({
@@ -183,6 +185,59 @@ const Profile = () => {
 
     fetchContracts();
   }, [userData.id, navigate, token]);
+
+  // Thêm dữ liệu giả định cho Lịch sử đấu giá và Đấu giá của tôi
+  useEffect(() => {
+    // Dữ liệu cho Lịch sử đấu giá
+    const auctionHistoryData = [
+      {
+        stt: 1,
+        tenTaiSan: 'Nhà đất quận 1',
+        trangThai: 'Kết thúc',
+        thoiGianDauGia: '2025-10-10 14:00:00',
+        ketQua: 'Thắng',
+        xemChiTiet: '/auction/1'
+      },
+      {
+        stt: 2,
+        tenTaiSan: 'Xe máy Honda',
+        trangThai: 'Kết thúc',
+        thoiGianDauGia: '2025-10-12 10:30:00',
+        ketQua: 'Thua',
+        xemChiTiet: '/auction/2'
+      },
+      {
+        stt: 3,
+        tenTaiSan: 'Laptop Dell',
+        trangThai: 'Đang diễn ra',
+        thoiGianDauGia: '2025-10-14 15:00:00',
+        ketQua: 'Đang chờ',
+        xemChiTiet: '/auction/3'
+      }
+    ];
+    setAuctionHistory(auctionHistoryData);
+
+    // Dữ liệu cho Đấu giá của tôi
+    const myAuctionsData = [
+      {
+        stt: 1,
+        tenTaiSan: 'Căn hộ quận 2',
+        trangThai: 'Kết thúc',
+        thoiGian: '2025-10-11 16:00:00',
+        nguoiTrungDauGia: 'Nguyễn Văn A',
+        xemChiTiet: '/auction/4'
+      },
+      {
+        stt: 2,
+        tenTaiSan: 'Ô tô Toyota',
+        trangThai: 'Đang diễn ra',
+        thoiGian: '2025-10-13 09:00:00',
+        nguoiTrungDauGia: 'Chưa có',
+        xemChiTiet: '/auction/5'
+      }
+    ];
+    setMyAuctions(myAuctionsData);
+  }, []);
 
   const handleTabChange = (tab) => setActiveTab(tab);
   const openProfilePopup = () => setShowProfilePopup(true);
@@ -403,14 +458,6 @@ const Profile = () => {
                   <div className={styles.infoValue}>{userData.fullName}</div>
                 </div>
                 <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Tên đăng nhập:</span>
-                  <div className={styles.infoValue}>{userData.username}</div>
-                </div>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Loại tài khoản:</span>
-                  <div className={styles.infoValue}>{userData.accountType}</div>
-                </div>
-                <div className={styles.infoItem}>
                   <span className={styles.infoLabel}>Email:</span>
                   <div className={styles.infoValue}>{userData.email}</div>
                 </div>
@@ -421,22 +468,6 @@ const Profile = () => {
                 <div className={styles.infoItem}>
                   <span className={styles.infoLabel}>Địa chỉ:</span>
                   <div className={styles.infoValue}>{userData.address}</div>
-                </div>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Ngày tạo:</span>
-                  <div className={styles.infoValue}>{userData.createdAt}</div>
-                </div>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Email xác minh:</span>
-                  <div className={styles.infoValue}>{userData.emailVerifiedAt}</div>
-                </div>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Ngân hàng:</span>
-                  <div className={styles.infoValue}>{userData.bankName}</div>
-                </div>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Số tài khoản:</span>
-                  <div className={styles.infoValue}>{userData.bankAccount}</div>
                 </div>
               </div>
             </div>
@@ -693,6 +724,100 @@ const Profile = () => {
           </div>
         );
 
+      case 'auction-history':
+        return (
+          <div className={styles.tabPane} id="auction-history">
+            <div className={styles.infoSection}>
+              {auctionHistory.length === 0 ? (
+                <p>Không có lịch sử đấu giá.</p>
+              ) : (
+                <table className={styles.contractTable}>
+                  <thead>
+                    <tr>
+                      <th>STT</th>
+                      <th>Tên tài sản</th>
+                      <th>Trạng thái</th>
+                      <th>Thời gian đấu giá</th>
+                      <th>Kết quả</th>
+                      <th>Xem chi tiết</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auctionHistory.map((item) => (
+                      <tr key={item.stt}>
+                        <td>{item.stt}</td>
+                        <td>{item.tenTaiSan}</td>
+                        <td>
+                          <span className={`${styles.contractStatus} ${item.trangThai === 'Kết thúc' ? styles.statusPaid : styles.statusWaiting}`}>
+                            {item.trangThai}
+                          </span>
+                        </td>
+                        <td>{item.thoiGianDauGia}</td>
+                        <td>{item.ketQua}</td>
+                        <td>
+                          <Link
+                            to={item.xemChiTiet}
+                            className={`${styles.actionBtn} ${styles.viewDetails}`}
+                          >
+                            <i className="fas fa-eye"></i> Xem
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        );
+
+      case 'my-auctions':
+        return (
+          <div className={styles.tabPane} id="my-auctions">
+            <div className={styles.infoSection}>
+              {myAuctions.length === 0 ? (
+                <p>Không có đấu giá của bạn.</p>
+              ) : (
+                <table className={styles.contractTable}>
+                  <thead>
+                    <tr>
+                      <th>STT</th>
+                      <th>Tên tài sản</th>
+                      <th>Trạng thái</th>
+                      <th>Thời gian</th>
+                      <th>Người trúng đấu giá</th>
+                      <th>Xem chi tiết</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myAuctions.map((item) => (
+                      <tr key={item.stt}>
+                        <td>{item.stt}</td>
+                        <td>{item.tenTaiSan}</td>
+                        <td>
+                          <span className={`${styles.contractStatus} ${item.trangThai === 'Kết thúc' ? styles.statusPaid : styles.statusWaiting}`}>
+                            {item.trangThai}
+                          </span>
+                        </td>
+                        <td>{item.thoiGian}</td>
+                        <td>{item.nguoiTrungDauGia}</td>
+                        <td>
+                          <Link
+                            to={item.xemChiTiet}
+                            className={`${styles.actionBtn} ${styles.viewDetails}`}
+                          >
+                            <i className="fas fa-eye"></i> Xem
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -705,6 +830,8 @@ const Profile = () => {
       case 'contracts': return 'Danh sách hợp đồng';
       case 'payment-history': return 'Lịch sử thanh toán';
       case 'password': return 'Đổi mật khẩu';
+      case 'auction-history': return 'Lịch sử đấu giá';
+      case 'my-auctions': return 'Đấu giá của tôi';
       default: return 'Thông tin cá nhân';
     }
   };
@@ -766,8 +893,24 @@ const Profile = () => {
               Đổi mật khẩu
             </a>
           </li>
-          <li><a href="#">Đấu giá của tôi</a></li>
-          <li><a href="#">Lịch sử đấu giá</a></li>
+          <li>
+            <a
+              href="#"
+              className={activeTab === 'my-auctions' ? styles.active : ''}
+              onClick={(e) => { e.preventDefault(); handleTabChange('my-auctions'); }}
+            >
+              Đấu giá của tôi
+            </a>
+          </li>
+          <li>
+            <a
+              href="#"
+              className={activeTab === 'auction-history' ? styles.active : ''}
+              onClick={(e) => { e.preventDefault(); handleTabChange('auction-history'); }}
+            >
+              Lịch sử đấu giá
+            </a>
+          </li>
           {isAdminOrDauGiaVien && (
             <li>
               <Link to="/admin" className={activeTab === 'admin' ? styles.active : ''}>

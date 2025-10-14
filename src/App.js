@@ -28,6 +28,7 @@ import ProfilePage from './pages/profile';
 import AccessDenied from './AccessDenied';
 import { ToastContainer } from 'react-toastify';
 import RegisterAuctionPage from './pages/AdminRegisterAuction';
+import News from './pages/news';
 
 function App() {
   return (
@@ -49,6 +50,8 @@ function App() {
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/access-denied" element={<AccessDenied />} />
+            <Route path="/news" element={<News />} />
+
 
             {/* Public Routes (ngăn truy cập nếu đã đăng nhập) */}
             <Route

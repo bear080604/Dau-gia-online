@@ -178,7 +178,23 @@ const AdminPanel = () => {
 
   return (
     <div className={styles.container}>
-      <h1>Quản Lý Hồ Sơ Đăng Ký Đấu Giá</h1>
+      <div className={styles.header}>
+        <div className={styles.searchBar}>
+          <i className="fas fa-search"></i>
+          <input
+            type="text"
+            placeholder="Tìm kiếm phiên đấu giá..."
+          />
+        </div>
+        <div className={styles.userProfile}>
+          <div className={styles.notificationBell}>
+            <i className="fas fa-bell"></i>
+          </div>
+          <div className={styles.profileAvatar}>QT</div>
+        </div>
+      </div>
+      <h1 className={styles.h1Title}>Quản Lý Hồ Sơ Đăng Ký Đấu Giá</h1>
+      <p className={styles.pageSubtitle}>Quản lý hồ sơ yêu cầu đăng ký tham gia đấu giá tài sản</p>
 
       <div className={styles.head}>
         <div className={styles.filter}>
@@ -203,7 +219,7 @@ const AdminPanel = () => {
           <tr>
             <th>Phiên Đấu Giá</th>
             <th>Tài Liệu Liên Quan</th>
-            <th>User</th>
+            <th>Người yêu cầu</th>
             <th>Tiền Đặt Trước</th>
             <th>Trạng Thái</th>
             <th>Thao Tác</th>
@@ -214,10 +230,10 @@ const AdminPanel = () => {
             registrations.map((reg) => (
               <tr key={reg.profile_id} data-id={reg.profile_id}>
                 <td>{reg.session_id ? `Phiên ${reg.session_id}` : 'Không xác định'}</td>
-                <td>
+                <td data-label="Tài Liệu Liên Quan">
                   {reg.document_url ? (
                     <a href={reg.document_url} target="_blank" rel="noopener noreferrer">
-                      {reg.document_url}
+                      Xem tài liệu
                     </a>
                   ) : (
                     'Không có tài liệu'
@@ -303,10 +319,10 @@ const AdminPanel = () => {
             <div className={styles.detailContent}>
               <div><label>Phiên Đấu Giá:</label> <span>{paymentDetails.auction}</span></div>
               <div>
-                <label>Tài Liệu Liên Quan:</label>
+                <label>Tài Liệu Liên Quan:</label>{' '}
                 {paymentDetails.documentUrl ? (
                   <a href={paymentDetails.documentUrl} target="_blank" rel="noopener noreferrer">
-                    {paymentDetails.documentUrl}
+                    Xem tài liệu
                   </a>
                 ) : (
                   'Không có tài liệu'
