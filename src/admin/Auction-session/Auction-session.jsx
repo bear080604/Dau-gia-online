@@ -452,7 +452,7 @@ function AuctionSession() {
         response = await axios.post(`${API_URL}auction-sessions`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        alert('Tạo phiên đấu giá thành công!');
+        alert('Tạo phiên đấu giá thành công! Hợp đồng điện tử đã được tạo tự động');
       }
       fetchSessions();
       fetchProducts(); // Cập nhật lại danh sách sản phẩm để loại bỏ sản phẩm vừa thêm vào phiên
@@ -805,6 +805,22 @@ function AuctionSession() {
                   value={sessionForm.bidStep}
                   onChange={handleFormChange}
                 />
+              </div>
+
+               <div>
+                <label>Hợp đồng điện tử</label>
+                <span
+                  style={{
+                    display: 'block',
+                    padding: '8px',
+                    backgroundColor: '#f0f0f0',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    color: '#333',
+                  }}
+                >
+                  Dịch vụ đấu giá eContract
+                </span>
               </div>
               {modalMode === 'edit' && (
                 <div>
