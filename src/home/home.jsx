@@ -151,6 +151,53 @@ const Home = () => {
               </select>
             </div>
           </div>
+          <Swiper
+          modules={[Navigation, Pagination, Autoplay]}
+          spaceBetween={20}
+          navigation
+          pagination={{ clickable: true }}
+          autoplay={{ delay: 7000 }}
+          loop={true}
+          breakpoints={{
+            320: { slidesPerView: 1 },
+            640: { slidesPerView: 2 },
+            1024: { slidesPerView: 5 },
+          }}
+        >
+          {auctionItems.map((item) => {
+            const currentSession = item.sessions?.[0];
+            const computedStatus = getAuctionStatus(currentSession);
+            return (
+              <SwiperSlide key={item.id}>
+                <div className='list-auction'>
+                  <div className='auction-item'>
+                    <img
+                      className='auction-image'
+                      src={item.image_url ? item.image_url : "/assets/img/xe.png"}
+                      alt={item.name}
+                    />
+                    <div className='auction-details'>
+                      <h3 className='auction-name'>{item.name}</h3>
+                      <p className='auction-method'>
+                        {computedStatus}
+                      </p>
+                      <p className='auction-price'>
+                        Giá khởi điểm: {Number(item.starting_price).toLocaleString()} VNĐ
+                      </p>
+                    </div>
+                    <div className='action'>
+                      <Link to={`/detail/${currentSession.id}`} style={{ textDecoration: 'none' }}>
+                        <button className='bid-button'>
+                          <i className="fa fa-gavel" aria-hidden="true"></i> Đấu giá
+                        </button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </SwiperSlide>
+            );
+          })}
+        </Swiper>
         </section>
       </main>
     </div>

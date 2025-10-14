@@ -12,15 +12,61 @@ const Header = () => {
   const [isMobileCategoryActive, setIsMobileCategoryActive] = useState(false);
   const [latestUnpaidContract, setLatestUnpaidContract] = useState(null);
   const [contractData, setContractData] = useState(null);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false); // State cho popup thông báo
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState([
     { id: 1, text: 'Yêu cầu đấu giá đã được phê duyệt', isRead: false, timestamp: new Date('2025-10-13T17:00:00+07:00') },
     { id: 2, text: 'Phiên đấu giá mới sẽ bắt đầu vào 20:00 hôm nay.', isRead: false, timestamp: new Date('2025-10-13T16:30:00+07:00') },
-  ]); // Thêm timestamp cho mỗi thông báo
+  ]);
+  const [categories, setCategories] = useState([]); // Thêm state cho danh mục
 
-  // Logo base64
-  // (Giả sử bạn đã có base64 cho logo, bỏ qua nếu không cần)
+  // Fetch danh mục từ API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/categories');
+        if (!response.ok) {
+          throw new Error('Failed to fetch categories');
+        }
+        const result = await response.json();
+        if (result.status && result.data) {
+          // Ánh xạ dữ liệu API thành cấu trúc subItems
+          const mappedCategories = result.data.map(category => ({
+            icon: getIconForCategory(category.name), // Hàm để chọn icon
+            text: category.name,
+            href: `/category/${category.category_id}`, // Tạo href động
+          }));
+          setCategories(mappedCategories);
+        } else {
+          throw new Error('Invalid API response');
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setCategories([]); // Nếu lỗi, đặt danh mục rỗng
+      }
+    };
 
+    fetchCategories();
+  }, []);
+
+  // Hàm ánh xạ tên danh mục với icon (tùy chỉnh theo nhu cầu)
+  const getIconForCategory = (categoryName) => {
+    switch (categoryName) {
+      case 'Bất động sản':
+        return 'fa-home';
+      case 'Xe cộ':
+        return 'fa-car';
+      case 'Đồ cổ':
+        return 'fa-gem';
+      case 'Thiết bị điện tử':
+        return 'fa-laptop';
+      case 'Người yêu':
+        return 'fa-heart';
+      default:
+        return 'fa-folder';
+    }
+  };
+
+  // Fetch contracts
   useEffect(() => {
     const fetchContracts = async () => {
       try {
@@ -77,7 +123,7 @@ const Header = () => {
 
     const getTargetDate = (signedDate) => {
       const signed = new Date(signedDate);
-      signed.setHours(signed.getHours() + 24); // 24-hour payment window
+      signed.setHours(signed.getHours() + 24);
       return signed;
     };
 
@@ -198,15 +244,10 @@ const Header = () => {
       text: 'DANH MỤC TÀI SẢN',
       href: '#',
       isCategory: true,
-      subItems: [
-        { icon: 'fa-home', text: 'Bất động sản', href: '#' },
-        { icon: 'fa-car', text: 'Xe cộ', href: '#' },
-        { icon: 'fa-gem', text: 'Đồ cổ & Quý hiếm', href: '#' },
-        { icon: 'fa-laptop', text: 'Thiết bị công nghệ', href: '#' },
-      ],
+      subItems: categories, // Sử dụng categories từ API
     },
     { icon: 'fa-gavel', text: 'ĐẤU GIÁ TRỰC TUYẾN', href: 'auction-session' },
-    { icon: 'fa-newspaper', text: 'TIN TỨC - THÔNG BÁO', href: '#' },
+    { icon: 'fa-newspaper', text: 'TIN TỨC - THÔNG BÁO', href: 'news' },
     { icon: 'fa-book', text: 'HƯỚNG DẪN SỬ DỤNG', href: '#' },
     { icon: 'fa-phone', text: 'LIÊN HỆ BÁN TÀI SẢN', href: 'contact' },
   ];
