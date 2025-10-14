@@ -7,7 +7,7 @@ import moment from 'moment-timezone';
 import { Link } from "react-router-dom";
 
 function AuctionSession() {
-  const { token } = useUser();
+  const { token, user } = useUser(); // Lấy user để lấy id và full_name
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [itemFilter, setItemFilter] = useState('');
@@ -20,7 +20,8 @@ function AuctionSession() {
   const [products, setProducts] = useState([]);
   const [sessionForm, setSessionForm] = useState({
     item: '',
-    creator: '',
+    creator: user?.id || '',
+    creatorName: user?.full_name || '',
     startTime: '',
     endTime: '',
     regulation: '',
@@ -52,10 +53,11 @@ function AuctionSession() {
     return () => clearInterval(interval);
   }, []);
 
-  // Log token để debug
+  // Log token và user để debug
   useEffect(() => {
     console.log('Initial Auth Token:', token);
-  }, [token]);
+    console.log('User Info:', user);
+  }, [token, user]);
 
   const getAuctionStatus = (session) => {
     if (!session || !session.bid_start || !session.bid_end) {
@@ -65,10 +67,6 @@ function AuctionSession() {
     const now = moment.tz('Asia/Ho_Chi_Minh');
     const bidStart = moment.tz(session.bid_start, 'Asia/Ho_Chi_Minh');
     const bidEnd = moment.tz(session.bid_end, 'Asia/Ho_Chi_Minh');
-
-    console.log('Debug - Now:', now.format('YYYY-MM-DD HH:mm:ss'));
-    console.log('Debug - Bid Start:', bidStart.format('YYYY-MM-DD HH:mm:ss'));
-    console.log('Debug - Bid End:', bidEnd.format('YYYY-MM-DD HH:mm:ss'));
 
     if (now.isBefore(bidStart)) {
       return "Chưa bắt đầu";
@@ -80,14 +78,11 @@ function AuctionSession() {
   };
 
   const transformSession = (session) => {
-    console.log('Raw bid_start:', session.bid_start);
-    console.log('Raw bid_end:', session.bid_end);
     const winnerProfile = session.profiles.find(profile => profile.user.user_id === session.current_winner_id);
     const winnerName = winnerProfile ? winnerProfile.user.full_name : 'Chưa có';
     const highestBid = session.highest_bid ? Number(session.highest_bid).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : 'Chưa có';
     const bidStep = session.bid_step ? Number(session.bid_step).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : 'Chưa có';
 
-    // Sử dụng moment.tz để chuyển đổi thời gian về Asia/Ho_Chi_Minh
     const startTime = session.start_time ? moment.tz(session.start_time, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss') : 'Chưa có';
     const endTime = session.end_time ? moment.tz(session.end_time, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss') : 'Chưa có';
     const registerStart = session.register_start ? moment.tz(session.register_start, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss') : 'Chưa có';
@@ -214,7 +209,10 @@ function AuctionSession() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.data && Array.isArray(response.data.data)) {
-        const filteredProducts = response.data.data.filter(product => product.status === 'ChoDauGia');
+        // Lọc sản phẩm có status là ChoDauGia và không có sessions
+        const filteredProducts = response.data.data.filter(product => 
+          product.status === 'ChoDauGia' && (!product.sessions || product.sessions.length === 0)
+        );
         setProducts(filteredProducts);
       } else {
         setError('Dữ liệu sản phẩm không đúng định dạng.');
@@ -294,7 +292,7 @@ function AuctionSession() {
       alert('Chỉ có thể chỉnh sửa phiên đấu giá ở trạng thái Chưa bắt đầu.');
       return;
     }
-    if (!token) {
+    if (!token || !user) {
       alert('Vui lòng đăng nhập để thực hiện hành động này.');
       window.location.href = '/login';
       return;
@@ -303,12 +301,12 @@ function AuctionSession() {
     if (session) {
       setSessionForm({
         item: session.itemId,
-        creator: session.creatorId,
+        creator: user.id,
+        creatorName: user.full_name,
         startTime: session.startTime || '',
         endTime: session.endTime || '',
         regulation: session.regulation,
-        status: session.status === 'Chưa bắt đầu' ? 'Mo' :
-                session.status === 'Đang diễn ra' ? 'DangDienRa' : 'KetThuc',
+        status: 'Mo',
         method: session.method,
         auctionOrgId: session.auctionOrgId,
         registerStart: session.registerStart || '',
@@ -324,7 +322,8 @@ function AuctionSession() {
     } else {
       setSessionForm({
         item: '',
-        creator: '',
+        creator: user.id,
+        creatorName: user.full_name,
         startTime: '',
         endTime: '',
         regulation: '',
@@ -392,28 +391,33 @@ function AuctionSession() {
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setSessionForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (name === 'bidStep') {
+      const cleanedValue = value.replace(/[^\d]/g, '');
+      setSessionForm((prev) => ({
+        ...prev,
+        [name]: cleanedValue ? Number(cleanedValue).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '',
+      }));
+    } else {
+      setSessionForm((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSaveSession = async () => {
     setLoading(true);
     try {
-      if (!token) {
+      if (!token || !user) {
         throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
       }
-      console.log('Auth Token:', token);
-      console.log('Request URL:', modalMode === 'edit' && selectedSession ? `${API_URL}auction-sessions/${selectedSession.id}` : `${API_URL}auction-sessions`);
-
       const formData = {
         item_id: sessionForm.item,
         created_by: sessionForm.creator,
         start_time: sessionForm.startTime || null,
         end_time: sessionForm.endTime || null,
         regulation: sessionForm.regulation,
-        status: sessionForm.status,
+        status: 'Mo',
         method: sessionForm.method,
         auction_org_id: sessionForm.auctionOrgId,
         register_start: sessionForm.registerStart || null,
@@ -421,12 +425,10 @@ function AuctionSession() {
         checkin_time: sessionForm.checkinTime || null,
         bid_start: sessionForm.bidStart || null,
         bid_end: sessionForm.bidEnd || null,
-        bid_step: sessionForm.bidStep ? Number(sessionForm.bidStep) : null,
-        highest_bid: sessionForm.highestBid ? Number(sessionForm.highestBid) : null,
+        bid_step: sessionForm.bidStep ? Number(sessionForm.bidStep.replace(/[^\d]/g, '')) : null,
+        highest_bid: sessionForm.highestBid ? Number(sessionForm.highestBid.replace(/[^\d]/g, '')) : null,
         current_winner_id: null,
       };
-
-      console.log('Request Data:', formData);
 
       if (!formData.start_time || !formData.end_time || !formData.bid_start || !formData.bid_end) {
         throw new Error('Vui lòng nhập đầy đủ các thời gian bắt buộc.');
@@ -453,10 +455,10 @@ function AuctionSession() {
         alert('Tạo phiên đấu giá thành công!');
       }
       fetchSessions();
+      fetchProducts(); // Cập nhật lại danh sách sản phẩm để loại bỏ sản phẩm vừa thêm vào phiên
       closeSessionModal();
     } catch (error) {
       console.error('Error saving session:', error);
-      console.error('Error Response:', error.response?.data);
       if (error.response && error.response.status === 401) {
         alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
         window.location.href = '/login';
@@ -477,16 +479,14 @@ function AuctionSession() {
         if (!token) {
           throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
         }
-        console.log('Auth Token for Delete:', token);
-        console.log('Delete URL:', `${API_URL}auction-sessions/${sessionId}`);
         await axios.delete(`${API_URL}auction-sessions/${sessionId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         alert('Xóa phiên đấu giá thành công!');
         fetchSessions();
+        fetchProducts(); // Cập nhật lại danh sách sản phẩm sau khi xóa phiên
       } catch (error) {
         console.error('Error deleting session:', error);
-        console.error('Error Response:', error.response?.data);
         if (error.response && error.response.status === 401) {
           alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
           window.location.href = '/login';
@@ -560,7 +560,9 @@ function AuctionSession() {
           <div className={styles.notificationBell}>
             <i className="fas fa-bell"></i>
           </div>
-          <div className={styles.profileAvatar}>QT</div>
+          <div className={styles.profileAvatar}>
+            {user?.full_name ? user.full_name.slice(0, 2).toUpperCase() : 'QT'}
+          </div>
         </div>
       </div>
 
@@ -612,39 +614,36 @@ function AuctionSession() {
               <th>Hành động</th>
             </tr>
           </thead>
-  <tbody>
-  {currentSessions.map((session) => (
-    <tr key={session.id}>
-      <td data-label="Mã Phiên">{session.id}</td>
-      <td data-label="Tài sản">{session.item}</td>
-      <td data-label="Người tạo">{session.creator}</td>
-      <td data-label="Thời gian hiện tại">{now.format('YYYY-MM-DD HH:mm:ss')}</td>
-      <td data-label="Thời gian bắt đầu">{session.startTime}</td>
-      <td data-label="Thời gian kết thúc">{session.endTime}</td>
-      <td data-label="Trạng thái">
-        <span className={`${styles.statusBadge} ${styles[session.statusClass]}`}>
-          {session.status}
-        </span>
-      </td>
-      <td data-label="Phương thức">{session.method}</td>
-      <td data-label="Hành động">
-        <div className={styles.actionButtons}>
-          {getActionButtons(session)}
-
-          {/* Hiển thị nút xem đấu giá nếu trạng thái là "Đang diễn ra" */}
-          {session.status === "Đang diễn ra" && (
-            <Link to={`../admin/showauction/${session.id}`} style={{ textDecoration: 'none' }}>
-              <button>
-                <i className="fa fa-gavel" aria-hidden="true"></i> Xem đấu giá
-              </button>
-            </Link>
-          )}
-        </div>
-      </td>
-    </tr>
-  ))}
-</tbody>
-
+          <tbody>
+            {currentSessions.map((session) => (
+              <tr key={session.id}>
+                <td data-label="Mã Phiên">{session.id}</td>
+                <td data-label="Tài sản">{session.item}</td>
+                <td data-label="Người tạo">{session.creator}</td>
+                <td data-label="Thời gian hiện tại">{now.format('YYYY-MM-DD HH:mm:ss')}</td>
+                <td data-label="Thời gian bắt đầu">{session.startTime}</td>
+                <td data-label="Thời gian kết thúc">{session.endTime}</td>
+                <td data-label="Trạng thái">
+                  <span className={`${styles.statusBadge} ${styles[session.statusClass]}`}>
+                    {session.status}
+                  </span>
+                </td>
+                <td data-label="Phương thức">{session.method}</td>
+                <td data-label="Hành động">
+                  <div className={styles.actionButtons}>
+                    {getActionButtons(session)}
+                    {session.status === "Đang diễn ra" && (
+                      <Link to={`../admin/showauction/${session.id}`} style={{ textDecoration: 'none' }}>
+                        <button>
+                          <i className="fa fa-gavel" aria-hidden="true"></i> Xem đấu giá
+                        </button>
+                      </Link>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       )}
 
@@ -672,14 +671,19 @@ function AuctionSession() {
                 </select>
               </div>
               <div>
-                <label htmlFor="creator">Người tạo (ID)</label>
+                <label htmlFor="creator">Người tạo</label>
                 <input
-                  type="number"
+                  type="text"
                   id="creator"
+                  name="creatorName"
+                  value={sessionForm.creatorName}
+                  disabled
+                  style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
+                />
+                <input
+                  type="hidden"
                   name="creator"
-                  placeholder="Nhập ID người tạo"
                   value={sessionForm.creator}
-                  onChange={handleFormChange}
                 />
               </div>
               <div>
@@ -714,10 +718,14 @@ function AuctionSession() {
               </div>
               <div>
                 <label htmlFor="status">Trạng thái</label>
-                <select id="status" name="status" value={sessionForm.status} onChange={handleFormChange}>
+                <select
+                  id="status"
+                  name="status"
+                  value={sessionForm.status}
+                  disabled
+                  style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
+                >
                   <option value="Mo">Chưa bắt đầu</option>
-                  <option value="DangDienRa">Đang diễn ra</option>
-                  <option value="KetThuc">Kết thúc</option>
                 </select>
               </div>
               <div>
@@ -790,10 +798,10 @@ function AuctionSession() {
               <div>
                 <label htmlFor="bidStep">Bước giá (VND)</label>
                 <input
-                  type="number"
+                  type="text"
                   id="bidStep"
                   name="bidStep"
-                  placeholder="Nhập bước giá"
+                  placeholder="Nhập bước giá (VD: 100.000.000)"
                   value={sessionForm.bidStep}
                   onChange={handleFormChange}
                 />
@@ -802,10 +810,10 @@ function AuctionSession() {
                 <div>
                   <label htmlFor="highestBid">Giá cao nhất (VND)</label>
                   <input
-                    type="number"
+                    type="text"
                     id="highestBid"
                     name="highestBid"
-                    placeholder="Nhập giá cao nhất"
+                    placeholder="Nhập giá cao nhất (VD: 100.000.000)"
                     value={sessionForm.highestBid}
                     onChange={handleFormChange}
                   />
