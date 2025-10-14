@@ -13,7 +13,8 @@ function Contract() {
   const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
   const [selectedContract, setSelectedContract] = useState(null);
   const [contracts, setContracts] = useState([]);
-  const [users, setUsers] = useState([]); // New state for user data
+  const [users, setUsers] = useState({}); // Map of user_id to full_name
+  const [userList, setUserList] = useState([]); // Full user data for validation
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
@@ -34,6 +35,7 @@ function Contract() {
   };
 
   const formatCurrency = (amount) => {
+    if (!amount || parseFloat(amount) === 0) return 'N/A';
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
@@ -41,6 +43,7 @@ function Contract() {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleString('vi-VN', {
       year: 'numeric',
@@ -57,26 +60,34 @@ function Contract() {
       try {
         setLoading(true);
 
-        // Fetch contracts
-        const contractResponse = await axios.get(`${process.env.REACT_APP_API_URL}contracts`);
-        const userResponse = await axios.get(`${process.env.REACT_APP_API_URL}showuser`); // Fetch users
+        // Fetch contracts and users concurrently
+        const [contractResponse, userResponse] = await Promise.all([
+          axios.get(`${process.env.REACT_APP_API_URL}contracts`),
+          axios.get(`${process.env.REACT_APP_API_URL}showuser`),
+        ]);
 
+        // Store full user data for validation
+        setUserList(userResponse.data.users);
+
+        // Create a map of user_id to full_name
         const usersData = userResponse.data.users.reduce((acc, user) => {
           acc[user.user_id] = user.full_name;
           return acc;
-        }, {}); // Create a map of user_id to full_name
+        }, {});
         setUsers(usersData);
 
         const transformedContracts = contractResponse.data.contracts.map((contract) => ({
           id: `#HD-${String(contract.contract_id).padStart(3, '0')}`,
           sessionId: `#PH-${String(contract.session_id).padStart(3, '0')}`,
           sessionIdShort: `PH${String(contract.session_id).padStart(3, '0')}`,
-          winner: `${contract.winner.full_name} (ID: ${contract.winner_id})`,
-          winnerId: String(contract.winner_id),
+          winner: contract.winner
+            ? `${contract.winner.full_name} (ID: ${contract.winner_id})`
+            : 'N/A',
+          winnerId: contract.winner_id ? String(contract.winner_id) : '',
           finalPrice: formatCurrency(contract.final_price),
-          finalPriceValue: parseFloat(contract.final_price),
+          finalPriceValue: parseFloat(contract.final_price) || 0,
           signedDate: formatDate(contract.signed_date),
-          rawSignedDate: contract.signed_date,
+          rawSignedDate: contract.signed_date || '',
           manager: contract.session.created_by
             ? `${usersData[contract.session.created_by] || 'Unknown'} (ID: ${contract.session.created_by})`
             : 'Unknown',
@@ -150,7 +161,7 @@ function Contract() {
         contractSession: contract.sessionIdShort,
         contractWinner: contract.winnerId,
         finalPrice: contract.finalPriceValue.toString(),
-        signedDate: contract.rawSignedDate.slice(0, 16),
+        signedDate: contract.rawSignedDate ? contract.rawSignedDate.slice(0, 16) : '',
         contractManager: contract.managerId,
         contractStatus: contract.paymentStatus,
       });
@@ -183,12 +194,14 @@ function Contract() {
         id: `#HD-${String(data.contract.contract_id).padStart(3, '0')}`,
         sessionId: `#PH-${String(data.contract.session_id).padStart(3, '0')}`,
         sessionIdShort: `PH${String(data.contract.session_id).padStart(3, '0')}`,
-        winner: `${data.contract.winner.full_name} (ID: ${data.contract.winner_id})`,
-        winnerId: String(data.contract.winner_id),
+        winner: data.contract.winner
+          ? `${data.contract.winner.full_name} (ID: ${data.contract.winner_id})`
+          : 'N/A',
+        winnerId: data.contract.winner_id ? String(data.contract.winner_id) : '',
         finalPrice: formatCurrency(data.contract.final_price),
-        finalPriceValue: parseFloat(data.contract.final_price),
+        finalPriceValue: parseFloat(data.contract.final_price) || 0,
         signedDate: formatDate(data.contract.signed_date),
-        rawSignedDate: data.contract.signed_date,
+        rawSignedDate: data.contract.signed_date || '',
         manager: data.contract.session.created_by
           ? `${users[data.contract.session.created_by] || 'Unknown'} (ID: ${data.contract.session.created_by})`
           : 'Unknown',
@@ -238,6 +251,15 @@ function Contract() {
         return;
       }
 
+      // Validate winner_id
+      const winnerExists = userList.some(
+        (user) => user.user_id.toString() === formData.contractWinner
+      );
+      if (!winnerExists) {
+        alert('ID người thắng không hợp lệ.');
+        return;
+      }
+
       const payload = {
         session_id: formData.contractSession.replace('PH', ''),
         winner_id: formData.contractWinner,
@@ -258,17 +280,20 @@ function Contract() {
         alert('Thêm hợp đồng thành công!');
       }
 
+      // Refresh contracts
       const response = await axios.get(`${process.env.REACT_APP_API_URL}contracts`);
       const transformedContracts = response.data.contracts.map((contract) => ({
         id: `#HD-${String(contract.contract_id).padStart(3, '0')}`,
         sessionId: `#PH-${String(contract.session_id).padStart(3, '0')}`,
         sessionIdShort: `PH${String(contract.session_id).padStart(3, '0')}`,
-        winner: `${contract.winner.full_name} (ID: ${contract.winner_id})`,
-        winnerId: String(contract.winner_id),
+        winner: contract.winner
+          ? `${contract.winner.full_name} (ID: ${contract.winner_id})`
+          : 'N/A',
+        winnerId: contract.winner_id ? String(contract.winner_id) : '',
         finalPrice: formatCurrency(contract.final_price),
-        finalPriceValue: parseFloat(contract.final_price),
+        finalPriceValue: parseFloat(contract.final_price) || 0,
         signedDate: formatDate(contract.signed_date),
-        rawSignedDate: contract.signed_date,
+        rawSignedDate: contract.signed_date || '',
         manager: contract.session.created_by
           ? `${users[contract.session.created_by] || 'Unknown'} (ID: ${contract.session.created_by})`
           : 'Unknown',
@@ -467,14 +492,19 @@ function Contract() {
             </div>
             <div>
               <label htmlFor="contractWinner">Người thắng (ID User)</label>
-              <input
-                type="number"
+              <select
                 id="contractWinner"
                 name="contractWinner"
-                placeholder="Nhập ID người thắng"
                 value={formData.contractWinner}
                 onChange={handleFormChange}
-              />
+              >
+                <option value="">Chọn người thắng</option>
+                {userList.map((user) => (
+                  <option key={user.user_id} value={user.user_id}>
+                    {`${user.full_name} (ID: ${user.user_id})`}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label htmlFor="finalPrice">Giá cuối (VND)</label>
@@ -507,11 +537,13 @@ function Contract() {
                 onChange={handleFormChange}
               >
                 <option value="">Chọn người quản lý</option>
-                {Object.entries(users).map(([userId, fullName]) => (
-                  <option key={userId} value={userId}>
-                    {`${fullName} (ID: ${userId})`}
-                  </option>
-                ))}
+                {userList
+                  .filter((user) => ['Administrator', 'ChuyenVienTTC'].includes(user.role))
+                  .map((user) => (
+                    <option key={user.user_id} value={user.user_id}>
+                      {`${user.full_name} (ID: ${user.user_id})`}
+                    </option>
+                  ))}
               </select>
             </div>
             <div>
@@ -573,7 +605,7 @@ function Contract() {
                   <strong>Trạng thái:</strong> {selectedContract.status}
                 </p>
                 <div className={styles.orderHistory}>
-                  <h3>Lịch sử thanh toán (demo)</h3>
+                  <h3>Lịch sử thanh toán</h3>
                   <table className={styles.orderTable}>
                     <thead>
                       <tr>
@@ -585,19 +617,9 @@ function Contract() {
                       </tr>
                     </thead>
                     <tbody>
+                      {/* Placeholder for dynamic payment history */}
                       <tr>
-                        <td>PT001</td>
-                        <td>ChuyenKhoan</td>
-                        <td>2.700.000.000đ</td>
-                        <td>2025-10-03 19:00</td>
-                        <td>HoanTat</td>
-                      </tr>
-                      <tr>
-                        <td>PT002</td>
-                        <td>The</td>
-                        <td>1.300.000.000đ</td>
-                        <td>2025-10-04 20:00</td>
-                        <td>ChoXuLy</td>
+                        <td colSpan="5">Chưa có dữ liệu lịch sử thanh toán</td>
                       </tr>
                     </tbody>
                   </table>
