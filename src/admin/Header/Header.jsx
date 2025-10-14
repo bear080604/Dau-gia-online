@@ -66,8 +66,8 @@ const Sidebar = () => {
   return (
     <div className={styles.sidebar}>
       <div className={styles.sidebarHeader}>
-        <div className="logo">
-          {/* <img className="logo-img" src="\assets\img\logo.jpg" alt="Logo" /> */}
+        <div className={styles.logo}>
+          <img className={styles.logoImg} src="\assets\img\logo.jpg" alt="Logo" />
         </div>
       </div>
 

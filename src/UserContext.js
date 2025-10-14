@@ -76,7 +76,7 @@ export const UserProvider = ({ children }) => {
           const parsedUser = JSON.parse(savedUser);
           setUser(parsedUser);
 
-          const response = await fetch(`${process.env.REACT_APP_API_URL}api/user`, {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}user`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',

@@ -1,7 +1,8 @@
 import styles from './register-auction.module.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faTimes, faEye, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faUndo } from '@fortawesome/free-solid-svg-icons';
 
 const AdminPanel = () => {
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -9,26 +10,81 @@ const AdminPanel = () => {
   const [currentId, setCurrentId] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [paymentDetails, setPaymentDetails] = useState(null);
-  const [registrations, setRegistrations] = useState([
-    {
-      id: 2,
-      auction: 'Phiên 002',
-      documentUrl: 'document2.pdf',
-      user: 'user2@example.com',
-      deposit: '10,000,000 VND',
-      status: 'Chờ Duyệt',
-    },
-  ]);
+  const [registrations, setRegistrations] = useState([]);
+  const [users, setUsers] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const approveRegistration = (id) => {
-    alert(`Đã duyệt hồ sơ ID: ${id}`);
-    // Cập nhật trạng thái trong state thay vì DOM
-    setRegistrations(prev => prev.map(reg => 
-      reg.id === id ? { ...reg, status: 'Đã Duyệt' } : reg
-    ));
-    
-    if (paymentDetails && paymentDetails.id === id) {
-      setPaymentDetails(prev => prev ? { ...prev, status: 'Đã Duyệt' } : null);
+  const statusMap = {
+    DaDuyet: 'Đã Duyệt',
+    BiTuChoi: 'Bị Từ Chối',
+    'Chờ Duyệt': 'Chờ Duyệt',
+    'Đã Thanh Toán': 'Đã Thanh Toán',
+  };
+  const reverseStatusMap = {
+    'Đã Duyệt': 'DaDuyet',
+    'Bị Từ Chối': 'BiTuChoi',
+    'Chờ Duyệt': 'Chờ Duyệt',
+    'Đã Thanh Toán': 'Đã Thanh Toán',
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('No authentication token found. Please log in.');
+          return;
+        }
+
+        const profilesUrl = `${process.env.REACT_APP_API_URL}auction-profiles`;
+        console.log('Request URL (Profiles):', profilesUrl);
+        const profilesResponse = await axios.get(profilesUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log('API Response (Profiles):', profilesResponse.data);
+        const profilesData = profilesResponse.data.profiles || [];
+        setRegistrations(profilesData);
+
+        const usersUrl = `${process.env.REACT_APP_API_URL}showuser`;
+        console.log('Request URL (Users):', usersUrl);
+        const usersResponse = await axios.get(usersUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log('API Response (Users):', usersResponse.data);
+        const usersData = usersResponse.data.users.reduce((acc, user) => {
+          acc[user.user_id] = user;
+          return acc;
+        }, {});
+        setUsers(usersData);
+      } catch (err) {
+        console.error('Fetch Error:', err);
+        setError(err.response?.data?.message || 'Failed to fetch data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const updateStatus = async (id, newStatus, reason = '') => {
+    try {
+      const token = localStorage.getItem('token');
+      const apiStatus = reverseStatusMap[newStatus] || newStatus;
+      const url = `${process.env.REACT_APP_API_URL}auction-profiles/${id}/status`;
+      const payload = { status: apiStatus };
+      if (reason) payload.reject_reason = reason;
+      const response = await axios.put(url, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setRegistrations(prev => prev.map(reg =>
+        reg.profile_id === id ? { ...reg, status: apiStatus, reject_reason: reason || null } : reg
+      ));
+      alert(response.data.message || `Đã cập nhật trạng thái thành ${newStatus}${reason ? ` với lý do: ${reason}` : ''}`);
+    } catch (err) {
+      console.error('Update Error:', err);
+      alert(err.response?.data?.message || 'Cập nhật trạng thái thất bại');
     }
   };
 
@@ -48,31 +104,23 @@ const AdminPanel = () => {
       alert('Vui lòng nhập lý do!');
       return;
     }
-    alert(`Đã từ chối hồ sơ ID: ${currentId} với lý do: ${rejectReason}`);
-    
-    // Cập nhật trạng thái trong state
-    setRegistrations(prev => prev.map(reg => 
-      reg.id === currentId ? { ...reg, status: 'Từ Chối' } : reg
-    ));
-    
-    if (paymentDetails && paymentDetails.id === currentId) {
-      setPaymentDetails(prev => prev ? { ...prev, status: 'Từ Chối' } : null);
-    }
-    
+    updateStatus(currentId, 'Bị Từ Chối', rejectReason);
     closeRejectModal();
   };
 
   const openDetailModal = (id) => {
-    const reg = registrations.find((r) => r.id === id);
+    const reg = registrations.find((r) => r.profile_id === id);
     if (reg) {
+      const user = users[reg.user_id] || {};
       setCurrentId(id);
       setPaymentDetails({
-        id: reg.id,
-        auction: reg.auction,
-        documentUrl: reg.documentUrl || '#',
-        user: reg.user,
-        deposit: reg.deposit,
-        status: reg.status,
+        id: reg.profile_id,
+        auction: reg.session_id ? `Phiên ${reg.session_id}` : 'Không xác định',
+        documentUrl: reg.document_url || '#',
+        user: user.full_name || `user${reg.user_id}@example.com`,
+        deposit: `${reg.deposit_amount} VND`,
+        status: statusMap[reg.status] || 'Chờ Duyệt',
+        rejectReason: reg.reject_reason || 'Không có lý do',
         paymentMethod: 'Chuyển Khoản Ngân Hàng',
         paymentDate: '2025-10-10',
         paymentStatus: 'Chưa Hoàn Tiền',
@@ -89,14 +137,24 @@ const AdminPanel = () => {
     setPaymentDetails(null);
   };
 
-  const refundPayment = (paymentId) => {
-    alert(`Đã hoàn tiền cho thanh toán ID: ${paymentId} thuộc hồ sơ ${currentId}`);
-    setPaymentDetails((prev) =>
-      prev ? { ...prev, paymentStatus: 'Đã Hoàn Tiền' } : prev
-    );
+  const refundPayment = async (paymentId) => {
+    try {
+      const token = localStorage.getItem('token');
+      // Placeholder for refund API call (replace with actual endpoint)
+      const url = `${process.env.REACT_APP_API_URL}/auction-profiles/${currentId}/refund`;
+      await axios.post(url, { payment_id: paymentId }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPaymentDetails((prev) =>
+        prev ? { ...prev, paymentStatus: 'Đã Hoàn Tiền' } : prev
+      );
+      alert(`Đã hoàn tiền cho thanh toán ID: ${paymentId} thuộc hồ sơ ${currentId}`);
+    } catch (err) {
+      console.error('Refund Error:', err);
+      alert(err.response?.data?.message || 'Hoàn tiền thất bại');
+    }
   };
 
-  // Hàm đóng modal khi click bên ngoài
   const handleBackdropClick = (e, modalType) => {
     if (e.target.id === 'rejectModal' || e.target.id === 'detailModal') {
       if (modalType === 'reject') {
@@ -107,9 +165,36 @@ const AdminPanel = () => {
     }
   };
 
+  const handleStatusChange = (id, newStatus) => {
+    if (newStatus === 'Bị Từ Chối') {
+      openRejectModal(id);
+    } else {
+      updateStatus(id, newStatus);
+    }
+  };
+
+  if (loading) return <div>Đang tải dữ liệu...</div>;
+  if (error) return <div>{error}</div>;
+
   return (
     <div className={styles.container}>
-      <h1>Quản Lý Hồ Sơ Đăng Ký Đấu Giá</h1>
+      <div className={styles.header}>
+        <div className={styles.searchBar}>
+          <i className="fas fa-search"></i>
+          <input
+            type="text"
+            placeholder="Tìm kiếm phiên đấu giá..."
+          />
+        </div>
+        <div className={styles.userProfile}>
+          <div className={styles.notificationBell}>
+            <i className="fas fa-bell"></i>
+          </div>
+          <div className={styles.profileAvatar}>QT</div>
+        </div>
+      </div>
+      <h1 className={styles.h1Title}>Quản Lý Hồ Sơ Đăng Ký Đấu Giá</h1>
+      <p className={styles.pageSubtitle}>Quản lý hồ sơ yêu cầu đăng ký tham gia đấu giá tài sản</p>
 
       <div className={styles.head}>
         <div className={styles.filter}>
@@ -134,110 +219,110 @@ const AdminPanel = () => {
           <tr>
             <th>Phiên Đấu Giá</th>
             <th>Tài Liệu Liên Quan</th>
-            <th>User</th>
+            <th>Người yêu cầu</th>
             <th>Tiền Đặt Trước</th>
             <th>Trạng Thái</th>
             <th>Thao Tác</th>
           </tr>
         </thead>
         <tbody>
-          {registrations.map((reg) => (
-            <tr key={reg.id} data-id={reg.id}>
-              <td>{reg.auction}</td>
-              <td>
-                {reg.documentUrl ? (
-                  <a href={reg.documentUrl} target="_blank" rel="noopener noreferrer">
-                    {reg.documentUrl}
-                  </a>
-                ) : (
-                  'Không có tài liệu'
-                )}
-              </td>
-              <td>{reg.user}</td>
-              <td>{reg.deposit}</td>
-              <td>{reg.status}</td>
-              <td className={styles.actions}>
-                <button 
-                  className={styles.approve} 
-                  onClick={() => approveRegistration(reg.id)}
-                  disabled={reg.status !== 'Chờ Duyệt'}
-                >
-                  <FontAwesomeIcon icon={faCheck} />
-                </button>
-                <button 
-                  className={styles.reject} 
-                  onClick={() => openRejectModal(reg.id)}
-                  disabled={reg.status !== 'Chờ Duyệt'}
-                >
-                  <FontAwesomeIcon icon={faTimes} />
-                </button>
-                <button 
-                  className={styles.detail} 
-                  onClick={() => openDetailModal(reg.id)}
-                >
-                  <FontAwesomeIcon icon={faEye} />
-                </button>
-              </td>
-            </tr>
-          ))}
+          {Array.isArray(registrations) ? (
+            registrations.map((reg) => (
+              <tr key={reg.profile_id} data-id={reg.profile_id}>
+                <td>{reg.session_id ? `Phiên ${reg.session_id}` : 'Không xác định'}</td>
+                <td data-label="Tài Liệu Liên Quan">
+                  {reg.document_url ? (
+                    <a href={reg.document_url} target="_blank" rel="noopener noreferrer">
+                      Xem tài liệu
+                    </a>
+                  ) : (
+                    'Không có tài liệu'
+                  )}
+                </td>
+                <td>{users[reg.user_id]?.full_name || `user${reg.user_id}@example.com`}</td>
+                <td>{`${reg.deposit_amount} VND`}</td>
+                <td>
+                  <select
+                    value={statusMap[reg.status] || 'Chờ Duyệt'}
+                    onChange={(e) => handleStatusChange(reg.profile_id, e.target.value)}
+                    className={styles.statusSelect}
+                  >
+                    <option value="Chờ Duyệt">Chờ Duyệt</option>
+                    <option value="Đã Duyệt">Đã Duyệt</option>
+                    <option value="Bị Từ Chối">Bị Từ Chối</option>
+                    <option value="Đã Thanh Toán">Đã Thanh Toán</option>
+                  </select>
+                </td>
+                <td className={styles.actions}>
+                  <button
+                    className={styles.detail}
+                    onClick={() => openDetailModal(reg.profile_id)}
+                  >
+                    <FontAwesomeIcon icon={faEye} />
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr><td colSpan="6">Dữ liệu không hợp lệ</td></tr>
+          )}
         </tbody>
       </table>
 
-      {/* Modal Từ Chối */}
-        {isRejectModalOpen && (
-        <div 
-            id="rejectModal" 
-            className={styles.modal}
-            onClick={(e) => e.target.id === 'rejectModal' && closeRejectModal()}
+      {/* Reject Modal */}
+      {isRejectModalOpen && (
+        <div
+          id="rejectModal"
+          className={styles.modal}
+          onClick={(e) => handleBackdropClick(e, 'reject')}
         >
-            <div className={styles.modalContent}>
+          <div className={styles.modalContent}>
             <span className={styles.close} onClick={closeRejectModal}>&times;</span>
             <p>Nhập lý do từ chối:</p>
             <textarea
-                id="rejectReason"
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Nhập lý do từ chối..."
-                rows="4"
-                style={{
+              id="rejectReason"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Nhập lý do từ chối..."
+              rows="4"
+              style={{
                 width: '100%',
                 padding: '10px',
                 border: '1px solid #ddd',
                 borderRadius: '4px',
                 resize: 'vertical',
                 fontFamily: 'inherit',
-                fontSize: '14px'
-                }}
+                fontSize: '14px',
+              }}
             />
             <div className={styles.modalActions}>
-                <button className={styles.cancel} onClick={closeRejectModal}>
+              <button className={styles.cancel} onClick={closeRejectModal}>
                 Hủy
-                </button>
-                <button className={styles.confirm} onClick={submitReject}>
+              </button>
+              <button className={styles.confirm} onClick={submitReject}>
                 Xác Nhận
-                </button>
+              </button>
             </div>
-            </div>
+          </div>
         </div>
-        )}
+      )}
 
-      {/* Modal Chi Tiết Thanh Toán */}
+      {/* Detail Modal */}
       {isDetailModalOpen && paymentDetails && (
-        <div 
-          id="detailModal" 
+        <div
+          id="detailModal"
           className={styles.modal}
           onClick={(e) => handleBackdropClick(e, 'detail')}
         >
           <div className={styles.modalContent}>
-           
             <h2>Chi Tiết Thanh Toán</h2>
             <div className={styles.detailContent}>
               <div><label>Phiên Đấu Giá:</label> <span>{paymentDetails.auction}</span></div>
               <div>
-                <label>Tài Liệu Liên Quan:</label>
+                <label>Tài Liệu Liên Quan:</label>{' '}
                 {paymentDetails.documentUrl ? (
                   <a href={paymentDetails.documentUrl} target="_blank" rel="noopener noreferrer">
-                    {paymentDetails.documentUrl}
+                    Xem tài liệu
                   </a>
                 ) : (
                   'Không có tài liệu'
@@ -246,18 +331,19 @@ const AdminPanel = () => {
               <div><label>User:</label> <span>{paymentDetails.user}</span></div>
               <div><label>Tiền Đặt Trước:</label> <span>{paymentDetails.deposit}</span></div>
               <div><label>Trạng Thái Hồ Sơ:</label> <span>{paymentDetails.status}</span></div>
+              <div><label>Lý Do Từ Chối:</label> <span>{paymentDetails.rejectReason}</span></div>
               <div><label>Phương Thức Thanh Toán:</label> <span>{paymentDetails.paymentMethod}</span></div>
               <div><label>Ngày Thanh Toán:</label> <span>{paymentDetails.paymentDate}</span></div>
               <div><label>Trạng Thái Hoàn Tiền:</label> <span>{paymentDetails.paymentStatus}</span></div>
               <div className={styles.modalActions}>
-                <button 
-                  className={styles.refund} 
+                <button
+                  className={styles.refund}
                   onClick={() => refundPayment(paymentDetails.paymentId)}
                   disabled={paymentDetails.paymentStatus === 'Đã Hoàn Tiền'}
                 >
                   <FontAwesomeIcon icon={faUndo} /> Hoàn Tiền
                 </button>
-                 <span className={styles.close} onClick={closeDetailModal}>&times;</span>
+                <span className={styles.close} onClick={closeDetailModal}>&times;</span>
               </div>
             </div>
           </div>

@@ -16,6 +16,7 @@ import Admindashboard from './pages/AdminDashboard';
 import AdminReport from './pages/AdminReport';
 import AdminContract from './pages/AdminContract';
 import AdminEContract from './pages/AdminEContract';
+import AdminAdshowauction from './pages/AdminShowAuction';
 import AdminHistory from './pages/AdminHistory';
 import AdminUsers from './pages/AdminUsers';
 import AdminPayment from './pages/AdminPayment';
@@ -172,6 +173,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/showauction/:id"
+              element={
+                <ProtectedRoute>
+                  <AdminAdshowauction />
+             </ProtectedRoute>
+             }
+             />
             <Route
               path="/admin/register-auction"
               element={

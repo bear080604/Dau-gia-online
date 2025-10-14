@@ -10,6 +10,7 @@ function Contract() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedContract, setSelectedContract] = useState(null);
+  const [contracts, setContracts] = useState([]);
   const [formData, setFormData] = useState({
     contractSession: '',
     contractWinner: '',
@@ -21,106 +22,49 @@ function Contract() {
 
   const itemsPerPage = 5;
 
-  const contracts = [
-    {
-      id: '#HD-001',
-      sessionId: '#PH-001',
-      winner: 'User 1 (ID: 2)',
-      finalPrice: '2.700.000.000đ',
-      signedDate: '2025-10-03 18:00',
-      manager: 'Admin QT (ID: 1)',
-      status: 'Đã thanh toán',
-      statusClass: 'statusDathanhtoan',
-      sessionIdShort: 'PH001',
-      winnerId: '2',
-      managerId: '1',
-      paymentStatus: 'HoanTat'
-    },
-    {
-      id: '#HD-002',
-      sessionId: '#PH-002',
-      winner: 'User 3 (ID: 4)',
-      finalPrice: '1.300.000.000đ',
-      signedDate: '2025-10-04 19:00',
-      manager: 'Admin QT (ID: 1)',
-      status: 'Chờ thanh toán',
-      statusClass: 'statusChothanhtoan',
-      sessionIdShort: 'PH002',
-      winnerId: '4',
-      managerId: '1',
-      paymentStatus: 'ChoXuLy'
-    },
-    {
-      id: '#HD-003',
-      sessionId: '#PH-003',
-      winner: 'User 2 (ID: 3)',
-      finalPrice: '200.000.000đ',
-      signedDate: '2025-10-01 17:00',
-      manager: 'Manager A (ID: 8)',
-      status: 'Hủy',
-      statusClass: 'statusHuy',
-      sessionIdShort: 'PH003',
-      winnerId: '3',
-      managerId: '8',
-      paymentStatus: 'Huy'
-    },
-    {
-      id: '#HD-004',
-      sessionId: '#PH-004',
-      winner: 'User 5 (ID: 6)',
-      finalPrice: '600.000.000đ',
-      signedDate: '2025-10-05 13:00',
-      manager: 'Admin QT (ID: 1)',
-      status: 'Chờ thanh toán',
-      statusClass: 'statusChothanhtoan',
-      sessionIdShort: 'PH004',
-      winnerId: '6',
-      managerId: '1',
-      paymentStatus: 'ChoXuLy'
-    },
-    {
-      id: '#HD-005',
-      sessionId: '#PH-005',
-      winner: 'User 1 (ID: 2)',
-      finalPrice: '100.000.000đ',
-      signedDate: '2025-10-06 16:00',
-      manager: 'Manager B (ID: 9)',
-      status: 'Đã thanh toán',
-      statusClass: 'statusDathanhtoan',
-      sessionIdShort: 'PH005',
-      winnerId: '2',
-      managerId: '9',
-      paymentStatus: 'HoanTat'
-    },
-    {
-      id: '#HD-006',
-      sessionId: '#PH-006',
-      winner: 'User 4 (ID: 5)',
-      finalPrice: '50.000.000đ',
-      signedDate: '2025-10-07 18:00',
-      manager: 'Admin QT (ID: 1)',
-      status: 'Chờ thanh toán',
-      statusClass: 'statusChothanhtoan',
-      sessionIdShort: 'PH006',
-      winnerId: '5',
-      managerId: '1',
-      paymentStatus: 'ChoXuLy'
-    },
-    {
-      id: '#HD-007',
-      sessionId: '#PH-007',
-      winner: 'User 7 (ID: 7)',
-      finalPrice: '900.000.000đ',
-      signedDate: '2025-09-30 14:00',
-      manager: 'Manager A (ID: 8)',
-      status: 'Hủy',
-      statusClass: 'statusHuy',
-      sessionIdShort: 'PH007',
-      winnerId: '7',
-      managerId: '8',
-      paymentStatus: 'Huy'
-    }
-  ];
+  // Fetch contracts from the backend
+  useEffect(() => {
+    const fetchContracts = async () => {
+      try {
+        const response = await fetch('/contracts'); // Adjust URL based on your API setup
+        const data = await response.json();
+        if (data.status) {
+          // Transform backend data to match frontend structure
+          const transformedContracts = data.contracts.map(contract => ({
+            id: `#HD-${contract.contract_id.toString().padStart(3, '0')}`,
+            sessionId: `#PH-${contract.session_id.toString().padStart(3, '0')}`,
+            sessionIdShort: `PH${contract.session_id.toString().padStart(3, '0')}`,
+            winner: `${contract.winner.full_name} (ID: ${contract.winner_id})`,
+            winnerId: contract.winner_id.toString(),
+            finalPrice: new Intl.NumberFormat('vi-VN', {
+              style: 'currency',
+              currency: 'VND'
+            }).format(contract.final_price),
+            signedDate: new Date(contract.signed_date).toLocaleString('vi-VN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
+            manager: contract.session.created_by
+              ? `Admin QT (ID: ${contract.session.created_by})`
+              : 'Unknown',
+            managerId: contract.session.created_by?.toString() || '1',
+            status: contract.status === 'ChoThanhToan' ? 'Chờ thanh toán' :
+                    contract.status === 'DaThanhToan' ? 'Đã thanh toán' : 'Hủy',
+            statusClass: contract.status === 'ChoThanhToan' ? 'statusChothanhtoan' :
+                         contract.status === 'DaThanhToan' ? 'statusDathanhtoan' : 'statusHuy',
+            paymentStatus: contract.status
+          }));
+          setContracts(transformedContracts);
+        }
+      } catch (error) {
+        console.error('Error fetching contracts:', error);
+      }
+    };
+    fetchContracts();
+  }, []);
 
   const applyFilters = () => {
     return contracts.filter(contract => {
@@ -179,17 +123,54 @@ function Contract() {
     setFormData({
       contractSession: contract.sessionIdShort,
       contractWinner: contract.winnerId,
-      finalPrice: contract.finalPrice.replace(/\./g, '').replace('đ', ''),
-      signedDate: contract.signedDate.slice(0, 16).replace(' ', 'T'),
+      finalPrice: contract.finalPrice.replace(/[^\d]/g, ''),
+      signedDate: contract.signedDate.replace(' ', 'T').slice(0, 16),
       contractManager: contract.managerId,
-      contractStatus: contract.status
+      contractStatus: contract.status === 'Chờ thanh toán' ? 'ChoThanhToan' :
+                      contract.status === 'Đã thanh toán' ? 'DaThanhToan' : 'Hủy'
     });
     setShowAddModal(true);
   };
 
-  const openViewModal = (contract) => {
-    setSelectedContract(contract);
-    setShowViewModal(true);
+  const openViewModal = async (contract) => {
+    try {
+      const contractId = contract.id.replace('#HD-', '');
+      const response = await fetch(`/contracts/${contractId}`); // Fetch single contract
+      const data = await response.json();
+      if (data.status) {
+        const transformedContract = {
+          id: `#HD-${data.contract.contract_id.toString().padStart(3, '0')}`,
+          sessionId: `#PH-${data.contract.session_id.toString().padStart(3, '0')}`,
+          sessionIdShort: `PH${data.contract.session_id.toString().padStart(3, '0')}`,
+          winner: `${data.contract.winner.full_name} (ID: ${data.contract.winner_id})`,
+          winnerId: data.contract.winner_id.toString(),
+          finalPrice: new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+          }).format(data.contract.final_price),
+          signedDate: new Date(data.contract.signed_date).toLocaleString('vi-VN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+          manager: data.contract.session.created_by
+            ? `Admin QT (ID: ${data.contract.session.created_by})`
+            : 'Unknown',
+          managerId: data.contract.session.created_by?.toString() || '1',
+          status: data.contract.status === 'ChoThanhToan' ? 'Chờ thanh toán' :
+                  data.contract.status === 'DaThanhToan' ? 'Đã thanh toán' : 'Hủy',
+          statusClass: data.contract.status === 'ChoThanhToan' ? 'statusChothanhtoan' :
+                       data.contract.status === 'DaThanhToan' ? 'statusDathanhtoan' : 'statusHuy',
+          paymentStatus: data.contract.status
+        };
+        setSelectedContract(transformedContract);
+        setShowViewModal(true);
+      }
+    } catch (error) {
+      console.error('Error fetching contract details:', error);
+    }
   };
 
   const closeViewModal = () => {
@@ -205,14 +186,115 @@ function Contract() {
     }));
   };
 
-  const handleSave = () => {
-    alert('Chức năng lưu chỉ là demo, không lưu thực tế.');
-    closeAddModal();
+  const handleSave = async () => {
+    try {
+      // Simulate API call to save contract
+      const response = await fetch('/contracts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: formData.contractSession.replace('PH', ''),
+          winner_id: formData.contractWinner,
+          final_price: formData.finalPrice,
+          signed_date: formData.signedDate,
+          status: formData.contractStatus,
+          created_by: formData.contractManager
+        })
+      });
+      if (response.ok) {
+        alert('Hợp đồng đã được lưu (demo).');
+        closeAddModal();
+        // Refetch contracts to update the list
+        const fetchResponse = await fetch('/contracts');
+        const data = await fetchResponse.json();
+        if (data.status) {
+          const transformedContracts = data.contracts.map(contract => ({
+            id: `#HD-${contract.contract_id.toString().padStart(3, '0')}`,
+            sessionId: `#PH-${contract.session_id.toString().padStart(3, '0')}`,
+            sessionIdShort: `PH${contract.session_id.toString().padStart(3, '0')}`,
+            winner: `${contract.winner.full_name} (ID: ${contract.winner_id})`,
+            winnerId: contract.winner_id.toString(),
+            finalPrice: new Intl.NumberFormat('vi-VN', {
+              style: 'currency',
+              currency: 'VND'
+            }).format(contract.final_price),
+            signedDate: new Date(contract.signed_date).toLocaleString('vi-VN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
+            manager: contract.session.created_by
+              ? `Admin QT (ID: ${contract.session.created_by})`
+              : 'Unknown',
+            managerId: contract.session.created_by?.toString() || '1',
+            status: contract.status === 'ChoThanhToan' ? 'Chờ thanh toán' :
+                    contract.status === 'DaThanhToan' ? 'Đã thanh toán' : 'Hủy',
+            statusClass: contract.status === 'ChoThanhToan' ? 'statusChothanhtoan' :
+                         contract.status === 'DaThanhToan' ? 'statusDathanhtoan' : 'statusHuy',
+            paymentStatus: contract.status
+          }));
+          setContracts(transformedContracts);
+        }
+      } else {
+        alert('Lỗi khi lưu hợp đồng.');
+      }
+    } catch (error) {
+      console.error('Error saving contract:', error);
+      alert('Lỗi khi lưu hợp đồng.');
+    }
   };
 
-  const handleDelete = (contract) => {
+  const handleDelete = async (contract) => {
     if (window.confirm('Bạn có chắc muốn xóa hợp đồng này?')) {
-      alert('Chức năng xóa chỉ là demo, không xóa thực tế.');
+      try {
+        const contractId = contract.id.replace('#HD-', '');
+        const response = await fetch(`/contracts/${contractId}`, {
+          method: 'DELETE'
+        });
+        if (response.ok) {
+          alert('Hợp đồng đã được xóa (demo).');
+          // Refetch contracts to update the list
+          const fetchResponse = await fetch('/contracts');
+          const data = await fetchResponse.json();
+          if (data.status) {
+            const transformedContracts = data.contracts.map(contract => ({
+              id: `#HD-${contract.contract_id.toString().padStart(3, '0')}`,
+              sessionId: `#PH-${contract.session_id.toString().padStart(3, '0')}`,
+              sessionIdShort: `PH${contract.session_id.toString().padStart(3, '0')}`,
+              winner: `${contract.winner.full_name} (ID: ${contract.winner_id})`,
+              winnerId: contract.winner_id.toString(),
+              finalPrice: new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+              }).format(contract.final_price),
+              signedDate: new Date(contract.signed_date).toLocaleString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              }),
+              manager: contract.session.created_by
+                ? `Admin QT (ID: ${contract.session.created_by})`
+                : 'Unknown',
+              managerId: contract.session.created_by?.toString() || '1',
+              status: contract.status === 'ChoThanhToan' ? 'Chờ thanh toán' :
+                      contract.status === 'DaThanhToan' ? 'Đã thanh toán' : 'Hủy',
+              statusClass: contract.status === 'ChoThanhToan' ? 'statusChothanhtoan' :
+                           contract.status === 'DaThanhToan' ? 'statusDathanhtoan' : 'statusHuy',
+              paymentStatus: contract.status
+            }));
+            setContracts(transformedContracts);
+          }
+        } else {
+          alert('Lỗi khi xóa hợp đồng.');
+        }
+      } catch (error) {
+        console.error('Error deleting contract:', error);
+        alert('Lỗi khi xóa hợp đồng.');
+      }
     }
   };
 
@@ -281,13 +363,9 @@ function Contract() {
             onChange={handleSessionFilterChange}
           >
             <option value="">Tất cả phiên</option>
-            <option value="PH001">#PH-001</option>
-            <option value="PH002">#PH-002</option>
-            <option value="PH003">#PH-003</option>
-            <option value="PH004">#PH-004</option>
-            <option value="PH005">#PH-005</option>
-            <option value="PH006">#PH-006</option>
-            <option value="PH007">#PH-007</option>
+            {[...new Set(contracts.map(c => c.sessionId))].map(sessionId => (
+              <option key={sessionId} value={sessionId}>{sessionId}</option>
+            ))}
           </select>
         </div>
         <button className={styles.addBtn} onClick={openAddModal}>
@@ -372,13 +450,9 @@ function Contract() {
                 onChange={handleFormChange}
               >
                 <option value="">Chọn phiên</option>
-                <option value="PH001">#PH-001</option>
-                <option value="PH002">#PH-002</option>
-                <option value="PH003">#PH-003</option>
-                <option value="PH004">#PH-004</option>
-                <option value="PH005">#PH-005</option>
-                <option value="PH006">#PH-006</option>
-                <option value="PH007">#PH-007</option>
+                {[...new Set(contracts.map(c => c.sessionIdShort))].map(sessionId => (
+                  <option key={sessionId} value={sessionId}>{`#${sessionId}`}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -433,8 +507,8 @@ function Contract() {
                 value={formData.contractStatus}
                 onChange={handleFormChange}
               >
-                <option value="Chờ thanh toán">Chờ thanh toán</option>
-                <option value="Đã thanh toán">Đã thanh toán</option>
+                <option value="ChoThanhToan">Chờ thanh toán</option>
+                <option value="DaThanhToan">Đã thanh toán</option>
                 <option value="Hủy">Hủy</option>
               </select>
             </div>
@@ -510,5 +584,4 @@ function Contract() {
     </div>
   );
 }
-
 export default Contract;
