@@ -1,4 +1,3 @@
-// Home.jsx
 import React, { useEffect, useState } from 'react';
 import './home.css';
 import { Link } from "react-router-dom";
@@ -9,58 +8,68 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/autoplay';
 import axios from 'axios';
-import echo from '../echo'; // cấu hình Pusher Cloud
 
 const Home = () => {
   const [auctionItems, setAuctionItems] = useState([]);
 
-  // Chuyển status backend sang hiển thị
   const getAuctionStatus = (session) => {
-    if (!session || !session.status) return "Chưa bắt đầu";
-    const statusMap = {
-      Mo: "Chưa bắt đầu",
-      DangDienRa: "Đang diễn ra",
-      KetThuc: "Kết thúc"
-    };
-    return statusMap[session.status] || "Chưa bắt đầu";
+    if (!session || !session.bid_start || !session.bid_end) {
+      return "Chưa bắt đầu";
+    }
+
+    // Sử dụng thời gian thực tế
+    const now = new Date();
+
+    const bidStart = new Date(session.bid_start);
+    const bidEnd = new Date(session.bid_end);
+
+    if (now < bidStart) {
+      return "Chưa bắt đầu";
+    } else if (now >= bidStart && now <= bidEnd) {
+      return "Đang diễn ra";
+    } else {
+      return "Kết thúc";
+    }
   };
 
   useEffect(() => {
-    const fetchProductsAndSetupEcho = async () => {
-      try {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}products`);
-        const products = res.data.data || [];
-        setAuctionItems(products);
+    const fetchData = () => {
+      axios.get(`${process.env.REACT_APP_API_URL}products`)
+        .then((res) => {
+          const products = res.data.data || [];
 
-        // Setup Echo listener cho tất cả sessions
-        products.forEach(item => {
-          item.sessions.forEach(session => {
-            const channelName = `auction-session.${session.id}`;
-            echo.channel(channelName)
-              .listen('.auction.session.updated', (e) => {
-                console.log('♻️ Session updated:', e);
-                setAuctionItems(prev =>
-                  prev.map(prod => {
-                    if (prod.id === e.session.item_id) {
-                      const updatedSessions = prod.sessions.map(s =>
-                        s.id === e.session.id ? { ...s, ...e.session } : { ...s }
-                      );
-                      return { ...prod, sessions: updatedSessions };
-                    }
-                    return { ...prod };
-                  })
-                );
-              });
+          // Lọc sản phẩm có sessions
+          const productsWithSessions = products.filter(
+            (p) => Array.isArray(p.sessions) && p.sessions.length > 0
+          );
+
+          // 🔽 Sắp xếp theo trạng thái phiên đấu giá
+          const sortedProducts = productsWithSessions.sort((a, b) => {
+            const statusOrder = {
+              "Đang diễn ra": 1,
+              "Chưa bắt đầu": 2,
+              "Kết thúc": 3,
+            };
+
+            // Lấy trạng thái đầu tiên của mỗi sản phẩm
+            const statusA = getAuctionStatus(a.sessions[0]);
+            const statusB = getAuctionStatus(b.sessions[0]);
+
+            return statusOrder[statusA] - statusOrder[statusB];
           });
-        });
 
-      } catch (err) {
-        console.error("Lỗi API:", err);
-      }
+          setAuctionItems(sortedProducts);
+        })
+        .catch((err) => {
+          console.error("Lỗi API:", err);
+        });
     };
 
-    fetchProductsAndSetupEcho();
+    fetchData(); // gọi lần đầu khi mount
+    const interval = setInterval(fetchData, 3000); // gọi lại mỗi 3 giây
+    return () => clearInterval(interval); // cleanup khi component unmount
   }, []);
+
 
   return (
     <div className="home-container">
@@ -75,35 +84,36 @@ const Home = () => {
           navigation
           pagination={{ clickable: true }}
           autoplay={{ delay: 7000 }}
-          loop={auctionItems.length > 1}
+          loop={true}
           breakpoints={{
             320: { slidesPerView: 1 },
             640: { slidesPerView: 2 },
             1024: { slidesPerView: 5 },
           }}
         >
-          {auctionItems.map(item => {
+          {auctionItems.map((item) => {
             const currentSession = item.sessions?.[0];
             const computedStatus = getAuctionStatus(currentSession);
-
             return (
               <SwiperSlide key={item.id}>
                 <div className='list-auction'>
                   <div className='auction-item'>
                     <img
                       className='auction-image'
-                      src={item.image_url || "/assets/img/xe.png"}
+                      src={item.image_url ? item.image_url : "/assets/img/xe.png"}
                       alt={item.name}
                     />
                     <div className='auction-details'>
                       <h3 className='auction-name'>{item.name}</h3>
-                      <p className='auction-method'>{computedStatus}</p>
+                      <p className='auction-method'>
+                        {computedStatus}
+                      </p>
                       <p className='auction-price'>
                         Giá khởi điểm: {Number(item.starting_price).toLocaleString()} VNĐ
                       </p>
                     </div>
                     <div className='action'>
-                      <Link to={`/detail/${currentSession?.id}`} style={{ textDecoration: 'none' }}>
+                      <Link to={`/detail/${currentSession.id}`} style={{ textDecoration: 'none' }}>
                         <button className='bid-button'>
                           <i className="fa fa-gavel" aria-hidden="true"></i> Đấu giá
                         </button>
@@ -115,6 +125,33 @@ const Home = () => {
             );
           })}
         </Swiper>
+        <section>
+          <div className='section-title'>
+            <p>DANH SÁCH TÀI SẢN ĐẤU GIÁ TRỰC TUYẾN</p> 
+          </div>
+
+          <div className='head'>
+            <div className='input-search'>
+            <input className='input' type="text" name="" id="" placeholder='Tìm kiếm ...' />
+            </div>
+            <div className='select-cate'>
+              <select name="" id="">
+                <option value="">Tất cả danh mục</option>
+              </select>
+            </div>
+            <div className='method'>
+              <select name="" id="">
+                <option value="">Phương thức đấu giá</option>
+              </select>
+            </div>
+            <div className='sort'>
+              <p>Sắp xếp: </p>
+              <select className='select' name="" id="">
+                <option value="">Mặc định</option>
+              </select>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   );
