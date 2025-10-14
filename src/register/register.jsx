@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import styles from "./register.module.css";
 
@@ -21,34 +21,27 @@ function Register() {
   const [successMsg, setSuccessMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(10);
+  const [banks, setBanks] = useState([]);
+  const [banksLoading, setBanksLoading] = useState(true);
+  const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
+  const [searchBank, setSearchBank] = useState("");
+  const dropdownRef = useRef(null);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-    setClientErrors({
-      ...clientErrors,
-      [name]: "", // Xóa lỗi client khi người dùng nhập
-    });
-    setErrors({}); // Xóa lỗi API khi người dùng nhập
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.full_name.trim()) newErrors.full_name = "Vui lòng nhập họ và tên.";
-    if (!formData.email.trim()) newErrors.email = "Vui lòng nhập email.";
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email không hợp lệ.";
-    if (!formData.phone.trim()) newErrors.phone = "Vui lòng nhập số điện thoại.";
-    if (!formData.password.trim()) newErrors.password = "Vui lòng nhập mật khẩu.";
-    else if (formData.password.length < 6) newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự.";
-    if (!formData.password_confirmation.trim()) newErrors.password_confirmation = "Vui lòng nhập lại mật khẩu.";
-    else if (formData.password !== formData.password_confirmation) newErrors.password_confirmation = "Mật khẩu nhập lại không khớp.";
-
-    setClientErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  useEffect(() => {
+    axios
+      .get("https://api.vietqr.io/v2/banks")
+      .then((res) => {
+        if (res.data.code === "00" && res.data.data) {
+          setBanks(res.data.data);
+        } else {
+          console.warn("API ngân hàng trả về dữ liệu không hợp lệ:", res.data);
+        }
+      })
+      .catch((err) => {
+        console.error("Lỗi tải danh sách ngân hàng:", err);
+      })
+      .finally(() => setBanksLoading(false));
+  }, []);
 
   useEffect(() => {
     let timer;
@@ -62,6 +55,68 @@ function Register() {
     }
     return () => clearInterval(timer);
   }, [successMsg, countdown]);
+
+  // Đóng dropdown khi click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsBankDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Lọc banks theo từ khóa tìm kiếm
+  const filteredBanks = banks.filter(bank =>
+    bank.name.toLowerCase().includes(searchBank.toLowerCase()) ||
+    bank.shortName.toLowerCase().includes(searchBank.toLowerCase())
+  );
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+    setClientErrors({
+      ...clientErrors,
+      [name]: "",
+    });
+    setErrors({});
+  };
+
+  // Xử lý chọn ngân hàng
+  const handleBankSelect = (bank) => {
+    setFormData({
+      ...formData,
+      bank_name: bank.name,
+    });
+    setSearchBank("");
+    setIsBankDropdownOpen(false);
+    setClientErrors({
+      ...clientErrors,
+      bank_name: "",
+    });
+    setErrors({});
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.full_name.trim()) newErrors.full_name = "Vui lòng nhập họ và tên.";
+    if (!formData.email.trim()) newErrors.email = "Vui lòng nhập email.";
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email không hợp lệ.";
+    if (!formData.phone.trim()) newErrors.phone = "Vui lòng nhập số điện thoại.";
+    if (!formData.password.trim()) newErrors.password = "Vui lòng nhập mật khẩu.";
+    else if (formData.password.length < 6) newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự.";
+    if (!formData.password_confirmation.trim()) newErrors.password_confirmation = "Vui lòng nhập lại mật khẩu.";
+    else if (formData.password !== formData.password_confirmation) newErrors.password_confirmation = "Mật khẩu nhập lại không khớp.";
+    if (!formData.bank_name.trim()) newErrors.bank_name = "Vui lòng chọn ngân hàng.";
+
+    setClientErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -194,16 +249,58 @@ function Register() {
         </div>
 
         <div className={styles.formGroup}>
-          <label>Ngân hàng</label>
-          <input
-            type="text"
-            name="bank_name"
-            value={formData.bank_name}
-            onChange={handleChange}
-            className={errors.bank_name ? styles.inputError : ""}
-            disabled={isLoading}
-          />
-          {errors.bank_name && <p className={styles.errorMsg}>{errors.bank_name[0]}</p>}
+          <label>Ngân hàng <span className={styles.required}>*</span></label>
+          <div className={styles.customDropdown} ref={dropdownRef}>
+            <div
+              className={`${styles.dropdownHeader} ${clientErrors.bank_name || errors.bank_name ? styles.inputError : ""} ${isLoading ? styles.disabled : ""}`}
+              onClick={() => !isLoading && setIsBankDropdownOpen(!isBankDropdownOpen)}
+            >
+              <span className={formData.bank_name ? styles.selectedValue : styles.placeholder}>
+                {formData.bank_name || "Chọn ngân hàng"}
+              </span>
+              <span className={styles.dropdownArrow}>
+                {isBankDropdownOpen ? '▲' : '▼'}
+              </span>
+            </div>
+            
+            {isBankDropdownOpen && (
+              <div className={styles.dropdownList}>
+                <div className={styles.searchContainer}>
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm ngân hàng..."
+                    value={searchBank}
+                    onChange={(e) => setSearchBank(e.target.value)}
+                    className={styles.searchInput}
+                    autoFocus
+                  />
+                </div>
+                <div className={styles.dropdownOptions}>
+                  {banksLoading ? (
+                    <div className={styles.loadingMessage}>Đang tải danh sách ngân hàng...</div>
+                  ) : filteredBanks.length > 0 ? (
+                    filteredBanks.map((bank) => (
+                      <div
+                        key={bank.id}
+                        className={`${styles.dropdownOption} ${
+                          formData.bank_name === bank.name ? styles.selected : ""
+                        }`}
+                        onClick={() => handleBankSelect(bank)}
+                      >
+                        <span className={styles.bankName}>{bank.name}</span>
+                        <span className={styles.bankShortName}>({bank.shortName})</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className={styles.noResults}>Không tìm thấy ngân hàng</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          {(clientErrors.bank_name || errors.bank_name) && (
+            <p className={styles.errorMsg}>{clientErrors.bank_name || errors.bank_name[0]}</p>
+          )}
         </div>
 
         <div className={styles.formGroup}>
