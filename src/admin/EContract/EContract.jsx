@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import styles from './EContract.module.css';
+import axios from 'axios';
+
+// Base URL for API and PDFs from environment variables
+const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
+const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://127.0.0.1:8000';
 
 function EContract() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,102 +23,52 @@ function EContract() {
     sessionId: '',
     contractId: ''
   });
+  // New states for API data, loading, and error
+  const [econtracts, setEcontracts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const itemsPerPage = 5;
 
-  const econtracts = [
-    {
-      id: '#HDĐT-001',
-      type: 'Dịch vụ đấu giá',
-      typeClass: 'typeDichvudaugia',
-      fileUrl: 'https://example.com/econtract1.pdf',
-      signedBy: 'Admin QT (ID: 1)',
-      signedDate: '2025-10-01 10:00',
-      sessionId: '#PH-001',
-      contractId: '#HD-001',
-      signedById: '1',
-      sessionIdShort: 'PH001',
-      contractIdShort: 'HD001'
-    },
-    {
-      id: '#HDĐT-002',
-      type: 'Mua bán tài sản',
-      typeClass: 'typeMuabantaisan',
-      fileUrl: 'https://example.com/econtract2.pdf',
-      signedBy: 'Nguyễn Văn A (ID: 2)',
-      signedDate: '2025-10-02 14:30',
-      sessionId: '#PH-002',
-      contractId: '#HD-002',
-      signedById: '2',
-      sessionIdShort: 'PH002',
-      contractIdShort: 'HD002'
-    },
-    {
-      id: '#HDĐT-003',
-      type: 'Dịch vụ đấu giá',
-      typeClass: 'typeDichvudaugia',
-      fileUrl: 'https://example.com/econtract3.pdf',
-      signedBy: 'Trần Thị B (ID: 3)',
-      signedDate: '2025-09-30 16:00',
-      sessionId: '#PH-003',
-      contractId: '#HD-003',
-      signedById: '3',
-      sessionIdShort: 'PH003',
-      contractIdShort: 'HD003'
-    },
-    {
-      id: '#HDĐT-004',
-      type: 'Mua bán tài sản',
-      typeClass: 'typeMuabantaisan',
-      fileUrl: 'https://example.com/econtract4.pdf',
-      signedBy: 'Lê Văn C (ID: 4)',
-      signedDate: '2025-10-03 11:45',
-      sessionId: '#PH-004',
-      contractId: '#HD-004',
-      signedById: '4',
-      sessionIdShort: 'PH004',
-      contractIdShort: 'HD004'
-    },
-    {
-      id: '#HDĐT-005',
-      type: 'Dịch vụ đấu giá',
-      typeClass: 'typeDichvudaugia',
-      fileUrl: 'https://example.com/econtract5.pdf',
-      signedBy: 'Phạm Thị D (ID: 5)',
-      signedDate: '2025-10-04 13:20',
-      sessionId: '#PH-005',
-      contractId: '#HD-005',
-      signedById: '5',
-      sessionIdShort: 'PH005',
-      contractIdShort: 'HD005'
-    },
-    {
-      id: '#HDĐT-006',
-      type: 'Mua bán tài sản',
-      typeClass: 'typeMuabantaisan',
-      fileUrl: 'https://example.com/econtract6.pdf',
-      signedBy: 'Hoàng Văn E (ID: 6)',
-      signedDate: '2025-10-05 15:50',
-      sessionId: '#PH-006',
-      contractId: '#HD-006',
-      signedById: '6',
-      sessionIdShort: 'PH006',
-      contractIdShort: 'HD006'
-    },
-    {
-      id: '#HDĐT-007',
-      type: 'Dịch vụ đấu giá',
-      typeClass: 'typeDichvudaugia',
-      fileUrl: 'https://example.com/econtract7.pdf',
-      signedBy: 'Vũ Thị F (ID: 7)',
-      signedDate: '2025-09-29 12:10',
-      sessionId: '#PH-007',
-      contractId: '#HD-007',
-      signedById: '7',
-      sessionIdShort: 'PH007',
-      contractIdShort: 'HD007'
-    }
-  ];
+  // Fetch econtracts from API
+  useEffect(() => {
+    const fetchEContracts = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${API_URL}econtracts`);
+        if (response.data.status && response.data.econtracts) {
+          // Map API data to match the component's expected format
+          const mappedEContracts = response.data.econtracts.map(econtract => ({
+            id: `#HDĐT-${econtract.econtract_id.toString().padStart(3, '0')}`,
+            type: econtract.contract_type === 'DichVuDauGia' ? 'Dịch vụ đấu giá' : 'Mua bán tài sản',
+            typeClass: econtract.contract_type === 'DichVuDauGia' ? 'typeDichvudaugia' : 'typeMuabantaisan',
+            fileUrl: `${BASE_URL}${econtract.file_url}`, // Construct full PDF URL
+            signedBy: `${econtract.signer.full_name} (ID: ${econtract.signer.user_id})`,
+            signedDate: econtract.signed_at,
+            sessionId: `#PH-${econtract.session_id.toString().padStart(3, '0')}`,
+            contractId: `#HD-${econtract.contract_id.toString().padStart(3, '0')}`,
+            signedById: econtract.signed_by.toString(),
+            sessionIdShort: `PH${econtract.session_id.toString().padStart(3, '0')}`,
+            contractIdShort: `HD${econtract.contract_id.toString().padStart(3, '0')}`,
+            // Store additional data for view modal
+            contract: econtract.contract,
+            session: econtract.session,
+            signer: econtract.signer
+          }));
+          setEcontracts(mappedEContracts);
+        } else {
+          throw new Error('Invalid API response');
+        }
+      } catch (err) {
+        setError('Failed to fetch e-contracts. Please try again later.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEContracts();
+  }, []);
 
   const applyFilters = () => {
     return econtracts.filter(econtract => {
@@ -200,12 +155,28 @@ function EContract() {
   };
 
   const handleSave = () => {
+    // Add form validation
+    const errors = {};
+    if (!formData.fileUrl) errors.fileUrl = 'File URL is required';
+    else if (!/^https?:\/\/.+/.test(formData.fileUrl)) errors.fileUrl = 'Invalid URL';
+    if (!formData.signedBy) errors.signedBy = 'Signed By ID is required';
+    if (!formData.signedDate) errors.signedDate = 'Signed Date is required';
+    if (!formData.sessionId) errors.sessionId = 'Session ID is required';
+    if (!formData.contractId) errors.contractId = 'Contract ID is required';
+    
+    if (Object.keys(errors).length > 0) {
+      alert('Please fix the following errors:\n' + Object.values(errors).join('\n'));
+      return;
+    }
+
+    // TODO: Implement API call to save or update econtract
     alert('Chức năng lưu chỉ là demo, không lưu thực tế.');
     closeAddModal();
   };
 
   const handleDelete = (econtract) => {
     if (window.confirm('Bạn có chắc muốn xóa hợp đồng điện tử này?')) {
+      // TODO: Implement API call to delete econtract
       alert('Chức năng xóa chỉ là demo, không xóa thực tế.');
     }
   };
@@ -241,6 +212,15 @@ function EContract() {
 
     return pages;
   };
+
+  // Render loading or error states
+  if (loading) {
+    return <div className={styles.loading}>Đang tải dữ liệu...</div>;
+  }
+
+  if (error) {
+    return <div className={styles.error}>{error}</div>;
+  }
 
   return (
     <div className={styles.mainContent}>
@@ -282,9 +262,11 @@ function EContract() {
             onChange={handleSessionFilterChange}
           >
             <option value="">Tất cả phiên</option>
-            <option value="PH001">#PH-001</option>
-            <option value="PH002">#PH-002</option>
-            <option value="PH003">#PH-003</option>
+            {econtracts.map(econtract => (
+              <option key={econtract.sessionIdShort} value={econtract.sessionIdShort}>
+                {econtract.sessionId}
+              </option>
+            ))}
           </select>
         </div>
         <button className={styles.addBtn} onClick={openAddModal}>
@@ -293,79 +275,87 @@ function EContract() {
         </button>
       </div>
 
-      <table className={styles.dataTable}>
-        <thead>
-          <tr>
-            <th>Mã HDĐT</th>
-            <th>Loại hợp đồng</th>
-            <th>File URL</th>
-            <th>Người ký (ID)</th>
-            <th>Ngày ký</th>
-            <th>Phiên ID</th>
-            <th>Hợp đồng ID</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentEContracts.map((econtract, index) => (
-            <tr key={index}>
-              <td data-label="Mã HDĐT">{econtract.id}</td>
-              <td data-label="Loại hợp đồng">
-                <span className={`${styles.statusBadge} ${styles[econtract.typeClass]}`}>
-                  {econtract.type}
-                </span>
-              </td>
-              <td data-label="File URL">
-                <a href={econtract.fileUrl} target="_blank">{econtract.fileUrl.split('/').pop()}</a>
-              </td>
-              <td data-label="Người ký (ID)">{econtract.signedBy}</td>
-              <td data-label="Ngày ký">{econtract.signedDate}</td>
-              <td data-label="Phiên ID">{econtract.sessionId}</td>
-              <td data-label="Hợp đồng ID">{econtract.contractId}</td>
-              <td data-label="Hành động">
-                <button
-                  className={`${styles.btn} ${styles.btnPrimary}`}
-                  onClick={() => openEditModal(econtract)}
-                  title="Chỉnh sửa hợp đồng điện tử"
-                >
-                  <i className="fa fa-pencil" aria-hidden="true"></i>
-                </button>
-                <button
-                  className={`${styles.btn} ${styles.btnSuccess}`}
-                  onClick={() => handleDownload(econtract.fileUrl)}
-                  title="Tải file"
-                >
-                  <i className="fa fa-download" aria-hidden="true"></i>
-                </button>
-                <button
-                  className={`${styles.btn} ${styles.btnDanger}`}
-                  onClick={() => handleDelete(econtract)}
-                  title="Xóa hợp đồng điện tử"
-                >
-                  <i className="fa fa-trash" aria-hidden="true"></i>
-                </button>
-                <button
-                  className={`${styles.btn} ${styles.btnSuccess}`}
-                  onClick={() => openViewModal(econtract)}
-                  title="Xem chi tiết hợp đồng điện tử"
-                >
-                  <i className="fa fa-eye" aria-hidden="true"></i>
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {filteredEContracts.length === 0 ? (
+        <div className={styles.noResults}>Không tìm thấy hợp đồng điện tử.</div>
+      ) : (
+        <>
+          <table className={styles.dataTable}>
+            <thead>
+              <tr>
+                <th>Mã HDĐT</th>
+                <th>Loại hợp đồng</th>
+                <th>File URL</th>
+                <th>Người ký (ID)</th>
+                <th>Ngày ký</th>
+                <th>Phiên ID</th>
+                <th>Hợp đồng ID</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentEContracts.map((econtract, index) => (
+                <tr key={index}>
+                  <td data-label="Mã HDĐT">{econtract.id}</td>
+                  <td data-label="Loại hợp đồng">
+                    <span className={`${styles.statusBadge} ${styles[econtract.typeClass]}`}>
+                      {econtract.type}
+                    </span>
+                  </td>
+                  <td data-label="File URL">
+                    <a href={econtract.fileUrl} target="_blank">{econtract.fileUrl.split('/').pop()}</a>
+                  </td>
+                  <td data-label="Người ký (ID)">{econtract.signedBy}</td>
+                  <td data-label="Ngày ký">{econtract.signedDate}</td>
+                  <td data-label="Phiên ID">{econtract.sessionId}</td>
+                  <td data-label="Hợp đồng ID">{econtract.contractId}</td>
+                  <td data-label="Hành động">
+                    <button
+                      className={`${styles.btn} ${styles.btnPrimary}`}
+                      onClick={() => openEditModal(econtract)}
+                      title="Chỉnh sửa hợp đồng điện tử"
+                    >
+                      <i className="fa fa-pencil" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      className={`${styles.btn} ${styles.btnSuccess}`}
+                      onClick={() => handleDownload(econtract.fileUrl)}
+                      title="Tải file"
+                    >
+                      <i className="fa fa-download" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      className={`${styles.btn} ${styles.btnDanger}`}
+                      onClick={() => handleDelete(econtract)}
+                      title="Xóa hợp đồng điện tử"
+                    >
+                      <i className="fa fa-trash" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      className={`${styles.btn} ${styles.btnSuccess}`}
+                      onClick={() => openViewModal(econtract)}
+                      title="Xem chi tiết hợp đồng điện tử"
+                    >
+                      <i className="fa fa-eye" aria-hidden="true"></i>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-      <div className={styles.pagination}>
-        {renderPagination()}
-      </div>
+          <div className={styles.pagination}>
+            {renderPagination()}
+          </div>
+        </>
+      )}
 
       {/* Add/Edit Modal */}
       <div className={`${styles.modal} ${showAddModal ? styles.show : ''}`}>
         <div className={styles.modalContent}>
           <div className={styles.modalHeader}>
-            <h2 className={styles.modalTitle}>Thêm Hợp Đồng Điện Tử Mới</h2>
+            <h2 className={styles.modalTitle}>
+              {formData.id ? 'Chỉnh Sửa Hợp Đồng Điện Tử' : 'Thêm Hợp Đồng Điện Tử Mới'}
+            </h2>
             <span className={styles.modalClose} onClick={closeAddModal}>×</span>
           </div>
           <div className={styles.modalBody}>
@@ -422,13 +412,11 @@ function EContract() {
                 onChange={handleFormChange}
               >
                 <option value="">Chọn phiên</option>
-                <option value="PH001">#PH-001</option>
-                <option value="PH002">#PH-002</option>
-                <option value="PH003">#PH-003</option>
-                <option value="PH004">#PH-004</option>
-                <option value="PH005">#PH-005</option>
-                <option value="PH006">#PH-006</option>
-                <option value="PH007">#PH-007</option>
+                {econtracts.map(econtract => (
+                  <option key={econtract.sessionIdShort} value={econtract.sessionIdShort}>
+                    {econtract.sessionId}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -440,13 +428,11 @@ function EContract() {
                 onChange={handleFormChange}
               >
                 <option value="">Chọn hợp đồng</option>
-                <option value="HD001">#HD-001</option>
-                <option value="HD002">#HD-002</option>
-                <option value="HD003">#HD-003</option>
-                <option value="HD004">#HD-004</option>
-                <option value="HD005">#HD-005</option>
-                <option value="HD006">#HD-006</option>
-                <option value="HD007">#HD-007</option>
+                {econtracts.map(econtract => (
+                  <option key={econtract.contractIdShort} value={econtract.contractIdShort}>
+                    {econtract.contractId}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -478,8 +464,10 @@ function EContract() {
                 <p><strong>Ngày ký:</strong> {selectedEContract.signedDate}</p>
                 <p><strong>Phiên ID:</strong> {selectedEContract.sessionId}</p>
                 <p><strong>Hợp đồng ID:</strong> {selectedEContract.contractId}</p>
+                <p><strong>Giá cuối cùng:</strong> {selectedEContract.contract.final_price}</p>
+                <p><strong>Trạng thái hợp đồng:</strong> {selectedEContract.contract.status}</p>
                 <div className={styles.orderHistory}>
-                  <h3>Lịch sử ký hợp đồng (demo)</h3>
+                  <h3>Lịch sử ký hợp đồng</h3>
                   <table className={styles.orderTable}>
                     <thead>
                       <tr>
@@ -492,14 +480,14 @@ function EContract() {
                     <tbody>
                       <tr>
                         <td>Ký</td>
-                        <td>Admin QT</td>
-                        <td>2025-10-01 10:30</td>
+                        <td>{selectedEContract.signer.full_name}</td>
+                        <td>{selectedEContract.signedDate}</td>
                         <td>Xác nhận chữ ký số</td>
                       </tr>
                       <tr>
                         <td>Xác thực</td>
                         <td>Hệ thống</td>
-                        <td>2025-10-01 10:35</td>
+                        <td>{selectedEContract.signedDate}</td>
                         <td>Hợp đồng hợp lệ</td>
                       </tr>
                     </tbody>
