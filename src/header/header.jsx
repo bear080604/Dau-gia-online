@@ -12,9 +12,15 @@ const Header = () => {
   const [isMobileCategoryActive, setIsMobileCategoryActive] = useState(false);
   const [latestUnpaidContract, setLatestUnpaidContract] = useState(null);
   const [contractData, setContractData] = useState(null);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false); // State cho popup thông báo
+  const [notifications, setNotifications] = useState([
+    { id: 1, text: 'Yêu cầu đấu giá đã được phê duyệt', isRead: false, timestamp: new Date('2025-10-13T17:00:00+07:00') },
+    { id: 2, text: 'Phiên đấu giá mới sẽ bắt đầu vào 20:00 hôm nay.', isRead: false, timestamp: new Date('2025-10-13T16:30:00+07:00') },
+  ]); // Thêm timestamp cho mỗi thông báo
 
   // Logo base64
-  
+  // (Giả sử bạn đã có base64 cho logo, bỏ qua nếu không cần)
+
   useEffect(() => {
     const fetchContracts = async () => {
       try {
@@ -145,6 +151,45 @@ const Header = () => {
     setIsMobileCategoryActive(!isMobileCategoryActive);
   };
 
+  // Toggle notification popup
+  const toggleNotification = () => {
+    setIsNotificationOpen(!isNotificationOpen);
+  };
+
+  const closeNotification = (e) => {
+    if (e.target.className === styles.notificationPopup) {
+      setIsNotificationOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('click', closeNotification);
+    return () => document.removeEventListener('click', closeNotification);
+  }, [isNotificationOpen]);
+
+  // Mark notification as read
+  const markAsRead = (id) => {
+    setNotifications((prev) =>
+      prev.map((notif) =>
+        notif.id === id ? { ...notif, isRead: true } : notif
+      )
+    );
+  };
+
+  // Calculate time ago
+  const getTimeAgo = (timestamp) => {
+    const now = new Date();
+    const diffMs = now - timestamp;
+    const diffMin = Math.floor(diffMs / (1000 * 60));
+
+    if (diffMin < 1) return 'Vừa xong';
+    if (diffMin === 1) return '1 phút trước';
+    if (diffMin < 60) return `${diffMin} phút trước`;
+    const diffHours = Math.floor(diffMin / 60);
+    if (diffHours === 1) return '1 giờ trước';
+    return `${diffHours} giờ trước`;
+  };
+
   // Navigation menu items
   const navItems = [
     { icon: 'fa-info-circle', text: 'GIỚI THIỆU', href: '#' },
@@ -178,18 +223,22 @@ const Header = () => {
           {user ? (
             <>
               <span>Xin chào, {user.full_name}</span>
-                <div className={styles.userIconContainer}>
-                  <Link to="/profile" aria-label="Go to profile">
-                    <i className={`fa fa-user ${styles.userIcon}`} aria-hidden="true"></i>
-                  </Link>
-                  {user.role === 'admin' && (
-                    <div className={styles.adminDropdown}>
-                      <Link to="/admin" aria-label="Go to admin panel">
-                        Admin
-                      </Link>
-                    </div>
-                  )}
-                </div>
+              <div className={styles.userIconContainer}>
+                <Link to="/profile" aria-label="Go to profile">
+                  <i className={`fa fa-user ${styles.userIcon}`} aria-hidden="true"></i>
+                </Link>
+                {user.role === 'admin' && (
+                  <div className={styles.adminDropdown}>
+                    <Link to="/admin" aria-label="Go to admin panel">
+                      Admin
+                    </Link>
+                  </div>
+                )}
+              </div>
+              {/* Notification Bell */}
+              <div className={styles.notifi} onClick={toggleNotification}>
+                <i className="fa fa-bell" aria-hidden="true"></i>
+              </div>
               <a href="#" onClick={handleLogout}>
                 Đăng Xuất <i className="fa fa-sign-out" aria-hidden="true"></i>
               </a>
@@ -203,6 +252,30 @@ const Header = () => {
           )}
         </div>
       </div>
+
+      {/* Notification Popup */}
+      {isNotificationOpen && (
+        <div className={styles.notificationPopup} onClick={closeNotification}>
+          <div className={styles.notificationContent}>
+            <span className={styles.notificationClose} onClick={toggleNotification}>
+              &times;
+            </span>
+            <h3>Thông Báo</h3>
+            <ul>
+              {notifications.map((notif) => (
+                <li
+                  key={notif.id}
+                  className={notif.isRead ? styles.read : styles.unread}
+                  onClick={() => markAsRead(notif.id)}
+                >
+                  {notif.isRead && <span className={styles.readIcon}>✔ </span>}
+                  {notif.text} <span className={styles.timeAgo}>({getTimeAgo(notif.timestamp)})</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* Header Main */}
       <header className={styles.headerMain}>
@@ -300,7 +373,7 @@ const Header = () => {
         <div className={styles.mobileNavHeader}>
           <h3>Menu Điều Hướng</h3>
           <button aria-label="Đóng menu" className={styles.mobileNavClose} onClick={closeMobileNav}>
-            <i className="fa fa-times"></i>
+            <i className="fa fa-times" />
           </button>
         </div>
         <ul className={styles.mobileNavMenu}>
