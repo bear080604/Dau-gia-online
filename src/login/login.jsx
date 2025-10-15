@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styles from './login.module.css'; // Import CSS Modules
+import styles from './login.module.css';
 import { Eye, EyeOff } from 'lucide-react';
 import { useUser } from '../UserContext';
 
@@ -11,6 +11,7 @@ function LoginForm() {
     email: '',
     password: ''
   });
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -18,6 +19,7 @@ function LoginForm() {
       ...prev,
       [name]: value
     }));
+    setErrorMessage(''); // Xóa lỗi khi người dùng nhập
   };
 
   const handleCheckboxChange = (e) => {
@@ -26,6 +28,16 @@ function LoginForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Kiểm tra null
+    if (!formData.email.trim()) {
+      setErrorMessage('Vui lòng nhập email.');
+      return;
+    }
+    if (!formData.password.trim()) {
+      setErrorMessage('Vui lòng nhập mật khẩu.');
+      return;
+    }
 
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}login`, {
@@ -44,20 +56,22 @@ function LoginForm() {
         console.log('Đăng nhập thành công:', result);
         if (result && result.user) {
           const token = result.token || null;
-          // Lưu token vào localStorage
           if (token) {
             localStorage.setItem('authToken', token);
           }
           login(result.user, token);
-         window.location.href = result.user.role === 'Administrator' ? '/admin' : 
-                      result.user.role === 'DauGiaVien' ? '/admin' : '/';
+          window.location.href = result.user.role === 'Administrator' ? '/admin' :
+                                result.user.role === 'DauGiaVien' ? '/admin' : '/';
+        } else {
+          setErrorMessage('Đăng nhập thất bại: Dữ liệu người dùng không hợp lệ.');
         }
       } else {
         const error = await response.json();
-        console.error('Lỗi đăng nhập:', error.message);
+        setErrorMessage(error.message || 'Email hoặc mật khẩu không đúng');
       }
     } catch (err) {
       console.error('Lỗi API:', err);
+      setErrorMessage('Không thể kết nối đến server. Vui lòng thử lại sau.');
     }
   };
 
@@ -118,6 +132,12 @@ function LoginForm() {
               </button>
             </div>
           </div>
+          {/* Error Message */}
+          {errorMessage && (
+            <div className={styles.errorMessage}>
+              {errorMessage}
+            </div>
+          )}
 
           {/* Remember me and Forgot password */}
           <div className={styles.options}>

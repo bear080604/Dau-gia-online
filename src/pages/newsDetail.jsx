@@ -1,18 +1,16 @@
 import React from "react";
 import Header from "../header/header";
-import Home from "../home/home";
-import Footer from "../footer/footer";
+import  News from "../news-detail/news-detail";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 
-function Index() {
+function NewsDetail() {
   return (
     <div>
       <Header />
-      <Home />
-      <Footer />
+      <News />
     </div>
   );
 }
 
-export default Index;
+export default NewsDetail;

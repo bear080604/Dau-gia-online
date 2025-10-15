@@ -21,6 +21,8 @@
   width: 250px;
   background: #f9f9f9;
   border-radius: 8px;
+  border: 1px solid #e8dddd;
+  padding: 20px;
 }
 
 .sidebarTitle {
@@ -28,6 +30,8 @@
   font-weight: bold;
   margin-bottom: 20px;
   color: #333;
+  text-align: center;
+  border-bottom: 2px solid black;
 }
 
 .categoryList {

@@ -163,3 +163,6 @@
 .submitButton:hover {
   opacity: 0.9;
 }
+.errorMessage{
+  color: #ef4444;
+}

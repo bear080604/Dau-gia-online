@@ -1,80 +1,288 @@
 .registerContainer {
-  max-width: 480px;
-  margin: 40px auto;
-  padding: 25px 30px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .registerTitle {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #333;
   text-align: center;
   margin-bottom: 20px;
-  color: #333;
-  font-size: 22px;
-  font-weight: 600;
 }
 
 .registerForm {
   display: flex;
   flex-direction: column;
+  gap: 15px;
 }
 
 .formGroup {
-  margin-bottom: 15px;
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 
 .formGroup label {
-  font-weight: 600;
-  margin-bottom: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
   color: #333;
 }
 
-.formGroup input[type="text"],
-.formGroup input[type="email"],
-.formGroup input[type="password"],
-.formGroup input[type="file"] {
+.formGroup label .required {
+  color: #d32f2f;
+}
+
+.formGroup input,
+.formGroup select {
   padding: 10px;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: 5px;
+  font-size: 0.9rem;
   outline: none;
-  font-size: 14px;
-  transition: border-color 0.3s;
+  transition: border 0.2s;
 }
 
-.formGroup input:focus {
-  border-color: #007bff;
+.formGroup input:focus,
+.formGroup select:focus {
+  border: 1px solid #2772ba;
 }
 
-.btnSubmit {
-  width: 100%;
-  padding: 12px;
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s;
+.formGroup input.inputError,
+.formGroup select.inputError {
+  border: 1px solid #d32f2f;
 }
 
-.btnSubmit:hover {
-  background-color: #0056b3;
+.formGroup input:disabled,
+.formGroup select:disabled {
+  background: #f0f0f0;
+  cursor: not-allowed;
 }
 
 .errorMsg {
-  color: #d9534f;
-  font-size: 13px;
+  color: #d32f2f;
+  font-size: 0.8rem;
   margin-top: 4px;
 }
 
 .successMsg {
+  color: #2772ba;
+  font-size: 0.9rem;
   text-align: center;
-  color: #28a745;
-  font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  background: #e3f2fd;
+  padding: 8px;
+  border-radius: 5px;
+}
+
+.btnSubmit {
+  padding: 10px;
+  background: #2772ba;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btnSubmit:hover:not(:disabled) {
+  background: #1e5b9a;
+}
+
+.btnSubmit:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-top: 2px solid #2772ba;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .registerContainer {
+    padding: 15px;
+  }
+
+  .registerTitle {
+    font-size: 1.5rem;
+  }
+
+  .formGroup input,
+  .formGroup select,
+  .btnSubmit {
+    font-size: 0.8rem;
+  }
+
+  .errorMsg,
+  .successMsg {
+    font-size: 0.7rem;
+  }
+}
+
+.customDropdown {
+  position: relative;
+  width: 100%;
+}
+
+.dropdownHeader {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  min-height: 38px;
+  transition: border-color 0.2s;
+}
+
+.dropdownHeader:hover {
+  border-color: #ccc;
+}
+
+.dropdownHeader.inputError {
+  border-color: #dc3545;
+}
+
+.dropdownHeader.disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.selectedValue {
+  color: #333;
+}
+
+.placeholder {
+  color: #6c757d;
+}
+
+.dropdownArrow {
+  font-size: 10px;
+  color: #666;
+  transition: transform 0.2s;
+}
+
+.dropdownList {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 300px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.searchContainer {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  background: #f8f9fa;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.dropdownOptions {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.dropdownOption {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.dropdownOption:hover {
+  background-color: #f8f9fa;
+}
+
+.dropdownOption.selected {
+  background-color: #007bff;
+  color: white;
+}
+
+.dropdownOption:last-child {
+  border-bottom: none;
+}
+
+.bankName {
+  font-weight: 500;
+}
+
+.bankShortName {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.dropdownOption.selected .bankShortName {
+  color: #e6f3ff;
+}
+
+.loadingMessage, .noResults {
+  padding: 12px;
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Đảm bảo dropdown hiển thị trên các phần tử khác */
+.registerContainer {
+  position: relative;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dropdownOption {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  
+  .bankShortName {
+    font-size: 11px;
+  }
 }

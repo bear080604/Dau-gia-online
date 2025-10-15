@@ -9,7 +9,9 @@ function AuctionSession() {
   const [sortBy, setSortBy] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
   const [auctionItems, setAuctionItems] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const itemsPerPage = 6;
@@ -37,22 +39,42 @@ function AuctionSession() {
   };
 
   useEffect(() => {
-    const fetchData = () => {
-      axios
-        .get(`${process.env.REACT_APP_API_URL}products`)
-        .then((res) => {
-          const products = res.data.data || [];
-          const productsWithSessions = products.filter(
-            (p) => Array.isArray(p.sessions) && p.sessions.length > 0
-          );
-          setAuctionItems(productsWithSessions);
-        })
-        .catch((err) => {
-          console.error('Lỗi API:', err);
-        })
-        .finally(() => {
-          setLoading(false);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch danh mục
+        const categoryResponse = await axios.get(`${process.env.REACT_APP_API_URL}categories`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
         });
+        if (categoryResponse.data.status && categoryResponse.data.data) {
+          setCategories(categoryResponse.data.data);
+        } else {
+          throw new Error('Invalid categories API response');
+        }
+
+        // Fetch sản phẩm
+        const productResponse = await axios.get(`${process.env.REACT_APP_API_URL}products`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        const products = productResponse.data.data || [];
+        const productsWithSessions = products.filter(
+          (p) => Array.isArray(p.sessions) && p.sessions.length > 0
+        );
+        setAuctionItems(productsWithSessions);
+
+        setError(null);
+      } catch (err) {
+        console.error('Lỗi API:', err);
+        setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
@@ -111,6 +133,16 @@ function AuctionSession() {
     );
   }
 
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <div style={{ textAlign: 'center', padding: '40px', color: '#d32f2f' }}>
+          {error}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.leftPanel}>
@@ -136,50 +168,48 @@ function AuctionSession() {
                 onChange={(e) => setCategoryFilter(e.target.value)}
               >
                 <option value="all">Tất cả danh mục</option>
-                <option value="Xe cộ">Xe cộ</option>
-                <option value="Bất động sản">Bất động sản</option>
-                <option value="Thiết bị điện tử">Thiết bị điện tử</option>
-                <option value="Trang sức">Trang sức</option>
-                <option value="Khác">Khác</option>
+                {categories.map((category) => (
+                  <option key={category.category_id} value={category.name}>
+                    {category.name}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div className={styles.filterGroup}>
               <label>Lọc theo thời gian đăng ký:</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-  <input
-    type="date"
-    value={startDate}
-    onChange={(e) => setStartDate(e.target.value)}
-    style={{
-      padding: '10px 12px',
-      borderRadius: '5px',
-      border: '1px solid #ccc',
-      fontSize: '14px',
-      outline: 'none',
-      transition: 'all 0.2s',
-    }}
-    onFocus={(e) => (e.target.style.border = '1px solid #007bff')}
-    onBlur={(e) => (e.target.style.border = '1px solid #ccc')}
-  />
-
-  <input
-    type="date"
-    value={endDate}
-    onChange={(e) => setEndDate(e.target.value)}
-    style={{
-      padding: '10px 12px',
-      borderRadius: '5px',
-      border: '1px solid #ccc',
-      fontSize: '14px',
-      outline: 'none',
-      transition: 'all 0.2s',
-    }}
-    onFocus={(e) => (e.target.style.border = '1px solid #007bff')}
-    onBlur={(e) => (e.target.style.border = '1px solid #ccc')}
-  />
-</div>
-
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: '5px',
+                    border: '1px solid #ccc',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'all 0.2s',
+                  }}
+                  onFocus={(e) => (e.target.style.border = '1px solid #2772ba')}
+                  onBlur={(e) => (e.target.style.border = '1px solid #ccc')}
+                />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: '5px',
+                    border: '1px solid #ccc',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'all 0.2s',
+                  }}
+                  onFocus={(e) => (e.target.style.border = '1px solid #2772ba')}
+                  onBlur={(e) => (e.target.style.border = '1px solid #ccc')}
+                />
+              </div>
             </div>
 
             <div className={styles.filterGroup}>
@@ -211,7 +241,7 @@ function AuctionSession() {
         <div className={styles.resultsInfo}>
           <span>
             <h1 className={styles.pageTitle}>
-              Tổng {auctionItems.length} phiên đấu giá
+              Tổng {filteredItems.length} phiên đấu giá
             </h1>
           </span>
         </div>
@@ -224,7 +254,7 @@ function AuctionSession() {
           ) : (
             currentItems.map((item) => {
               const session = item.sessions[0];
-              const status = getAuctionStatus(session); // Sử dụng getAuctionStatus
+              const status = getAuctionStatus(session);
               return (
                 <div key={item.id} className={styles.auctionItem}>
                   <div className={styles.itemImage}>
@@ -257,7 +287,7 @@ function AuctionSession() {
                           {formatDate(session?.bid_start)} - {formatDate(session?.bid_end)}
                         </div>
                         <br />
-                        <div style={{ fontSize: '13px', color: '#555' }}>
+                        <div style={{ fontSize: '13px', color: '#2772ba' }}>
                           <b>Trạng thái:</b> {status}
                         </div>
                       </div>
