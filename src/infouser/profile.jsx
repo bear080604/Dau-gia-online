@@ -484,6 +484,7 @@ const Profile = () => {
                         onClick={() => handleUploadImage('front')}
                         style={{ cursor: 'pointer', position: 'relative' }}
                       >
+                     { console.log(userData.idCardFrontUrl)}
                         {userData.idCardFrontUrl ? (
                           <img 
                             src={userData.idCardFrontUrl} 

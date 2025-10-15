@@ -99,10 +99,10 @@ const Home = () => {
                 <div className='list-auction'>
                   <div className='auction-item'>
                     <img
-                      className='auction-image'
-                      src={item.image_url ? item.image_url : "/assets/img/xe.png"}
-                      alt={item.name}
-                    />
+                        className='auction-image'
+                        src={item.image_url ? `http://localhost:8000${item.image_url}` : "/assets/img/xe.png"}
+                        alt={item.name}
+                      />
                     <div className='auction-details'>
                       <h3 className='auction-name'>{item.name}</h3>
                       <p className='auction-method'>
