@@ -129,12 +129,14 @@ const Home = () => {
               <SwiperSlide key={item.id}>
                 <div className='list-auction'>
                   <div className='auction-item'>
+                    <div className='item-img'>
                     <img
                       className='auction-image'
                       src={item.image_url ? item.image_url : "/assets/img/xe.png"}
                       alt={item.name}
                       onError={(e) => { e.target.src = "/assets/img/xe.png"; }}
                     />
+                    </div>
                     <div className='auction-details'>
                       <h3 className='auction-name'>{item.name}</h3>
                       <p className='auction-method'>{computedStatus}</p>
@@ -226,12 +228,14 @@ const Home = () => {
                 <SwiperSlide key={item.id}>
                   <div className='list-auction'>
                     <div className='auction-item'>
+                      <div className='item-img'>
                       <img
                         className='auction-image'
                         src={item.image_url ? item.image_url : "/assets/img/xe.png"}
                         alt={item.name}
                         onError={(e) => { e.target.src = "/assets/img/xe.png"; }}
                       />
+                      </div>
                       <div className='auction-details'>
                         <h3 className='auction-name'>{item.name}</h3>
                         <p className='auction-method'>{computedStatus}</p>

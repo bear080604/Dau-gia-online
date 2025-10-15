@@ -29,6 +29,7 @@ import AccessDenied from './AccessDenied';
 import { ToastContainer } from 'react-toastify';
 import RegisterAuctionPage from './pages/AdminRegisterAuction';
 import News from './pages/news';
+import NewsDetail from './pages/newsDetail';
 
 function App() {
   return (
@@ -51,7 +52,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/access-denied" element={<AccessDenied />} />
             <Route path="/news" element={<News />} />
-
+            <Route path="/news/:id" element={<NewsDetail />} />
 
             {/* Public Routes (ngăn truy cập nếu đã đăng nhập) */}
             <Route
