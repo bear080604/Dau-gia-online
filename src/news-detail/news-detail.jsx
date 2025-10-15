@@ -18,6 +18,11 @@ const NewsDetail = () => {
         return response.json();
       })
       .then((data) => {
+        // Xử lý content để ngắt dòng tự động
+        const processedContent = data.content
+          .split('\n') // Tách theo ký tự xuống dòng (nếu có)
+          .map((paragraph, index) => <p key={index}>{paragraph}</p>); // Tạo từng đoạn
+
         setNews({
           id: data.id,
           title: data.title,
@@ -28,7 +33,7 @@ const NewsDetail = () => {
             year: 'numeric',
           }),
           author: data.author || 'Không xác định',
-          content: data.content,
+          content: processedContent, // Sử dụng mảng các đoạn
           imageUrl: data.thumbnail
             ? `http://127.0.0.1:8000/storage/news/${data.thumbnail}`
             : 'https://via.placeholder.com/600x400?text=Image+Not+Found',
@@ -69,10 +74,7 @@ const NewsDetail = () => {
           e.target.src = 'https://via.placeholder.com/600x400?text=Image+Not+Found';
         }}
       />
-      <div
-        className={styles.content}
-        dangerouslySetInnerHTML={{ __html: news.content }}
-      />
+      <div className={styles.content}>{news.content}</div> {/* Hiển thị các đoạn */}
     </div>
   );
 };
