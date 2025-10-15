@@ -21,6 +21,8 @@ const Sidebar = () => {
       { id: 'auctions', icon: 'fas fa-clock', label: 'Phiên đấu giá', href: addAdminPrefix('/auction-session') },
       { id: 'contracts', icon: 'fas fa-file-contract', label: 'Hợp đồng', href: addAdminPrefix('/contract') },
       { id: 'register-auction', icon: 'fa fa-ticket', label: 'Đăng ký đấu giá', href: addAdminPrefix('/register-auction') },
+      { id: 'news', icon: 'fas fa-file-contract', label: 'Tin tức', href: addAdminPrefix('/news') },
+      { id: 'news-categories', icon: 'fas fa-file-contract', label: 'Danh mục tin tức', href: addAdminPrefix('/news-categories') },
       { id: 'reports', icon: 'fas fa-chart-bar', label: 'Báo cáo', href: addAdminPrefix('/report') },
       { id: 'users', icon: 'fas fa-users', label: 'Quản lý người dùng', href: addAdminPrefix('/users') },
       { id: 'bids', icon: 'fas fa-file-alt', label: 'Hồ sơ đấu giá', href: addAdminPrefix('/profile') },

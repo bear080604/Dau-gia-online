@@ -33,8 +33,11 @@ const News = () => {
           summary: item.content.substring(0, 100) + (item.content.length > 100 ? '...' : ''), // Create summary
           link: `/news/${item.id}`,
           imageUrl: item.thumbnail
-            ? `http://127.0.0.1:8000/storage/news/${item.thumbnail}` // Sử dụng đường dẫn storage/news/
-            : 'https://via.placeholder.com/300x200?text=Image+Not+Found', // Fallback image
+          ? item.thumbnail.startsWith('http')
+            ? item.thumbnail // nếu backend đã trả URL đầy đủ
+            : `http://127.0.0.1:8000/storage/news/${item.thumbnail.replace('storage/news/', '')}`
+          : 'https://via.placeholder.com/300x200?text=Image+Not+Found',
+
         }));
         setNewsData(formattedNews);
       })

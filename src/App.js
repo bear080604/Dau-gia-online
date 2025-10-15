@@ -30,6 +30,8 @@ import { ToastContainer } from 'react-toastify';
 import RegisterAuctionPage from './pages/AdminRegisterAuction';
 import News from './pages/news';
 import NewsDetail from './pages/newsDetail';
+import Adminnews from './pages/AdminNews';
+import AdminNewsCategories from './pages/AdminNewsCategories';
 
 function App() {
   return (
@@ -118,6 +120,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminEContract />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/news"
+              element={
+                <ProtectedRoute>
+                  <Adminnews />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/news-categories"
+              element={
+                <ProtectedRoute>
+                  <AdminNewsCategories />
                 </ProtectedRoute>
               }
             />

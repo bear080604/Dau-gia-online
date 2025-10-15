@@ -16,6 +16,7 @@ const Home = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('default');
+  const [news, setNews] = useState([]);
   const [error, setError] = useState(null);
 
   const getAuctionStatus = (session) => {
@@ -39,7 +40,7 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch danh mục
+        // Fetch danh mục auctions
         const categoryResponse = await axios.get(`${process.env.REACT_APP_API_URL}categories`, {
           headers: {
             'Content-Type': 'application/json',
@@ -52,7 +53,7 @@ const Home = () => {
           throw new Error('Invalid categories API response');
         }
 
-        // Fetch sản phẩm
+        // Fetch sản phẩm auctions
         const productResponse = await axios.get(`${process.env.REACT_APP_API_URL}products`, {
           headers: {
             'Content-Type': 'application/json',
@@ -70,6 +71,24 @@ const Home = () => {
 
         // Tất cả tài sản: Không sắp xếp
         setAllAuctions(productsWithSessions);
+
+        // Fetch tin tức
+        const newsResponse = await fetch('http://127.0.0.1:8000/api/news');
+        if (!newsResponse.ok) {
+          throw new Error('Lỗi khi lấy tin tức');
+        }
+        const newsData = await newsResponse.json();
+        const formattedNews = newsData.map((item) => ({
+          id: item.id,
+          category: item.category.name,
+          title: item.title,
+          date: new Date(item.created_at).toLocaleDateString('vi-VN'),
+          summary: item.content.substring(0, 100) + (item.content.length > 100 ? '...' : ''),
+          imageUrl: item.thumbnail
+            ? `http://127.0.0.1:8000/storage/news/${item.thumbnail}`
+            : 'https://via.placeholder.com/300x200?text=Image+Not+Found',
+        }));
+        setNews(formattedNews);
 
         setError(null);
       } catch (err) {
@@ -257,6 +276,54 @@ const Home = () => {
             })}
           </Swiper>
         </section>
+
+        {/* Phần tin tức */}
+        <section>
+          <div className='section-title'>
+            <p>TIN TỨC VÀ THÔNG BÁO</p>
+          </div>
+          {error && <p className="error-message">{error}</p>}
+          {news.length === 0 && !error && <p>Không có tin tức nào.</p>}
+          <Swiper
+            modules={[Navigation, Pagination, Autoplay]}
+            spaceBetween={20}
+            navigation
+            pagination={{ clickable: true }}
+            autoplay={{ delay: 7000 }}
+            loop={true}
+            breakpoints={{
+              320: { slidesPerView: 1 },
+              640: { slidesPerView: 2 },
+              1024: { slidesPerView: 4 },
+            }}
+          >
+            {news.map((newsItem) => (
+              <SwiperSlide key={newsItem.id}>
+                <div className='news-item'>
+                  <img
+                    className='news-image'
+                    src={newsItem.imageUrl}
+                    alt={newsItem.title}
+                    onError={(e) => { e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Found'; }}
+                  />
+                  <div className='news-details'>
+                    <h3 className='news-title'>{newsItem.title}</h3>
+                    <p className='news-date'>{newsItem.date}</p>
+                    <p className='news-summary'>{newsItem.summary}</p>
+                  </div>
+                  <div className='action'>
+                    <Link to={`/news/${newsItem.id}`} style={{ textDecoration: 'none' }}>
+                      <button className='read-more-button'>
+                        <i className="fa fa-arrow-right" aria-hidden="true"></i> Đọc thêm
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </section>
+        
       </main>
     </div>
   );
