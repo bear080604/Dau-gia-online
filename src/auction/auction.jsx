@@ -34,7 +34,7 @@ const AuctionPage = () => {
   const [pausedTime, setPausedTime] = useState(null);
   const [bidders, setBidders] = useState([]);
   const [bids, setBids] = useState([]);
-  const [categories, setCategories] = useState([]); // State mới để lưu danh sách danh mục
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -62,7 +62,6 @@ const AuctionPage = () => {
         setCurrentTime((prevTime) => new Date());
       }, 1000);
     } else {
-      // Khi bị pause, lưu lại thời gian hiện tại và không cho đồng hồ chạy nữa
       setPausedTime(new Date());
     }
 
@@ -105,7 +104,7 @@ const AuctionPage = () => {
     }
   }, [id, token]);
 
-  // 🔁 Tự động cập nhật trạng thái phiên đấu giá (paused, thời gian, vv) mỗi 5 giây
+  // Tự động cập nhật trạng thái phiên đấu giá
   useEffect(() => {
     if (!id || !token) return;
 
@@ -117,7 +116,6 @@ const AuctionPage = () => {
         });
         const session = response.data.session;
         if (session) {
-          // Nếu trạng thái paused thay đổi thì cập nhật lại
           if (session.paused !== paused) {
             setPaused(session.paused ?? false);
             if (!session.paused) {
@@ -247,7 +245,8 @@ const AuctionPage = () => {
 
   // Format numbers and prices
   const formatNumber = (num) => {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    if (!num) return '';
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
   const formatPrice = (priceStr) => {
@@ -264,7 +263,7 @@ const AuctionPage = () => {
   // Calculate bid steps (N)
   const calculateN = () => {
     if (!auctionItem) return 0;
-    const currentBidValue = displayValue ? parseInt(displayValue.replace(/,/g, '')) : 0;
+    const currentBidValue = displayValue ? parseInt(displayValue.replace(/\./g, '')) : 0;
     if (currentBidValue <= currentPrice) return 0;
     const bidStep = parseFloat(auctionItem.bid_step) || 10000000;
     return Math.floor((currentBidValue - currentPrice) / bidStep);
@@ -272,7 +271,7 @@ const AuctionPage = () => {
 
   // Calculate countdown
   const getCountdownParts = () => {
-    const now = paused ? pausedTime : currentTime; // Dừng đồng hồ khi paused
+    const now = paused ? pausedTime : currentTime;
     if (isAuctionEnded) {
       return { hours: '00', minutes: '00', seconds: '00', status: 'ended' };
     }
@@ -297,13 +296,17 @@ const AuctionPage = () => {
 
   // Handle bid input
   const handleNumberInputChange = (e) => {
-    const rawValue = e.target.value.replace(/\D/g, '');
+    let rawValue = e.target.value.replace(/[^0-9.]/g, '');
+    const parts = rawValue.split('.');
+    if (parts.length > 1) {
+      rawValue = parts[0] + '.' + parts.slice(1).join('').slice(0, 3 * (parts.length - 1));
+    }
     setDisplayValue(rawValue);
   };
 
   const handleBlur = () => {
     if (displayValue === '') return;
-    const value = parseInt(displayValue) || 0;
+    const value = parseInt(displayValue.replace(/\./g, '')) || 0;
     setDisplayValue(formatNumber(value));
   };
 
@@ -324,7 +327,7 @@ const AuctionPage = () => {
       return;
     }
 
-    const currentBidValue = parseInt(displayValue.replace(/,/g, '')) || 0;
+    const currentBidValue = parseInt(displayValue.replace(/\./g, '')) || 0;
     const bidStep = parseFloat(auctionItem?.bid_step) || 10000000;
     const minBid = currentPrice + bidStep;
 
@@ -485,19 +488,19 @@ const AuctionPage = () => {
             <div className={styles['section-title']}>THÀNH PHẦN THAM DỰ</div>
             <div className={styles['info-row']}>
               <div className={styles['info-label']}>Thư ký phiên đấu giá:</div>
-              <div className={styles['info-value']}>Nguyễn Văn A</div>
+              <div className={styles['info-value']}>{auctionItem.secretary?.full_name || 'N/A'}</div>
             </div>
             <div className={styles['info-row']}>
               <div className={styles['info-label']}>Đại diện bên có tài sản:</div>
-              <div className={styles['info-value']}>Nguyễn Văn B</div>
+              <div className={styles['info-value']}>{auctionItem.item?.owner?.full_name || 'N/A'}</div>
             </div>
             <div className={styles['info-row']}>
               <div className={styles['info-label']}>Đấu giá viên:</div>
-              <div className={styles['info-value']}>Nguyễn Văn D</div>
+              <div className={styles['info-value']}>{auctionItem.auction_org?.full_name || 'N/A'}</div>
             </div>
             <div className={styles['info-row']}>
               <div className={styles['info-label']}>Đại diện người tham gia đấu giá:</div>
-              <div className={styles['info-value']}>Nguyễn Văn E</div>
+              <div className={styles['info-value']}>{auctionItem.bidder_representative?.full_name || 'N/A'}</div>
             </div>
           </div>
 
@@ -514,13 +517,14 @@ const AuctionPage = () => {
                     value={displayValue}
                     onChange={handleNumberInputChange}
                     onBlur={handleBlur}
-                    placeholder="Nhập số tiền lớn hơn giá hiện tại"
+                    placeholder="Nhập số tiền, ví dụ: 100.000.000"
                     className={styles['bid-input']}
                     disabled={paused || isAuctionEnded || !isBiddingOngoing}
+                    pattern="[0-9.]*"
                     style={{ marginBottom: '10px', padding: '8px', width: '100%', border: '1px solid #ccc', borderRadius: '4px' }}
                   />
                   <div className={styles['bid-amount']}>
-                    {displayValue ? formatNumber(parseInt(displayValue.replace(/,/g, ''))) : '0'}<br />VNĐ
+                    {displayValue ? formatNumber(parseInt(displayValue.replace(/\./g, ''))) : '0'}<br />VNĐ
                   </div>
                   <div style={{ fontSize: '12px', color: '#2772BA' }}>
                     Số tiền đấu giá = Giá hiện tại ({formatNumber(currentPrice)} VNĐ) + {n} x Bước giá ({formatNumber(bidStep)} VNĐ)

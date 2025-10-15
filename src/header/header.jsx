@@ -238,7 +238,7 @@ const Header = () => {
 
   // Navigation menu items
   const navItems = [
-    { icon: 'fa-info-circle', text: 'GIỚI THIỆU', href: '#' },
+    { icon: 'fa-info-circle', text: 'GIỚI THIỆU', href: '/about' },
     {
       icon: 'fa-th-list',
       text: 'DANH MỤC TÀI SẢN',
