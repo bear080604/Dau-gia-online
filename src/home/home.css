@@ -19,6 +19,9 @@
     max-width: 100%;
     box-shadow: 0 0 10px 0 gray; /* mờ đều 4 cạnh */
 }
+.item-img{
+    width: 100%;
+}
 .auction-image{
     max-width: 100%;
 }

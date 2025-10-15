@@ -3,40 +3,48 @@ import { Link } from 'react-router-dom';
 import styles from './news.module.css';
 
 const News = () => {
-  const [activeCategory, setActiveCategory] = useState('Thông báo đấu giá');
+  const [activeCategory, setActiveCategory] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [newsData, setNewsData] = useState([]);
+  const [categories, setCategories] = useState([]);
   const itemsPerPage = 6;
 
-  // Dữ liệu giả định với thêm trường imageUrl
-  const mockNewsData = [
-    { id: 1, category: 'Thông báo đấu giá', title: 'Thông báo đấu giá căn hộ Quận 7', date: '2025-10-10', summary: 'Phiên đấu giá căn hộ cao cấp tại Quận 7 sẽ diễn ra vào 15/10/2025.', link: '/news/1', imageUrl: 'https://via.placeholder.com/300x200?text=Căn+hộ+Quận+7' },
-    { id: 2, category: 'Thông báo đấu giá', title: 'Thông báo đấu giá xe ô tô BMW', date: '2025-10-09', summary: 'Phiên đấu giá xe BMW X5 sẽ được tổ chức trực tuyến.', link: '/news/2', imageUrl: 'https://via.placeholder.com/300x200?text=Xe+BMW+X5' },
-    { id: 3, category: 'Kết quả đấu giá', title: 'Kết quả đấu giá đất nền Phú Mỹ', date: '2025-10-08', summary: 'Phiên đấu giá đất nền Phú Mỹ đã kết thúc với giá 5 tỷ.', link: '/news/3', imageUrl: 'https://via.placeholder.com/300x200?text=Đất+nền+Phú+Mỹ' },
-    { id: 4, category: 'Kết quả đấu giá', title: 'Kết quả đấu giá tranh cổ', date: '2025-10-07', summary: 'Tranh cổ được bán với giá 200 triệu đồng.', link: '/news/4', imageUrl: 'https://via.placeholder.com/300x200?text=Tranh+cổ' },
-    { id: 5, category: 'Tin tức sự kiện', title: 'Sự kiện ra mắt nền tảng đấu giá mới', date: '2025-10-06', summary: 'Nền tảng đấu giá trực tuyến mới sẽ ra mắt vào 20/10.', link: '/news/5', imageUrl: 'https://via.placeholder.com/300x200?text=Nền+tảng+đấu+giá' },
-    { id: 6, category: 'Tin tức sự kiện', title: 'Hội thảo đấu giá bất động sản', date: '2025-10-05', summary: 'Hội thảo chia sẻ kinh nghiệm đấu giá bất động sản.', link: '/news/6', imageUrl: 'https://via.placeholder.com/300x200?text=Hội+thảo+BĐS' },
-    { id: 7, category: 'Thông báo tuyển dụng', title: 'Tuyển dụng đấu giá viên', date: '2025-10-04', summary: 'Chúng tôi cần tuyển 5 đấu giá viên chuyên nghiệp.', link: '/news/7', imageUrl: 'https://via.placeholder.com/300x200?text=Đấu+giá+viên' },
-    { id: 8, category: 'Thông báo tuyển dụng', title: 'Tuyển nhân viên hỗ trợ khách hàng', date: '2025-10-03', summary: 'Vị trí hỗ trợ khách hàng với mức lương hấp dẫn.', link: '/news/8', imageUrl: 'https://via.placeholder.com/300x200?text=Hỗ+trợ+khách+hàng' },
-    { id: 9, category: 'Thông báo đấu giá', title: 'Thông báo đấu giá đất nền Quận 9', date: '2025-10-02', summary: 'Phiên đấu giá đất nền Quận 9 sẽ diễn ra vào 18/10.', link: '/news/9', imageUrl: 'https://via.placeholder.com/300x200?text=Đất+nền+Quận+9' },
-    { id: 10, category: 'Kết quả đấu giá', title: 'Kết quả đấu giá xe máy Yamaha', date: '2025-10-01', summary: 'Xe máy Yamaha được bán với giá 50 triệu đồng.', link: '/news/10', imageUrl: 'https://via.placeholder.com/300x200?text=Xe+Yamaha' },
-  ];
-
+  // Fetch categories and news from API
   useEffect(() => {
-    setNewsData(mockNewsData); // Thay bằng fetch API nếu cần
+    // Fetch categories
+    fetch('http://127.0.0.1:8000/api/news-categories')
+      .then((response) => response.json())
+      .then((data) => {
+        setCategories(data.map((cat) => cat.name));
+        setActiveCategory(data[0]?.name || ''); // Set first category as default
+      })
+      .catch((error) => console.error('Lỗi khi lấy danh mục:', error));
+
+    // Fetch news
+    fetch('http://127.0.0.1:8000/api/news')
+      .then((response) => response.json())
+      .then((data) => {
+        // Map API data to match the component's expected structure
+        const formattedNews = data.map((item) => ({
+          id: item.id,
+          category: item.category.name,
+          title: item.title,
+          date: new Date(item.created_at).toLocaleDateString('vi-VN'), // Format date
+          summary: item.content.substring(0, 100) + (item.content.length > 100 ? '...' : ''), // Create summary
+          link: `/news/${item.id}`,
+          imageUrl: item.thumbnail
+            ? `http://127.0.0.1:8000/storage/news/${item.thumbnail}` // Sử dụng đường dẫn storage/news/
+            : 'https://via.placeholder.com/300x200?text=Image+Not+Found', // Fallback image
+        }));
+        setNewsData(formattedNews);
+      })
+      .catch((error) => console.error('Lỗi khi lấy tin tức:', error));
   }, []);
 
-  const filteredNews = newsData.filter(item => item.category === activeCategory);
+  const filteredNews = newsData.filter((item) => item.category === activeCategory);
   const totalPages = Math.ceil(filteredNews.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentNews = filteredNews.slice(startIndex, startIndex + itemsPerPage);
-
-  const categories = [
-    'Thông báo đấu giá',
-    'Kết quả đấu giá',
-    'Tin tức sự kiện',
-    'Thông báo tuyển dụng'
-  ];
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -77,7 +85,7 @@ const News = () => {
 
         <div className={styles.mobileCategory}>
           <button className={styles.mobileCategoryToggle} onClick={toggleMobileMenu}>
-            {activeCategory} <i className="fa fa-chevron-down"></i>
+            {activeCategory || 'Chọn danh mục'} <i className="fa fa-chevron-down"></i>
           </button>
           {isMobileMenuOpen && (
             <ul className={styles.mobileCategoryList}>
@@ -110,7 +118,9 @@ const News = () => {
                     src={news.imageUrl}
                     alt={news.title}
                     className={styles.newsImage}
-                    onError={(e) => { e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Found'; }}
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Found';
+                    }}
                   />
                   <h3 className={styles.newsTitle}>{news.title}</h3>
                   <p className={styles.newsDate}>{news.date}</p>
