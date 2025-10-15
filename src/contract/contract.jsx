@@ -4,6 +4,7 @@ import './contract.css';
 
 const Contract = () => {
   const [contracts, setContracts] = useState([]);
+  const [econtracts, setEcontracts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showToast, setShowToast] = useState(false);
@@ -11,6 +12,8 @@ const Contract = () => {
   const [toastType, setToastType] = useState('success');
 
   const CONTRACTS_API_URL = 'http://localhost:8000/api/contracts';
+  const ECONTRACTS_API_URL = 'http://localhost:8000/api/econtracts';
+  const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:8000';
 
   const vnFormatter = new Intl.DateTimeFormat('vi-VN', {
     timeZone: 'Asia/Ho_Chi_Minh',
@@ -51,31 +54,49 @@ const Contract = () => {
         throw new Error('Cần đăng nhập lại!');
       }
 
-      const response = await fetch(CONTRACTS_API_URL, {
+      // Fetch contracts
+      const contractResponse = await fetch(CONTRACTS_API_URL, {
         headers: { 
           "Authorization": `Bearer ${token}`, 
           "Accept": "application/json" 
         }
       });
 
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      const data = await response.json();
+      if (!contractResponse.ok) throw new Error(`HTTP ${contractResponse.status}: ${contractResponse.statusText}`);
+      const contractData = await contractResponse.json();
 
-      if (data.status) {
-        const allContracts = data.contracts || [];
+      // Fetch e-contracts
+      const econtractResponse = await fetch(ECONTRACTS_API_URL, {
+        headers: { 
+          "Authorization": `Bearer ${token}`, 
+          "Accept": "application/json" 
+        }
+      });
+
+      if (!econtractResponse.ok) throw new Error(`HTTP ${econtractResponse.status}: ${econtractResponse.statusText}`);
+      const econtractData = await econtractResponse.json();
+
+      if (contractData.status) {
+        const allContracts = contractData.contracts || [];
         const userContracts = allContracts.filter(contract => 
           contract.winner_id == user.user_id || (contract.winner && contract.winner.user_id == user.user_id)
         );
         
         setContracts(userContracts);
-        
+
         if (userContracts.length > 0) {
           showToastMessage(`Tải ${userContracts.length} hợp đồng thành công!`, 'success');
         } else {
           showToastMessage('Không có hợp đồng phù hợp.', 'warning');
         }
       } else {
-        throw new Error(data.message || 'Lỗi dữ liệu hợp đồng');
+        throw new Error(contractData.message || 'Lỗi dữ liệu hợp đồng');
+      }
+
+      if (econtractData.status) {
+        setEcontracts(econtractData.econtracts || []);
+      } else {
+        throw new Error(econtractData.message || 'Lỗi dữ liệu hợp đồng điện tử');
       }
     } catch (error) {
       console.error('Fetch error:', error);
@@ -101,6 +122,11 @@ const Contract = () => {
       default:
         return { text: status, className: 'pending' };
     }
+  };
+
+  const getEcontractUrl = (sessionId) => {
+    const econtract = econtracts.find(ec => ec.session_id === sessionId);
+    return econtract ? `${BASE_URL}${econtract.file_url}` : '#';
   };
 
   return (
@@ -145,7 +171,7 @@ const Contract = () => {
                   <td data-label="Mã Hợp Đồng">{contract.contract_id}</td>
                   <td data-label="Tên Phiên">{itemName}</td>
                   <td data-label="Giá Cuối (VND)">{formatPrice(parseFloat(contract.final_price))}</td>
-                  <td data-label="Ngày Ký">{formatDateTime(contract.signed_date)}</td>
+                  <td data-label="Ngày Ký">{contract.signed_date ? formatDateTime(contract.signed_date) : 'Chưa ký'}</td>
                   <td data-label="Trạng Thái">
                     <span className={`status ${statusInfo.className}`}>
                       {statusInfo.text}
@@ -160,6 +186,14 @@ const Contract = () => {
                         <i className="fa-solid fa-credit-card"></i> Thanh Toán
                       </Link>
                     )}
+                    <a 
+                      href={getEcontractUrl(contract.session_id)}
+                      className="btn btn-view"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <i className="fa-solid fa-file-pdf"></i> Xem Hợp Đồng
+                    </a>
                   </td>
                 </tr>
               );

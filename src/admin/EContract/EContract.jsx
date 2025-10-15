@@ -18,6 +18,7 @@ function EContract() {
   const [formData, setFormData] = useState({
     econtractType: 'DichVuDauGia',
     fileUrl: '',
+    itemName: '', // Added to store item name for display
     signedBy: '',
     signedDate: '',
     sessionId: '',
@@ -43,6 +44,8 @@ function EContract() {
             type: econtract.contract_type === 'DichVuDauGia' ? 'Dịch vụ đấu giá' : 'Mua bán tài sản',
             typeClass: econtract.contract_type === 'DichVuDauGia' ? 'typeDichvudaugia' : 'typeMuabantaisan',
             fileUrl: `${BASE_URL}${econtract.file_url}`, // Construct full PDF URL
+            fileName: econtract.file_url.split('/').pop(), // Extract file name for display
+            itemName: `Hợp đồng ${econtract.session.item.name}`, // Store item name with prefix
             signedBy: `${econtract.signer.full_name} (ID: ${econtract.signer.user_id})`,
             signedDate: econtract.signed_at,
             sessionId: `#PH-${econtract.session_id.toString().padStart(3, '0')}`,
@@ -75,7 +78,8 @@ function EContract() {
       const searchMatch = econtract.fileUrl.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          econtract.signedBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          econtract.sessionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         econtract.contractId.toLowerCase().includes(searchTerm.toLowerCase());
+                         econtract.contractId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         econtract.itemName.toLowerCase().includes(searchTerm.toLowerCase());
       const typeMatch = !typeFilter || econtract.type.toLowerCase().includes(typeFilter.toLowerCase());
       const sessionMatch = !sessionFilter || econtract.sessionId.toLowerCase().includes(sessionFilter.toLowerCase());
       return searchMatch && typeMatch && sessionMatch;
@@ -112,6 +116,7 @@ function EContract() {
     setFormData({
       econtractType: 'DichVuDauGia',
       fileUrl: '',
+      itemName: '',
       signedBy: '',
       signedDate: '',
       sessionId: '',
@@ -128,6 +133,7 @@ function EContract() {
     setFormData({
       econtractType: econtract.type === 'Dịch vụ đấu giá' ? 'DichVuDauGia' : 'MuaBanTaiSan',
       fileUrl: econtract.fileUrl,
+      itemName: econtract.itemName, // Use the item name with "Hợp đồng " prefix
       signedBy: econtract.signedById,
       signedDate: econtract.signedDate.slice(0, 16).replace(' ', 'T'),
       sessionId: econtract.sessionIdShort,
@@ -302,7 +308,7 @@ function EContract() {
                     </span>
                   </td>
                   <td data-label="File URL">
-                    <a href={econtract.fileUrl} target="_blank">{econtract.fileUrl.split('/').pop()}</a>
+                    <a href={econtract.fileUrl} target="_blank">{econtract.itemName}</a>
                   </td>
                   <td data-label="Người ký (ID)">{econtract.signedBy}</td>
                   <td data-label="Ngày ký">{econtract.signedDate}</td>
@@ -373,6 +379,7 @@ function EContract() {
             </div>
             <div>
               <label htmlFor="fileUrl">File URL</label>
+              <a href={formData.fileUrl} target="_blank">{formData.itemName || 'Chưa có tên mặt hàng'}</a>
               <input
                 type="url"
                 id="fileUrl"
@@ -459,11 +466,12 @@ function EContract() {
               <>
                 <p><strong>Mã hợp đồng điện tử:</strong> {selectedEContract.id}</p>
                 <p><strong>Loại hợp đồng:</strong> {selectedEContract.type}</p>
-                <p><strong>File URL:</strong> <a id="viewFileUrl" href={selectedEContract.fileUrl} target="_blank">{selectedEContract.fileUrl.split('/').pop()}</a></p>
+                <p><strong>File URL:</strong> <a id="viewFileUrl" href={selectedEContract.fileUrl} target="_blank">{selectedEContract.itemName}</a></p>
                 <p><strong>Người ký:</strong> {selectedEContract.signedBy}</p>
                 <p><strong>Ngày ký:</strong> {selectedEContract.signedDate}</p>
                 <p><strong>Phiên ID:</strong> {selectedEContract.sessionId}</p>
                 <p><strong>Hợp đồng ID:</strong> {selectedEContract.contractId}</p>
+                <p><strong>Tên mặt hàng:</strong> {selectedEContract.itemName}</p>
                 <p><strong>Giá cuối cùng:</strong> {selectedEContract.contract.final_price}</p>
                 <p><strong>Trạng thái hợp đồng:</strong> {selectedEContract.contract.status}</p>
                 <div className={styles.orderHistory}>
