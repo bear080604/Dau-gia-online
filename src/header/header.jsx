@@ -16,6 +16,7 @@ const Header = () => {
   const [notifications, setNotifications] = useState([]);
   const [categories, setCategories] = useState([]);
   const [notificationError, setNotificationError] = useState(null);
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
 
   // Fetch danh mục từ API
   useEffect(() => {
@@ -289,15 +290,16 @@ const toggleNotification = (e) => {
 
 const closeNotification = (e) => {
   // Nếu click vào chuông thì không đóng
-  if (e.target.closest(`.${styles.notifi}`) || 
+  if (e.target.closest(`.${styles.notifi}`) ||
       e.target.closest(`.${styles.userIconContainer}`) ||
       e.target.closest(`.${styles.authLinks}`)) {
     return;
   }
-  
+
   // Nếu click bên ngoài notification popup thì đóng
   if (isNotificationOpen && !e.target.closest(`.${styles.notificationPopup}`)) {
     setIsNotificationOpen(false);
+    setShowAllNotifications(false); // Reset when closing
   }
 };
 
@@ -316,9 +318,9 @@ useEffect(() => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/${id}/mark-read`,
+        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/${id}/read`,
         {
-          method: 'PATCH',
+          method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -335,6 +337,31 @@ useEffect(() => {
       );
     } catch (error) {
       console.error('Error marking notification as read:', error);
+    }
+  };
+
+  // Mark all notifications as read
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/user/${user.user_id}/read-all`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to mark all notifications as read: ${response.statusText}`);
+      }
+      setNotifications((prev) =>
+        prev.map((notif) => ({ ...notif, isRead: true }))
+      );
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
     }
   };
 
@@ -435,23 +462,36 @@ useEffect(() => {
       {notificationError ? (
         <p className={styles.error}>{notificationError}</p>
       ) : notifications.length > 0 ? (
-        <ul>
-          {notifications.slice(0, 5).map((notif) => (
-            <li
-              key={notif.id}
-              className={notif.isRead ? styles.read : styles.unread}
-              onClick={() => markAsRead(notif.id)}
-              role="button"
-              tabIndex={0}
+        <>
+          <ul>
+            {(showAllNotifications ? notifications : notifications.slice(0, 5)).map((notif) => (
+              <li
+                key={notif.id}
+                className={notif.isRead ? styles.read : styles.unread}
+                onClick={() => markAsRead(notif.id)}
+                role="button"
+                tabIndex={0}
+              >
+                {notif.isRead && <span className={styles.readIcon}>✔</span>}
+                {notif.text}
+                <span className={styles.timeAgo}>({getTimeAgo(notif.timestamp)})</span>
+              </li>
+            ))}
+          </ul>
+          {notifications.length > 5 && (
+            <button
+              className={styles.viewMoreButton}
+              onClick={() => setShowAllNotifications(!showAllNotifications)}
             >
-              {notif.isRead && <span className={styles.readIcon}>✔</span>}
-              {notif.text} 
-              <span className={styles.timeAgo}>({getTimeAgo(notif.timestamp)})</span>
-            </li>
-          ))}
-        </ul>
+              {showAllNotifications ? 'Thu gọn' : 'Xem thêm'}
+            </button>
+          )}
+        </>
       ) : (
-        <p>Không có thông báo nào</p>
+        <div className={styles.notificationEmpty}>
+          <i className="fa fa-bell-slash"></i>
+          <p>Không có thông báo nào</p>
+        </div>
       )}
     </div>
   </div>

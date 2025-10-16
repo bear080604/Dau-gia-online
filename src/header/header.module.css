@@ -1042,14 +1042,214 @@
   position: absolute;
   top: 60px;
   right: 20px;
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
   z-index: 9999;
-  padding: 15px;
-  max-width: 300px;
+  padding: 0;
+  max-width: 450px;
   width: 100%;
+  max-height: 600px;
+  overflow: hidden;
+  animation: notificationSlideIn 0.3s ease-out;
+}
+
+@keyframes notificationSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.notificationContent {
+  position: relative;
+  padding: 20px;
+}
+
+.notificationClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 18px;
+  cursor: pointer;
+  color: #6c757d;
+  background: none;
+  border: none;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notificationClose:hover {
+  color: #dc3545;
+  background-color: #f8d7da;
+  transform: scale(1.1);
+}
+
+.notificationContent h3 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: #495057;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notificationContent h3::before {
+  content: '🔔';
+  font-size: 20px;
+}
+
+.notificationContent ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notificationContent li {
+  list-style: none;
+      width: 400px;
+  font-size: 14px;
+  color: #495057;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.notificationContent li:hover {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+  transform: translateX(2px);
+}
+
+/* Trạng thái mới (chưa đọc) */
+.unread {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border-color: #ffc107;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);
+}
+
+.unread::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background-color: #ffc107;
+  border-radius: 50%;
+}
+
+/* Trạng thái đã đọc */
+.read {
+  background-color: #ffffff;
+  color: #6c757d;
+  border-color: #f8f9fa;
+}
+
+/* Dấu tích cho thông báo đã đọc */
+.readIcon {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  color: #28a745;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+/* Thời gian trước */
+.timeAgo {
+  font-size: 12px;
+  color: #adb5bd;
+  font-weight: 500;
+}
+
+/* Scrollbar styling */
+.notificationContent ul::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notificationContent ul::-webkit-scrollbar-track {
+  background: #f1f3f4;
+  border-radius: 3px;
+}
+
+.notificationContent ul::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.notificationContent ul::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* View More Button */
+.viewMoreButton {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  margin-top: 16px;
+  background: linear-gradient(135deg, var(--primary-color), #1e5ea8);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  text-decoration: none;
+}
+
+.viewMoreButton:hover {
+  background: linear-gradient(135deg, #1e5ea8, var(--primary-color));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(39, 114, 186, 0.3);
+}
+
+.viewMoreButton:active {
+  transform: translateY(0);
+}
+
+/* Empty state */
+.notificationEmpty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+}
+
+.notificationEmpty i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.notificationEmpty p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 /* Search Suggestions Styles */
