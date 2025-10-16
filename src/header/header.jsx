@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../UserContext';
-import styles from './header.module.css'; // Import CSS module
+import styles from './header.module.css';
 
 const Header = () => {
   const { user, logout } = useUser();
@@ -13,27 +13,24 @@ const Header = () => {
   const [latestUnpaidContract, setLatestUnpaidContract] = useState(null);
   const [contractData, setContractData] = useState(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: 'Yêu cầu đấu giá đã được phê duyệt', isRead: false, timestamp: new Date('2025-10-13T17:00:00+07:00') },
-    { id: 2, text: 'Phiên đấu giá mới sẽ bắt đầu vào 20:00 hôm nay.', isRead: false, timestamp: new Date('2025-10-13T16:30:00+07:00') },
-  ]);
-  const [categories, setCategories] = useState([]); // Thêm state cho danh mục
+  const [notifications, setNotifications] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [notificationError, setNotificationError] = useState(null);
 
   // Fetch danh mục từ API
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/categories');
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}categories`);
         if (!response.ok) {
           throw new Error('Failed to fetch categories');
         }
         const result = await response.json();
         if (result.status && result.data) {
-          // Ánh xạ dữ liệu API thành cấu trúc subItems
           const mappedCategories = result.data.map(category => ({
-            icon: getIconForCategory(category.name), // Hàm để chọn icon
+            icon: getIconForCategory(category.name),
             text: category.name,
-            href: `/category/${category.category_id}`, // Tạo href động
+            href: `/category/${category.category_id}`,
           }));
           setCategories(mappedCategories);
         } else {
@@ -41,14 +38,14 @@ const Header = () => {
         }
       } catch (error) {
         console.error('Error fetching categories:', error);
-        setCategories([]); // Nếu lỗi, đặt danh mục rỗng
+        setCategories([]);
       }
     };
 
     fetchCategories();
   }, []);
 
-  // Hàm ánh xạ tên danh mục với icon (tùy chỉnh theo nhu cầu)
+  // Hàm ánh xạ tên danh mục với icon
   const getIconForCategory = (categoryName) => {
     switch (categoryName) {
       case 'Bất động sản':
@@ -65,6 +62,63 @@ const Header = () => {
         return 'fa-folder';
     }
   };
+
+  // Fetch thông báo từ API
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!user || !user.user_id) {
+        setNotifications([]);
+        setNotificationError(null);
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setNotifications([]);
+          setNotificationError(null);
+          return;
+        }
+
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/${user.user_id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch notifications: ${response.status} ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        if (result.status && result.notifications) {
+          setNotifications(
+            result.notifications.map(notif => ({
+              id: notif.notification_id,
+              text: notif.message,
+              isRead: notif.is_read,
+              timestamp: new Date(notif.created_at),
+            }))
+          );
+          setNotificationError(null);
+        } else {
+          throw new Error('Invalid API response structure');
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        setNotifications([]);
+        setNotificationError(`Không thể tải thông báo: ${error.message}`);
+      }
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   // Fetch contracts
   useEffect(() => {
@@ -197,29 +251,60 @@ const Header = () => {
     setIsMobileCategoryActive(!isMobileCategoryActive);
   };
 
-  // Toggle notification popup
-  const toggleNotification = () => {
-    setIsNotificationOpen(!isNotificationOpen);
-  };
+const toggleNotification = (e) => {
+  e.stopPropagation(); // Ngăn chặn event bubbling
+  setIsNotificationOpen(!isNotificationOpen);
+};
 
-  const closeNotification = (e) => {
-    if (e.target.className === styles.notificationPopup) {
-      setIsNotificationOpen(false);
-    }
-  };
+const closeNotification = (e) => {
+  // Nếu click vào chuông thì không đóng
+  if (e.target.closest(`.${styles.notifi}`) || 
+      e.target.closest(`.${styles.userIconContainer}`) ||
+      e.target.closest(`.${styles.authLinks}`)) {
+    return;
+  }
+  
+  // Nếu click bên ngoài notification popup thì đóng
+  if (isNotificationOpen && !e.target.closest(`.${styles.notificationPopup}`)) {
+    setIsNotificationOpen(false);
+  }
+};
 
-  useEffect(() => {
+useEffect(() => {
+  // Thêm event listener cho toàn bộ document
+  if (isNotificationOpen) {
     document.addEventListener('click', closeNotification);
     return () => document.removeEventListener('click', closeNotification);
-  }, [isNotificationOpen]);
+  }
+}, [isNotificationOpen]);
+
+
 
   // Mark notification as read
-  const markAsRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((notif) =>
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
-    );
+  const markAsRead = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/${id}/mark-read`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to mark notification as read: ${response.statusText}`);
+      }
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          notif.id === id ? { ...notif, isRead: true } : notif
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
   // Calculate time ago
@@ -244,7 +329,7 @@ const Header = () => {
       text: 'DANH MỤC TÀI SẢN',
       href: '#',
       isCategory: true,
-      subItems: categories, // Sử dụng categories từ API
+      subItems: categories,
     },
     { icon: 'fa-gavel', text: 'ĐẤU GIÁ TRỰC TUYẾN', href: 'auction-session' },
     { icon: 'fa-newspaper', text: 'TIN TỨC - THÔNG BÁO', href: 'news' },
@@ -253,7 +338,7 @@ const Header = () => {
   ];
 
   return (
-    <>
+    <div style={{ position: 'relative' }}>
       {/* Top Bar */}
       <div className={styles.topBar}>
         <div className={styles.hotline}>
@@ -279,6 +364,11 @@ const Header = () => {
               {/* Notification Bell */}
               <div className={styles.notifi} onClick={toggleNotification}>
                 <i className="fa fa-bell" aria-hidden="true"></i>
+                {notifications.filter(notif => !notif.isRead).length > 0 && (
+                  <span className={styles.unreadCount}>
+                    {notifications.filter(notif => !notif.isRead).length}
+                  </span>
+                )}
               </div>
               <a href="#" onClick={handleLogout}>
                 Đăng Xuất <i className="fa fa-sign-out" aria-hidden="true"></i>
@@ -295,28 +385,46 @@ const Header = () => {
       </div>
 
       {/* Notification Popup */}
-      {isNotificationOpen && (
-        <div className={styles.notificationPopup} onClick={closeNotification}>
-          <div className={styles.notificationContent}>
-            <span className={styles.notificationClose} onClick={toggleNotification}>
-              &times;
-            </span>
-            <h3>Thông Báo</h3>
-            <ul>
-              {notifications.map((notif) => (
-                <li
-                  key={notif.id}
-                  className={notif.isRead ? styles.read : styles.unread}
-                  onClick={() => markAsRead(notif.id)}
-                >
-                  {notif.isRead && <span className={styles.readIcon}>✔ </span>}
-                  {notif.text} <span className={styles.timeAgo}>({getTimeAgo(notif.timestamp)})</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+    {isNotificationOpen && (
+  <div className={styles.notificationPopup} role="dialog" aria-label="Thông báo">
+    <div className={styles.notificationContent}>
+      <span 
+        className={styles.notificationClose} 
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsNotificationOpen(false);
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label="Đóng thông báo"
+      >
+        &times;
+      </span>
+      <h3>Thông Báo</h3>
+      {notificationError ? (
+        <p className={styles.error}>{notificationError}</p>
+      ) : notifications.length > 0 ? (
+        <ul>
+          {notifications.slice(0, 5).map((notif) => (
+            <li
+              key={notif.id}
+              className={notif.isRead ? styles.read : styles.unread}
+              onClick={() => markAsRead(notif.id)}
+              role="button"
+              tabIndex={0}
+            >
+              {notif.isRead && <span className={styles.readIcon}>✔</span>}
+              {notif.text} 
+              <span className={styles.timeAgo}>({getTimeAgo(notif.timestamp)})</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>Không có thông báo nào</p>
       )}
+    </div>
+  </div>
+)}
 
       {/* Header Main */}
       <header className={styles.headerMain}>
@@ -454,7 +562,7 @@ const Header = () => {
           ))}
         </ul>
       </div>
-    </>
+    </div>
   );
 };
 
