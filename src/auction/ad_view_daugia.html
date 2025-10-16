@@ -688,7 +688,7 @@
             // Gộp fetch bids và bidders
             await Promise.all([fetchBids(), fetchBidders()]);  // Parallel để nhanh hơn
         } catch (err) {
-            console.error('Poll error:', err);
+           
             log('⚠️ Lỗi polling dữ liệu');
         }
     };
@@ -729,7 +729,7 @@
             remainingSeconds = Math.max(0, Math.floor((end - now) / 1000));
             updateUI();
         } catch (err) {
-            console.error('Fetch error:', err);
+          
             error = err.message || 'Lỗi không xác định';
             log(`Lỗi tải thông tin: ${error}`);
         } finally {
@@ -747,8 +747,7 @@
                 throw new Error(data.message || 'Không thể lấy danh sách danh mục');
             }
         } catch (err) {
-            console.error('Fetch categories error:', err);
-            categories = [];
+           
             log('Không thể tải danh sách danh mục');
         }
     };

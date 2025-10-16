@@ -113,7 +113,6 @@ const Profile = () => {
         }
       } catch (err) {
         setError(err.message);
-        console.error('Error fetching user data:', err);
       } finally {
         setLoading(false);
       }

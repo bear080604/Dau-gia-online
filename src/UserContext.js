@@ -16,7 +16,7 @@ export const UserProvider = ({ children }) => {
       const savedUser = localStorage.getItem('user');
       return savedUser ? JSON.parse(savedUser) : null;
     } catch (err) {
-      console.error('Invalid user data in localStorage:', err);
+     
       localStorage.removeItem('user');
       return null;
     }
@@ -37,16 +37,11 @@ export const UserProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    console.log('Before logout:', { user, token, authToken: localStorage.getItem('authToken') });
-    setUser(null);
-    setToken(null);
+    
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('authToken'); // Thêm dòng này để xóa authToken
-    console.log('After logout:', {
-      localStorageToken: localStorage.getItem('token'),
-      localStorageAuthToken: localStorage.getItem('authToken')
-    });
+ 
 
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/logout`, {
@@ -59,10 +54,10 @@ export const UserProvider = ({ children }) => {
       });
 
       if (!response.ok) {
-        console.error('Logout API failed:', response.status);
+        
       }
     } catch (err) {
-      console.error('Logout error:', err);
+     
     }
   };
 
@@ -95,7 +90,7 @@ export const UserProvider = ({ children }) => {
               throw new Error('Invalid user data from API');
             }
           } else if (response.status === 401) {
-            console.warn('Session expired (401)');
+           
             setUser(null);
             setToken(null);
             localStorage.removeItem('user');
@@ -103,7 +98,7 @@ export const UserProvider = ({ children }) => {
             localStorage.removeItem('authToken'); // Xóa authToken nếu token hết hạn
           }
         } catch (err) {
-          console.error('Validation error:', err);
+         
           setUser(null);
           setToken(null);
           localStorage.removeItem('user');

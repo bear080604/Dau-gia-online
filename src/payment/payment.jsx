@@ -69,7 +69,6 @@ const Payment = () => {
         throw new Error(data.message || 'Lỗi dữ liệu hợp đồng');
       }
     } catch (error) {
-      console.error('Fetch contract error:', error);
       showToastMessage('Lỗi tải thông tin hợp đồng: ' + error.message, 'error');
       return null;
     }
@@ -99,7 +98,6 @@ const Payment = () => {
         throw new Error('Lỗi dữ liệu user');
       }
     } catch (error) {
-      console.error('Fetch organization error:', error);
       showToastMessage('Lỗi tải thông tin tổ chức: ' + error.message, 'error');
       return 'N/A';
     }
@@ -139,7 +137,6 @@ const Payment = () => {
         throw new Error(data.message || 'Không lấy được URL thanh toán');
       }
     } catch (error) {
-      console.error(error);
       showToastMessage('Lỗi tạo URL thanh toán: ' + error.message, 'error');
       setProcessing(false);
     }

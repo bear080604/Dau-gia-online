@@ -70,7 +70,6 @@ function LoginForm() {
         setErrorMessage(error.message || 'Email hoặc mật khẩu không đúng');
       }
     } catch (err) {
-      console.error('Lỗi API:', err);
       setErrorMessage('Không thể kết nối đến server. Vui lòng thử lại sau.');
     }
   };

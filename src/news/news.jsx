@@ -18,7 +18,7 @@ const News = () => {
         setCategories(data.map((cat) => cat.name));
         setActiveCategory(data[0]?.name || ''); // Set first category as default
       })
-      .catch((error) => console.error('Lỗi khi lấy danh mục:', error));
+      .catch((error) => {});
 
     // Fetch news
     fetch('http://127.0.0.1:8000/api/news')
@@ -41,7 +41,7 @@ const News = () => {
         }));
         setNewsData(formattedNews);
       })
-      .catch((error) => console.error('Lỗi khi lấy tin tức:', error));
+      .catch((error) => {});
   }, []);
 
   const filteredNews = newsData.filter((item) => item.category === activeCategory);

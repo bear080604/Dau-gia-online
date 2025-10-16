@@ -1,13 +1,23 @@
-# Upgrade WebSocket to Socket.IO in Detail Page
+# TODO: Remove console.error statements from codebase
 
-## Tasks
-- [x] Import Socket.IO client in detai.jsx
-- [x] Replace native WebSocket with Socket.IO connection
-- [x] Join auction room on connection
-- [x] Listen for 'bid_update' and 'status_update' events
-- [x] Update currentBidPrice and auctionItem status on events
-- [x] Add connection status updates
-- [x] Handle disconnections and reconnections
-- [x] Remove old WebSocket code
-- [x] Update status_update to handle full auctionItem updates
-- [ ] Test the implementation
+- [x] Remove console.error from src/payment/payment.jsx
+- [x] Remove console.error from src/news/news.jsx
+- [x] Remove console.error from src/login/login.jsx
+- [x] Remove console.error from src/infouser/profile.jsx
+- [x] Remove console.error from src/home/home.jsx
+- [ ] Remove console.error from src/header/header.jsx
+- [ ] Remove console.error from src/footer/footer.jsx
+- [ ] Remove console.error from src/detail/detail.jsx
+- [ ] Remove console.error from src/contract/contract.jsx
+- [ ] Remove console.error from src/contact/contact.jsx
+- [ ] Remove console.error from src/auction-session/auction-session.jsx
+- [ ] Remove console.error from src/auction/backkupjsx
+- [ ] Remove console.error from src/auction/auction.jsx
+- [ ] Remove console.error from src/auction/ad_view_daugia.html
+- [ ] Remove console.error from src/admin/Register-auction/register-auction.jsx
+- [ ] Remove console.error from src/admin/EContract/EContract.jsx
+- [ ] Remove console.error from src/admin/Contract/Contract.jsx
+- [ ] Remove console.error from src/register/register.jsx
+- [ ] Remove console.error from src/admin/Auction-session/Auction-session.jsx
+- [ ] Remove console.error from src/admin/adshow-auction/adshowauction.jsx
+- [ ] Verify no console statements remain
