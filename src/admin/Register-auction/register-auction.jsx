@@ -38,27 +38,27 @@ const AdminPanel = () => {
         }
 
         const profilesUrl = `${process.env.REACT_APP_API_URL}auction-profiles`;
-        console.log('Request URL (Profiles):', profilesUrl);
+       
         const profilesResponse = await axios.get(profilesUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log('API Response (Profiles):', profilesResponse.data);
+      
         const profilesData = profilesResponse.data.profiles || [];
         setRegistrations(profilesData);
 
         const usersUrl = `${process.env.REACT_APP_API_URL}showuser`;
-        console.log('Request URL (Users):', usersUrl);
+        
         const usersResponse = await axios.get(usersUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log('API Response (Users):', usersResponse.data);
+      
         const usersData = usersResponse.data.users.reduce((acc, user) => {
           acc[user.user_id] = user;
           return acc;
         }, {});
         setUsers(usersData);
       } catch (err) {
-        console.error('Fetch Error:', err);
+      
         setError(err.response?.data?.message || 'Failed to fetch data');
       } finally {
         setLoading(false);
@@ -83,7 +83,7 @@ const AdminPanel = () => {
       ));
       alert(response.data.message || `Đã cập nhật trạng thái thành ${newStatus}${reason ? ` với lý do: ${reason}` : ''}`);
     } catch (err) {
-      console.error('Update Error:', err);
+     
       alert(err.response?.data?.message || 'Cập nhật trạng thái thất bại');
     }
   };
@@ -127,9 +127,7 @@ const AdminPanel = () => {
         paymentId: 1,
       });
       setIsDetailModalOpen(true);
-    } else {
-      console.error('Không tìm thấy đăng ký với ID:', id);
-    }
+    } else {    }
   };
 
   const closeDetailModal = () => {
@@ -150,7 +148,7 @@ const AdminPanel = () => {
       );
       alert(`Đã hoàn tiền cho thanh toán ID: ${paymentId} thuộc hồ sơ ${currentId}`);
     } catch (err) {
-      console.error('Refund Error:', err);
+   
       alert(err.response?.data?.message || 'Hoàn tiền thất bại');
     }
   };

@@ -25,9 +25,6 @@ function AuctionSession() {
     const bidStart = new Date(session.bid_start);
     const bidEnd = new Date(session.bid_end);
 
-    console.log('Debug - Now:', now);
-    console.log('Debug - Bid Start:', bidStart);
-    console.log('Debug - Bid End:', bidEnd);
 
     if (now < bidStart) {
       return "Chưa bắt đầu";
@@ -70,7 +67,7 @@ function AuctionSession() {
 
         setError(null);
       } catch (err) {
-        console.error('Lỗi API:', err);
+       
         setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
       } finally {
         setLoading(false);

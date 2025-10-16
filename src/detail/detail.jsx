@@ -105,7 +105,7 @@ const Detail = () => {
       );
       return data.session ? data : { status: true, session: data };
     } catch (e) {
-      console.error(e);
+    
       return null;
     }
   }, [apiFetch]);
@@ -393,8 +393,7 @@ const Detail = () => {
       });
 
       const data = await res.json();
-      console.log("Submit response:", data);
-
+     
       if (res.ok && data.status) {
         if (data.profile && data.profile.status) {
           setProfile({ 
@@ -416,7 +415,7 @@ const Detail = () => {
         throw new Error(errorMsg);
       }
     } catch (err) {
-      console.error("Submit error:", err);
+   
       showToast(err.message || "Lỗi server khi submit", "error");
     }
   };
@@ -465,7 +464,7 @@ const Detail = () => {
         throw new Error("Không lấy được URL thanh toán");
       }
     } catch (err) {
-      console.error(err);
+   
       showToast(err.message, "error");
     }
   };
@@ -623,7 +622,7 @@ async function handleCheckin() {
         }
       }
     } catch (err) {
-      console.error("Lỗi refetch profile:", err);
+    
     }
   }, [apiFetch, showRegisterModal, showToast]);
 

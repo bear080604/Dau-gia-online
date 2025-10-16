@@ -133,7 +133,7 @@ const AdShowAuction = () => {
             }
             return response.json();
         } catch (error) {
-            console.error('API Error:', error);
+         
             throw error;
         }
     }, [token]);

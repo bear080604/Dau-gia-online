@@ -55,8 +55,7 @@ function AuctionSession() {
 
   // Log token và user để debug
   useEffect(() => {
-    console.log('Initial Auth Token:', token);
-    console.log('User Info:', user);
+   
   }, [token, user]);
 
   const getAuctionStatus = (session) => {
@@ -152,7 +151,7 @@ function AuctionSession() {
       }
       return [];
     } catch (error) {
-      console.error('Error fetching bids:', error);
+     
       if (error.response && error.response.status === 401) {
         alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
         window.location.href = '/login';
@@ -180,12 +179,12 @@ function AuctionSession() {
         setSessions(transformedSessions);
         setTotalPages(Math.ceil(transformedSessions.length / itemsPerPage));
       } else {
-        console.error('Unexpected API response structure:', response.data);
+        
         setSessions([]);
         setError('Dữ liệu từ API không đúng định dạng.');
       }
     } catch (error) {
-      console.error('Error fetching sessions:', error);
+
       if (error.response && error.response.status === 401) {
         alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
         window.location.href = '/login';
@@ -218,7 +217,7 @@ function AuctionSession() {
         setError('Dữ liệu sản phẩm không đúng định dạng.');
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
+      
       if (error.response && error.response.status === 401) {
         alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
         window.location.href = '/login';
@@ -371,7 +370,7 @@ function AuctionSession() {
         setError('Không tìm thấy phiên đấu giá hoặc dữ liệu không hợp lệ.');
       }
     } catch (error) {
-      console.error('Error fetching session details or bids:', error);
+     
       if (error.response && error.response.status === 401) {
         alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
         window.location.href = '/login';
@@ -458,7 +457,7 @@ function AuctionSession() {
       fetchProducts(); // Cập nhật lại danh sách sản phẩm để loại bỏ sản phẩm vừa thêm vào phiên
       closeSessionModal();
     } catch (error) {
-      console.error('Error saving session:', error);
+    
       if (error.response && error.response.status === 401) {
         alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
         window.location.href = '/login';
@@ -486,7 +485,7 @@ function AuctionSession() {
         fetchSessions();
         fetchProducts(); // Cập nhật lại danh sách sản phẩm sau khi xóa phiên
       } catch (error) {
-        console.error('Error deleting session:', error);
+       
         if (error.response && error.response.status === 401) {
           alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
           window.location.href = '/login';
