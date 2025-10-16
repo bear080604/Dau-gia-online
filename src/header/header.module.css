@@ -1372,3 +1372,68 @@
     z-index: 1002;
   }
 }
+
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.suggestions li {
+  padding: 10px;
+  cursor: pointer;
+}
+.suggestions li:hover {
+  background: #f0f0f0;
+}
+.suggestions li a {
+  text-decoration: none;
+  color: #333;
+  display: block;
+}
+
+.suggestionItem {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.suggestionContent {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.suggestionImage {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  margin-right: 10px;
+  border-radius: 4px;
+}
+
+.suggestionDetails {
+  display: flex;
+  flex-direction: column;
+}
+
+.suggestionName {
+  font-weight: 500;
+  color: #333;
+}
+
+.suggestionPrice {
+  font-size: 0.9em;
+  color: #888;
+}

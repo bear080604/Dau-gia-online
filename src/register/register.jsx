@@ -113,6 +113,8 @@ function Register() {
     if (!formData.password_confirmation.trim()) newErrors.password_confirmation = "Vui lòng nhập lại mật khẩu.";
     else if (formData.password !== formData.password_confirmation) newErrors.password_confirmation = "Mật khẩu nhập lại không khớp.";
     if (!formData.bank_name.trim()) newErrors.bank_name = "Vui lòng chọn ngân hàng.";
+    if (!idCardFront) newErrors.id_card_front = "Vui lòng tải lên ảnh CCCD mặt trước.";
+    if (!idCardBack) newErrors.id_card_back = "Vui lòng tải lên ảnh CCCD mặt sau.";
 
     setClientErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -317,25 +319,39 @@ function Register() {
         </div>
 
         <div className={styles.formGroup}>
-          <label>CCCD mặt trước</label>
+          <label>CCCD mặt trước <span className={styles.required}>*</span></label>
           <input
             type="file"
-            onChange={(e) => setIdCardFront(e.target.files[0])}
-            className={errors.id_card_front ? styles.inputError : ""}
+            accept="image/*"
+            onChange={(e) => {
+              setIdCardFront(e.target.files[0]);
+              setClientErrors({ ...clientErrors, id_card_front: "" });
+              setErrors({ ...errors, id_card_front: null });
+            }}
+            className={clientErrors.id_card_front || errors.id_card_front ? styles.inputError : ""}
             disabled={isLoading}
           />
-          {errors.id_card_front && <p className={styles.errorMsg}>{errors.id_card_front[0]}</p>}
+          {(clientErrors.id_card_front || errors.id_card_front) && (
+            <p className={styles.errorMsg}>{clientErrors.id_card_front || errors.id_card_front[0]}</p>
+          )}
         </div>
 
         <div className={styles.formGroup}>
-          <label>CCCD mặt sau</label>
+          <label>CCCD mặt sau <span className={styles.required}>*</span></label>
           <input
             type="file"
-            onChange={(e) => setIdCardBack(e.target.files[0])}
-            className={errors.id_card_back ? styles.inputError : ""}
+            accept="image/*"
+            onChange={(e) => {
+              setIdCardBack(e.target.files[0]);
+              setClientErrors({ ...clientErrors, id_card_back: "" });
+              setErrors({ ...errors, id_card_back: null });
+            }}
+            className={clientErrors.id_card_back || errors.id_card_back ? styles.inputError : ""}
             disabled={isLoading}
           />
-          {errors.id_card_back && <p className={styles.errorMsg}>{errors.id_card_back[0]}</p>}
+          {(clientErrors.id_card_back || errors.id_card_back) && (
+            <p className={styles.errorMsg}>{clientErrors.id_card_back || errors.id_card_back[0]}</p>
+          )}
         </div>
 
         <button type="submit" className={styles.btnSubmit} disabled={isLoading}>

@@ -15,6 +15,7 @@ const Profile = () => {
   const [myAuctions, setMyAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [bankError, setBankError] = useState(null); // Thêm state cho lỗi tài khoản ngân hàng
   const [userData, setUserData] = useState({
     id: null,
     fullName: '',
@@ -43,6 +44,12 @@ const Profile = () => {
     newPassword: '',
     confirmPassword: '',
   });
+  const [bankData, setBankData] = useState({
+    bankName: '',
+    bankAccount: '',
+    bankBranch: '',
+    accountHolder: userData.fullName || '',
+  });
   const navigate = useNavigate();
 
   // Đồng bộ formData với userData
@@ -53,6 +60,10 @@ const Profile = () => {
       phone: userData.phone,
       address: userData.address,
     });
+    setBankData((prev) => ({
+      ...prev,
+      accountHolder: userData.fullName,
+    }));
   }, [userData]);
 
   // Lấy dữ liệu người dùng
@@ -66,12 +77,12 @@ const Profile = () => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${process.env.REACT_APP_API_URL}user`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
+            'Authorization': `Bearer ${token}`,
+          },
         });
 
         if (!response.ok) {
@@ -90,12 +101,20 @@ const Profile = () => {
             id: data.user.user_id || null,
             fullName: data.user.full_name || 'Chưa cập nhật',
             username: data.user.email ? data.user.email.split('@')[0] : 'Chưa cập nhật',
-            accountType: data.user.role === 'User' ? 'Cá nhân' :
-                        data.user.role === 'Administrator' ? 'Quản trị viên' :
-                        data.user.role === 'ToChucDauGia' ? 'Tổ chức đấu giá' :
-                        data.user.role === 'DauGiaVien' ? 'Đấu giá viên' :
-                        data.user.role === 'ChuyenVienTTC' ? 'Chuyên viên TTC' :
-                        data.user.role === 'DonViThuc' ? 'Đơn vị thực' : 'Chưa xác định',
+            accountType:
+              data.user.role === 'User'
+                ? 'Cá nhân'
+                : data.user.role === 'Administrator'
+                ? 'Quản trị viên'
+                : data.user.role === 'ToChucDauGia'
+                ? 'Tổ chức đấu giá'
+                : data.user.role === 'DauGiaVien'
+                ? 'Đấu giá viên'
+                : data.user.role === 'ChuyenVienTTC'
+                ? 'Chuyên viên TTC'
+                : data.user.role === 'DonViThuc'
+                ? 'Đơn vị thực'
+                : 'Chưa xác định',
             email: data.user.email || 'Chưa cập nhật',
             phone: data.user.phone || 'Chưa cập nhật',
             address: data.user.address || 'Chưa cập nhật',
@@ -106,7 +125,7 @@ const Profile = () => {
             bankName: data.user.bank_name || 'Chưa cập nhật',
             bankAccount: data.user.bank_account || 'Chưa cập nhật',
             createdAt: data.user.created_at || 'Chưa cập nhật',
-            emailVerifiedAt: data.user.email_verified_at || 'Chưa cập nhật'
+            emailVerifiedAt: data.user.email_verified_at || 'Chưa cập nhật',
           });
         } else {
           throw new Error('Định dạng dữ liệu không hợp lệ');
@@ -130,11 +149,11 @@ const Profile = () => {
       }
       try {
         setLoading(true);
-        const response = await fetch(`${process.env.REACT_APP_API_URL}contracts`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}contracts`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
           },
         });
 
@@ -150,15 +169,13 @@ const Profile = () => {
 
         const data = await response.json();
         if (data.status && Array.isArray(data.contracts)) {
-          const filteredContracts = data.contracts.filter(
-            contract => contract.winner_id === userData.id
-          );
-          const formattedContracts = filteredContracts.map(contract => ({
+          const filteredContracts = data.contracts.filter((contract) => contract.winner_id === userData.id);
+          const formattedContracts = filteredContracts.map((contract) => ({
             id: contract.contract_id,
             sessionName: contract.session.item.name,
             finalPrice: new Intl.NumberFormat('vi-VN', {
               style: 'currency',
-              currency: 'VND'
+              currency: 'VND',
             }).format(parseFloat(contract.final_price)),
             signDate: new Date(contract.signed_date).toLocaleString('vi-VN', {
               hour: '2-digit',
@@ -167,9 +184,9 @@ const Profile = () => {
               day: '2-digit',
               month: '2-digit',
               year: 'numeric',
-              timeZone: 'Asia/Ho_Chi_Minh'
+              timeZone: 'Asia/Ho_Chi_Minh',
             }),
-            status: contract.status === 'DaThanhToan' ? 'Đã Thanh Toán' : 'Chờ Thanh Toán'
+            status: contract.status === 'DaThanhToan' ? 'Đã Thanh Toán' : 'Chờ Thanh Toán',
           }));
           setContracts(formattedContracts);
         } else {
@@ -185,9 +202,8 @@ const Profile = () => {
     fetchContracts();
   }, [userData.id, navigate, token]);
 
-  // Thêm dữ liệu giả định cho Lịch sử đấu giá và Đấu giá của tôi
+  // Dữ liệu giả định cho Lịch sử đấu giá và Đấu giá của tôi
   useEffect(() => {
-    // Dữ liệu cho Lịch sử đấu giá
     const auctionHistoryData = [
       {
         stt: 1,
@@ -195,7 +211,7 @@ const Profile = () => {
         trangThai: 'Kết thúc',
         thoiGianDauGia: '2025-10-10 14:00:00',
         ketQua: 'Thắng',
-        xemChiTiet: '/auction/1'
+        xemChiTiet: '/auction/1',
       },
       {
         stt: 2,
@@ -203,7 +219,7 @@ const Profile = () => {
         trangThai: 'Kết thúc',
         thoiGianDauGia: '2025-10-12 10:30:00',
         ketQua: 'Thua',
-        xemChiTiet: '/auction/2'
+        xemChiTiet: '/auction/2',
       },
       {
         stt: 3,
@@ -211,12 +227,11 @@ const Profile = () => {
         trangThai: 'Đang diễn ra',
         thoiGianDauGia: '2025-10-14 15:00:00',
         ketQua: 'Đang chờ',
-        xemChiTiet: '/auction/3'
-      }
+        xemChiTiet: '/auction/3',
+      },
     ];
     setAuctionHistory(auctionHistoryData);
 
-    // Dữ liệu cho Đấu giá của tôi
     const myAuctionsData = [
       {
         stt: 1,
@@ -224,7 +239,7 @@ const Profile = () => {
         trangThai: 'Kết thúc',
         thoiGian: '2025-10-11 16:00:00',
         nguoiTrungDauGia: 'Nguyễn Văn A',
-        xemChiTiet: '/auction/4'
+        xemChiTiet: '/auction/4',
       },
       {
         stt: 2,
@@ -232,8 +247,8 @@ const Profile = () => {
         trangThai: 'Đang diễn ra',
         thoiGian: '2025-10-13 09:00:00',
         nguoiTrungDauGia: 'Chưa có',
-        xemChiTiet: '/auction/5'
-      }
+        xemChiTiet: '/auction/5',
+      },
     ];
     setMyAuctions(myAuctionsData);
   }, []);
@@ -243,25 +258,132 @@ const Profile = () => {
   const closeProfilePopup = () => setShowProfilePopup(false);
   const openBankPopup = () => {
     setBankPopupMode('add');
+    setBankData({
+      bankName: '',
+      bankAccount: '',
+      bankBranch: '',
+      accountHolder: userData.fullName,
+    });
     setShowBankPopup(true);
   };
-  const closeBankPopup = () => setShowBankPopup(false);
+  const closeBankPopup = () => {
+    setShowBankPopup(false);
+    setBankError(null);
+  };
 
   const handleEditBank = (accountId) => {
     setBankPopupMode('edit');
     setEditingBankId(accountId);
+    setBankData({
+      bankName: userData.bankName !== 'Chưa cập nhật' ? userData.bankName : '',
+      bankAccount: userData.bankAccount !== 'Chưa cập nhật' ? userData.bankAccount : '',
+      bankBranch: '',
+      accountHolder: userData.fullName,
+    });
     setShowBankPopup(true);
   };
 
-  const handleDeleteBank = (accountId) => {
+  const handleDeleteBank = async () => {
     if (window.confirm('Bạn có chắc chắn muốn xóa tài khoản ngân hàng này?')) {
-      alert(`Đã xóa tài khoản ngân hàng #${accountId}`);
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            bank_name: null,
+            bank_account: null,
+          }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem('token');
+            setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+            navigate('/login');
+            return;
+          }
+          throw new Error(data.message || 'Lỗi khi xóa tài khoản ngân hàng');
+        }
+
+        if (data.status) {
+          setUserData((prev) => ({
+            ...prev,
+            bankName: 'Chưa cập nhật',
+            bankAccount: 'Chưa cập nhật',
+          }));
+          alert('Xóa tài khoản ngân hàng thành công!');
+        } else {
+          throw new Error(data.message || 'Lỗi từ server');
+        }
+      } catch (err) {
+        setError(err.message);
+        alert(`Lỗi: ${err.message}`);
+      }
     }
   };
 
-  const handleSaveBank = () => {
-    alert('Tài khoản ngân hàng đã được lưu!');
-    closeBankPopup();
+  const handleBankInputChange = (e) => {
+    const { id, value } = e.target;
+    setBankData((prev) => ({
+      ...prev,
+      [id === 'bankName' ? 'bankName' : id === 'accountNumber' ? 'bankAccount' : id]: value,
+    }));
+  };
+
+  const handleSaveBank = async () => {
+    try {
+      if (!bankData.bankName || !bankData.bankAccount) {
+        setBankError('Vui lòng nhập đầy đủ tên ngân hàng và số tài khoản');
+        return;
+      }
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          bank_name: bankData.bankName,
+          bank_account: bankData.bankAccount,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+          navigate('/login');
+          return;
+        }
+        if (response.status === 422) {
+          const errors = data.errors || {};
+          const errorMessages = Object.values(errors).flat().join(', ');
+          throw new Error(errorMessages || 'Dữ liệu không hợp lệ');
+        }
+        throw new Error(data.message || 'Lỗi khi lưu tài khoản ngân hàng');
+      }
+
+      if (data.status) {
+        setUserData((prev) => ({
+          ...prev,
+          bankName: data.user.bank_name || 'Chưa cập nhật',
+          bankAccount: data.user.bank_account || 'Chưa cập nhật',
+        }));
+        alert('Lưu tài khoản ngân hàng thành công!');
+        closeBankPopup();
+      } else {
+        throw new Error(data.message || 'Lỗi từ server');
+      }
+    } catch (err) {
+      setBankError(err.message);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -277,13 +399,13 @@ const Profile = () => {
   const handleSaveProfile = async () => {
     try {
       const payload = {
-        name: formData.fullName,
+        full_name: formData.fullName,
         email: formData.email,
         phone: formData.phone,
         address: formData.address,
       };
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL}user/update`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -300,6 +422,11 @@ const Profile = () => {
           setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
           navigate('/login');
           return;
+        }
+        if (response.status === 422) {
+          const errors = data.errors || {};
+          const errorMessages = Object.values(errors).flat().join(', ');
+          throw new Error(errorMessages || 'Dữ liệu không hợp lệ');
         }
         throw new Error(data.message || 'Lỗi khi cập nhật thông tin');
       }
@@ -342,7 +469,7 @@ const Profile = () => {
         return;
       }
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL}user/update`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -362,6 +489,11 @@ const Profile = () => {
           setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
           navigate('/login');
           return;
+        }
+        if (response.status === 422) {
+          const errors = data.errors || {};
+          const errorMessages = Object.values(errors).flat().join(', ');
+          throw new Error(errorMessages || 'Dữ liệu không hợp lệ');
         }
         throw new Error(data.message || 'Lỗi khi đổi mật khẩu');
       }
@@ -383,59 +515,93 @@ const Profile = () => {
   };
 
   const handleUploadImage = async (side) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = async (e) => {
-      if (e.target.files && e.target.files[0]) {
-        const file = e.target.files[0];
-        const formDataUpload = new FormData();
-        formDataUpload.append(side === 'front' ? 'id_card_front' : 'id_card_back', file);
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const formDataUpload = new FormData();
+      formDataUpload.append(side === 'front' ? 'id_card_front' : 'id_card_back', file);
 
-        try {
-          const response = await fetch(`${process.env.REACT_APP_API_URL}user/update`, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-            body: formDataUpload,
-          });
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formDataUpload,
+        });
 
-          const data = await response.json();
+        const data = await response.json();
 
-          if (!response.ok) {
-            if (response.status === 401) {
-              localStorage.removeItem('token');
-              setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-              navigate('/login');
-              return;
-            }
-            throw new Error(data.message || 'Lỗi khi tải ảnh');
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem('token');
+            setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+            navigate('/login');
+            return;
           }
-
-          if (data.status) {
-            setUserData((prev) => ({
-              ...prev,
-              [side === 'front' ? 'idCardFront' : 'idCardBack']: data.user[side === 'front' ? 'id_card_front' : 'id_card_back'],
-              [side === 'front' ? 'idCardFrontUrl' : 'idCardBackUrl']: data.user[side === 'front' ? 'id_card_front_url' : 'id_card_back_url'],
-            }));
-            alert(`Tải ảnh mặt ${side === 'front' ? 'trước' : 'sau'} thành công`);
+          if (response.status === 422) {
+            const errors = data.errors || {};
+            const errorMessages = Object.values(errors).flat().join(', ');
+            throw new Error(errorMessages || 'Dữ liệu không hợp lệ');
           }
-        } catch (err) {
-          setError(err.message);
-          alert(`Lỗi: ${err.message}`);
+          throw new Error(data.message || 'Lỗi khi tải ảnh');
         }
+
+        if (data.status && data.user) {
+          setUserData((prev) => ({
+            ...prev,
+            idCardFront: data.user.id_card_front || prev.idCardFront,
+            idCardFrontUrl: data.user.id_card_front_url || prev.idCardFrontUrl,
+            idCardBack: data.user.id_card_back || prev.idCardBack,
+            idCardBackUrl: data.user.id_card_back_url || prev.idCardBackUrl,
+          }));
+          alert(`Tải ảnh mặt ${side === 'front' ? 'trước' : 'sau'} thành công`);
+        } else {
+          throw new Error('Phản hồi không hợp lệ từ server');
+        }
+      } catch (err) {
+        setError(err.message);
+        alert(`Lỗi: ${err.message}`);
       }
-    };
-    input.click();
+    }
   };
+  input.click();
+};
 
   const handleLogout = async (e) => {
     e.preventDefault();
     try {
-      await logout();
-      alert('Đăng xuất thành công');
-      navigate('/login');
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+          navigate('/login');
+          return;
+        }
+        throw new Error(`Yêu cầu thất bại với mã trạng thái ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.status) {
+        await logout();
+        localStorage.removeItem('token');
+        alert('Đăng xuất thành công');
+        navigate('/login');
+      } else {
+        throw new Error(data.message || 'Đăng xuất thất bại');
+      }
     } catch (err) {
       setError('Lỗi đăng xuất: ' + err.message);
       alert('Lỗi đăng xuất: ' + err.message);
@@ -444,7 +610,7 @@ const Profile = () => {
 
   const renderTabContent = () => {
     if (loading) return <p>Đang tải dữ liệu...</p>;
-    if (error) return <p>{error}</p>;
+    if (error) return <p className={styles.error}>{error}</p>;
 
     switch (activeTab) {
       case 'profile':
@@ -478,35 +644,36 @@ const Profile = () => {
                   <div className={styles.photoSection}>
                     <div className={styles.photoItem}>
                       <span className={styles.photoLabel}>Mặt trước</span>
-                      <div 
-                        className={styles.photoPlaceholder} 
+                      <div
+                        className={styles.photoPlaceholder}
                         onClick={() => handleUploadImage('front')}
                         style={{ cursor: 'pointer', position: 'relative' }}
                       >
-                     { console.log(userData.idCardFrontUrl)}
                         {userData.idCardFrontUrl ? (
-                          <img 
-                            src={userData.idCardFrontUrl} 
-                            alt="CCCD Mặt trước" 
-                            style={{ 
-                              maxWidth: '100px', 
-                              maxHeight: '150px', 
+                          <img
+                            src={userData.idCardFrontUrl}
+                            alt="CCCD Mặt trước"
+                            style={{
+                              maxWidth: '100px',
+                              maxHeight: '150px',
                               objectFit: 'contain',
                               border: '1px solid #ddd',
-                              borderRadius: '4px'
-                            }} 
-                            onError={(e) => { e.target.style.display = 'none'; }}
+                              borderRadius: '4px',
+                            }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
                           />
                         ) : (
-                          <div 
-                            className={styles.placeholderText} 
-                            style={{ 
-                              padding: '50px 10px', 
-                              textAlign: 'center', 
-                              color: '#999', 
+                          <div
+                            className={styles.placeholderText}
+                            style={{
+                              padding: '50px 10px',
+                              textAlign: 'center',
+                              color: '#999',
                               border: '2px dashed #ccc',
                               borderRadius: '4px',
-                              backgroundColor: '#f9f9f9'
+                              backgroundColor: '#f9f9f9',
                             }}
                           >
                             [Ảnh mặt trước]<br />
@@ -517,34 +684,36 @@ const Profile = () => {
                     </div>
                     <div className={styles.photoItem}>
                       <span className={styles.photoLabel}>Mặt sau</span>
-                      <div 
-                        className={styles.photoPlaceholder} 
+                      <div
+                        className={styles.photoPlaceholder}
                         onClick={() => handleUploadImage('back')}
                         style={{ cursor: 'pointer', position: 'relative' }}
                       >
                         {userData.idCardBackUrl ? (
-                          <img 
-                            src={userData.idCardBackUrl} 
-                            alt="CCCD Mặt sau" 
-                            style={{ 
-                              maxWidth: '100px', 
-                              maxHeight: '150px', 
+                          <img
+                            src={userData.idCardBackUrl}
+                            alt="CCCD Mặt sau"
+                            style={{
+                              maxWidth: '100px',
+                              maxHeight: '150px',
                               objectFit: 'contain',
                               border: '1px solid #ddd',
-                              borderRadius: '4px'
-                            }} 
-                            onError={(e) => { e.target.style.display = 'none'; }}
+                              borderRadius: '4px',
+                            }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
                           />
                         ) : (
-                          <div 
-                            className={styles.placeholderText} 
-                            style={{ 
-                              padding: '50px 10px', 
-                              textAlign: 'center', 
-                              color: '#999', 
+                          <div
+                            className={styles.placeholderText}
+                            style={{
+                              padding: '50px 10px',
+                              textAlign: 'center',
+                              color: '#999',
                               border: '2px dashed #ccc',
                               borderRadius: '4px',
-                              backgroundColor: '#f9f9f9'
+                              backgroundColor: '#f9f9f9',
                             }}
                           >
                             [Ảnh mặt sau]<br />
@@ -593,7 +762,7 @@ const Profile = () => {
           <div className={styles.tabPane} id="contracts">
             <div className={styles.infoSection}>
               {loading && <p>Đang tải dữ liệu...</p>}
-              {error && <p>{error}</p>}
+              {error && <p className={styles.error}>{error}</p>}
               {!loading && !error && contracts.length === 0 && <p>Không có hợp đồng nào.</p>}
               {!loading && !error && contracts.length > 0 && (
                 <table className={styles.contractTable}>
@@ -608,14 +777,18 @@ const Profile = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {contracts.map(contract => (
+                    {contracts.map((contract) => (
                       <tr key={contract.id}>
                         <td className={styles.contractId}>{contract.id}</td>
                         <td>{contract.sessionName}</td>
                         <td className={styles.contractPrice}>{contract.finalPrice}</td>
                         <td>{contract.signDate}</td>
                         <td>
-                          <span className={`${styles.contractStatus} ${contract.status === 'Đã Thanh Toán' ? styles.statusPaid : styles.statusWaiting}`}>
+                          <span
+                            className={`${styles.contractStatus} ${
+                              contract.status === 'Đã Thanh Toán' ? styles.statusPaid : styles.statusWaiting
+                            }`}
+                          >
                             {contract.status}
                           </span>
                         </td>
@@ -672,7 +845,9 @@ const Profile = () => {
                   </select>
                 </div>
                 <div className={styles.filterGroup} style={{ alignSelf: 'flex-end' }}>
-                  <button className={styles.btn} onClick={() => alert('Đã áp dụng bộ lọc')}>Lọc</button>
+                  <button className={styles.btn} onClick={() => alert('Đã áp dụng bộ lọc')}>
+                    Lọc
+                  </button>
                 </div>
               </div>
               <div className={styles.paymentHistory}>
@@ -719,7 +894,9 @@ const Profile = () => {
                   placeholder="Nhập lại mật khẩu mới"
                 />
               </div>
-              <button className={styles.btn} onClick={handleChangePassword}>Đổi mật khẩu</button>
+              <button className={styles.btn} onClick={handleChangePassword}>
+                Đổi mật khẩu
+              </button>
             </div>
           </div>
         );
@@ -748,7 +925,11 @@ const Profile = () => {
                         <td>{item.stt}</td>
                         <td>{item.tenTaiSan}</td>
                         <td>
-                          <span className={`${styles.contractStatus} ${item.trangThai === 'Kết thúc' ? styles.statusPaid : styles.statusWaiting}`}>
+                          <span
+                            className={`${styles.contractStatus} ${
+                              item.trangThai === 'Kết thúc' ? styles.statusPaid : styles.statusWaiting
+                            }`}
+                          >
                             {item.trangThai}
                           </span>
                         </td>
@@ -795,7 +976,11 @@ const Profile = () => {
                         <td>{item.stt}</td>
                         <td>{item.tenTaiSan}</td>
                         <td>
-                          <span className={`${styles.contractStatus} ${item.trangThai === 'Kết thúc' ? styles.statusPaid : styles.statusWaiting}`}>
+                          <span
+                            className={`${styles.contractStatus} ${
+                              item.trangThai === 'Kết thúc' ? styles.statusPaid : styles.statusWaiting
+                            }`}
+                          >
                             {item.trangThai}
                           </span>
                         </td>
@@ -825,14 +1010,22 @@ const Profile = () => {
 
   const renderContentTitle = () => {
     switch (activeTab) {
-      case 'profile': return 'Thông tin cá nhân';
-      case 'bank': return 'Tài khoản ngân hàng';
-      case 'contracts': return 'Danh sách hợp đồng';
-      case 'payment-history': return 'Lịch sử thanh toán';
-      case 'password': return 'Đổi mật khẩu';
-      case 'auction-history': return 'Lịch sử đấu giá';
-      case 'my-auctions': return 'Đấu giá của tôi';
-      default: return 'Thông tin cá nhân';
+      case 'profile':
+        return 'Thông tin cá nhân';
+      case 'bank':
+        return 'Tài khoản ngân hàng';
+      case 'contracts':
+        return 'Danh sách hợp đồng';
+      case 'payment-history':
+        return 'Lịch sử thanh toán';
+      case 'password':
+        return 'Đổi mật khẩu';
+      case 'auction-history':
+        return 'Lịch sử đấu giá';
+      case 'my-auctions':
+        return 'Đấu giá của tôi';
+      default:
+        return 'Thông tin cá nhân';
     }
   };
 
@@ -844,7 +1037,7 @@ const Profile = () => {
       <div className={styles.sidebar}>
         <div className={styles.userInfo}>
           <div className={styles.avatar}>{userData.fullName ? userData.fullName[0] : 'N/A'}</div>
-          <div className={styles.username}>{userData.username}</div>
+          <div className={styles.fullName}>{userData.fullName}</div>
           <div className={styles.accountType}>{userData.accountType}</div>
         </div>
         <ul className={styles.sidebarMenu}>
@@ -852,7 +1045,10 @@ const Profile = () => {
             <a
               href="#"
               className={activeTab === 'profile' ? styles.active : ''}
-              onClick={(e) => { e.preventDefault(); handleTabChange('profile'); }}
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabChange('profile');
+              }}
             >
               Thông tin cá nhân
             </a>
@@ -861,7 +1057,10 @@ const Profile = () => {
             <a
               href="#"
               className={activeTab === 'bank' ? styles.active : ''}
-              onClick={(e) => { e.preventDefault(); handleTabChange('bank'); }}
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabChange('bank');
+              }}
             >
               Tài khoản ngân hàng
             </a>
@@ -870,7 +1069,10 @@ const Profile = () => {
             <a
               href="#"
               className={activeTab === 'contracts' ? styles.active : ''}
-              onClick={(e) => { e.preventDefault(); handleTabChange('contracts'); }}
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabChange('contracts');
+              }}
             >
               Danh sách hợp đồng
             </a>
@@ -879,7 +1081,10 @@ const Profile = () => {
             <a
               href="#"
               className={activeTab === 'payment-history' ? styles.active : ''}
-              onClick={(e) => { e.preventDefault(); handleTabChange('payment-history'); }}
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabChange('payment-history');
+              }}
             >
               Lịch sử thanh toán
             </a>
@@ -888,7 +1093,10 @@ const Profile = () => {
             <a
               href="#"
               className={activeTab === 'password' ? styles.active : ''}
-              onClick={(e) => { e.preventDefault(); handleTabChange('password'); }}
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabChange('password');
+              }}
             >
               Đổi mật khẩu
             </a>
@@ -897,7 +1105,10 @@ const Profile = () => {
             <a
               href="#"
               className={activeTab === 'my-auctions' ? styles.active : ''}
-              onClick={(e) => { e.preventDefault(); handleTabChange('my-auctions'); }}
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabChange('my-auctions');
+              }}
             >
               Đấu giá của tôi
             </a>
@@ -906,7 +1117,10 @@ const Profile = () => {
             <a
               href="#"
               className={activeTab === 'auction-history' ? styles.active : ''}
-              onClick={(e) => { e.preventDefault(); handleTabChange('auction-history'); }}
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabChange('auction-history');
+              }}
             >
               Lịch sử đấu giá
             </a>
@@ -919,10 +1133,7 @@ const Profile = () => {
             </li>
           )}
           <li>
-            <a
-              href="#"
-              onClick={handleLogout}
-            >
+            <a href="#" onClick={handleLogout}>
               Đăng xuất
             </a>
           </li>
@@ -937,9 +1148,7 @@ const Profile = () => {
             </button>
           )}
         </div>
-        <div className={styles.tabContent}>
-          {renderTabContent()}
-        </div>
+        <div className={styles.tabContent}>{renderTabContent()}</div>
       </div>
 
       {showProfilePopup && (
@@ -947,9 +1156,12 @@ const Profile = () => {
           <div className={styles.popup}>
             <div className={styles.popupHeader}>
               <div className={styles.popupTitle}>Chỉnh sửa thông tin cá nhân</div>
-              <button className={styles.popupClose} onClick={closeProfilePopup}>&times;</button>
+              <button className={styles.popupClose} onClick={closeProfilePopup}>
+                &times;
+              </button>
             </div>
             <div className={styles.popupBody}>
+              {error && <p className={styles.error}>{error}</p>}
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Họ và tên</label>
@@ -999,34 +1211,36 @@ const Profile = () => {
                 <div className={styles.photoSection}>
                   <div className={styles.photoItem}>
                     <span className={styles.photoLabel}>Mặt trước</span>
-                    <div 
-                      className={styles.photoPlaceholder} 
+                    <div
+                      className={styles.photoPlaceholder}
                       onClick={() => handleUploadImage('front')}
                       style={{ cursor: 'pointer', position: 'relative' }}
                     >
                       {userData.idCardFrontUrl ? (
-                        <img 
-                          src={userData.idCardFrontUrl} 
-                          alt="CCCD Mặt trước" 
-                          style={{ 
-                            maxWidth: '100px', 
-                            maxHeight: '150px', 
+                        <img
+                          src={userData.idCardFrontUrl}
+                          alt="CCCD Mặt trước"
+                          style={{
+                            maxWidth: '100px',
+                            maxHeight: '150px',
                             objectFit: 'contain',
                             border: '1px solid #ddd',
-                            borderRadius: '4px'
-                          }} 
-                          onError={(e) => { e.target.style.display = 'none'; }}
+                            borderRadius: '4px',
+                          }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
                         />
                       ) : (
-                        <div 
-                          className={styles.placeholderText} 
-                          style={{ 
-                            padding: '50px 10px', 
-                            textAlign: 'center', 
-                            color: '#999', 
+                        <div
+                          className={styles.placeholderText}
+                          style={{
+                            padding: '50px 10px',
+                            textAlign: 'center',
+                            color: '#999',
                             border: '2px dashed #ccc',
                             borderRadius: '4px',
-                            backgroundColor: '#f9f9f9'
+                            backgroundColor: '#f9f9f9',
                           }}
                         >
                           [Ảnh mặt trước]<br />
@@ -1037,34 +1251,36 @@ const Profile = () => {
                   </div>
                   <div className={styles.photoItem}>
                     <span className={styles.photoLabel}>Mặt sau</span>
-                    <div 
-                      className={styles.photoPlaceholder} 
+                    <div
+                      className={styles.photoPlaceholder}
                       onClick={() => handleUploadImage('back')}
                       style={{ cursor: 'pointer', position: 'relative' }}
                     >
                       {userData.idCardBackUrl ? (
-                        <img 
-                          src={userData.idCardBackUrl} 
-                          alt="CCCD Mặt sau" 
-                          style={{ 
-                            maxWidth: '100px', 
-                            maxHeight: '150px', 
+                        <img
+                          src={userData.idCardBackUrl}
+                          alt="CCCD Mặt sau"
+                          style={{
+                            maxWidth: '100px',
+                            maxHeight: '150px',
                             objectFit: 'contain',
                             border: '1px solid #ddd',
-                            borderRadius: '4px'
-                          }} 
-                          onError={(e) => { e.target.style.display = 'none'; }}
+                            borderRadius: '4px',
+                          }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
                         />
                       ) : (
-                        <div 
-                          className={styles.placeholderText} 
-                          style={{ 
-                            padding: '50px 10px', 
-                            textAlign: 'center', 
-                            color: '#999', 
+                        <div
+                          className={styles.placeholderText}
+                          style={{
+                            padding: '50px 10px',
+                            textAlign: 'center',
+                            color: '#999',
                             border: '2px dashed #ccc',
                             borderRadius: '4px',
-                            backgroundColor: '#f9f9f9'
+                            backgroundColor: '#f9f9f9',
                           }}
                         >
                           [Ảnh mặt sau]<br />
@@ -1077,8 +1293,12 @@ const Profile = () => {
               </div>
             </div>
             <div className={styles.popupFooter}>
-              <button className={styles.btn} onClick={closeProfilePopup}>Hủy</button>
-              <button className={`${styles.btn} ${styles.btnEdit}`} onClick={handleSaveProfile}>Lưu thay đổi</button>
+              <button className={styles.btn} onClick={closeProfilePopup}>
+                Hủy
+              </button>
+              <button className={`${styles.btn} ${styles.btnEdit}`} onClick={handleSaveProfile}>
+                Lưu thay đổi
+              </button>
             </div>
           </div>
         </div>
@@ -1091,38 +1311,70 @@ const Profile = () => {
               <div className={styles.popupTitle}>
                 {bankPopupMode === 'add' ? 'Thêm tài khoản ngân hàng' : 'Chỉnh sửa tài khoản ngân hàng'}
               </div>
-              <button className={styles.popupClose} onClick={closeBankPopup}>&times;</button>
+              <button className={styles.popupClose} onClick={closeBankPopup}>
+                &times;
+              </button>
             </div>
             <div className={styles.popupBody}>
+              {bankError && <p className={styles.error}>{bankError}</p>}
               <div className={styles.bankForm}>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Ngân hàng</label>
-                  <select className={styles.formControl} id="bankName">
+                  <select
+                    className={styles.formControl}
+                    id="bankName"
+                    value={bankData.bankName}
+                    onChange={handleBankInputChange}
+                  >
                     <option value="">Chọn ngân hàng</option>
-                    <option value="vcb">Vietcombank</option>
-                    <option value="ab">Agribank</option>
-                    <option value="vietinbank">VietinBank</option>
-                    <option value="bidv">BIDV</option>
-                    <option value="techcombank">Techcombank</option>
+                    <option value="Vietcombank">Vietcombank</option>
+                    <option value="Agribank">Agribank</option>
+                    <option value="VietinBank">VietinBank</option>
+                    <option value="BIDV">BIDV</option>
+                    <option value="Techcombank">Techcombank</option>
                   </select>
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Số tài khoản</label>
-                  <input type="text" className={styles.formControl} id="accountNumber" placeholder="Nhập số tài khoản" />
+                  <input
+                    type="text"
+                    className={styles.formControl}
+                    id="bankAccount"
+                    value={bankData.bankAccount}
+                    onChange={handleBankInputChange}
+                    placeholder="Nhập số tài khoản"
+                  />
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Chủ tài khoản</label>
-                  <input type="text" className={styles.formControl} id="accountHolder" defaultValue={userData.fullName} />
+                  <input
+                    type="text"
+                    className={styles.formControl}
+                    id="accountHolder"
+                    value={bankData.accountHolder}
+                    readOnly
+                  />
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Chi nhánh</label>
-                  <input type="text" className={styles.formControl} id="bankBranch" placeholder="Nhập chi nhánh ngân hàng" />
+                  <input
+                    type="text"
+                    className={styles.formControl}
+                    id="bankBranch"
+                    value={bankData.bankBranch}
+                    onChange={handleBankInputChange}
+                    placeholder="Nhập chi nhánh ngân hàng"
+                  />
                 </div>
               </div>
             </div>
             <div className={styles.popupFooter}>
-              <button className={styles.btn} onClick={closeBankPopup}>Hủy</button>
-              <button className={`${styles.btn} ${styles.btnEdit}`} onClick={handleSaveBank}>Lưu tài khoản</button>
+              <button className={styles.btn} onClick={closeBankPopup}>
+                Hủy
+              </button>
+              <button className={`${styles.btn} ${styles.btnEdit}`} onClick={handleSaveBank}>
+                Lưu tài khoản
+              </button>
             </div>
           </div>
         </div>
