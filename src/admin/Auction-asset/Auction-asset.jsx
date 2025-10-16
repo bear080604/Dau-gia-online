@@ -45,11 +45,13 @@ function AuctionAsset() {
   };
 
   const formatAssetData = (asset, categories) => {
-    
+    console.log('Formatting asset:', asset);
+    console.log('Categories:', categories);
+    // Tìm danh mục dựa trên tên danh mục (asset.category) thay vì category_id
     const category = categories.find((cat) =>
       cat.name === asset.category
     );
-    
+    console.log('Found category:', category);
     // const imageUrls = asset.image_url
     //   ? typeof asset.image_url === 'string'
     //     ? JSON.parse(asset.image_url)
@@ -108,7 +110,7 @@ function AuctionAsset() {
     const fetchCategories = async () => {
       try {
         const response = await axios.get(`${API_URL}categories`);
-       
+        console.log('Dữ liệu API danh mục:', response.data);
         const categoriesData = response.data.data || [];
         const normalizedCategories = categoriesData.map((cat) => ({
           id: cat.category_id || cat.id,
@@ -117,7 +119,7 @@ function AuctionAsset() {
         }));
         setCategories(normalizedCategories);
       } catch (error) {
-  
+        console.error('Lỗi khi lấy danh mục:', error.response?.data || error);
         alert(
           `Không thể tải danh mục: ${
             error.response?.data?.message || 'Vui lòng thử lại.'
@@ -135,13 +137,13 @@ function AuctionAsset() {
       try {
         setIsLoadingAssets(true);
         const response = await axios.get(`${API_URL}products`);
-   
+        console.log('Dữ liệu API tài sản:', response.data);
         const formattedAssets = response.data.data
           .map((asset) => formatAssetData(asset, categories))
           .sort((a, b) => new Date(b.rawCreatedAt || 0) - new Date(a.rawCreatedAt || 0));
         setAssets(formattedAssets);
       } catch (error) {
-       
+        console.error('Lỗi khi lấy dữ liệu tài sản:', error.response?.data || error);
         alert(
           `Không thể tải dữ liệu tài sản: ${
             error.response?.data?.message || 'Vui lòng thử lại.'
@@ -176,7 +178,8 @@ function AuctionAsset() {
       const categoryMatch =
         !categoryFilter ||
         asset.categoryId.toString() === categoryFilter.toString();
-   
+      console.log('Filter result for asset:', { asset, searchMatch, statusMatch, categoryMatch });
+      return searchMatch && statusMatch && categoryMatch;
     });
   };
 
@@ -235,7 +238,7 @@ function AuctionAsset() {
     setModalMode(mode);
     setSelectedAsset(asset);
     if (asset) {
-   
+      console.log('Opening modal with asset:', asset);
       setAssetForm({
         name: asset.name,
         category: asset.categoryId || '', // Sử dụng categoryId từ formatAssetData
@@ -289,7 +292,7 @@ function AuctionAsset() {
       });
       setBidHistory(response.data.data);
     } catch (error) {
-   
+      console.error('Lỗi khi lấy lịch sử bid:', error.response?.data || error);
       setBidHistory([]);
     }
     setShowViewModal(true);
@@ -314,7 +317,7 @@ function AuctionAsset() {
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-  
+    console.log(`Form change: ${name}=${value}`); // Debug giá trị form
     if (name === 'startingPrice') {
       const formattedValue = formatNumber(value);
       setAssetForm((prev) => ({
@@ -352,7 +355,7 @@ function AuctionAsset() {
   };
 
   const handleSaveAsset = async () => {
-   
+    console.log('Saving asset with form:', assetForm);
     if (!assetForm.name.trim()) {
       alert('Tên tài sản không được để trống!');
       return;
@@ -382,7 +385,7 @@ function AuctionAsset() {
         status: assetForm.status,
         removed_image_urls: assetForm.removedImageUrls,
       };
-    
+      console.log('Payload:', payload); // Debug payload
 
       if (assetForm.files?.length > 0 && modalMode === 'add') {
         const formData = new FormData();
@@ -420,7 +423,7 @@ function AuctionAsset() {
       setAssets(formattedAssets);
       closeAssetModal();
     } catch (error) {
-    
+      console.error('Lỗi khi lưu tài sản:', error.response?.data || error);
       const errorMessage =
         error.response?.data?.message ||
         error.message ||
@@ -444,7 +447,7 @@ function AuctionAsset() {
           .sort((a, b) => new Date(b.rawCreatedAt || 0) - new Date(a.rawCreatedAt || 0));
         setAssets(formattedAssets);
       } catch (error) {
-       
+        console.error('Lỗi khi xóa tài sản:', error.response?.data || error);
         alert(
           `Lỗi khi xóa tài sản: ${
             error.response?.data?.message || 'Vui lòng thử lại.'
@@ -474,7 +477,7 @@ function AuctionAsset() {
         .sort((a, b) => new Date(b.rawCreatedAt || 0) - new Date(a.rawCreatedAt || 0));
       setAssets(formattedAssets);
     } catch (error) {
-   
+      console.error('Lỗi khi duyệt tài sản:', error.response?.data || error);
       alert(
         `Lỗi khi duyệt tài sản: ${
           error.response?.data?.message || 'Vui lòng thử lại.'
@@ -509,7 +512,7 @@ function AuctionAsset() {
       setAssets(formattedAssets);
       closeRejectModal();
     } catch (error) {
-      
+      console.error('Lỗi khi từ chối tài sản:', error.response?.data || error);
       alert(
         `Lỗi khi từ chối tài sản: ${
           error.response?.data?.message || 'Vui lòng thử lại.'
