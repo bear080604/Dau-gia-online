@@ -7,10 +7,12 @@ import Detail from './pages/Detail';
 import Register from './pages/Register';
 import Login from './pages/login';
 import Auction from './pages/Auction';
+import AboutPage from './pages/About';
 import AuctionSessionPageUser from './pages/AuctionSession';
 import ContactPage from './pages/contact';
 import ContractPage from './pages/contract';
 import PaymentPage from './pages/payment';
+
 import AdminSettings from './pages/AdminSettings';
 import Admindashboard from './pages/AdminDashboard';
 import AdminReport from './pages/AdminReport';
@@ -33,6 +35,7 @@ import NewsDetail from './pages/newsDetail';
 import Adminnews from './pages/AdminNews';
 import AdminNewsCategories from './pages/AdminNewsCategories';
 
+
 function App() {
   return (
     <UserProvider>
@@ -54,6 +57,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/access-denied" element={<AccessDenied />} />
             <Route path="/news" element={<News />} />
+              <Route path="/about" element={<AboutPage />} />
             <Route path="/news/:id" element={<NewsDetail />} />
 
             {/* Public Routes (ngăn truy cập nếu đã đăng nhập) */}
