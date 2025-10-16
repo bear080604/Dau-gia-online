@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../UserContext';
-import styles from './header.module.css'; // Import CSS module
+import axios from 'axios';
+import styles from './header.module.css';
 
 const Header = () => {
   const { user, logout } = useUser();
@@ -13,27 +14,30 @@ const Header = () => {
   const [latestUnpaidContract, setLatestUnpaidContract] = useState(null);
   const [contractData, setContractData] = useState(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: 'Yêu cầu đấu giá đã được phê duyệt', isRead: false, timestamp: new Date('2025-10-13T17:00:00+07:00') },
-    { id: 2, text: 'Phiên đấu giá mới sẽ bắt đầu vào 20:00 hôm nay.', isRead: false, timestamp: new Date('2025-10-13T16:30:00+07:00') },
-  ]);
-  const [categories, setCategories] = useState([]); // Thêm state cho danh mục
+  const [notifications, setNotifications] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [notificationError, setNotificationError] = useState(null);
+
+  const [searchQuery, setSearchQuery] = useState(''); // State cho từ khóa tìm kiếm
+  const [suggestions, setSuggestions] = useState([]); // State cho danh sách đề xuất
+  const searchRef = useRef(null); // Ref để xử lý click bên ngoài
+
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
 
   // Fetch danh mục từ API
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/categories');
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}categories`);
         if (!response.ok) {
           throw new Error('Failed to fetch categories');
         }
         const result = await response.json();
         if (result.status && result.data) {
-          // Ánh xạ dữ liệu API thành cấu trúc subItems
           const mappedCategories = result.data.map(category => ({
-            icon: getIconForCategory(category.name), // Hàm để chọn icon
+            icon: getIconForCategory(category.name),
             text: category.name,
-            href: `/category/${category.category_id}`, // Tạo href động
+            href: `/category/${category.category_id}`,
           }));
           setCategories(mappedCategories);
         } else {
@@ -41,14 +45,14 @@ const Header = () => {
         }
       } catch (error) {
         console.error('Error fetching categories:', error);
-        setCategories([]); // Nếu lỗi, đặt danh mục rỗng
+        setCategories([]);
       }
     };
 
     fetchCategories();
   }, []);
 
-  // Hàm ánh xạ tên danh mục với icon (tùy chỉnh theo nhu cầu)
+  // Hàm ánh xạ tên danh mục với icon
   const getIconForCategory = (categoryName) => {
     switch (categoryName) {
       case 'Bất động sản':
@@ -66,11 +70,68 @@ const Header = () => {
     }
   };
 
+  // Fetch thông báo từ API
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!user || !user.user_id) {
+        setNotifications([]);
+        setNotificationError(null);
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setNotifications([]);
+          setNotificationError(null);
+          return;
+        }
+
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}notifications/${user.user_id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch notifications: ${response.status} ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        if (result.status && result.notifications) {
+          setNotifications(
+            result.notifications.map(notif => ({
+              id: notif.notification_id,
+              text: notif.message,
+              isRead: notif.is_read,
+              timestamp: new Date(notif.created_at),
+            }))
+          );
+          setNotificationError(null);
+        } else {
+          throw new Error('Invalid API response structure');
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        setNotifications([]);
+        setNotificationError(`Không thể tải thông báo: ${error.message}`);
+      }
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   // Fetch contracts
   useEffect(() => {
     const fetchContracts = async () => {
       try {
-        const apiUrl = `${process.env.REACT_APP_API_URL}contracts`;
+        const apiUrl = `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}contracts`;
         const response = await fetch(apiUrl);
         if (!response.ok) {
           throw new Error('Failed to fetch contract data');
@@ -85,6 +146,49 @@ const Header = () => {
 
     fetchContracts();
   }, []);
+
+  // Fetch sản phẩm cho tìm kiếm có đề xuất
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!searchQuery.trim()) {
+        setSuggestions([]);
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}products`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        const products = response.data.data || [];
+        const productsWithSessions = products.filter(
+          (p) => Array.isArray(p.sessions) && p.sessions.length > 0
+        );
+        // Lọc sản phẩm dựa trên từ khóa tìm kiếm
+        const filteredSuggestions = productsWithSessions
+          .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+          .map(p => ({
+            id: p.sessions[0]?.id,
+            name: p.name,
+            href: `/auction-session/${p.sessions[0]?.id}`,
+            image: p.image || '/assets/img/default-product.jpg', // Giả sử API trả về trường image
+            price: p.price || 'N/A', // Giả sử API trả về trường price
+          }))
+          .slice(0, 5); // Giới hạn 5 đề xuất
+        setSuggestions(filteredSuggestions);
+      } catch (error) {
+        console.error('Error fetching search suggestions:', error);
+        setSuggestions([]);
+      }
+    };
+
+    const debounce = setTimeout(fetchSuggestions, 300); // Debounce để tránh gọi API quá nhanh
+    return () => clearTimeout(debounce);
+  }, [searchQuery]);
 
   // Update clock
   useEffect(() => {
@@ -152,10 +256,42 @@ const Header = () => {
   const handleLogout = async (e) => {
     e.preventDefault();
     try {
-      await logout();
-      alert('Đăng xuất thành công');
-      window.location.href = '/login';
+      const token = localStorage.getItem('token');
+      console.log('LocalStorage keys:', Object.keys(localStorage));
+      console.log('Token retrieved:', token);
+      if (!token) {
+        throw new Error('Không tìm thấy token đăng nhập trong localStorage');
+      }
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+      console.log('API URL:', `${apiUrl}logout`);
+      const response = await fetch(`${apiUrl}logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      console.log('Response status:', response.status);
+      if (!response.ok) {
+        const text = await response.text();
+        console.log('Response text:', text);
+        throw new Error(`Yêu cầu thất bại với mã trạng thái ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Response JSON:', result);
+      if (response.ok && result.status) {
+        await logout();
+        localStorage.removeItem('token');
+        alert('Đăng xuất thành công');
+        window.location.href = '/login';
+      } else {
+        throw new Error(result.message || 'Đăng xuất thất bại');
+      }
     } catch (err) {
+      console.error('Lỗi đăng xuất:', err);
       alert('Lỗi đăng xuất: ' + err.message);
     }
   };
@@ -163,22 +299,26 @@ const Header = () => {
   // Mobile search handlers
   const toggleMobileSearch = () => {
     setIsMobileSearchActive(!isMobileSearchActive);
+    setSearchQuery('');
+    setSuggestions([]);
   };
 
   const handleClickOutsideSearch = (e) => {
     if (
-      isMobileSearchActive &&
-      !e.target.closest(`.${styles.mobileSearchBox}`) &&
+      searchRef.current &&
+      !searchRef.current.contains(e.target) &&
       !e.target.closest(`.${styles.mobileSearchToggle}`)
     ) {
       setIsMobileSearchActive(false);
+      setSearchQuery('');
+      setSuggestions([]);
     }
   };
 
   useEffect(() => {
     document.addEventListener('click', handleClickOutsideSearch);
     return () => document.removeEventListener('click', handleClickOutsideSearch);
-  }, [isMobileSearchActive]);
+  }, []);
 
   // Mobile navigation handlers
   const openMobileNav = () => {
@@ -197,29 +337,84 @@ const Header = () => {
     setIsMobileCategoryActive(!isMobileCategoryActive);
   };
 
-  // Toggle notification popup
-  const toggleNotification = () => {
+  const toggleNotification = (e) => {
+    e.stopPropagation();
     setIsNotificationOpen(!isNotificationOpen);
   };
 
   const closeNotification = (e) => {
-    if (e.target.className === styles.notificationPopup) {
+    // Nếu click vào chuông thì không đóng
+    if (e.target.closest(`.${styles.notifi}`) ||
+        e.target.closest(`.${styles.userIconContainer}`) ||
+        e.target.closest(`.${styles.authLinks}`)) {
+      return;
+    }
+
+    // Nếu click bên ngoài notification popup thì đóng
+    if (isNotificationOpen && !e.target.closest(`.${styles.notificationPopup}`)) {
       setIsNotificationOpen(false);
+      setShowAllNotifications(false); // Reset when closing
     }
   };
 
   useEffect(() => {
-    document.addEventListener('click', closeNotification);
-    return () => document.removeEventListener('click', closeNotification);
+    // Thêm event listener cho toàn bộ document
+    if (isNotificationOpen) {
+      document.addEventListener('click', closeNotification);
+      return () => document.removeEventListener('click', closeNotification);
+    }
   }, [isNotificationOpen]);
 
   // Mark notification as read
-  const markAsRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((notif) =>
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
-    );
+  const markAsRead = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/${id}/read`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to mark notification as read: ${response.statusText}`);
+      }
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          notif.id === id ? { ...notif, isRead: true } : notif
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  // Mark all notifications as read
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/user/${user.user_id}/read-all`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to mark all notifications as read: ${response.statusText}`);
+      }
+      setNotifications((prev) =>
+        prev.map((notif) => ({ ...notif, isRead: true }))
+      );
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
   };
 
   // Calculate time ago
@@ -236,6 +431,19 @@ const Header = () => {
     return `${diffHours} giờ trước`;
   };
 
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Handle search form submit
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`; // Chuyển hướng đến trang tìm kiếm
+    }
+  };
+
   // Navigation menu items
   const navItems = [
     { icon: 'fa-info-circle', text: 'GIỚI THIỆU', href: '/about' },
@@ -244,7 +452,7 @@ const Header = () => {
       text: 'DANH MỤC TÀI SẢN',
       href: '#',
       isCategory: true,
-      subItems: categories, // Sử dụng categories từ API
+      subItems: categories,
     },
     { icon: 'fa-gavel', text: 'ĐẤU GIÁ TRỰC TUYẾN', href: 'auction-session' },
     { icon: 'fa-newspaper', text: 'TIN TỨC - THÔNG BÁO', href: 'news' },
@@ -253,7 +461,7 @@ const Header = () => {
   ];
 
   return (
-    <>
+    <div style={{ position: 'relative' }}>
       {/* Top Bar */}
       <div className={styles.topBar}>
         <div className={styles.hotline}>
@@ -279,6 +487,11 @@ const Header = () => {
               {/* Notification Bell */}
               <div className={styles.notifi} onClick={toggleNotification}>
                 <i className="fa fa-bell" aria-hidden="true"></i>
+                {notifications.filter(notif => !notif.isRead).length > 0 && (
+                  <span className={styles.unreadCount}>
+                    {notifications.filter(notif => !notif.isRead).length}
+                  </span>
+                )}
               </div>
               <a href="#" onClick={handleLogout}>
                 Đăng Xuất <i className="fa fa-sign-out" aria-hidden="true"></i>
@@ -296,24 +509,42 @@ const Header = () => {
 
       {/* Notification Popup */}
       {isNotificationOpen && (
-        <div className={styles.notificationPopup} onClick={closeNotification}>
+        <div className={styles.notificationPopup} role="dialog" aria-label="Thông báo">
           <div className={styles.notificationContent}>
-            <span className={styles.notificationClose} onClick={toggleNotification}>
+            <span
+              className={styles.notificationClose}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsNotificationOpen(false);
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Đóng thông báo"
+            >
               &times;
             </span>
             <h3>Thông Báo</h3>
-            <ul>
-              {notifications.map((notif) => (
-                <li
-                  key={notif.id}
-                  className={notif.isRead ? styles.read : styles.unread}
-                  onClick={() => markAsRead(notif.id)}
-                >
-                  {notif.isRead && <span className={styles.readIcon}>✔ </span>}
-                  {notif.text} <span className={styles.timeAgo}>({getTimeAgo(notif.timestamp)})</span>
-                </li>
-              ))}
-            </ul>
+            {notificationError ? (
+              <p className={styles.error}>{notificationError}</p>
+            ) : notifications.length > 0 ? (
+              <ul>
+                {notifications.slice(0, 5).map((notif) => (
+                  <li
+                    key={notif.id}
+                    className={notif.isRead ? styles.read : styles.unread}
+                    onClick={() => markAsRead(notif.id)}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    {notif.isRead && <span className={styles.readIcon}>✔</span>}
+                    {notif.text}
+                    <span className={styles.timeAgo}>({getTimeAgo(notif.timestamp)})</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Không có thông báo nào</p>
+            )}
           </div>
         </div>
       )}
@@ -329,25 +560,86 @@ const Header = () => {
         </div>
 
         {/* Desktop Search */}
-        <div className={styles.searchContainer}>
-          <form action="#" className={styles.searchBox} method="GET">
-            <input name="q" placeholder="Nhập tên tài sản cần tìm ..." type="text" />
+        <div className={styles.searchContainer} ref={searchRef}>
+          <form onSubmit={handleSearchSubmit} className={styles.searchBox}>
+            <input
+              name="q"
+              placeholder="Nhập tên tài sản cần tìm ..."
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              autoComplete="off"
+            />
             <button type="submit">
               <i aria-hidden="true" className="fa fa-search"></i>
             </button>
           </form>
+          {suggestions.length > 0 && (
+            <ul className={styles.suggestions}>
+              {suggestions.map((suggestion) => (
+                <li key={suggestion.id} className={styles.suggestionItem}>
+                  <Link to={suggestion.href} onClick={() => setSearchQuery('')}>
+                    <div className={styles.suggestionContent}>
+                      <img
+                        src={suggestion.image}
+                        alt={suggestion.name}
+                        className={styles.suggestionImage}
+                      />
+                      <div className={styles.suggestionDetails}>
+                        <span className={styles.suggestionName}>{suggestion.name}</span>
+                        <span className={styles.suggestionPrice}>
+                          Giá: {suggestion.price.toLocaleString('vi-VN')} VNĐ
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Mobile Search */}
-        <div className={styles.mobileSearchContainer}>
+        <div className={styles.mobileSearchContainer} ref={searchRef}>
           <button className={styles.mobileSearchToggle} onClick={toggleMobileSearch}>
             <i aria-hidden="true" className="fa fa-search"></i>
           </button>
           <div className={`${styles.mobileSearchBox} ${isMobileSearchActive ? styles.active : ''}`}>
-            <input placeholder="Nhập tên tài sản..." type="text" />
-            <button type="submit">
-              <i aria-hidden="true" className="fa fa-search"></i>
-            </button>
+            <form onSubmit={handleSearchSubmit}>
+              <input
+                placeholder="Nhập tên tài sản..."
+                type="text"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                autoComplete="off"
+              />
+              <button type="submit">
+                <i aria-hidden="true" className="fa fa-search"></i>
+              </button>
+            </form>
+            {suggestions.length > 0 && (
+              <ul className={styles.suggestions}>
+                {suggestions.map((suggestion) => (
+                  <li key={suggestion.id} className={styles.suggestionItem}>
+                    <Link to={suggestion.href} onClick={() => setSearchQuery('')}>
+                      <div className={styles.suggestionContent}>
+                        <img
+                          src={suggestion.image}
+                          alt={suggestion.name}
+                          className={styles.suggestionImage}
+                        />
+                        <div className={styles.suggestionDetails}>
+                          <span className={styles.suggestionName}>{suggestion.name}</span>
+                          <span className={styles.suggestionPrice}>
+                            Giá: {suggestion.price.toLocaleString('vi-VN')} VNĐ
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
@@ -454,7 +746,7 @@ const Header = () => {
           ))}
         </ul>
       </div>
-    </>
+    </div>
   );
 };
 

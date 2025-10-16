@@ -15,15 +15,20 @@
     width: 100%;
     padding-bottom: 40px;
 }
-.auction-item{
-    max-width: 100%;
-    box-shadow: 0 0 10px 0 gray; /* mờ đều 4 cạnh */
+.auction-item {
+  width: 100%;
+  max-width: 300px; /* hoặc kích thước bạn muốn */
+  box-shadow: 0 0 10px 0 gray;
+  border-radius: 8px;
+  overflow: hidden; /* tránh ảnh tràn khỏi khung */
 }
-.item-img{
-    width: 100%;
-}
-.auction-image{
-    max-width: 100%;
+
+.item-img,
+.auction-image {
+  width: 100%;
+  height: 380px; /* cố định chiều cao khung hình */
+  object-fit: cover; /* giữ tỉ lệ ảnh, cắt phần thừa cho vừa khung */
+  display: block;
 }
 .auction-details{
     text-align: center;
