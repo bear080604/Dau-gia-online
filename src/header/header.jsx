@@ -150,15 +150,46 @@ const Header = () => {
 
   // User logout using API
   const handleLogout = async (e) => {
-    e.preventDefault();
-    try {
+  e.preventDefault();
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Không tìm thấy token đăng nhập');
+    }
+    // console.log('Token:', token); 
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+    // console.log('API URL:', `${apiUrl}logout`); 
+    const response = await fetch(`${apiUrl}logout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    console.log('Response status:', response.status); // Debug status
+    if (!response.ok) {
+      const text = await response.text(); // Lấy phản hồi gốc
+      // console.log('Response text:', text); 
+      throw new Error('Phản hồi không phải JSON hoặc yêu cầu thất bại');
+    }
+
+    const result = await response.json();
+    console.log('Response JSON:', result); // Debug JSON
+    if (response.ok && result.status) {
       await logout();
+      localStorage.removeItem('auth_token');
       alert('Đăng xuất thành công');
       window.location.href = '/login';
-    } catch (err) {
-      alert('Lỗi đăng xuất: ' + err.message);
+    } else {
+      throw new Error(result.message || 'Đăng xuất thất bại');
     }
-  };
+  } catch (err) {
+    console.error('Lỗi đăng xuất:', err);
+    alert('Lỗi đăng xuất: ' + err.message);
+  }
+};
 
   // Mobile search handlers
   const toggleMobileSearch = () => {
