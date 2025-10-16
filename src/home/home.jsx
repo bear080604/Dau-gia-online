@@ -98,10 +98,9 @@ const Home = () => {
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 3000);
+    const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
-
   const filterAndSortAuctions = () => {
     let filtered = allAuctions.filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -126,8 +125,7 @@ const Home = () => {
         <div className='section-title'>
           <p>PHIÊN ĐẤU GIÁ MỚI NHẤT/NỔI BẬT</p>
         </div>
-        {error && <p className="error-message">{error}</p>}
-        {latestAuctions.length === 0 && !error && <p>Không có phiên đấu giá nào.</p>}
+        {latestAuctions.length === 0 && <p>Không có phiên đấu giá nào.</p>}
         <Swiper
           modules={[Navigation, Pagination, Autoplay]}
           spaceBetween={20}
@@ -224,8 +222,7 @@ const Home = () => {
               </select>
             </div>
           </div>
-          {error && <p className="error-message">{error}</p>}
-          {filteredAuctions.length === 0 && !error && <p>Không có tài sản nào.</p>}
+          {filteredAuctions.length === 0  && <p>Không có tài sản nào.</p>}
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
             spaceBetween={20}
@@ -281,8 +278,7 @@ const Home = () => {
           <div className='section-title'>
             <p>TIN TỨC VÀ THÔNG BÁO</p>
           </div>
-          {error && <p className="error-message">{error}</p>}
-          {news.length === 0 && !error && <p>Không có tin tức nào.</p>}
+          {news.length === 0 && <p>Không có tin tức nào.</p>}
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
             spaceBetween={20}
@@ -303,7 +299,6 @@ const Home = () => {
                     className='news-image'
                     src={newsItem.imageUrl}
                     alt={newsItem.title}
-                    onError={(e) => { e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Found'; }}
                   />
                   <div className='news-details'>
                     <h3 className='news-title'>{newsItem.title}</h3>
