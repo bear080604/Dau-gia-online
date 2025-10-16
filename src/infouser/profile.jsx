@@ -516,57 +516,61 @@ const Profile = () => {
   };
 
   const handleUploadImage = async (side) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = async (e) => {
-      if (e.target.files && e.target.files[0]) {
-        const file = e.target.files[0];
-        const formDataUpload = new FormData();
-        formDataUpload.append(side === 'front' ? 'id_card_front' : 'id_card_back', file);
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const formDataUpload = new FormData();
+      formDataUpload.append(side === 'front' ? 'id_card_front' : 'id_card_back', file);
 
-        try {
-          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-            body: formDataUpload,
-          });
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formDataUpload,
+        });
 
-          const data = await response.json();
+        const data = await response.json();
 
-          if (!response.ok) {
-            if (response.status === 401) {
-              localStorage.removeItem('token');
-              setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-              navigate('/login');
-              return;
-            }
-            if (response.status === 422) {
-              const errors = data.errors || {};
-              const errorMessages = Object.values(errors).flat().join(', ');
-              throw new Error(errorMessages || 'Dữ liệu không hợp lệ');
-            }
-            throw new Error(data.message || 'Lỗi khi tải ảnh');
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem('token');
+            setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+            navigate('/login');
+            return;
           }
-
-          if (data.status) {
-            setUserData((prev) => ({
-              ...prev,
-              [side === 'front' ? 'idCardFront' : 'idCardBack']: data.user[side === 'front' ? 'id_card_front' : 'id_card_back'],
-              [side === 'front' ? 'idCardFrontUrl' : 'idCardBackUrl']: data.user[side === 'front' ? 'id_card_front_url' : 'id_card_back_url'],
-            }));
-            alert(`Tải ảnh mặt ${side === 'front' ? 'trước' : 'sau'} thành công`);
+          if (response.status === 422) {
+            const errors = data.errors || {};
+            const errorMessages = Object.values(errors).flat().join(', ');
+            throw new Error(errorMessages || 'Dữ liệu không hợp lệ');
           }
-        } catch (err) {
-          setError(err.message);
-          alert(`Lỗi: ${err.message}`);
+          throw new Error(data.message || 'Lỗi khi tải ảnh');
         }
+
+        if (data.status && data.user) {
+          setUserData((prev) => ({
+            ...prev,
+            idCardFront: data.user.id_card_front || prev.idCardFront,
+            idCardFrontUrl: data.user.id_card_front_url || prev.idCardFrontUrl,
+            idCardBack: data.user.id_card_back || prev.idCardBack,
+            idCardBackUrl: data.user.id_card_back_url || prev.idCardBackUrl,
+          }));
+          alert(`Tải ảnh mặt ${side === 'front' ? 'trước' : 'sau'} thành công`);
+        } else {
+          throw new Error('Phản hồi không hợp lệ từ server');
+        }
+      } catch (err) {
+        setError(err.message);
+        alert(`Lỗi: ${err.message}`);
       }
-    };
-    input.click();
+    }
   };
+  input.click();
+};
 
   const handleLogout = async (e) => {
     e.preventDefault();

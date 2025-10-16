@@ -17,9 +17,12 @@ const Header = () => {
   const [notifications, setNotifications] = useState([]);
   const [categories, setCategories] = useState([]);
   const [notificationError, setNotificationError] = useState(null);
+
   const [searchQuery, setSearchQuery] = useState(''); // State cho từ khóa tìm kiếm
   const [suggestions, setSuggestions] = useState([]); // State cho danh sách đề xuất
   const searchRef = useRef(null); // Ref để xử lý click bên ngoài
+
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
 
   // Fetch danh mục từ API
   useEffect(() => {
@@ -172,7 +175,8 @@ const Header = () => {
             id: p.sessions[0]?.id,
             name: p.name,
             href: `/auction-session/${p.sessions[0]?.id}`,
-
+            image: p.image || '/assets/img/default-product.jpg', // Giả sử API trả về trường image
+            price: p.price || 'N/A', // Giả sử API trả về trường price
           }))
           .slice(0, 5); // Giới hạn 5 đề xuất
         setSuggestions(filteredSuggestions);
@@ -339,19 +343,22 @@ const Header = () => {
   };
 
   const closeNotification = (e) => {
-    if (
-      e.target.closest(`.${styles.notifi}`) ||
-      e.target.closest(`.${styles.userIconContainer}`) ||
-      e.target.closest(`.${styles.authLinks}`)
-    ) {
+    // Nếu click vào chuông thì không đóng
+    if (e.target.closest(`.${styles.notifi}`) ||
+        e.target.closest(`.${styles.userIconContainer}`) ||
+        e.target.closest(`.${styles.authLinks}`)) {
       return;
     }
+
+    // Nếu click bên ngoài notification popup thì đóng
     if (isNotificationOpen && !e.target.closest(`.${styles.notificationPopup}`)) {
       setIsNotificationOpen(false);
+      setShowAllNotifications(false); // Reset when closing
     }
   };
 
   useEffect(() => {
+    // Thêm event listener cho toàn bộ document
     if (isNotificationOpen) {
       document.addEventListener('click', closeNotification);
       return () => document.removeEventListener('click', closeNotification);
@@ -363,9 +370,9 @@ const Header = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}notifications/${id}/mark-read`,
+        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/${id}/read`,
         {
-          method: 'PATCH',
+          method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -382,6 +389,31 @@ const Header = () => {
       );
     } catch (error) {
       console.error('Error marking notification as read:', error);
+    }
+  };
+
+  // Mark all notifications as read
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/user/${user.user_id}/read-all`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to mark all notifications as read: ${response.statusText}`);
+      }
+      setNotifications((prev) =>
+        prev.map((notif) => ({ ...notif, isRead: true }))
+      );
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
     }
   };
 
@@ -545,9 +577,21 @@ const Header = () => {
           {suggestions.length > 0 && (
             <ul className={styles.suggestions}>
               {suggestions.map((suggestion) => (
-                <li key={suggestion.id}>
+                <li key={suggestion.id} className={styles.suggestionItem}>
                   <Link to={suggestion.href} onClick={() => setSearchQuery('')}>
-                    {suggestion.name}
+                    <div className={styles.suggestionContent}>
+                      <img
+                        src={suggestion.image}
+                        alt={suggestion.name}
+                        className={styles.suggestionImage}
+                      />
+                      <div className={styles.suggestionDetails}>
+                        <span className={styles.suggestionName}>{suggestion.name}</span>
+                        <span className={styles.suggestionPrice}>
+                          Giá: {suggestion.price.toLocaleString('vi-VN')} VNĐ
+                        </span>
+                      </div>
+                    </div>
                   </Link>
                 </li>
               ))}
@@ -576,9 +620,21 @@ const Header = () => {
             {suggestions.length > 0 && (
               <ul className={styles.suggestions}>
                 {suggestions.map((suggestion) => (
-                  <li key={suggestion.id}>
+                  <li key={suggestion.id} className={styles.suggestionItem}>
                     <Link to={suggestion.href} onClick={() => setSearchQuery('')}>
-                      {suggestion.name}
+                      <div className={styles.suggestionContent}>
+                        <img
+                          src={suggestion.image}
+                          alt={suggestion.name}
+                          className={styles.suggestionImage}
+                        />
+                        <div className={styles.suggestionDetails}>
+                          <span className={styles.suggestionName}>{suggestion.name}</span>
+                          <span className={styles.suggestionPrice}>
+                            Giá: {suggestion.price.toLocaleString('vi-VN')} VNĐ
+                          </span>
+                        </div>
+                      </div>
                     </Link>
                   </li>
                 ))}
