@@ -55,10 +55,11 @@ function Contract() {
   };
 
   // Fetch contracts and users from the backend
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+ useEffect(() => {
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
 
         // Fetch contracts and users concurrently
         const [contractResponse, userResponse] = await Promise.all([
@@ -69,14 +70,24 @@ function Contract() {
         // Store full user data for validation
         setUserList(userResponse.data.users);
 
-        // Create a map of user_id to full_name
-        const usersData = userResponse.data.users.reduce((acc, user) => {
-          acc[user.user_id] = user.full_name;
-          return acc;
-        }, {});
-        setUsers(usersData);
+      const usersData = userResponse.data.users.reduce((acc, user) => {
+        acc[user.user_id] = user.full_name;
+        return acc;
+      }, {});
+      console.log("Mapped usersData:", usersData);
+      setUsers(usersData);
 
-        const transformedContracts = contractResponse.data.contracts.map((contract) => ({
+      console.log("Mapping contracts (THIS IS THE POTENTIAL CRASH POINT)...");
+      const transformedContracts = contractResponse.data.contracts.map((contract) => {
+        console.log("Processing contract:", contract);
+
+        // Đây là đoạn gốc của bạn, log trước khi crash
+        console.log("Winner:", contract.winner);
+        console.log("Winner full_name:", contract.winner.full_name); // <- có thể crash ở đây nếu winner null
+        console.log("Signed date:", contract.signed_date);
+        console.log("Session created_by:", contract.session.created_by);
+
+        return {
           id: `#HD-${String(contract.contract_id).padStart(3, '0')}`,
           sessionId: `#PH-${String(contract.session_id).padStart(3, '0')}`,
           sessionIdShort: `PH${String(contract.session_id).padStart(3, '0')}`,
@@ -101,17 +112,22 @@ function Contract() {
               : 'statusHuy',
           paymentStatus: contract.status,
           rawContractId: contract.contract_id,
-        }));
+        };
+      });
 
-        setContracts(transformedContracts);
-        setLoading(false);
-      } catch (err) {
-        setError('Không thể tải dữ liệu.');
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+      console.log("Transformed contracts:", transformedContracts);
+      setContracts(transformedContracts);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching or transforming contracts:", err);
+      setError('Không thể tải dữ liệu.');
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
+
 
   const applyFilters = () => {
     return contracts.filter((contract) => {

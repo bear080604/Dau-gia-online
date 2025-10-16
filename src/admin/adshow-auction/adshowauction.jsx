@@ -60,8 +60,8 @@ const ControlSection = React.memo(({
 const AdShowAuction = () => {
     // Constants
     const API_URL = 'http://localhost:8000/api/';
-    const { id } = useParams(); // Lấy id từ URL
-
+  const { id } = useParams(); // Lấy id từ URL
+  
     // State management
     const [token] = useState(localStorage.getItem('token'));
     const [auctionItem, setAuctionItem] = useState(null);

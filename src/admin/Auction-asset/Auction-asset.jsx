@@ -52,11 +52,19 @@ function AuctionAsset() {
       cat.name === asset.category
     );
     console.log('Found category:', category);
+    // const imageUrls = asset.image_url
+    //   ? typeof asset.image_url === 'string'
+    //     ? JSON.parse(asset.image_url)
+    //     : asset.image_url
+    //   : [];
     const imageUrls = asset.image_url
-      ? typeof asset.image_url === 'string'
-        ? JSON.parse(asset.image_url)
-        : asset.image_url
-      : [];
+  ? typeof asset.image_url === 'string'
+    ? asset.image_url.startsWith('[') // nếu JSON array
+      ? JSON.parse(asset.image_url)
+      : asset.image_url.split(',') // tách bằng dấu phẩy
+    : asset.image_url
+  : [];
+
     return {
       id: asset.id ?? 'N/A',
       name: asset.name ?? 'Không xác định',

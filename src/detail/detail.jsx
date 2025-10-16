@@ -697,7 +697,7 @@ async function handleCheckin() {
     return images.map((img, i) => (
       <img
         key={i}
-        src={img}
+        src={`http://localhost:8000${img}`}
         className={`detailsp-thumbnail ${i === currentImageIndex ? "detailsp-active" : ""}`}
         alt={`Thumbnail ${i + 1}`}
         onClick={() => changeImage(i)}
@@ -715,7 +715,8 @@ async function handleCheckin() {
     if (images.length === 0) {
       images = [auctionItem.item?.image_url || PLACEHOLDER_IMAGE];
     }
-    return images[currentImageIndex] || PLACEHOLDER_IMAGE;
+    return `http://localhost:8000${images[currentImageIndex] || PLACEHOLDER_IMAGE}`;
+    // return images[currentImageIndex] || PLACEHOLDER_IMAGE;
   };
 
   // Render documents

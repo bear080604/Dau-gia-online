@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hướng Dẫn Sử Dụng Hệ Thống Đấu Giá Trực Tuyến (Trực Quan & Hiện Đại)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        header {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            padding: 50px 0;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            font-weight: 600;
+        }
+        nav {
+            background-color: rgba(255,255,255,0.98);
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        nav a {
+            color: #007bff;
+            margin: 0 15px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+        nav a:hover, nav a.active {
+            color: #0056b3;
+            background: rgba(0,123,255,0.1);
+            border-bottom: 2px solid #007bff;
+        }
+        main {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 20px;
+            background-color: white;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .container-fluid {
+            padding: 30px;
+        }
+        section {
+            margin-bottom: 50px;
+            padding: 25px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        section:last-child {
+            border-bottom: none;
+        }
+        h2 {
+            color: #007bff;
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        h3 {
+            color: #28a745;
+            font-size: 1.4rem;
+            margin-top: 25px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        /* Mermaid flowchart */
+        .flowchart {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        .mermaid {
+            margin: 0 auto;
+        }
+        /* Interface card */
+        .interface {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-left: 4px solid #007bff;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+        .step {
+            display: inline-block;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 25px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+        .step:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .step.bg-success { background: linear-gradient(135deg, #28a745, #1e7e34); }
+        .step.bg-warning { background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529; }
+        .step.bg-info { background: linear-gradient(135deg, #17a2b8, #117a8b); }
+        .step.bg-danger { background: linear-gradient(135deg, #dc3545, #c82333); }
+        .arrow {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin: 0 10px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        /* Table cải thiện */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 14px;
+            text-align: left;
+        }
+        th {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #e3f2fd;
+            transition: background-color 0.3s ease;
+        }
+        /* Badge cho trạng thái */
+        .status-success { 
+            display: inline-block;
+            background-color: #d4edda; 
+            color: #155724; 
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        .status-danger { 
+            display: inline-block;
+            background-color: #f8d7da; 
+            color: #721c24; 
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        .status-info { 
+            display: inline-block;
+            background-color: #d1ecf1; 
+            color: #0c5460; 
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        /* Demo input */
+        .demo-input { 
+            background-color: #f8f9fa; 
+            border: 1px dashed #007bff; 
+            color: #555;
+        }
+        .demo-btn { 
+            opacity: 0.7; 
+            cursor: not-allowed; 
+            background: #6c757d;
+        }
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            h2 { font-size: 1.8rem; }
+            h3 { font-size: 1.2rem; }
+            .container-fluid { padding: 20px; }
+            nav a { margin: 0 5px; padding: 0.4rem 0.6rem; font-size: 0.9rem; }
+            .table { display: none; }
+            .mobile-cards { display: block; }
+        }
+        .mobile-cards {
+            display: none;
+        }
+        .mobile-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        footer {
+            background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+            color: white;
+            text-align: center;
+            padding: 25px;
+            margin-top: 40px;
+            border-radius: 20px 20px 0 0;
+        }
+        .accordion-button {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            font-weight: 600;
+            border: none;
+        }
+        .accordion-button:not(.collapsed) {
+            background: linear-gradient(135deg, #0056b3, #004085);
+            color: white;
+        }
+        .accordion-body {
+            background: #f8f9fa;
+            border-left: 3px solid #007bff;
+        }
+        .icon { color: #007bff; }
+        .update-date { font-style: italic; }
+        /* Ẩn chi tiết kỹ thuật cho người dùng không biết code */
+        .tech-detail {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <h1><i class="fas fa-gavel"></i> HỆ THỐNG ĐẤU GIÁ TRỰC TUYẾN</h1>
+        <p class="lead">Hướng dẫn sử dụng trực quan & hiện đại cho người đấu giá | <span class="update-date">Ngày cập nhật: 15/10/2025</span></p>
+    </div>
+</header>
+
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <ul class="navbar-nav mx-auto">
+            <li class="nav-item"><a class="nav-link" href="#dangky"><i class="fas fa-user-plus"></i> 1. Đăng ký & Quản lý</a></li>
+            <li class="nav-item"><a class="nav-link" href="#danhmuc"><i class="fas fa-tags"></i> 2. Gửi tài sản đấu giá</a></li>
+            <li class="nav-item"><a class="nav-link" href="#phien"><i class="fas fa-clock"></i> 3. Tham gia Phiên Đấu Giá</a></li>
+            <li class="nav-item"><a class="nav-link" href="#bid"><i class="fas fa-gavel"></i> 4. Giá Thầu</a></li>
+            <li class="nav-item"><a class="nav-link" href="#hopdong"><i class="fas fa-file-contract"></i> 5. Hợp đồng & Thanh toán</a></li>
+            <li class="nav-item"><a class="nav-link" href="#hoso"><i class="fas fa-folder-open"></i> 6. Hồ sơ & Tài liệu</a></li>
+            <li class="nav-item"><a class="nav-link" href="#thongbao"><i class="fas fa-bell"></i> 7. Thông báo & Báo cáo</a></li>
+            <li class="nav-item"><a class="nav-link" href="#log"><i class="fas fa-shield-alt"></i> 8-9. Kiểm toán, Job & Giao diện</a></li>
+        </ul>
+    </div>
+</nav>
+
+<main class="container-fluid">
+    <section id="dangky">
+        <h2><i class="fas fa-user-plus icon"></i> 1. Đăng ký và quản lý người dùng</h2>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="flowchart">
+                    <div class="mermaid">
+                        graph LR
+                            A([Đăng ký tài khoản <br/> Họ tên, email, số điện thoại]) --> B[Xác thực qua Email <br/> Nhấp vào link trong mail để kích hoạt]
+                            B --> C[Hoạt động bình thường <br/> Bạn có thể bắt đầu đấu giá]
+                            B -.-> D[Quản trị viên phê duyệt nếu cần <br/> Để có quyền cao hơn]
+                            classDef user fill:#e3f2fd,stroke:#007bff
+                            classDef system fill:#e8f5e8,stroke:#28a745
+                            classDef admin fill:#f3e5f5,stroke:#6f42c1
+                            class A,C user
+                            class B system
+                            class D admin
+                    </div>
+                </div>
+                <h3><i class="fas fa-cogs icon"></i> Các bước đơn giản để đăng ký</h3>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Bước 1: Điền họ tên, email, số điện thoại, mật khẩu, địa chỉ ngân hàng, số tài khoản ngân hàng của bạn. Chuẩn bị ảnh CCCD trước và sau mặt (scan rõ nét).</li>
+                    <li class="list-group-item">Bước 2: Kiểm tra hộp thư email, nhấp vào liên kết xác thực để kích hoạt tài khoản.</li>
+                    <li class="list-group-item">Bước 3: Đăng nhập và bắt đầu tham gia đấu giá! Nếu cần hỗ trợ, liên hệ admin.</li>
+                    <li class="list-group-item d-none tech-detail">Ghi chú kỹ thuật (cho admin): Sử dụng bảng Users và UserVerifications để lưu thông tin.</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <div class="interface">
+                    <strong>Giao diện đăng ký đơn giản:</strong><br>
+                    <i class="fas fa-user"></i> Họ tên: <input type="text" class="form-control demo-input" placeholder="Nguyễn Văn A" readonly><br>
+                    <i class="fas fa-envelope"></i> Email: <input type="email" class="form-control demo-input" placeholder="example@email.com" readonly><br>
+                    <i class="fas fa-phone"></i> SĐT: <input type="tel" class="form-control demo-input" placeholder="0123456789" readonly><br>
+                    <i class="fas fa-lock"></i> Mật khẩu: <input type="password" class="form-control demo-input" placeholder="********" readonly><br>
+                    <i class="fas fa-home"></i> Địa chỉ ngân hàng: <input type="text" class="form-control demo-input" placeholder="Ngân hàng Vietcombank - Chi nhánh TP.HCM" readonly><br>
+                    <i class="fas fa-credit-card"></i> Số tài khoản: <input type="text" class="form-control demo-input" placeholder="1234567890" readonly><br>
+                    <i class="fas fa-id-card"></i> Ảnh CCCD trước: [Chọn file ảnh] (face trước)<br>
+                    <i class="fas fa-id-card-alt"></i> Ảnh CCCD sau: [Chọn file ảnh] (face sau)<br>
+                    <span class="step">Đăng ký</span> → Kiểm tra email → Nhấp liên kết → <span class="step bg-success">Kích hoạt tài khoản</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="danhmuc">
+        <h2><i class="fas fa-tags icon"></i> 2. Gửi tài sản của bạn để đấu giá</h2>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="flowchart">
+                    <div class="mermaid">
+                        graph TD
+                            A[Bạn (có tài sản)] --> B[Gửi tài sản <br/> Tên, mô tả, giá khởi điểm, chọn danh mục có sẵn]
+                            B --> C[Chờ phê duyệt <br/> Admin kiểm tra để sẵn sàng đấu giá]
+                            C --> D[Tài sản được duyệt <br/> Có thể tạo phiên đấu giá]
+                            D --> E[Xem chi tiết và hình ảnh <br/> Sẵn sàng cho người khác thầu]
+                            classDef user fill:#e3f2fd,stroke:#007bff
+                            classDef system fill:#e8f5e8,stroke:#28a745
+                            classDef admin fill:#f3e5f5,stroke:#6f42c1
+                            class A,B user
+                            class C admin
+                            class D,E system
+                    </div>
+                </div>
+                <h3><i class="fas fa-image icon"></i> Cách gửi tài sản của bạn</h3>
+                <div class="interface">
+                    <strong>Form gửi tài sản (dành cho bạn - chủ sở hữu):</strong><br>
+                    <i class="fas fa-box"></i> Tên tài sản: <input type="text" class="form-control demo-input" placeholder="Xe hơi BMW của tôi" readonly><br>
+                    <i class="fas fa-align-left"></i> Mô tả chi tiết: <input type="text" class="form-control demo-input" placeholder="Xe BMW 2025, màu đen, chạy tốt" readonly><br>
+                    <i class="fas fa-dollar-sign"></i> Giá khởi điểm: ₫<input type="number" class="form-control demo-input" placeholder="50,000,000" readonly> (giá thấp nhất bạn chấp nhận)<br>
+                    <i class="fas fa-image"></i> Hình ảnh tài sản: [Chọn file ảnh] (nhiều ảnh nếu cần)<br>
+                    <i class="fas fa-list"></i> Chọn danh mục: <select class="form-select demo-input"><option>Xe hơi</option><option>Đất đai</option><option>Nhà cửa</option></select> (danh mục có sẵn, không cần tạo mới)<br>
+                    <i class="fas fa-user"></i> Chủ sở hữu: <select class="form-select demo-input"><option>Tôi (tài khoản của bạn)</option></select><br>
+                    Trạng thái: Chờ phê duyệt → Sẵn sàng đấu giá<br>
+                    <span class="step bg-warning">Gửi tài sản để phê duyệt</span> (Admin sẽ kiểm tra trong 1-2 ngày)
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr><th>Trạng thái Tài sản</th><th>Mô tả</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><span class="status-info">Chờ phê duyệt</span></td><td>Đang chờ admin kiểm tra tài sản của bạn</td></tr>
+                            <tr><td>Sẵn sàng đấu giá</td><td>Có thể tạo phiên để người khác thầu</td></tr>
+                            <tr><td>Đang đấu giá</td><td>Phiên đang diễn ra với tài sản của bạn</td></tr>
+                            <tr><td><span class="status-success">Đã bán</span></td><td>Tài sản của bạn đã được bán thành công</td></tr>
+                            <tr><td><span class="status-danger">Hủy</span></td><td>Tài sản bị hủy (liên hệ admin nếu cần)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mobile-cards">
+                    <div class="mobile-card"><strong><span class="status-info">Chờ phê duyệt</span>:</strong> Đang chờ admin kiểm tra tài sản của bạn</div>
+                    <div class="mobile-card"><strong><span class="status-success">Đã bán</span>:</strong> Tài sản của bạn đã được bán thành công</div>
+                    <div class="mobile-card"><strong><span class="status-danger">Hủy</span>:</strong> Tài sản bị hủy (liên hệ admin nếu cần)</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="phien">
+        <h2><i class="fas fa-clock icon"></i> 3. Tham gia phiên đấu giá</h2>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="flowchart">
+                    <div class="mermaid">
+                        graph TD
+                            A[Bạn thấy phiên đấu giá <br/> Đến thời gian đăng ký] --> B[Gửi hồ sơ cá nhân + <br/> Thanh toán tiền cọc]
+                            B --> C[Admin duyệt hồ sơ <br/> Không vi phạm: Duyệt / Vi phạm: Không duyệt + Hoàn tiền]
+                            C -->|Duyệt| D[Đợi mở phiên + <br/> Điểm danh tham gia]
+                            D --> E[Tham gia đấu giá]
+                            E --> F[Thắng: Ký hợp đồng trong 24h / <br/> Thua: Hoàn tiền cọc tự động]
+                            classDef user fill:#e3f2fd,stroke:#007bff
+                            classDef system fill:#e8f5e8,stroke:#28a745
+                            classDef admin fill:#f3e5f5,stroke:#6f42c1
+                            class A,B,D,E,F user
+                            class C admin
+                    </div>
+                </div>
+                <h3><i class="fas fa-calendar-alt icon"></i> Các bước tham gia phiên đấu giá</h3>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Bước 1: Khi phiên mở đăng ký, gửi file hồ sơ cá nhân (CCCD, thông tin cá nhân) và thanh toán tiền cọc (ví dụ: 5.000.000₫ qua VNPAY hoặc chuyển khoản).</li>
+                    <li class="list-group-item">Bước 2: Admin kiểm tra hồ sơ. Nếu không vi phạm (hồ sơ hợp lệ), được duyệt. Nếu vi phạm (thiếu giấy tờ), không duyệt và hoàn tiền cọc ngay.</li>
+                    <li class="list-group-item">Bước 3: Nếu duyệt, đợi mở phiên. Điểm danh (check-in) để xác nhận tham gia.</li>
+                    <li class="list-group-item">Bước 4: Tham gia đấu giá theo phương thức (tự do/kín/Anh). Nếu thắng, ký hợp đồng điện tử trong 24h. Nếu thua, tiền cọc được hoàn tự động.</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <div class="interface">
+                    <strong>Giao diện đăng ký tham gia phiên:</strong><br>
+                    <i class="fas fa-file-upload"></i> Hồ sơ cá nhân: [Chọn file CCCD, thông tin] (scan rõ nét, <5MB)<br>
+                    <i class="fas fa-dollar-sign"></i> Tiền cọc: ₫<input type="number" class="form-control demo-input" placeholder="5,000,000" readonly><br>
+                    <i class="fas fa-credit-card"></i> Thanh toán: <select class="form-select demo-input"><option>VNPAY</option><option>Chuyển khoản</option></select><br>
+                    <span class="step">Gửi đăng ký</span> → Trạng thái: <span class="status-info">Chờ duyệt</span> → <span class="step bg-success">Duyệt OK</span> hoặc <span class="step bg-danger">Không duyệt + Hoàn tiền</span><br><br>
+                    <strong>Lịch trình ví dụ:</strong><br>
+                    Đăng ký: 30/09/2025 08:00 → 01/10/2025 08:00<br>
+                    Điểm danh: 01/10/2025 08:30<br>
+                    Đấu giá: 01/10/2025 09:00 → 17:00<br>
+                    Kết quả: Thắng → Hợp đồng 24h / Thua → Hoàn cọc ngay
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h3><i class="fas fa-user-shield icon"></i> Lưu ý khi tham gia</h3>
+                <p>Hồ sơ phải đầy đủ để tránh bị từ chối. Nếu thắng, kiểm tra email để ký hợp đồng. Hệ thống tự động hoàn cọc nếu thua hoặc không duyệt.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="bid">
+        <h2><i class="fas fa-gavel icon"></i> 4. Gửi giá thầu (Bids)</h2>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="flowchart">
+                    <div class="mermaid">
+                        graph TD
+                            A[Bạn (người tham gia)] --> B[Xem phiên đang diễn ra]
+                            B --> C[Gửi giá thầu <br/> Cao hơn giá hiện tại]
+                            C --> D[Hệ thống kiểm tra <br/> Phải đúng bước giá]
+                            D --> E[Cập nhật giá cao nhất <br/> Và thông báo cho bạn]
+                            classDef user fill:#e3f2fd
+                            classDef system fill:#e8f5e8
+                            class A,B user
+                            class C,D,E system
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="interface">
+                    <strong>Danh sách tài sản đang đấu giá:</strong><br>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead><tr><th>ID</th><th>Tên</th><th>Giá hiện tại</th><th>Thời gian còn lại</th></tr></thead>
+                            <tbody><tr><td>1</td><td>Xe hơi BMW</td><td>₫50,000,000</td><td>2h 30m</td></tr></tbody>
+                        </table>
+                    </div>
+                    <span class="step">Xem chi tiết</span> → Nhập giá thầu: <input type="number" class="form-control demo-input" placeholder="55,000,000 (phải > 50M + bước 5M)" readonly> <span class="step bg-success">Gửi thầu</span><br>
+                    <strong>Lịch sử giá thầu:</strong><br>
+                    - Bạn A: <span class="status-info">₫45M lúc 10:00</span><br>
+                    - Bạn B: <span class="status-info">₫48M lúc 10:05</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="hopdong">
+        <h2><i class="fas fa-file-contract icon"></i> 5. Hợp đồng và thanh toán</h2>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="flowchart">
+                    <div class="mermaid">
+                        graph TD
+                            A[Phiên kết thúc] --> B[Tạo hợp đồng <br/> Với giá thắng cuộc]
+                            B --> C[Gửi hợp đồng qua email <br/> Để bạn ký điện tử]
+                            C --> D[Thanh toán <br/> Chọn VNPAY hoặc chuyển khoản]
+                            D --> E[Thanh toán thành công <br/> Nhận tài sản]
+                            D -.-> F[Thanh toán thất bại <br/> Liên hệ hỗ trợ]
+                            F --> G[Gửi thông báo nhắc nhở]
+                            classDef system fill:#e8f5e8
+                            class B,C,D,E,F,G system
+                    </div>
+                </div>
+                <h3><i class="fas fa-money-bill-wave icon"></i> Đặt cọc và hoàn tiền</h3>
+                <p>Nộp đặt cọc khi đăng ký (ví dụ 5.000.000₫). Nếu bạn thua, hệ thống tự hoàn trong 24h. Nếu thắng, khấu trừ vào giá cuối.</p>
+            </div>
+            <div class="col-md-4">
+                <div class="interface">
+                    <strong>Giao diện thanh toán:</strong><br>
+                    <i class="fas fa-file-contract"></i> Hợp đồng: ID 1 | Giá thắng: ₫50,000,000<br>
+                    <i class="fas fa-credit-card"></i> Chọn cách thanh toán: <select class="form-select demo-input"><option>VNPAY (nhanh)</option><option>Chuyển khoản</option><option>Tiền mặt</option></select><br>
+                    <span class="step">Thanh toán ngay</span> → Trạng thái: <span class="status-success">Hoàn tất</span><br>
+                    <i class="fas fa-hand-holding-usd"></i> Đặt cọc: ₫5,000,000 | Hoàn trả nếu thua: <span class="status-success">Tự động sau 24h</span>
+                </div>
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm">
+                        <thead><tr><th>Cách thanh toán</th><th>Mô tả</th></tr></thead>
+                        <tbody>
+                            <tr><td>VNPAY</td><td>Thanh toán online nhanh chóng</td></tr>
+                            <tr><td>Chuyển khoản</td><td>Chuyển đến tài khoản hệ thống</td></tr>
+                            <tr><td>Tiền mặt</td><td>Trả trực tiếp khi nhận hàng</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mobile-cards mt-3">
+                    <div class="mobile-card"><strong>VNPAY:</strong> Thanh toán online nhanh chóng</div>
+                    <div class="mobile-card"><strong>Chuyển khoản:</strong> Chuyển đến tài khoản hệ thống</div>
+                    <div class="mobile-card"><strong>Tiền mặt:</strong> Trả trực tiếp khi nhận hàng</div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h3><i class="fas fa-user-tie icon"></i> Theo dõi hợp đồng</h3>
+                <p>Admin sẽ gán người quản lý để hỗ trợ bạn nếu cần.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="hoso">
+        <h2><i class="fas fa-folder-open icon"></i> 6. Hồ sơ và tài liệu đấu giá</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="flowchart">
+                    <div class="mermaid">
+                        graph TD
+                            A[Bạn] --> B[Upload hồ sơ <br/> CMND, đặt cọc]
+                            B --> C[Chờ duyệt <br/> Admin kiểm tra nhanh]
+                            classDef user fill:#e3f2fd
+                            classDef admin fill:#f3e5f5
+                            classDef system fill:#e8f5e8
+                            class A user
+                            class B system
+                            class C admin
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h3><i class="fas fa-file-signature icon"></i> Tài liệu cần chuẩn bị</h3>
+                <ul class="list-group">
+                    <li class="list-group-item"><strong>Tài liệu bắt buộc:</strong> CMND/CCCD (scan trước sau mặt), Quy chế đấu giá (tải mẫu PDF từ hệ thống).</li>
+                    <li class="list-group-item"><strong>Hợp đồng điện tử:</strong> Ký online qua email, không cần in ấn.</li>
+                </ul>
+                <div class="interface mt-3">
+                    <strong>Giao diện nộp hồ sơ:</strong><br>
+                    <i class="fas fa-upload"></i> Chọn file: [CMND.pdf hoặc ảnh] (dung lượng <5MB)<br>
+                    <i class="fas fa-dollar-sign"></i> Đặt cọc: ₫<input type="number" class="form-control demo-input" placeholder="5,000,000" readonly><br>
+                    <span class="step">Nộp hồ sơ</span> → Trạng thái: Chờ duyệt → <span class="status-success">Đã duyệt</span> (thường trong 1-2 ngày)
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="thongbao">
+        <h2><i class="fas fa-bell icon"></i> 7. Thông báo và báo cáo</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="flowchart">
+                    <div class="mermaid">
+                        graph TD
+                            A[Hệ thống tự động] --> B[Gửi thông báo <br/> Qua email hoặc app]
+                            C[Admin] --> D[Tạo báo cáo <br/> Tổng quan phiên đấu giá]
+                            classDef system fill:#e8f5e8
+                            classDef admin fill:#f3e5f5
+                            class A,B system
+                            class C,D admin
+                    </div>
+                </div>
+                <p>Bạn sẽ nhận thông báo về: Phiên mới, thầu của bạn, hợp đồng cần ký, thanh toán nhắc nhở. Kiểm tra icon chuông để xem tin mới.</p>
+            </div>
+            <div class="col-md-6">
+                <div class="interface">
+                    <strong>Giao diện thông báo:</strong><br>
+                    <i class="fas fa-bell"></i> [Icon chuông với số 3] Tin mới: "Chúc mừng! Bạn thắng phiên 1. Thanh toán trong 24h."<br>
+                    <strong>Tạo báo cáo (nếu cần):</strong><br>
+                    Chọn loại: Tổng quan / Chi tiết → <span class="step bg-info">Tải PDF</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="log">
+        <h2><i class="fas fa-shield-alt icon"></i> 8. Kiểm toán và xử lý tự động</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="flowchart">
+                    <div class="mermaid">
+                        graph TD
+                            A[Mọi thao tác của bạn] --> B[Hệ thống ghi lại <br/> Để kiểm tra nếu cần]
+                            C[Hệ thống] --> D[Xử lý tự động <br/> Như gửi email, hoàn tiền]
+                            classDef system fill:#e8f5e8
+                            class A,B,D system
+                    </div>
+                </div>
+                <p><strong>Kiểm toán:</strong> Hệ thống ghi lại mọi thay đổi để đảm bảo minh bạch (bạn không cần lo, chỉ admin xem).</p>
+                <p><strong>Xử lý tự động:</strong> Gửi email xác nhận, hoàn tiền cọc nếu thua, nhắc thanh toán.</p>
+            </div>
+            <div class="col-md-6">
+                <div class="interface">
+                    <strong>Xem lịch sử hoạt động:</strong><br>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead><tr><th>Hoạt động</th><th>Thời gian</th></tr></thead>
+                            <tbody><tr><td>Cập nhật phiên</td><td>15/10/2025</td></tr></tbody>
+                        </table>
+                    </div>
+                    <strong>Danh sách xử lý tự động:</strong> [Xem] (ví dụ: Hoàn tiền cọc)
+                </div>
+            </div>
+        </div>
+
+        <h2><i class="fas fa-desktop icon"></i> 9. Giao diện sử dụng hàng ngày</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="interface">
+                    <strong>Trang chính (Dashboard):</strong><br>
+                    <i class="fas fa-list"></i> [Danh sách phiên đang diễn ra]<br>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead><tr><th>ID</th><th>Tên tài sản</th><th>Thời gian</th><th>Trạng thái</th></tr></thead>
+                            <tbody><tr><td>1</td><td>Xe hơi BMW</td><td>01/10/2025</td><td>Đang đấu giá</td></tr></tbody>
+                        </table>
+                    </div>
+                    <span class="step">Xem chi tiết</span> → Gửi thầu / Xem tài liệu / Thanh toán
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="interface">
+                    <strong>Trang hồ sơ cá nhân:</strong><br>
+                    <i class="fas fa-file-upload"></i> [Nộp hoặc xem hồ sơ] → Theo dõi: <span class="status-success">Đã duyệt</span><br><br>
+                    <strong>Trang hợp đồng:</strong><br>
+                    <i class="fas fa-file-contract"></i> [Xem và ký hợp đồng] → Thanh toán → Nhận thông báo<br><br>
+                    <strong>Trang quản lý (nếu bạn là tổ chức):</strong><br>
+                    <i class="fas fa-cog"></i> Quản lý tài sản, phiên, báo cáo.<br>
+                    Số phiên hôm nay: <span class="status-info">5</span> | Hợp đồng chờ: <span class="status-danger">2</span><br>
+                    Vai trò của bạn: <select class="form-select demo-input"><option>Người tham gia</option><option>Tổ chức</option></select>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="accordion" id="accordionFAQ">
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faqPanel">
+                    <i class="fas fa-question-circle me-2"></i> Mở rộng để xem FAQ
+                </button>
+            </h2>
+            <div id="faqPanel" class="accordion-collapse collapse" data-bs-parent="#accordionFAQ">
+                <div class="accordion-body">
+                    <p><strong>Câu hỏi thường gặp:</strong></p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-hand-holding-usd text-primary"></i> Làm thế nào để đặt cọc? → Nộp qua form hồ sơ khi đăng ký phiên.</li>
+                        <li><i class="fas fa-clock text-primary"></i> Phiên đấu giá hôm nay? → Kiểm tra trang chính, lọc "Đang diễn ra".</li>
+                        <li><i class="fas fa-exclamation-triangle text-warning"></i> Lỗi thanh toán? → Thử lại hoặc liên hệ hỗ trợ qua email.</li>
+                        <li><i class="fas fa-list text-primary"></i> Làm sao biết phiên nào đang diễn ra? → Icon chuông sẽ thông báo.</li>
+                        <li><i class="fas fa-edit text-primary"></i> Có thể chỉnh sửa giá thầu không? → Không, chỉ gửi thầu mới; xem lịch sử để theo dõi.</li>
+                        <li><i class="fas fa-exclamation-circle text-warning"></i> Chậm thanh toán thì sao? → Hợp đồng hủy sau 48h, mất đặt cọc; liên hệ ngay để gia hạn.</li>
+                    </ul>
+                    <h5><i class="fas fa-list-alt icon"></i> Các trạng thái phổ biến</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead><tr><th>Trạng thái</th><th>Ý nghĩa</th></tr></thead>
+                            <tbody>
+                                <tr><td>Người tham gia</td><td>Bạn có thể đấu giá</td></tr>
+                                <tr><td>Chờ phê duyệt</td><td>Hồ sơ đang kiểm tra</td></tr>
+                                <tr><td>Đã bán</td><td>Phiên hoàn tất</td></tr>
+                                <tr><td>Hoàn tất</td><td>Thanh toán OK</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <a href="#" class="btn btn-outline-primary">Tải hướng dẫn PDF</a> | <a href="mailto:support@dau-gia.vn" class="btn btn-outline-primary">Liên hệ hỗ trợ</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="text-center">
+    <p>&copy; 2025 Hệ Thống Đấu Giá Trực Tuyến. Dành cho bạn - người đấu giá. | Hỗ trợ: support@dau-gia.vn</p>
+    <a href="#" class="text-light">Tải hướng dẫn PDF</a> | <a href="mailto:support@dau-gia.vn" class="text-light">Gửi câu hỏi</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Mermaid init với theme tối ưu
+    mermaid.initialize({startOnLoad: true, theme: 'default', themeVariables: { primaryColor: '#e3f2fd', primaryTextColor: '#333', primaryBorderColor: '#007bff' }});
+    // Smooth scrolling và active nav
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+    // Scrollspy cho nav active
+    window.addEventListener('scroll', () => {
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('nav a');
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop - 100;
+            if (scrollY >= sectionTop) {
+                current = section.getAttribute('id');
+            }
+        });
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
