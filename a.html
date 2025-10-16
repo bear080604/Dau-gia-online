@@ -3,598 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hướng Dẫn Sử Dụng Hệ Thống Đấu Giá Trực Tuyến (Trực Quan & Hiện Đại)</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <title>Đơn Xin Nghỉ Việc - Bùi Phương Nam</title>
     <style>
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-        }
-        header {
-            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-            color: white;
-            padding: 60px 0;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        header h1 {
-            font-size: 3rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        nav {
-            background-color: rgba(255,255,255,0.95);
-            padding: 15px 0;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-        }
-        nav a {
-            color: #007bff;
-            margin: 0 20px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.3s ease;
-            border-bottom: 2px solid transparent;
-            padding: 0.5rem 1rem; /* Thêm padding cho spacing */
-        }
-        nav a:hover {
-            color: #0056b3;
-            border-bottom: 2px solid #007bff;
-        }
-        main {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0;
-            background-color: white;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            border-radius: 15px;
-            overflow: hidden;
-        }
-        .container-fluid {
-            padding: 40px;
-        }
-        section {
-            margin-bottom: 60px;
-            padding: 30px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-        section:last-child {
-            border-bottom: none;
-        }
-        h2 {
-            color: #007bff;
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        h3 {
-            color: #28a745;
-            font-size: 1.5rem;
-            margin-top: 30px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        /* Media query cho mobile */
-        @media (max-width: 768px) {
-            h2 { font-size: 2rem; }
-            h3 { font-size: 1.25rem; }
-        }
-        .flowchart {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border: 2px solid #dee2e6;
-            border-radius: 10px;
+            font-family: 'Times New Roman', serif;
+            margin: 0;
             padding: 20px;
-            margin: 20px 0;
-            font-family: 'Consolas', 'Monaco', monospace; /* Thay Courier New */
-            white-space: pre-wrap;
-            overflow-x: auto;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .document {
+            background-color: white;
+            width: 210mm;
+            height: 297mm;
+            padding: 40px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             position: relative;
         }
-        .flowchart::before {
-            content: '';
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 0;
+            letter-spacing: 2px;
+        }
+        .info {
+            margin-bottom: 30px;
+        }
+        .info p {
+            margin: 5px 0;
+            text-align: center;
+        }
+        .content {
+            text-align: justify;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+        .content h2 {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0 10px 0;
+        }
+        .signature {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #007bff, #28a745);
+            bottom: 40px;
+            right: 40px;
+            text-align: right;
         }
-        /* Highlight cho node trong flowchart */
-        .user-node { background-color: #e3f2fd; padding: 2px 4px; border-radius: 4px; }
-        .admin-node { background-color: #f3e5f5; padding: 2px 4px; border-radius: 4px; }
-        .system-node { background-color: #e8f5e8; padding: 2px 4px; border-radius: 4px; }
-        .interface {
-            background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
-            border-left: 5px solid #007bff;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        .signature p {
+            margin: 5px 0;
         }
-        .step {
-            display: inline-block;
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            padding: 8px 15px;
-            margin: 5px;
-            border-radius: 20px;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
-        }
-        .step:hover {
-            transform: scale(1.05);
-        }
-        .arrow {
-            color: #dc3545;
-            font-weight: bold;
-            font-size: 1.2em;
-            margin: 0 10px;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        th, td {
-            border: 1px solid #dee2e6;
-            padding: 12px;
+        .date {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
             text-align: left;
         }
-        th {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            font-weight: 600;
+        @media print {
+            body { background-color: white; padding: 0; }
+            .document { box-shadow: none; width: auto; height: auto; }
         }
-        tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-        tr:hover {
-            background-color: #e9ecef;
-            transition: background-color 0.3s ease;
-        }
-        /* Highlight trạng thái */
-        .status-success { background-color: #d4edda; color: #155724; font-weight: bold; }
-        .status-danger { background-color: #f8d7da; color: #721c24; font-weight: bold; }
-        footer {
-            background: linear-gradient(135deg, #333 0%, #555 100%);
-            color: white;
-            text-align: center;
-            padding: 20px;
-            margin-top: 40px;
-            padding-bottom: 2rem; /* Thêm pb-4 tương đương */
-        }
-        .accordion-button {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            font-weight: 600;
-            border: none;
-        }
-        .accordion-button:not(.collapsed) {
-            background: linear-gradient(135deg, #0056b3, #004085);
-            color: white;
-        }
-        .accordion-body {
-            background: #f8f9fa;
-            border-left: 3px solid #007bff;
-        }
-        .icon {
-            color: #007bff;
-        }
-        /* Disable cho input minh họa */
-        .demo-input { background-color: #f8f9fa; border: 1px dashed #dee2e6; }
-        .demo-btn { opacity: 0.6; cursor: not-allowed; }
     </style>
 </head>
 <body>
-
-<header>
-    <div class="container">
-        <h1><i class="fas fa-gavel icon"></i> HỆ THỐNG ĐẤU GIÁ TRỰC TUYẾN</h1>
-        <p class="lead">Hướng dẫn sử dụng trực quan & hiện đại | Ngày cập nhật: 15/10/2025</p>
-    </div>
-</header>
-
-<nav class="navbar navbar-expand-lg navbar-light">
-    <div class="container">
-        <ul class="navbar-nav mx-auto">
-            <li class="nav-item"><a class="nav-link mx-3" href="#dangky"><i class="fas fa-user-plus"></i> 1. Đăng ký & Quản lý</a></li>
-            <li class="nav-item"><a class="nav-link mx-3" href="#danhmuc"><i class="fas fa-tags"></i> 2. Danh mục & Tài sản</a></li>
-            <li class="nav-item"><a class="nav-link mx-3" href="#phien"><i class="fas fa-clock"></i> 3. Phiên Đấu Giá</a></li>
-            <li class="nav-item"><a class="nav-link mx-3" href="#bid"><i class="fas fa-gavel"></i> 4. Giá Thầu</a></li> <!-- Sửa icon thành fa-gavel -->
-            <li class="nav-item"><a class="nav-link mx-3" href="#hopdong"><i class="fas fa-file-contract"></i> 5. Hợp đồng & Thanh toán</a></li>
-            <li class="nav-item"><a class="nav-link mx-3" href="#hoso"><i class="fas fa-folder-open"></i> 6. Hồ sơ & Tài liệu</a></li>
-            <li class="nav-item"><a class="nav-link mx-3" href="#thongbao"><i class="fas fa-bell"></i> 7. Thông báo & Báo cáo</a></li>
-            <li class="nav-item"><a class="nav-link mx-3" href="#log"><i class="fas fa-shield-alt"></i> 8-9. Kiểm toán, Job & Giao diện</a></li>
-        </ul>
-    </div>
-</nav>
-
-<main class="container-fluid">
-    <section id="dangky">
-        <h2><i class="fas fa-user-plus icon"></i> 1. Đăng ký và quản lý người dùng</h2>
-        <div class="row">
-            <div class="col-md-8">
-                <div class="flowchart">
-[Đăng ký tài khoản (<span class="user-node">Users</span>: full_name, email, phone, password, role)] <span class="arrow">---></span> [Xác thực Email/OTP (<span class="system-node">UserVerifications</span>: type, code, expires_at)] <span class="arrow">---></span> [Hoạt động bình thường (role: User/Customer)]
-                                         \
-                                          <span class="arrow">--> </span>[<span class="admin-node">Quản trị viên</span> phê duyệt nếu cần (Administrator role)]
-                </div>
-                <h3><i class="fas fa-cogs icon"></i> Minh họa thao tác</h3>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">Người dùng điền: Họ tên, email, số điện thoại, mật khẩu (bảng Users).</li>
-                    <li class="list-group-item">Nhận mã OTP hoặc email xác thực (bảng UserVerifications).</li>
-                    <li class="list-group-item">Nhập mã → tài khoản được kích hoạt (is_used = TRUE).</li>
-                    <li class="list-group-item">Admin có thể xem danh sách người dùng và thay đổi vai trò (ENUM: User, Administrator, Customer, ChuyenVienTTC, DauGiaVien, DonViThuc, ToChucDauGia).</li>
-                </ul>
-            </div>
-            <div class="col-md-4">
-                <div class="interface">
-                    <strong>Giao diện đăng ký:</strong><br>
-                    <i class="fas fa-user"></i> Họ tên: <input type="text" class="form-control demo-input" placeholder="Nguyễn Văn A" disabled><br>
-                    <i class="fas fa-envelope"></i> Email: <input type="email" class="form-control demo-input" placeholder="example@email.com" disabled><br>
-                    <i class="fas fa-phone"></i> SĐT: <input type="tel" class="form-control demo-input" placeholder="0123456789" disabled><br>
-                    <i class="fas fa-lock"></i> Mật khẩu: <input type="password" class="form-control demo-input" placeholder="********" disabled><br>
-                    <button class="btn btn-primary btn-sm demo-btn" disabled>Đăng ký</button> → Gửi OTP → <input type="text" class="form-control demo-input" placeholder="Nhập mã: 123456" disabled> → <button class="btn btn-success btn-sm demo-btn" disabled>Kích hoạt</button>
-                </div>
-            </div>
+    <div class="document">
+        <div class="header">
+            <h1>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h1>
+            <p>Độc lập - Tự do - Hạnh phúc</p>
+            <h1>ĐƠN XIN NGHỈ VIỆC</h1>
         </div>
-    </section>
-
-    <section id="danhmuc">
-        <h2><i class="fas fa-tags icon"></i> 2. Thêm danh mục và tài sản đấu giá</h2>
-        <div class="row">
-            <div class="col-md-8">
-                <div class="flowchart">
-[<span class="admin-node">Admin/Tổ chức</span> (role: ToChucDauGia)] <span class="arrow">--> </span>[Thêm danh mục (<span class="system-node">Categories</span>: name, description)]<br>
-                        |<br>
-                        v<br>
-                 [Thêm tài sản (<span class="system-node">AuctionItems</span>: name, description, starting_price, image_url, status=ChoDuyet, category_id, owner_id)]<br>
-                        |<br>
-                  [<span class="admin-node">Chờ phê duyệt</span> bởi Admin (status → ChoDauGia)]<br>
-                        |<br>
-                        v<br>
-                   [Tài sản sẵn sàng cho đấu giá (<span class="system-node">ItemImages</span>: image_url, is_primary)]
-                </div>
-                <h3><i class="fas fa-image icon"></i> Minh họa giao diện text</h3>
-                <div class="interface">
-                    <strong>Form thêm danh mục:</strong><br>
-                    <i class="fas fa-tag"></i> Tên: <input type="text" class="form-control demo-input" placeholder="Xe hơi" disabled><br>
-                    <i class="fas fa-info-circle"></i> Mô tả: <input type="text" class="form-control demo-input" placeholder="Xe BMW 2025" disabled><br>
-                    <button class="btn btn-primary btn-sm demo-btn" disabled>Lưu</button><br><br>
-                    <strong>Form thêm tài sản:</strong><br>
-                    <i class="fas fa-box"></i> Tên: <input type="text" class="form-control demo-input" placeholder="Xe hơi BMW" disabled><br>
-                    <i class="fas fa-align-left"></i> Mô tả: <input type="text" class="form-control demo-input" placeholder="Mô tả chi tiết" disabled><br>
-                    <i class="fas fa-dollar-sign"></i> Giá khởi điểm: ₫<input type="number" class="form-control demo-input" placeholder="50,000,000" disabled> (CHECK >0)<br>
-                    <i class="fas fa-image"></i> Hình ảnh: [Upload] (image_url)<br>
-                    <i class="fas fa-list"></i> Danh mục: <select class="form-select demo-input" disabled><option>Xe hơi</option></select><br>
-                    <i class="fas fa-user"></i> Chủ sở hữu: <select class="form-select demo-input" disabled><option>User ID 1</option></select><br>
-                    Status: ChoDuyet → ChoDauGia<br>
-                    <button class="btn btn-warning btn-sm demo-btn" disabled>Gửi phê duyệt</button>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr><th>Trạng thái Tài sản</th><th>Mô tả</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>ChoDuyet</td><td>Chờ admin kiểm tra</td></tr>
-                            <tr><td>ChoDauGia</td><td>Sẵn sàng tạo phiên</td></tr>
-                            <tr><td>DangDauGia</td><td>Đang diễn ra</td></tr>
-                            <tr><td class="status-success">DaBan</td><td>Đã bán</td></tr>
-                            <tr><td class="status-danger">Huy</td><td>Bị hủy</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        
+        <div class="info">
+            <p>Kính gửi: Anh Huy</p>
+            <p>Tôi tên là: Bùi Phương Nam</p>
+            <p>Sinh năm: 2005</p>
+            <p>Chức vụ: Lập trình viên Backend (Dev BE)</p>
+            <p>Đơn vị công tác: Công ty Nichitsu</p>
         </div>
-    </section>
-
-    <section id="phien">
-        <h2><i class="fas fa-clock icon"></i> 3. Quản lý phiên đấu giá</h2>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="flowchart">
-[<span class="admin-node">Admin/Tổ chức</span>] <span class="arrow">---> </span>[Tạo phiên đấu giá (<span class="system-node">AuctionSessions</span>: item_id, created_by, start_time, end_time, method, auction_org_id, register_start/end, checkin_time, bid_start/end, bid_step)]<br>
-                          |<br>
-          +---------------+----------------+<br>
-          |                                |<br>
-[<span class="user-node">Đăng ký tham gia</span> (<span class="user-node">Users</span>)]          [Thiết lập tham số phiên (CHECK end_time > start_time)]<br>
-          |                                |<br>
-       [Nộp hồ sơ + tiền đặt cọc (<span class="system-node">AuctionProfiles</span>, <span class="system-node">DepositPayments</span>)]        [Status: Mo → DangDienRa → KetThuc]
-                </div>
-            </div>
-            <div class="col-md-6">
-                <h3><i class="fas fa-calendar-alt icon"></i> Sơ đồ thời gian phiên đấu giá</h3>
-                <div class="flowchart">
-Đăng ký: register_start (e.g., 2025-09-30 08:00)  <span class="arrow">---></span> register_end (2025-10-01 08:00)<br>
-Check-in: checkin_time (2025-10-01 08:30)<br>
-Đấu giá: bid_start (2025-10-01 09:00)  <span class="arrow">---></span> bid_end (2025-10-01 17:00)<br>
-Method: 'Đấu giá tự do' | 'Đấu giá kín' | 'Đấu giá Anh' | Bid_step: 5,000,000 (lưu ý: giá thầu phải chia hết cho bước giá để hợp lệ)
-                </div>
-                <div class="interface">
-                    <strong>Giao diện tạo phiên:</strong><br>
-                    <i class="fas fa-box"></i> Tài sản: <select class="form-select demo-input" disabled><option>ID 1 - Xe hơi</option></select><br>
-                    <i class="fas fa-calendar"></i> Thời gian bắt đầu: <input type="datetime-local" class="form-control demo-input" disabled><br>
-                    <i class="fas fa-stopwatch"></i> Thời gian kết thúc: <input type="datetime-local" class="form-control demo-input" disabled><br>
-                    <i class="fas fa-exchange-alt"></i> Phương thức: <select class="form-select demo-input" disabled><option>Đấu giá tự do</option><option>Đấu giá kín</option><option>Đấu giá Anh</option></select><br>
-                    <i class="fas fa-step-forward"></i> Bước giá: ₫<input type="number" class="form-control demo-input" placeholder="5,000,000" disabled><br>
-                    <button class="btn btn-primary btn-sm demo-btn" disabled>Tạo</button>
-                </div>
-            </div>
+        
+        <div class="content">
+            <p>Kính gửi Anh Huy,</p>
+            
+            <p>Em tên là Bùi Phương Nam, sinh năm 2005, hiện đang làm việc với vị trí Lập trình viên Backend tại Công ty Nichitsu. Sau một khoảng thời gian gắn bó và đóng góp cho công ty, em đã cân nhắc kỹ lưỡng và quyết định nộp đơn này để xin nghỉ việc. Em rất trân trọng những cơ hội mà công ty đã mang lại, nhưng em nhận thấy bản thân cần có sự thay đổi để phù hợp hơn với khả năng và định hướng cá nhân.</p>
+            
+            <h2>Lý do xin nghỉ việc:</h2>
+            <p>Dự án hiện tại mà em đang tham gia có độ phức tạp cao, vượt quá khả năng và kinh nghiệm hiện tại của em, dẫn đến em gặp nhiều khó khăn trong việc hoàn thành nhiệm vụ một cách hiệu quả. Dù em đã cố gắng hết mình để học hỏi và đóng góp, nhưng em cảm thấy không thể đáp ứng được yêu cầu, và điều này ảnh hưởng đến hiệu suất chung của đội ngũ. Em cam kết sẽ hoàn tất tất cả nhiệm vụ đang đảm nhận một cách chuyên nghiệp, hỗ trợ bàn giao đầy đủ kiến thức và tài liệu cho đồng nghiệp, đồng thời sẵn sàng hỗ trợ thêm trong giai đoạn chuyển giao để đảm bảo không ảnh hưởng đến hoạt động của đội ngũ.</p>
+            
+            <h2>Thời gian dự kiến nghỉ việc:</h2>
+            <p>Em xin đề nghị thời gian nghỉ việc có hiệu lực từ ngày 15 tháng 11 năm 2025, sau khi hoàn thành đúng 30 ngày thông báo theo quy định của công ty. Em sẵn sàng điều chỉnh lịch trình nếu cần thiết để phù hợp với nhu cầu của công ty.</p>
+            
+            <p>Em xin gửi lời cảm ơn chân thành đến Anh Huy, Ban Lãnh đạo và toàn thể anh chị em đồng nghiệp tại Nichitsu vì sự hỗ trợ, hướng dẫn và những kỷ niệm đẹp trong thời gian qua. Em hy vọng có thể duy trì mối quan hệ tốt đẹp và có cơ hội hợp tác lại trong tương lai.</p>
+            
+            <p>Em xin trân trọng,</p>
         </div>
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <h3><i class="fas fa-user-shield icon"></i> Quản lý phiên (AuctionManagement)</h3>
-                <p>Action_type: GiayPhep, TruatQuyen, TamDung, CongBoKetQua (auctioneer_id: DauGiaVien).</p>
-            </div>
+        
+        <div class="date">
+            <p>TP. Hồ Chí Minh, ngày 15 tháng 10 năm 2025</p>
         </div>
-    </section>
-
-    <section id="bid">
-        <h2><i class="fas fa-gavel icon"></i> 4. Gửi giá thầu (Bids)</h2> <!-- Icon đã sửa -->
-        <div class="row">
-            <div class="col-md-8">
-                <div class="flowchart">
-[<span class="user-node">Người tham gia</span> (role: User)] <span class="arrow">---> </span>[Xem phiên đấu giá (status=DangDienRa)] <span class="arrow">---> </span>[Gửi giá thầu (amount > starting_price, CHECK amount >0, bid_time)]<br>
-                                             |<br>
-                                             v<br>
-                                    [<span class="system-node">Hệ thống</span> kiểm tra (bid_step hợp lệ, INDEX idx_bids_session_time)]<br>
-                                             |<br>
-                                             v<br>
-                                     [Cập nhật giá cao nhất (session_id, user_id)]
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="interface">
-                    <strong>Danh sách tài sản đang đấu giá:</strong><br>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead><tr><th>ID</th><th>Tên</th><th>Giá hiện tại</th><th>Thời gian còn lại</th></tr></thead>
-                            <tbody><tr><td>1</td><td>Xe hơi</td><td>₫50,000,000</td><td>2h 30m</td></tr></tbody>
-                        </table>
-                    </div>
-                    [Nút: Xem chi tiết] → <input type="number" class="form-control demo-input" placeholder="Giá thầu: 55,000,000" disabled> <button class="btn btn-success btn-sm demo-btn" disabled>Gửi</button><br>
-                    <strong>Lịch sử giá thầu (Bids):</strong><br>
-                    - User A (user_id=2): ₫45M (bid_time=10:00)<br>
-                    - User B (user_id=3): ₫48M (10:05)
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="hopdong">
-        <h2><i class="fas fa-file-contract icon"></i> 5. Hợp đồng và thanh toán</h2>
-        <div class="row">
-            <div class="col-md-8">
-                <div class="flowchart">
-[Phiên đấu giá kết thúc (status=KetThuc)] <span class="arrow">---> </span>[Tạo hợp đồng (<span class="system-node">Contracts</span>: session_id, winner_id, final_price, status=ChoThanhToan, signed_date)]<br>
-                                    |<br>
-                                    v<br>
-                              [Gửi hợp đồng cho người thắng (<span class="system-node">EContracts</span>: type=MuaBanTaiSan, signed_by)]<br>
-                                    |<br>
-                                    v<br>
-                              [Thanh toán (<span class="system-node">Payments</span>: contract_id, method=TienMat/ChuyenKhoan/VNPAY, amount, status=ChoXuLy → HoanTat → DaThanhToan, receiver_id)]<br>
-                                    |<br>
-                        +-----------+------------+<br>
-                        |                        |<br>
-                 [Thanh toán đầy đủ (DaThanhToan)]     [Thanh toán thất bại (ThatBai) - Liên hệ admin để hỗ trợ]<br>
-                        |                        |<br>
-                        v                        v<br>
-                  [Cập nhật trạng thái]      [Gửi thông báo lỗi (<span class="system-node">Notifications</span>)]
-                </div>
-                <h3><i class="fas fa-money-bill-wave icon"></i> Hồ sơ đặt cọc (DepositPayments)</h3>
-                <p>Amount, payment_method (TienMat/VNPAY), status=ChoXuLy → HoanTat, refund_status=KhongHoan/ChoHoan/DaHoan, session_id (nếu thua, hoàn trả tự động trong 24h, ví dụ: 5.000.000₫).</p>
-            </div>
-            <div class="col-md-4">
-                <div class="interface">
-                    <strong>Giao diện thanh toán:</strong><br>
-                    <i class="fas fa-file-contract"></i> Hợp đồng ID: 1 | Giá cuối: ₫50,000,000 (final_price)<br>
-                    <i class="fas fa-credit-card"></i> Phương thức: <select class="form-select demo-input" disabled><option>VNPAY</option><option>Chuyển khoản</option><option>TienMat</option></select><br>
-                    <button class="btn btn-primary btn-sm demo-btn" disabled>Thanh toán</button> → Trạng thái: <span class="status-success">HoanTat</span> (payment_date)<br>
-                    <i class="fas fa-hand-holding-usd"></i> Đặt cọc: ₫5,000,000 | Hoàn trả: <span class="status-success">[Có]</span> (refund_date: 24h sau kết thúc)
-                </div>
-                <div class="table-responsive mt-3">
-                    <table class="table table-sm">
-                        <thead><tr><th>Phương thức Thanh toán</th><th>Mô tả</th></tr></thead>
-                        <tbody>
-                            <tr><td>TienMat</td><td>Trả tiền mặt</td></tr>
-                            <tr><td>ChuyenKhoan</td><td>Chuyển khoản ngân hàng</td></tr>
-                            <tr><td>VNPAY</td><td>Thanh toán trực tuyến</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <h3><i class="fas fa-user-tie icon"></i> Quản lý hợp đồng (ContractManagement)</h3>
-                <p>Gán manager_id (role: DauGiaVien/ToChucDauGia/Admin), assigned_at.</p>
-            </div>
-        </div>
-    </section>
-
-    <section id="hoso">
-        <h2><i class="fas fa-folder-open icon"></i> 6. Hồ sơ và tài liệu đấu giá</h2>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="flowchart">
-[<span class="user-node">Người tham gia</span>] <span class="arrow">---> </span>[Upload hồ sơ đấu giá (<span class="system-node">AuctionProfiles</span>: user_id, item_id, document_url, deposit_amount, status=ChoDuyet)]<br>
-                                    |<br>
-                                    v<br>
-                          [<span class="admin-node">Admin/Tổ chức</span> duyệt hồ sơ (status → DaDuyet / BiTuChoi)]<br>
-                                    |<br>
-                                    v<br>
-                          [Trạng thái cập nhật (created_at)]
-                </div>
-            </div>
-            <div class="col-md-6">
-                <h3><i class="fas fa-file-signature icon"></i> Văn bản điện tử & hợp đồng điện tử</h3>
-                <ul class="list-group">
-                    <li class="list-group-item"><strong>EDocuments:</strong> type=QuyChe (Quy chế đấu giá - PDF bắt buộc), BienBan (Biên bản - JPG/PDF), TaiLieuKhac (Khác - ví dụ CMND), file_url, session_id.</li>
-                    <li class="list-group-item"><strong>EContracts:</strong> type=DichVuDauGia/MuaBanTaiSan, file_url, signed_by, signed_at, session_id/contract_id.</li>
-                </ul>
-                <div class="interface mt-3">
-                    <strong>Giao diện upload hồ sơ:</strong><br>
-                    <i class="fas fa-upload"></i> Tài liệu: [Upload file] (document_url, ví dụ: quy_che.pdf)<br>
-                    <i class="fas fa-dollar-sign"></i> Tiền đặt cọc: ₫<input type="number" class="form-control demo-input" placeholder="5,000,000" disabled><br>
-                    <button class="btn btn-primary btn-sm demo-btn" disabled>Nộp</button> → Trạng thái: ChoDuyet → [<span class="admin-node">Duyệt bởi Admin</span>] (Regulations: content, issued_by)
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="thongbao">
-        <h2><i class="fas fa-bell icon"></i> 7. Thông báo và báo cáo</h2>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="flowchart">
-[<span class="system-node">Hệ thống</span> (<span class="system-node">Jobs</span>)] <span class="arrow">---> </span>[Gửi <span class="system-node">Notifications</span> tới <span class="user-node">Users</span> (message, status=ChuaDoc → DaDoc, sent_at)]<br>
-[<span class="admin-node">Admin</span> (role=Administrator)] <span class="arrow">---> </span>[Tạo <span class="system-node">Reports</span>: report_type=TongQuan/ChiTiet/KPI, content, generated_by]
-                </div>
-                <p>Người dùng nhận thông báo về: Phiên đấu giá (AuctionSessions), giá thầu (Bids), hợp đồng (Contracts), thanh toán (Payments). Hiển thị dưới dạng popup hoặc badge số lượng tin mới trên icon chuông.</p>
-            </div>
-            <div class="col-md-6">
-                <div class="interface">
-                    <strong>Giao diện thông báo:</strong><br>
-                    <i class="fas fa-bell"></i> [Bell icon với badge: 3] Tin mới: "Bạn đã thắng phiên 1! Thanh toán trong 24h." (user_id)<br>
-                    <strong>Báo cáo:</strong><br>
-                    [Dropdown: TongQuan / ChiTiet / KPI] → <button class="btn btn-info btn-sm demo-btn" disabled>Tạo PDF</button> (AuditLogs theo dõi generated_by)
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="log">
-        <h2><i class="fas fa-shield-alt icon"></i> 8. Kiểm toán và job nền</h2>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="flowchart">
-[Mọi hành động (<span class="user-node">Users.user_id</span>)] <span class="arrow">---> </span>[<span class="system-node">AuditLogs</span> (table_name, action_type=INSERT/UPDATE/DELETE, old_value/new_value=JSON, created_at)]<br>
-[<span class="system-node">Hệ thống</span>] <span class="arrow">---> </span>[<span class="system-node">Jobs</span> & <span class="system-node">Failed_Jobs</span> (queue, payload, attempts, available_at; uuid, exception, failed_at)]
-                </div>
-                <p><strong>AuditLogs:</strong> Lưu lại mọi thay đổi cho các bảng quan trọng (e.g., UPDATE AuctionItems.status).</p>
-                <p><strong>Jobs:</strong> Xử lý nền: gửi mail (Notifications), thông báo, thanh toán tự động (Payments), hoàn cọc (DepositPayments.refund_status=DaHoan).</p>
-            </div>
-            <div class="col-md-6">
-                <div class="interface">
-                    <strong>Giao diện log:</strong><br>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead><tr><th>Action</th><th>Table</th><th>Time</th></tr></thead>
-                            <tbody><tr><td>UPDATE</td><td>AuctionSessions</td><td>15/10/2025</td></tr></tbody>
-                        </table>
-                    </div>
-                    <strong>Jobs queue:</strong> [Xem danh sách] (e.g., process_payment)
-                </div>
-            </div>
-        </div>
-
-        <h2><i class="fas fa-desktop icon"></i> 9. Giao diện minh họa (Text-based)</h2>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="interface">
-                    <strong>Trang chính:</strong><br>
-                    <i class="fas fa-list"></i> [Danh sách phiên đấu giá (AuctionSessions.status=DangDienRa)]<br>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead><tr><th>ID</th><th>Tên tài sản</th><th>Thời gian</th><th>Trạng thái</th></tr></thead>
-                            <tbody><tr><td>1</td><td>Xe hơi (AuctionItems.name)</td><td>01/10/2025 (bid_start)</td><td>DangDauGia</td></tr></tbody>
-                        </table>
-                    </div>
-                    [Xem chi tiết] → Gửi giá thầu (Bids) / Xem tài liệu (EDocuments) / Thanh toán (Payments)
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="interface">
-                    <strong>Trang hồ sơ:</strong><br>
-                    <i class="fas fa-file-upload"></i> [Nộp hồ sơ (AuctionProfiles)] → [Theo dõi trạng thái: DaDuyet]<br><br>
-                    <strong>Trang hợp đồng:</strong><br>
-                    <i class="fas fa-file-contract"></i> [Xem hợp đồng (Contracts)] → [Thanh toán (Payments)] → [Nhận thông báo (Notifications)]<br><br>
-                    <strong>Trang Admin (Dashboard):</strong><br>
-                    <i class="fas fa-cog"></i> [Quản lý Users (role ENUM), Tài sản (AuctionItems.status), Phiên đấu giá (AuctionSessions), Báo cáo (Reports), AuditLogs]<br>
-                    Metrics ví dụ: Số phiên: 5 | Số tài sản đang đấu giá: 3 | Số hợp đồng chưa thanh toán: 2<br>
-                    Danh sách Users: [Thêm/Sửa/Xóa] | Vai trò: <select class="form-select demo-input" disabled><option>User</option><option>Administrator</option></select> (INDEX idx_users_email_role)
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <div class="accordion" id="accordionFAQ">
-        <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faqPanel">
-                    <i class="fas fa-question-circle me-2"></i> Mở rộng để xem FAQ
-                </button>
-            </h2>
-            <div id="faqPanel" class="accordion-collapse collapse" data-bs-parent="#accordionFAQ">
-                <div class="accordion-body">
-                    <p><strong>Câu hỏi thường gặp:</strong></p>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-hand-holding-usd text-primary"></i> Làm thế nào để đặt cọc? → Nộp qua form hồ sơ đấu giá (DepositPayments.profile_id, amount).</li>
-                        <li><i class="fas fa-clock text-primary"></i> Phiên đấu giá hôm nay? → Kiểm tra bid_start trong AuctionSessions (e.g., 01/10/2025, method='Đấu giá tự do').</li>
-                        <li><i class="fas fa-exclamation-triangle text-warning"></i> Lỗi thanh toán? → Kiểm tra Failed_Jobs và liên hệ admin (role=Administrator).</li>
-                        <li><i class="fas fa-list text-primary"></i> Làm sao biết phiên đấu giá nào đang diễn ra? → Xem dashboard trang chính, lọc status=DangDienRa.</li>
-                        <li><i class="fas fa-edit text-primary"></i> Tôi có thể chỉnh sửa giá thầu không? → Không, chỉ gửi thầu mới; thầu cũ lưu lịch sử Bids.</li>
-                        <li><i class="fas fa-exclamation-circle text-warning"></i> Chậm thanh toán có ảnh hưởng gì? → Hợp đồng hủy sau 48h, mất đặt cọc; liên hệ admin để gia hạn.</li>
-                    </ul>
-                    <h5><i class="fas fa-list-alt icon"></i> Appendix: Tổng hợp ENUM</h5>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead><tr><th>Bảng</th><th>Trường ENUM</th><th>Giá trị</th></tr></thead>
-                            <tbody>
-                                <tr><td>Users</td><td>role</td><td>User, Administrator, Customer, ChuyenVienTTC, DauGiaVien, DonViThuc, ToChucDauGia</td></tr>
-                                <tr><td>AuctionItems</td><td>status</td><td>ChoDuyet, ChoDauGia, DangDauGia, DaBan, Huy</td></tr>
-                                <tr><td>AuctionSessions</td><td>method</td><td>Đấu giá tự do, Đấu giá kín, Đấu giá Anh</td></tr>
-                                <tr><td>Payments</td><td>status</td><td>ChoXuLy, HoanTat, DaThanhToan, ThatBai</td></tr>
-                                <tr><td>EDocuments</td><td>type</td><td>QuyChe, BienBan, TaiLieuKhac</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <a href="#" class="btn btn-link">Tải hướng dẫn PDF</a> | <a href="mailto:admin@dau-gia.vn" class="btn btn-link">Liên hệ Admin</a>
-                </div>
-            </div>
+        
+        <div class="signature">
+            <p>Người làm đơn</p>
+            <p><strong>Bùi Phương Nam</strong></p>
         </div>
     </div>
-</main>
-
-<footer class="text-center">
-    <p>&copy; 2025 Hệ Thống Đấu Giá Trực Tuyến. Tất cả quyền được bảo lưu. | Dựa trên schema MySQL: dau_gia_online (UTF8MB4).</p>
-    <a href="#" class="text-light">Tải hướng dẫn PDF</a> | <a href="mailto:support@dau-gia.vn" class="text-light">Liên hệ hỗ trợ</a>
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // Smooth scrolling for nav links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            document.querySelector(this.getAttribute('href')).scrollIntoView({
-                behavior: 'smooth'
-            });
-        });
-    });
-</script>
-
 </body>
 </html>
