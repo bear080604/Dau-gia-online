@@ -13,6 +13,7 @@ const Profile = () => {
   const [contracts, setContracts] = useState([]);
   const [auctionHistory, setAuctionHistory] = useState([]);
   const [myAuctions, setMyAuctions] = useState([]);
+  const [banks, setBanks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [bankError, setBankError] = useState(null);
@@ -74,78 +75,108 @@ const Profile = () => {
       return;
     }
 
-   const fetchUserData = async () => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+        console.log('API /user response:', data);
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem('token');
+            setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+            navigate('/login');
+            return;
+          }
+          throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
+        }
+
+        if (data.status && data.user) {
+          const newUserData = {
+            id: data.user.user_id || null,
+            fullName: data.user.full_name || 'Chưa cập nhật',
+            username: data.user.email ? data.user.email.split('@')[0] : 'Chưa cập nhật',
+            accountType:
+              data.user.role === 'User'
+                ? 'Cá nhân'
+                : data.user.role === 'Administrator'
+                ? 'Quản trị viên'
+                : data.user.role === 'ToChucDauGia'
+                ? 'Tổ chức đấu giá'
+                : data.user.role === 'DauGiaVien'
+                ? 'Đấu giá viên'
+                : data.user.role === 'ChuyenVienTTC'
+                ? 'Chuyên viên TTC'
+                : data.user.role === 'DonViThuc'
+                ? 'Đơn vị thực'
+                : 'Chưa xác định',
+            email: data.user.email || 'Chưa cập nhật',
+            phone: data.user.phone || 'Chưa cập nhật',
+            address: data.user.address || 'Chưa cập nhật',
+            idCardFront: data.user.id_card_front || null,
+            idCardFrontUrl: data.user.id_card_front_url || null,
+            idCardBack: data.user.id_card_back || null,
+            idCardBackUrl: data.user.id_card_back_url || null,
+            bankName: data.user.bank_name || 'Chưa cập nhật',
+            bankAccount: data.user.bank_account || 'Chưa cập nhật',
+            createdAt: data.user.created_at || 'Chưa cập nhật',
+            emailVerifiedAt: data.user.email_verified_at || 'Chưa cập nhật',
+          };
+          setUserData(newUserData);
+          console.log('Set userData.id:', newUserData.id);
+        } else {
+          throw new Error('Định dạng dữ liệu không hợp lệ');
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching user data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [navigate, token]);
+
+  // Lấy danh sách ngân hàng từ VietQR API
+  const fetchBanks = async () => {
     try {
       setLoading(true);
-      // console.log('Token used:', token); 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user`, {
+      const response = await fetch('https://api.vietqr.io/v2/banks', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
         },
       });
 
       const data = await response.json();
-      // console.log('API /user response:', data); 
+      console.log('API VietQR /banks response:', data);
 
       if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('token');
-          setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-          navigate('/login');
-          return;
-        }
         throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
-
       }
 
-      if (data.status && data.user) {
-        const newUserData = {
-          id: data.user.user_id || null, // Đảm bảo ánh xạ đúng user_id
-          fullName: data.user.full_name || 'Chưa cập nhật',
-          username: data.user.email ? data.user.email.split('@')[0] : 'Chưa cập nhật',
-          accountType:
-            data.user.role === 'User'
-              ? 'Cá nhân'
-              : data.user.role === 'Administrator'
-              ? 'Quản trị viên'
-              : data.user.role === 'ToChucDauGia'
-              ? 'Tổ chức đấu giá'
-              : data.user.role === 'DauGiaVien'
-              ? 'Đấu giá viên'
-              : data.user.role === 'ChuyenVienTTC'
-              ? 'Chuyên viên TTC'
-              : data.user.role === 'DonViThuc'
-              ? 'Đơn vị thực'
-              : 'Chưa xác định',
-          email: data.user.email || 'Chưa cập nhật',
-          phone: data.user.phone || 'Chưa cập nhật',
-          address: data.user.address || 'Chưa cập nhật',
-          idCardFront: data.user.id_card_front || null,
-          idCardFrontUrl: data.user.id_card_front_url || null,
-          idCardBack: data.user.id_card_back || null,
-          idCardBackUrl: data.user.id_card_back_url || null,
-          bankName: data.user.bank_name || 'Chưa cập nhật',
-          bankAccount: data.user.bank_account || 'Chưa cập nhật',
-          createdAt: data.user.created_at || 'Chưa cập nhật',
-          emailVerifiedAt: data.user.email_verified_at || 'Chưa cập nhật',
-        };
-        setUserData(newUserData);
-        // console.log('Set userData.id:', newUserData.id); 
+      if (data.code === '00' && Array.isArray(data.data)) {
+        setBanks(data.data);
       } else {
-        throw new Error('Định dạng dữ liệu không hợp lệ');
+        throw new Error('Dữ liệu ngân hàng không hợp lệ');
       }
     } catch (err) {
-      setError(err.message);
-      console.error('Error fetching user data:', err);
+      setBankError('Lỗi tải danh sách ngân hàng: ' + err.message);
+      console.error('Error fetching banks:', err);
     } finally {
       setLoading(false);
     }
   };
-
-    fetchUserData();
-  }, [navigate, token]);
 
   // Lấy dữ liệu hợp đồng
   useEffect(() => {
@@ -209,6 +240,13 @@ const Profile = () => {
 
   // Hàm lấy danh sách sản phẩm đấu giá của người dùng
   const fetchMyAuctions = async () => {
+    console.log('Gọi API cho user_id:', userData.id);
+    if (!userData.id) {
+      console.error('userData.id is null or undefined');
+      setError('Không thể lấy ID người dùng');
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
@@ -224,6 +262,9 @@ const Profile = () => {
         }
       );
 
+      const data = await response.json();
+      console.log('API /products response:', data);
+
       if (!response.ok) {
         if (response.status === 401) {
           localStorage.removeItem('token');
@@ -238,9 +279,7 @@ const Profile = () => {
         throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
       }
 
-      const data = await response.json();
       const items = Array.isArray(data) ? data : data.data || [];
-
       if (!Array.isArray(items)) {
         throw new Error('Dữ liệu sản phẩm không đúng định dạng');
       }
@@ -272,7 +311,7 @@ const Profile = () => {
     }
   };
 
-  // Fetch danh sách sản phẩm đấu giá của người dùng (My Auctions)
+  // Fetch danh sách sản phẩm đấu giá của người dùng
   useEffect(() => {
     if (!userData.id || !token) {
       setLoading(false);
@@ -326,8 +365,10 @@ const Profile = () => {
   }, []);
 
   const handleTabChange = (tab) => setActiveTab(tab);
+
   const openProfilePopup = () => setShowProfilePopup(true);
   const closeProfilePopup = () => setShowProfilePopup(false);
+
   const openBankPopup = () => {
     setBankPopupMode('add');
     setBankData({
@@ -337,7 +378,9 @@ const Profile = () => {
       accountHolder: userData.fullName,
     });
     setShowBankPopup(true);
+    fetchBanks();
   };
+
   const closeBankPopup = () => {
     setShowBankPopup(false);
     setBankError(null);
@@ -353,6 +396,7 @@ const Profile = () => {
       accountHolder: userData.fullName,
     });
     setShowBankPopup(true);
+    fetchBanks();
   };
 
   const handleDeleteBank = async () => {
@@ -1403,21 +1447,22 @@ const Profile = () => {
             </div>
             <div className={styles.popupBody}>
               {bankError && <p className={styles.error}>{bankError}</p>}
+              {loading && <p>Đang tải danh sách ngân hàng...</p>}
               <div className={styles.bankForm}>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Ngân hàng</label>
                   <select
-                    className={styles.formControl}
+                    className={`${styles.formControl} ${styles.bankSelect}`}
                     id="bankName"
                     value={bankData.bankName}
                     onChange={handleBankInputChange}
                   >
                     <option value="">Chọn ngân hàng</option>
-                    <option value="Vietcombank">Vietcombank</option>
-                    <option value="Agribank">Agribank</option>
-                    <option value="VietinBank">VietinBank</option>
-                    <option value="BIDV">BIDV</option>
-                    <option value="Techcombank">Techcombank</option>
+                    {banks.map((bank) => (
+                      <option key={bank.id} value={bank.name} data-logo={bank.logo}>
+                        {bank.shortName}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className={styles.formGroup}>
