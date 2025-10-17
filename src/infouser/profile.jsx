@@ -77,7 +77,7 @@ const Profile = () => {
    const fetchUserData = async () => {
     try {
       setLoading(true);
-      console.log('Token used:', token); // Log token
+      // console.log('Token used:', token); 
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user`, {
         method: 'GET',
         headers: {
@@ -87,7 +87,7 @@ const Profile = () => {
       });
 
       const data = await response.json();
-      console.log('API /user response:', data); // Log phản hồi API
+      // console.log('API /user response:', data); 
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -132,7 +132,7 @@ const Profile = () => {
           emailVerifiedAt: data.user.email_verified_at || 'Chưa cập nhật',
         };
         setUserData(newUserData);
-        console.log('Set userData.id:', newUserData.id); // Log giá trị userData.id
+        // console.log('Set userData.id:', newUserData.id); 
       } else {
         throw new Error('Định dạng dữ liệu không hợp lệ');
       }
