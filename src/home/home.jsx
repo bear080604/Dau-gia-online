@@ -9,6 +9,41 @@ import 'swiper/css/pagination';
 import 'swiper/css/autoplay';
 import axios from 'axios';
 
+// localStorage keys
+const STORAGE_KEYS = {
+  LATEST_AUCTIONS: 'home_latestAuctions',
+  ALL_AUCTIONS: 'home_allAuctions',
+  CATEGORIES: 'home_categories',
+  NEWS: 'home_news',
+  SEARCH_TERM: 'home_searchTerm',
+  CATEGORY_FILTER: 'home_categoryFilter',
+  SORT_BY: 'home_sortBy',
+  TIMESTAMP: 'home_timestamp'
+};
+
+// Helper functions for localStorage
+const saveToStorage = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error('Error saving to localStorage:', error);
+  }
+};
+
+const loadFromStorage = (key) => {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : null;
+  } catch (error) {
+    console.error('Error loading from localStorage:', error);
+    return null;
+  }
+};
+
+const isDataFresh = (timestamp, maxAge = 5 * 60 * 1000) => { // 5 minutes
+  return timestamp && (Date.now() - timestamp) < maxAge;
+};
+
 const Home = () => {
   const [latestAuctions, setLatestAuctions] = useState([]);
   const [allAuctions, setAllAuctions] = useState([]);
@@ -18,6 +53,28 @@ const Home = () => {
   const [sortBy, setSortBy] = useState('default');
   const [news, setNews] = useState([]);
   const [error, setError] = useState(null);
+
+  // Load persisted state on mount
+  useEffect(() => {
+    const persistedTimestamp = loadFromStorage(STORAGE_KEYS.TIMESTAMP);
+    if (isDataFresh(persistedTimestamp)) {
+      const persistedLatestAuctions = loadFromStorage(STORAGE_KEYS.LATEST_AUCTIONS) || [];
+      const persistedAllAuctions = loadFromStorage(STORAGE_KEYS.ALL_AUCTIONS) || [];
+      const persistedCategories = loadFromStorage(STORAGE_KEYS.CATEGORIES) || [];
+      const persistedNews = loadFromStorage(STORAGE_KEYS.NEWS) || [];
+      setLatestAuctions(persistedLatestAuctions);
+      setAllAuctions(persistedAllAuctions);
+      setCategories(persistedCategories);
+      setNews(persistedNews);
+    }
+
+    const persistedSearchTerm = loadFromStorage(STORAGE_KEYS.SEARCH_TERM) || '';
+    const persistedCategoryFilter = loadFromStorage(STORAGE_KEYS.CATEGORY_FILTER) || 'all';
+    const persistedSortBy = loadFromStorage(STORAGE_KEYS.SORT_BY) || 'default';
+    setSearchTerm(persistedSearchTerm);
+    setCategoryFilter(persistedCategoryFilter);
+    setSortBy(persistedSortBy);
+  }, []);
 
   const getAuctionStatus = (session) => {
     if (!session || !session.bid_start || !session.bid_end) {
@@ -89,6 +146,14 @@ const Home = () => {
             : 'https://via.placeholder.com/300x200?text=Image+Not+Found',
         }));
         setNews(formattedNews);
+
+        // Save fetched data to localStorage with timestamp
+        const timestamp = Date.now();
+        saveToStorage(STORAGE_KEYS.LATEST_AUCTIONS, latestSorted);
+        saveToStorage(STORAGE_KEYS.ALL_AUCTIONS, productsWithSessions);
+        saveToStorage(STORAGE_KEYS.CATEGORIES, categoryResponse.data.data);
+        saveToStorage(STORAGE_KEYS.NEWS, formattedNews);
+        saveToStorage(STORAGE_KEYS.TIMESTAMP, timestamp);
 
         setError(null);
       } catch (err) {
@@ -187,14 +252,22 @@ const Home = () => {
                 type="text"
                 placeholder='Tìm kiếm ...'
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setSearchTerm(newValue);
+                  saveToStorage(STORAGE_KEYS.SEARCH_TERM, newValue);
+                }}
               />
             </div>
             <div className='select-cate'>
               <select
                 name="category"
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setCategoryFilter(newValue);
+                  saveToStorage(STORAGE_KEYS.CATEGORY_FILTER, newValue);
+                }}
               >
                 <option value="all">Tất cả danh mục</option>
                 {categories.map((category) => (
@@ -216,7 +289,11 @@ const Home = () => {
                 className='select'
                 name="sort"
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setSortBy(newValue);
+                  saveToStorage(STORAGE_KEYS.SORT_BY, newValue);
+                }}
               >
                 <option value="default">Mặc định</option>
                 <option value="price-asc">Giá tăng dần</option>

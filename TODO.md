@@ -1,13 +1,9 @@
-# Upgrade WebSocket to Socket.IO in Detail Page
+# TODO: Persist Home Page Data
 
-## Tasks
-- [x] Import Socket.IO client in detai.jsx
-- [x] Replace native WebSocket with Socket.IO connection
-- [x] Join auction room on connection
-- [x] Listen for 'bid_update' and 'status_update' events
-- [x] Update currentBidPrice and auctionItem status on events
-- [x] Add connection status updates
-- [x] Handle disconnections and reconnections
-- [x] Remove old WebSocket code
-- [x] Update status_update to handle full auctionItem updates
-- [ ] Test the implementation
+- [ ] Define localStorage keys for state persistence
+- [ ] Add function to load state from localStorage on component mount
+- [ ] Add function to save state to localStorage on changes
+- [ ] Modify useEffect to load persisted data and check timestamps (refetch if older than 5 minutes)
+- [ ] Save fetched data with timestamp after successful API calls
+- [ ] Save user input states (searchTerm, categoryFilter, sortBy) on changes
+- [ ] Test navigation to another page and back to verify persistence
