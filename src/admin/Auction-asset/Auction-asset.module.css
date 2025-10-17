@@ -16,6 +16,76 @@
   background-color: #f9fafb;
   overflow-y: auto;
 }
+.fileNamePreview a {
+  color: #007bff;
+  text-decoration: none;
+}
+.fileNamePreview a:hover {
+  text-decoration: underline;
+}
+/* Auction-asset.module.css */
+.imagePreview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.imageContainer {
+  position: relative;
+  width: 100px; /* Kích thước cố định cho ảnh */
+  height: 100px;
+}
+
+.previewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Đảm bảo ảnh không bị méo */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.removeImageBtn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+}
+
+.removeImageBtn:hover {
+  background-color: #cc0000;
+}
+
+.fileNamePreview {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+}
+
+.fileNamePreview a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.fileNamePreview a:hover {
+  text-decoration: underline;
+}
+
+/* Thêm style cho status nếu cần */
+.statusChoduyet { background-color: #f0ad4e; }
+.statusChodau { background-color: #5bc0de; }
+.statusDangdau { background-color: #5cb85c; }
+.statusDaban { background-color: #0275d8; }
+.statusHuy { background-color: #d9534f; }
 
 .header {
   display: flex;

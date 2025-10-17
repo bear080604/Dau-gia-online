@@ -326,6 +326,20 @@ select.formControl option {
   width: 100%;
   transition: width 5000ms linear;
 }
+.imagePreview {
+  margin-top: 10px;
+}
+.previewImg {
+  max-width: 100px;
+  max-height: 100px;
+  margin-right: 10px;
+  object-fit: cover;
+}
+.fileNamePreview {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+}
 
 @media (max-width: 420px) {
   .toastContainer {
