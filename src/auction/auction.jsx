@@ -89,7 +89,7 @@ const AuctionPage = () => {
         setPaused(session.paused ?? false);
         setAuctionItem(session);
       } catch (err) {
-        console.error('Fetch error:', err);
+      
         setError(err.response?.data?.message || err.message || 'Lỗi không xác định');
       } finally {
         setLoading(false);
@@ -131,7 +131,7 @@ const AuctionPage = () => {
           setAuctionItem(session);
         }
       } catch (err) {
-        console.error('Error refreshing auction session:', err);
+      
       }
     }, 3000);
 
@@ -153,7 +153,6 @@ const AuctionPage = () => {
           throw new Error(data.message || 'Không thể lấy danh sách danh mục');
         }
       } catch (err) {
-        console.error('Fetch categories error:', err);
         setCategories([]);
         showToast('Không thể tải danh sách danh mục', 'error');
       }
@@ -172,23 +171,23 @@ const AuctionPage = () => {
 
   const fetchBidders = async () => {
     if (!id || !token) return;
-    console.log('Fetching bidders for session_id:', id);
+   
     try {
       const fullUrl = `${API_URL}auction-profiles?session_id=${id}`;
       const response = await axios.get(fullUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = response.data;
-      console.log('API response:', data);
+   
       const profiles = data.profiles || [];
       const filteredBidders = profiles.filter(p => 
         (p.status === 'DaDuyet' || p.status === 'pending') && 
         p.session_id === parseInt(id)
       );
-      console.log('Filtered bidders:', filteredBidders);
+
       setBidders(filteredBidders);
     } catch (err) {
-      console.error('Fetch bidders error:', err);
+      
       setBidders([]);
     }
   };
@@ -210,7 +209,7 @@ const AuctionPage = () => {
       }
       setCurrentPrice(highest);
     } catch (err) {
-      console.error('Fetch bids error:', err);
+     
       setBids([]);
     }
   };
@@ -366,7 +365,7 @@ const AuctionPage = () => {
         showToast(result.message || 'Lỗi đặt giá', 'error');
       }
     } catch (err) {
-      console.error('Bid error:', err);
+   
       const errorMsg = err.response?.data?.message || err.message || 'Lỗi không xác định';
       showToast(errorMsg, 'error');
     } finally {

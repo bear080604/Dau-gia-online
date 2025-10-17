@@ -157,7 +157,6 @@ const Home = () => {
 
         setError(null);
       } catch (err) {
-        console.error("Lỗi API:", err);
         setError("Không thể tải dữ liệu. Vui lòng thử lại sau.");
       }
     };

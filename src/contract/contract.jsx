@@ -99,7 +99,6 @@ const Contract = () => {
         throw new Error(econtractData.message || 'Lỗi dữ liệu hợp đồng điện tử');
       }
     } catch (error) {
-      console.error('Fetch error:', error);
       setError('Lỗi: ' + error.message);
       showToastMessage('Lỗi tải hợp đồng: ' + error.message, 'error');
     } finally {

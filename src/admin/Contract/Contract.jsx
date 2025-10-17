@@ -74,52 +74,48 @@ function Contract() {
         acc[user.user_id] = user.full_name;
         return acc;
       }, {});
-      console.log("Mapped usersData:", usersData);
+     
       setUsers(usersData);
 
-      console.log("Mapping contracts (THIS IS THE POTENTIAL CRASH POINT)...");
-      const transformedContracts = contractResponse.data.contracts.map((contract) => {
-        console.log("Processing contract:", contract);
+const transformedContracts = contractResponse.data.contracts.map((contract, index) => {
+  try {
+    return {
+      id: `#HD-${String(contract.contract_id).padStart(3, '0')}`,
+      sessionId: `#PH-${String(contract.session_id).padStart(3, '0')}`,
+      sessionIdShort: `PH${String(contract.session_id).padStart(3, '0')}`,
+      winner: contract.winner && contract.winner.full_name
+        ? `${contract.winner.full_name} (ID: ${contract.winner_id || 'N/A'})`
+        : 'N/A',
+      winnerId: contract.winner_id ? String(contract.winner_id) : '',
+      finalPrice: formatCurrency(contract.final_price),
+      finalPriceValue: parseFloat(contract.final_price) || 0,
+      signedDate: formatDate(contract.signed_date),
+      rawSignedDate: contract.signed_date || '',
+      manager: contract.session && contract.session.created_by
+        ? `${usersData[contract.session.created_by] || 'Unknown'} (ID: ${contract.session.created_by})`
+        : 'Unknown',
+      managerId: contract.session?.created_by?.toString() || '1',
+      status: statusMap[contract.status] || contract.status,
+      statusClass:
+        contract.status === 'ChoThanhToan'
+          ? 'statusChothanhtoan'
+          : contract.status === 'DaThanhToan'
+          ? 'statusDathanhtoan'
+          : 'statusHuy',
+      paymentStatus: contract.status,
+      rawContractId: contract.contract_id,
+    };
+  } catch (error) {
+    console.error(`Error transforming contract at index ${index}:`, contract, error);
+    return null; // Skip problematic contract
+  }
+}).filter(contract => contract !== null); // Remove null entries
 
-        // Đây là đoạn gốc của bạn, log trước khi crash
-        console.log("Winner:", contract.winner);
-        console.log("Winner full_name:", contract.winner.full_name); // <- có thể crash ở đây nếu winner null
-        console.log("Signed date:", contract.signed_date);
-        console.log("Session created_by:", contract.session.created_by);
-
-        return {
-          id: `#HD-${String(contract.contract_id).padStart(3, '0')}`,
-          sessionId: `#PH-${String(contract.session_id).padStart(3, '0')}`,
-          sessionIdShort: `PH${String(contract.session_id).padStart(3, '0')}`,
-          winner: contract.winner
-            ? `${contract.winner.full_name} (ID: ${contract.winner_id})`
-            : 'N/A',
-          winnerId: contract.winner_id ? String(contract.winner_id) : '',
-          finalPrice: formatCurrency(contract.final_price),
-          finalPriceValue: parseFloat(contract.final_price) || 0,
-          signedDate: formatDate(contract.signed_date),
-          rawSignedDate: contract.signed_date || '',
-          manager: contract.session.created_by
-            ? `${usersData[contract.session.created_by] || 'Unknown'} (ID: ${contract.session.created_by})`
-            : 'Unknown',
-          managerId: contract.session.created_by?.toString() || '1',
-          status: statusMap[contract.status] || contract.status,
-          statusClass:
-            contract.status === 'ChoThanhToan'
-              ? 'statusChothanhtoan'
-              : contract.status === 'DaThanhToan'
-              ? 'statusDathanhtoan'
-              : 'statusHuy',
-          paymentStatus: contract.status,
-          rawContractId: contract.contract_id,
-        };
-      });
-
-      console.log("Transformed contracts:", transformedContracts);
+     
       setContracts(transformedContracts);
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching or transforming contracts:", err);
+     
       setError('Không thể tải dữ liệu.');
       setLoading(false);
     }

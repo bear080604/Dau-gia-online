@@ -64,7 +64,7 @@ function EContract() {
         }
       } catch (err) {
         setError('Failed to fetch e-contracts. Please try again later.');
-        console.error(err);
+    
       } finally {
         setLoading(false);
       }

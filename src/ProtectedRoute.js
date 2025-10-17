@@ -30,13 +30,13 @@ const ProtectedRoute = ({ children, restrictIfLoggedIn = false }) => {
   }
 
   if (!user) {
-    console.warn('Access denied: User is not logged in');
+   
     return <Navigate to="/login" replace />;
   }
 
 
   if (user.role !== 'DauGiaVien' && user.role !== 'Administrator') {
-    console.warn('Access denied: User is not a DauGiaVien or Administrator');
+   
     return <Navigate to="/access-denied" replace />;
   }
 

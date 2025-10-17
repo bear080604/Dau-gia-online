@@ -46,12 +46,12 @@ const Contact = () => {
           owner_id: user.user_id,
           owner_name: user.full_name || user.email || 'Người dùng'
         }));
-        console.log('Auto-set owner:', user.full_name, '(ID:', user.user_id + ')');
+       
       } else {
         setGlobalError('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
       }
     } catch (err) {
-      console.error('Lỗi parse user JSON:', err);
+    
       setGlobalError('Lỗi dữ liệu người dùng. Vui lòng đăng nhập lại.');
     }
 
@@ -220,7 +220,7 @@ const Contact = () => {
       });
 
       const data = await response.json();
-      console.log('Phản hồi:', data);
+    
 
       if (response.ok) {
         showToast({ title: 'Thành công!', message: 'Tạo thành công! ID: ' + (data.item?.item_id || 'N/A') });
@@ -244,7 +244,7 @@ const Contact = () => {
         throw new Error(data.message || 'Lỗi tạo sản phẩm');
       }
     } catch (error) {
-      console.error('Lỗi:', error);
+    
       setGlobalError(error.message || 'Lỗi kết nối server');
     } finally {
       setLoading(false);

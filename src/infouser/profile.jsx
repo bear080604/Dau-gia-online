@@ -97,6 +97,7 @@ const Profile = () => {
           return;
         }
         throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
+
       }
 
       if (data.status && data.user) {

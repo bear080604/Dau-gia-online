@@ -44,7 +44,6 @@ const Header = () => {
           throw new Error('Invalid API response');
         }
       } catch (error) {
-        console.error('Error fetching categories:', error);
         setCategories([]);
       }
     };
@@ -116,7 +115,6 @@ const Header = () => {
           throw new Error('Invalid API response structure');
         }
       } catch (error) {
-        console.error('Error fetching notifications:', error);
         setNotifications([]);
         setNotificationError(`Không thể tải thông báo: ${error.message}`);
       }
@@ -139,7 +137,6 @@ const Header = () => {
         const data = await response.json();
         setContractData(data);
       } catch (error) {
-        console.error('Error fetching contracts:', error);
         setContractData({ status: false, contracts: [] });
       }
     };
@@ -388,7 +385,6 @@ const Header = () => {
         )
       );
     } catch (error) {
-      console.error('Error marking notification as read:', error);
     }
   };
 
