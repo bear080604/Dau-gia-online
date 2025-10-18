@@ -16,7 +16,6 @@ export const UserProvider = ({ children }) => {
       const savedUser = localStorage.getItem('user');
       return savedUser ? JSON.parse(savedUser) : null;
     } catch (err) {
-     
       localStorage.removeItem('user');
       return null;
     }
@@ -31,17 +30,14 @@ export const UserProvider = ({ children }) => {
     if (tokenData) {
       setToken(tokenData);
       localStorage.setItem('token', tokenData);
-      // Xóa authToken nếu tồn tại để tránh xung đột
       localStorage.removeItem('authToken');
     }
   };
 
   const logout = async () => {
-    
     localStorage.removeItem('user');
     localStorage.removeItem('token');
-    localStorage.removeItem('authToken'); // Thêm dòng này để xóa authToken
- 
+    localStorage.removeItem('authToken');
 
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/logout`, {
@@ -54,10 +50,10 @@ export const UserProvider = ({ children }) => {
       });
 
       if (!response.ok) {
-        
+        // Xử lý lỗi nếu cần
       }
     } catch (err) {
-     
+      // Xử lý lỗi nếu cần
     }
   };
 
@@ -71,7 +67,7 @@ export const UserProvider = ({ children }) => {
           const parsedUser = JSON.parse(savedUser);
           setUser(parsedUser);
 
-          const response = await fetch(`${process.env.REACT_APP_API_URL}user`, {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/user`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -85,25 +81,23 @@ export const UserProvider = ({ children }) => {
             if (userData.status && userData.user) {
               setUser(userData.user);
               localStorage.setItem('user', JSON.stringify(userData.user));
-              localStorage.removeItem('authToken'); // Xóa authToken nếu tồn tại
+              localStorage.removeItem('authToken');
             } else {
               throw new Error('Invalid user data from API');
             }
           } else if (response.status === 401) {
-           
             setUser(null);
             setToken(null);
             localStorage.removeItem('user');
             localStorage.removeItem('token');
-            localStorage.removeItem('authToken'); // Xóa authToken nếu token hết hạn
+            localStorage.removeItem('authToken');
           }
         } catch (err) {
-         
           setUser(null);
           setToken(null);
           localStorage.removeItem('user');
           localStorage.removeItem('token');
-          localStorage.removeItem('authToken'); // Xóa authToken nếu có lỗi
+          localStorage.removeItem('authToken');
         }
       }
     };

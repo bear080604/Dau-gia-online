@@ -13,8 +13,21 @@ const Sidebar = () => {
     return `/admin${href.startsWith('/') ? href : `/${href}`}`;
   };
 
-  // Danh sách mục sidebar dựa trên vai trò
-  const getSidebarItems = (role) => {
+  // Ánh xạ role_id tới tên vai trò (giả định dựa trên bảng roles)
+  const getRoleName = (roleId) => {
+    const roleMap = {
+      1: 'Administrator',
+      2: 'ChuyenVienTTC',
+      3: 'DauGiaVien',
+      4: 'DonViThuc',
+      5: 'ToChucDauGia',
+    };
+    return roleMap[roleId] || 'default';
+  };
+
+  // Danh sách mục sidebar dựa trên role_id
+  const getSidebarItems = (roleId) => {
+    const roleName = getRoleName(roleId);
     const allItems = [
       { id: 'dashboard', icon: 'fas fa-home', label: 'Trang chủ', href: addAdminPrefix('/dashboard') },
       { id: 'assets', icon: 'fas fa-box-open', label: 'Tài sản đấu giá', href: addAdminPrefix('/auction-asset') },
@@ -35,7 +48,7 @@ const Sidebar = () => {
       { id: 'logs', icon: 'fas fa-history', label: 'Lịch sử log', href: addAdminPrefix('/history') },
     ];
 
-    switch (role) {
+    switch (roleName) {
       case 'Administrator':
         return allItems;
       case 'ChuyenVienTTC':
@@ -51,7 +64,7 @@ const Sidebar = () => {
     }
   };
 
-  const sidebarItems = getSidebarItems(user?.role);
+  const sidebarItems = getSidebarItems(user?.role_id); // Sử dụng role_id thay vì role
   const sections = [
     { title: 'Bảng điều khiển', items: sidebarItems.slice(0, 5) },
     { title: 'Công cụ', items: sidebarItems.slice(5, 10) },

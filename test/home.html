@@ -1,401 +1,173 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phiên Đấu Giá Đồng Điện Rã</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1290px;
-            margin: 0 auto;
-            background-color: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .header {
-            background-color: #2772BA;
-            color: white;
-            text-align: center;
-            padding: 15px;
-        }
-
-        .timer {
-            text-align: right;
-            padding: 10px 20px;
-            color: #d9534f;
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .lot-numbers {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            padding: 15px;
-            background-color: #f8f9fa;
-        }
-
-        .lot-number {
-            background-color: white;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .content {
-            display: flex;
-            padding: 20px;
-            gap: 20px;
-        }
-
-        .left-section {
-            flex: 1;
-            background-color: #FFF4E6;
-            padding: 20px;
-            border-radius: 8px;
-        }
-
-        .section-title {
-            background-color: #2772BA;
-            color: white;
-            padding: 10px;
-            margin: -20px -20px 15px -20px;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .info-row {
-            display: flex;
-            padding: 8px 0;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .info-label {
-            flex: 0 0 180px;
-            font-weight: normal;
-        }
-
-        .info-value {
-            flex: 1;
-        }
-
-        .right-section {
-            flex: 1;
-        }
-
-        .participants-section {
-            background-color: #FFF4E6;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .bid-section {
-            background-color: #FFF4E6;
-            padding: 20px;
-            border-radius: 8px;
-        }
-
-        .bid-info {
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        .bid-amount {
-            background-color: #2772BA;
-            color: white;
-            padding: 15px;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-
-        .bid-button {
-            background-color: #0066cc;
-            color: white;
-            border: none;
-            padding: 12px 40px;
-            font-size: 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        .bid-button:hover {
-            background-color: #0052a3;
-        }
-
-        .participants-table {
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        .table-title {
-            background-color: #2772BA;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: white;
-        }
-
-        th, td {
-            padding: 10px;
-            text-align: center;
-            border: 1px solid #ddd;
-        }
-
-        th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-        }
-
-        .user-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .user-icon.pink {
-            background-color: #e91e63;
-        }
-
-        input[type="range"] {
-            -webkit-appearance: none;
-            appearance: none;
-            height: 8px;
-            background: linear-gradient(to right, #2772BA 0%, #2772BA 0%, #ddd 0%, #ddd 100%);
-            border-radius: 5px;
-            outline: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            background: white;
-            border: 3px solid #2772BA;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            background: white;
-            border: 3px solid #2772BA;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Realtime Đấu giá</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .auction-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .auction-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+    .auction-card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    }
+    .auction-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+    .auction-card .info {
+      padding: 12px;
+    }
+    .auction-card .info h3 {
+      margin: 0 0 6px;
+    }
+    .auction-card .info p {
+      font-size: 14px;
+      color: #555;
+      margin: 4px 0;
+    }
+    .badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: #3b82f6;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            Phiên đấu giá đồng điện rã
-        </div>
-        
-        <div class="timer">00:00</div>
-        
-        <div class="lot-numbers">
-            <div class="lot-number">14</div>
-            <div class="lot-number">17</div>
-            <div class="lot-number">18</div>
-            <div class="lot-number">27</div>
-        </div>
+  <h1>🔥 Sản phẩm đấu giá (Realtime)</h1>
+  <!-- Container để hiển thị danh sách sản phẩm -->
+  <div class="auction-list" id="auctionList"></div>
 
-        <div class="content">
-            <div class="left-section">
-                <div class="section-title">THÔNG TIN TÀI SẢN</div>
-                <div class="info-row">
-                    <div class="info-label">Mã lô sản:</div>
-                    <div class="info-value">D401-22-01-BTN</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Loại tài sản:</div>
-                    <div class="info-value">Khác</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Người có tài sản:</div>
-                    <div class="info-value">Công ty TNHH Nicehustom</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Nơi có tài sản:</div>
-                    <div class="info-value">Kho hàng thu mua đồi Gò Dưa phường Tân Quy Q7</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Thời gian xem tài sản:</div>
-                    <div class="info-value">Giờ hành chính các ngày từ 24/12 đến 28/12/2021</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Tổ chức đấu giá tài sản:</div>
-                    <div class="info-value">Công ty đấu giá hợp danh Hoàn Cầu</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Phương thức đấu giá:</div>
-                    <div class="info-value">Trực tiếp</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Thời gian mở đăng ký:</div>
-                    <div class="info-value">17/12/2021 08:00:00</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Thời gian kết thúc đăng ký:</div>
-                    <div class="info-value">30/12/2021 16:30:00</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Thời gian bắt đầu trả giá:</div>
-                    <div class="info-value">04/01/2022 10:00:00</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Tiền hồ sơ:</div>
-                    <div class="info-value">500,000 VNĐ</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Tiền đặt trước:</div>
-                    <div class="info-value">3,000,000 VNĐ</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Giá khởi điểm:</div>
-                    <div class="info-value">4,000,000,000 VNĐ</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Giá hiện tại:</div>
-                    <div class="info-value">4,000,000,000 VNĐ</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Số lượt yêu cầu đấu giá:</div>
-                    <div class="info-value">4</div>
-                </div>
-            </div>
+  <!-- Socket.io client -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    console.log("📌 Script loaded, DOM ready");
 
-            <div class="right-section">
-                <div class="participants-section">
-                    <div class="section-title">THÀNH PHẦN THAM DỰ</div>
-                    <div class="info-row">
-                        <div class="info-label">Thư ký phiên đấu giá:</div>
-                        <div class="info-value">Nguyễn Văn A</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Đại diện bên có tài sản:</div>
-                        <div class="info-value">Nguyễn Văn B</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Đấu giá viên:</div>
-                        <div class="info-value">Nguyễn Văn D</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Đại diện người tham gia đấu giá:</div>
-                        <div class="info-value">Nguyễn Văn D</div>
-                    </div>
-                </div>
+    // -----------------------------
+    // 1️⃣ Cấu hình
+    // -----------------------------
+    const API_URL = "http://127.0.0.1:8000/api/products"; // API Laravel để load dữ liệu ban đầu
+    const socket = io("http://127.0.0.1:6001"); // Node.js Socket.io server
+    const auctionList = document.getElementById("auctionList");
+    const auctions = new Map(); // Lưu sản phẩm theo ID để tránh trùng
 
-                <div class="bid-section">
-                    <div class="section-title">THAM GIA ĐẤU GIÁ</div>
-                    <div class="bid-info">
-                        <input type="range" id="bidSlider" min="490000000" max="5000000000" value="490000000" step="10000000" style="width: 100%; margin: 15px 0;">
-                        <div>Số tiền đấu giá</div>
-                        <div class="bid-amount" id="bidAmount">490,000,000<br>VNĐ</div>
-                        <div style="font-size: 12px; color: #2772BA;">Số tiền đấu giá = Số tiền hiện tại + Bước giá</div>
-                    </div>
-                    <button class="bid-button">Đấu giá</button>
-                </div>
-            </div>
-        </div>
+    console.log("auctionList element:", auctionList);
 
-        <div class="participants-table">
-            <div class="table-title">DANH SÁCH NGƯỜI ĐĂNG KÝ ĐẤU GIÁ</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>STT</th>
-                        <th></th>
-                        <th>Họ và Tên</th>
-                        <th>Tiền hồ sơ</th>
-                        <th>Tiền đặt trước</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td><span class="user-icon" style="background-color: #4CAF50;"></span></td>
-                        <td>Bùi Thị B</td>
-                        <td>400,000</td>
-                        <td>500,000</td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td><span class="user-icon pink"></span></td>
-                        <td>Bùi Thị E</td>
-                        <td>400,000</td>
-                        <td>500,000</td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td><span class="user-icon pink"></span></td>
-                        <td>Bùi Thị P</td>
-                        <td>400,000</td>
-                        <td>500,000</td>
-                    </tr>
-                    <tr>
-                        <td>4</td>
-                        <td><span class="user-icon pink"></span></td>
-                        <td>Bùi Thị F</td>
-                        <td>400,000</td>
-                        <td>500,000</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+    // -----------------------------
+    // 2️⃣ Load dữ liệu ban đầu từ Laravel
+    // -----------------------------
+    async function loadInitial() {
+      console.log("⏳ Fetching initial data from Laravel...");
+      try {
+        const res = await fetch(API_URL);
+        const json = await res.json();
 
-    <script>
-        const slider = document.getElementById('bidSlider');
-        const bidAmount = document.getElementById('bidAmount');
+        // Laravel trả về { data: [...] }
+        let list = Array.isArray(json) ? json : json.data;
+        if (!Array.isArray(list)) list = [json];
 
-        function formatNumber(num) {
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        }
+        auctionList.innerHTML = ""; // Xóa UI cũ
+        list.forEach(addAuctionToUI); // Thêm từng sản phẩm vào UI
+        console.log("✅ Initial fetch complete:", json);
+      } catch (err) {
+        console.error("❌ Error fetching initial data:", err);
+      }
+    }
 
-        function updateSliderBackground() {
-            const min = slider.min;
-            const max = slider.max;
-            const val = slider.value;
-            const percentage = ((val - min) / (max - min)) * 100;
-            slider.style.background = `linear-gradient(to right, #2772BA 0%, #2772BA ${percentage}%, #ddd ${percentage}%, #ddd 100%)`;
-        }
+    // -----------------------------
+    // 3️⃣ Thêm hoặc cập nhật sản phẩm vào UI
+    // -----------------------------
+    function addAuctionToUI(a) {
+      // Chuẩn hóa ID (item_id từ backend)
+      if (!a.id && a.item_id) a.id = a.item_id;
 
-        slider.addEventListener('input', function() {
-            const value = this.value;
-            bidAmount.innerHTML = formatNumber(value) + '<br>VNĐ';
-            updateSliderBackground();
-        });
+      auctions.set(a.id, a); // Lưu vào Map
+      let card = document.getElementById(`auction-${a.id}`);
 
-        updateSliderBackground();
-    </script>
+      if (!card) {
+        // Nếu chưa có thẻ, tạo mới
+        card = document.createElement("div");
+        card.className = "auction-card";
+        card.id = `auction-${a.id}`;
+        card.innerHTML = `
+          <div class="badge">NEW</div>
+          <img src="${"http://127.0.0.1:8000"+a.image_url}" alt="${a.name}">
+          <div class="info">
+            <h3>${a.name}</h3>
+            <p>${a.description}</p>
+            <p><b>Giá khởi điểm:</b> ${Number(a.starting_price).toLocaleString()} VNĐ</p>
+            <p><b>Trạng thái:</b> ${a.status}</p>
+            <p><i>Người đăng:</i> ${a.owner?.name ?? "Không rõ"}</p>
+          </div>
+        `;
+        auctionList.prepend(card); // Thêm sản phẩm mới lên đầu danh sách
+      } else {
+        // Nếu đã có, cập nhật thông tin
+        card.querySelector(".info").innerHTML = `
+          <h3>${a.name}</h3>
+          <p>${a.description}</p>
+          <p><b>Giá khởi điểm:</b> ${Number(a.starting_price).toLocaleString()} VNĐ</p>
+          <p><b>Trạng thái:</b> ${a.status}</p>
+          <p><i>Người đăng:</i> ${a.owner?.name ?? "Không rõ"}</p>
+        `;
+        const badge = card.querySelector(".badge");
+        badge.textContent = "UPDATED";
+        badge.style.background = "#16a34a"; // màu xanh lá
+      }
+    }
+
+    // -----------------------------
+    // 4️⃣ Socket.io - Kết nối và join channel
+    // -----------------------------
+    socket.on("connect", () => {
+      console.log("⚡ Socket connected:", socket.id);
+      console.log("📢 Joining channel: auction-items");
+      socket.emit("join.channel", "auction-items"); // Join đúng channel
+    });
+
+    // -----------------------------
+    // 5️⃣ Lắng nghe event realtime từ Node
+    // -----------------------------
+    socket.onAny((event, payload) => {
+      console.log("⚡ Event từ Node.js:", event, payload);
+
+      // Node có thể gửi { item: {...} } hoặc { data: { item: {...} } }
+      const auction = payload.item || payload.data?.item;
+      if (auction) {
+        if (!auction.id && auction.item_id) auction.id = auction.item_id;
+        addAuctionToUI(auction); // Thêm hoặc cập nhật UI ngay
+      }
+    });
+
+    // -----------------------------
+    // 6️⃣ Load dữ liệu ban đầu khi mở trang
+    // -----------------------------
+    loadInitial();
+  </script>
 </body>
 </html>
