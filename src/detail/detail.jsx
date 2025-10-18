@@ -101,10 +101,31 @@ const Detail = () => {
     socket.on('connect', () => {
       console.log('✅ Kết nối Socket.io thành công');
       socket.emit('join.channel', `auction-session.${DEFAULT_SESSION_ID}`);
+      socket.emit('join.channel', 'auction-profiles'); // Thêm để nhận profile.updated
     });
 
     socket.on('disconnect', () => {
       console.log('⚠️ Socket disconnected');
+    });
+
+    // Xử lý sự kiện profile.updated
+    socket.on('profile.updated', (profileData) => {
+      console.log('🔄 Cập nhật hồ sơ:', profileData);
+      const updatedProfile = profileData.profile || profileData;
+      const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+      if (currentUser && updatedProfile.user_id === (currentUser.id || currentUser.user_id)) {
+        setProfile({ id: updatedProfile.profile_id, status: updatedProfile.status });
+        localStorage.setItem('profile_id', updatedProfile.profile_id.toString());
+        if (updatedProfile.status === 'DaThanhToan') {
+          setShowRegisterModal(true);
+          showToast('Thanh toán đặt cọc thành công! Hãy hoàn tất thủ tục.', 'success');
+        } else if (updatedProfile.status === 'DaDuyet') {
+          showToast('Hồ sơ của bạn đã được duyệt!', 'success');
+        } else if (updatedProfile.status === 'BiTuChoi' || updatedProfile.status === 'TuChoi') {
+          setHasSubmittedProfile(false);
+          showToast('Hồ sơ của bạn bị từ chối. Vui lòng đăng ký lại.', 'error');
+        }
+      }
     });
 
     socket.on('auction.session.updated', (updatedData) => {
@@ -142,25 +163,6 @@ const Detail = () => {
       }
     });
 
-    socket.on('auction.profile.updated', (profileData) => {
-      console.log('🔄 Cập nhật hồ sơ:', profileData);
-      const updatedProfile = profileData.profile || profileData;
-      const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
-      if (currentUser && updatedProfile.user_id === (currentUser.id || currentUser.user_id)) {
-        setProfile({ id: updatedProfile.profile_id, status: updatedProfile.status });
-        localStorage.setItem('profile_id', updatedProfile.profile_id.toString());
-        if (updatedProfile.status === 'DaThanhToan') {
-          setShowRegisterModal(true);
-          showToast('Thanh toán đặt cọc thành công! Hãy hoàn tất thủ tục.', 'success');
-        } else if (updatedProfile.status === 'DaDuyet') {
-          showToast('Hồ sơ của bạn đã được duyệt!', 'success');
-        } else if (updatedProfile.status === 'BiTuChoi' || updatedProfile.status === 'TuChoi') {
-          setHasSubmittedProfile(false);
-          showToast('Hồ sơ của bạn bị từ chối. Vui lòng đăng ký lại.', 'error');
-        }
-      }
-    });
-
     socket.on('error', (err) => {
       console.error('❌ Lỗi Socket.io:', err);
       showToast('Lỗi kết nối Socket.io', 'error');
@@ -168,6 +170,9 @@ const Detail = () => {
 
     return () => {
       socket.emit('leave.channel', `auction-session.${DEFAULT_SESSION_ID}`);
+      socket.emit('leave.channel', 'auction-profiles');
+      socket.off('profile.updated');
+      socket.off('auction.session.updated');
       socket.disconnect();
     };
   }, [DEFAULT_SESSION_ID, showToast]);
@@ -235,7 +240,7 @@ const Detail = () => {
         .map((img) => img.url || img)
         .filter((img) => img);
     }
-    if (images.length === 0) {
+    if (images.length === 0){
       images = [newAuctionItem.item.image_url || PLACEHOLDER_IMAGE];
     }
     setNumImages(images.length);
@@ -543,35 +548,31 @@ const Detail = () => {
     }
   };
 
-  const handleCheckin = async () => {
-    if (!profile.id) {
-      showToast('Chưa đăng ký', 'warning');
-      return;
-    }
+  // Sửa logic điểm danh: Kiểm tra profile.status, không gọi API
+  const handleCheckin = () => {
     if (!token) {
-      showToast('Bạn cần đăng nhập trước!', 'error');
+      showToast('Vui lòng đăng nhập trước!', 'error');
       navigate('/login');
       return;
     }
 
-    try {
-      const res = await apiFetch(`${API_BASE}/auction-profiles/${profile.id}/checkin`, {
-        method: 'POST',
-      });
-      if (res.success || res.status) {
-        setShowCheckinOverlay(true);
-        showToast('Điểm danh thành công!', 'success');
-        setTimeout(() => {
-          setShowCheckinOverlay(false);
-          navigate(`/Auction/${DEFAULT_SESSION_ID}`);
-        }, 1000);
-      } else {
-        throw new Error(res.message || 'Điểm danh thất bại');
-      }
-    } catch (err) {
-      console.error('❌ Lỗi checkin:', err);
-      showToast(err.message || 'Lỗi điểm danh', 'error');
+    if (!profile.id) {
+      showToast('Bạn chưa đăng ký tham gia đấu giá', 'warning');
+      return;
     }
+
+    if (profile.status !== 'DaDuyet') {
+      showToast('Hồ sơ của bạn chưa được duyệt', 'warning');
+      return;
+    }
+
+    // Nếu đã duyệt, hiển thị overlay và chuyển hướng
+    setShowCheckinOverlay(true);
+    showToast('Điểm danh thành công!', 'success');
+    setTimeout(() => {
+      setShowCheckinOverlay(false);
+      navigate(`/Auction/${DEFAULT_SESSION_ID}`);
+    }, 1000);
   };
 
   const handleFileChange = (e) => {
@@ -878,6 +879,12 @@ const Detail = () => {
                   <td>Giá khởi điểm:</td>
                   <td className='detailsp-price-highlight' id='detailsp-starting-price'>
                     {formatPrice(auctionItem.item?.starting_price)}
+                  </td>
+                </tr>
+                <tr>
+                  <td>Giá đấu cao nhất:</td>
+                  <td className='detailsp-price-highlight' id='detailsp-highest-bid'>
+                    {formatPrice(auctionItem.highest_bid)}
                   </td>
                 </tr>
               </tbody>

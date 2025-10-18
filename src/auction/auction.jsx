@@ -56,34 +56,66 @@ const AuctionPage = () => {
   const isAuctionEnded = bidEnd && now > bidEnd;
   const isAuctionNotStarted = bidStart && now < bidStart;
 
+  // Định nghĩa showToast
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type, show: true });
+    setTimeout(() => setToast({ message: '', type: '', show: false }), 5000);
+  };
+
   // Kết nối Socket.io
   useEffect(() => {
+    console.log('🆔 ID từ URL:', id); // Debug ID
+    console.log('🔑 Token:', token ? 'Có token' : 'Không có token'); // Debug token
     const socket = io('http://localhost:6001', {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      transports: ['websocket'], // Chỉ dùng websocket để tránh polling
     });
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log('✅ Kết nối Socket.io thành công');
+      console.log('✅ Kết nối Socket.io thành công, Socket ID:', socket.id);
       socket.emit('join.channel', `auction-session.${id}`);
+      socket.emit('join.channel', 'auction-profiles');
+      console.log(`👥 Đã join channel: auction-session.${id}`);
+    });
+
+    socket.on('reconnect', (attempt) => {
+      console.log(`🔄 Reconnect thành công sau ${attempt} lần`);
+      socket.emit('join.channel', `auction-session.${id}`);
+      socket.emit('join.channel', 'auction-profiles');
     });
 
     socket.on('disconnect', () => {
       console.log('⚠️ Socket disconnected');
     });
 
-    // Cập nhật trạng thái phiên đấu giá
+    socket.on('connect_error', (err) => {
+      console.error('❌ Lỗi kết nối Socket.io:', err.message);
+      showToast('Lỗi kết nối Socket.io', 'error');
+    });
+
+    // Debug tất cả sự kiện
+    socket.onAny((event, ...args) => {
+      console.log(`📡 Nhận sự kiện Socket.io: ${event}`, args);
+    });
+
     socket.on('auction.session.updated', (updatedData) => {
       console.log('🔄 Cập nhật phiên đấu giá realtime:', updatedData);
       const updatedSession = updatedData.session || updatedData;
-
       if (updatedSession.session_id === parseInt(id)) {
+        console.log('⏰ Thời gian mới:', {
+          register_start: updatedSession.register_start,
+          register_end: updatedSession.register_end,
+          checkin_time: updatedSession.checkin_time,
+          bid_start: updatedSession.bid_start,
+          bid_end: updatedSession.bid_end,
+        });
         setAuctionItem((prev) => ({
           ...prev,
           ...updatedSession,
-          item: { ...prev?.item, ...updatedSession.item }, // Giữ dữ liệu item
+          item: { ...prev?.item, ...updatedSession.item },
         }));
         if (updatedSession.paused !== paused) {
           setPaused(updatedSession.paused ?? false);
@@ -100,23 +132,53 @@ const AuctionPage = () => {
       }
     });
 
-    // Cập nhật giá thầu mới
-    socket.on('auction.bid.placed', (bidData) => {
-      console.log('💸 Giá thầu mới:', bidData);
+    socket.on('bid.placed', async (bidData) => {
+      console.log('💸 Giá thầu mới (bid.placed):', bidData);
       const newBid = bidData.bid || bidData;
-
+      console.log('🔍 Kiểm tra session_id:', newBid.session_id, 'vs', parseInt(id));
       if (newBid.session_id === parseInt(id)) {
+        newBid.id = newBid.bid_id;
+        let userName = newBid.user?.full_name || 'N/A';
+        if (!newBid.user?.full_name && newBid.user_id) {
+          try {
+            console.log(`📞 Gọi API lấy user: ${API_URL}showuser/${newBid.user_id}`);
+            const response = await axios.get(`${API_URL}showuser/${newBid.user_id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            console.log('📋 Response user:', response.data);
+            userName = response.data.user?.full_name || 'N/A';
+          } catch (err) {
+            console.error('❌ Lỗi fetch user:', err.message, err.response?.data);
+            userName = 'N/A';
+          }
+        }
         setBids((prev) => {
           if (prev.some((b) => b.id === newBid.id)) {
             console.log(`⚠️ Giá thầu ${newBid.id} đã tồn tại, bỏ qua`);
             return prev;
           }
-          const updatedBids = [...prev, newBid];
+          const updatedBids = [...prev, { ...newBid, user: { full_name: userName } }];
           const maxAmount = Math.max(...updatedBids.map((b) => parseFloat(b.amount)));
           setCurrentPrice(maxAmount);
-          showToast(`💰 Giá thầu mới: ${formatPrice(newBid.amount)} từ ${newBid.user?.full_name || 'N/A'}`, 'success');
+          showToast(`💰 Giá thầu mới: ${formatPrice(newBid.amount)} từ ${userName}`, 'success');
           return updatedBids;
         });
+      }
+    });
+
+    socket.on('profile.updated', (profileData) => {
+      console.log('🔄 Cập nhật hồ sơ:', profileData);
+      const updatedProfile = profileData.profile || profileData;
+      if (updatedProfile.session_id === parseInt(id) && (updatedProfile.status === 'DaDuyet' || updatedProfile.status === 'pending')) {
+        setBidders((prev) => {
+          if (prev.some((b) => b.profile_id === updatedProfile.profile_id)) {
+            return prev.map((b) =>
+              b.profile_id === updatedProfile.profile_id ? { ...b, ...updatedProfile } : b
+            );
+          }
+          return [...prev, updatedProfile];
+        });
+        showToast(`🆕 Người tham gia mới: ${updatedProfile.user?.full_name || 'N/A'}`, 'success');
       }
     });
 
@@ -127,14 +189,19 @@ const AuctionPage = () => {
 
     return () => {
       socket.emit('leave.channel', `auction-session.${id}`);
+      socket.emit('leave.channel', 'auction-profiles');
+      socket.offAny();
+      socket.off('auction.session.updated');
+      socket.off('bid.placed');
+      socket.off('profile.updated');
+      socket.off('error');
       socket.disconnect();
     };
-  }, [id, paused]);
+  }, [id, paused, token, API_URL]);
 
   // Update time every second
   useEffect(() => {
     let interval;
-
     if (!paused) {
       interval = setInterval(() => {
         setCurrentTime(new Date());
@@ -142,7 +209,6 @@ const AuctionPage = () => {
     } else {
       setPausedTime(new Date());
     }
-
     return () => clearInterval(interval);
   }, [paused]);
 
@@ -156,20 +222,21 @@ const AuctionPage = () => {
           throw new Error('REACT_APP_API_URL không được định nghĩa!');
         }
         const fullUrl = `${API_URL}auction-sessions/${id}`;
+        console.log('📞 Gọi API auction item:', fullUrl);
         const response = await axios.get(fullUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log('📋 Response auction item:', response.data);
         const data = response.data;
         const session = data.session;
         if (!session) {
           throw new Error(`Không tìm thấy phiên đấu giá với ID: ${id}`);
         }
-        console.log('📊 Auction session loaded:', session);
         setAuctionItem(session);
         setPaused(session.paused ?? false);
         setCurrentPrice(parseFloat(session.item?.starting_price) || 0);
       } catch (err) {
-        console.error('❌ Lỗi fetch auction item:', err);
+        console.error('❌ Lỗi fetch auction item:', err.message, err.response?.data);
         setError(err.response?.data?.message || err.message || 'Lỗi không xác định');
       } finally {
         setLoading(false);
@@ -178,7 +245,7 @@ const AuctionPage = () => {
 
     if (id && token) {
       fetchAuctionItem();
-    } else if (!token) {
+    } else {
       setError('Vui lòng đăng nhập để xem thông tin đấu giá');
       setLoading(false);
     }
@@ -189,9 +256,11 @@ const AuctionPage = () => {
     const fetchCategories = async () => {
       try {
         const fullUrl = `${API_URL}categories`;
+        console.log('📞 Gọi API categories:', fullUrl);
         const response = await axios.get(fullUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log('📋 Response categories:', response.data);
         const data = response.data;
         if (data.status && data.data) {
           setCategories(data.data);
@@ -199,7 +268,7 @@ const AuctionPage = () => {
           throw new Error(data.message || 'Không thể lấy danh sách danh mục');
         }
       } catch (err) {
-        console.error('❌ Lỗi fetch categories:', err);
+        console.error('❌ Lỗi fetch categories:', err.message, err.response?.data);
         setCategories([]);
         showToast('Không thể tải danh sách danh mục', 'error');
       }
@@ -212,12 +281,17 @@ const AuctionPage = () => {
 
   // Fetch bidders
   const fetchBidders = async () => {
-    if (!id || !token) return;
+    if (!id || !token) {
+      console.log('⚠️ Không fetch bidders: id hoặc token thiếu', { id, token });
+      return;
+    }
     try {
       const fullUrl = `${API_URL}auction-profiles?session_id=${id}`;
+      console.log('📞 Gọi API bidders:', fullUrl);
       const response = await axios.get(fullUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log('📋 Response bidders:', response.data);
       const data = response.data;
       const profiles = data.profiles || [];
       const filteredBidders = profiles.filter(
@@ -225,7 +299,7 @@ const AuctionPage = () => {
       );
       setBidders(filteredBidders);
     } catch (err) {
-      console.error('❌ Lỗi fetch bidders:', err);
+      console.error('❌ Lỗi fetch bidders:', err.message, err.response?.data);
       setBidders([]);
       showToast('Không thể tải danh sách người tham gia', 'error');
     }
@@ -233,46 +307,50 @@ const AuctionPage = () => {
 
   // Fetch bids
   const fetchBids = async () => {
-    if (!id || !token) return;
+    if (!id || !token) {
+      console.log('⚠️ Không fetch bids: id hoặc token thiếu', { id, token });
+      return;
+    }
     try {
       const fullUrl = `${API_URL}bids/${id}`;
+      console.log('📞 Gọi API bids:', fullUrl);
       const response = await axios.get(fullUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log('📋 Response bids:', response.data);
       const data = response.data;
-      setBids(data.bids || []);
-      let highest = parseFloat(auctionItem?.item?.starting_price) || 0;
-      if (data.bids && data.bids.length > 0) {
-        const maxAmount = Math.max(...data.bids.map((b) => parseFloat(b.amount)));
-        if (maxAmount > highest) highest = maxAmount;
+      if (!data.bids) {
+        console.warn('⚠️ Response bids không có data.bids:', data);
+        setBids([]);
+      } else {
+        setBids(data.bids);
+        let highest = parseFloat(auctionItem?.item?.starting_price) || 0;
+        if (data.bids.length > 0) {
+          const maxAmount = Math.max(...data.bids.map((b) => parseFloat(b.amount)));
+          if (maxAmount > highest) highest = maxAmount;
+        }
+        setCurrentPrice(highest);
       }
-      setCurrentPrice(highest);
     } catch (err) {
-      console.error('❌ Lỗi fetch bids:', err);
+      console.error('❌ Lỗi fetch bids:', err.message, err.response?.data);
       setBids([]);
-      showToast('Không thể tải danh sách giá thầu', 'error');
+      showToast(`Không thể tải danh sách giá thầu: ${err.message}`, 'error');
     }
   };
 
   // Fetch initial bidders and bids
   useEffect(() => {
     if (auctionItem) {
+      console.log('🚀 Fetching bidders and bids for auctionItem:', auctionItem);
       fetchBidders();
       fetchBids();
     }
   }, [auctionItem]);
 
-  // Show toast
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type, show: true });
-    setTimeout(() => setToast({ message: '', type: '', show: false }), 5000);
-  };
-
   const closeToast = () => {
     setToast({ message: '', type: '', show: false });
   };
 
-  // Format numbers and prices
   const formatNumber = (num) => {
     if (!num) return '';
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
@@ -289,7 +367,6 @@ const AuctionPage = () => {
     return new Date(dateTimeStr).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
   };
 
-  // Calculate bid steps (N)
   const calculateN = () => {
     if (!auctionItem) return 0;
     const currentBidValue = displayValue ? parseInt(displayValue.replace(/\./g, '')) : 0;
@@ -298,7 +375,6 @@ const AuctionPage = () => {
     return Math.floor((currentBidValue - currentPrice) / bidStep);
   };
 
-  // Calculate countdown
   const getCountdownParts = () => {
     const now = paused ? pausedTime : currentTime;
     if (isAuctionEnded) {
@@ -323,7 +399,6 @@ const AuctionPage = () => {
     return { hours: '00', minutes: '00', seconds: '00', status: 'invalid' };
   };
 
-  // Handle bid input
   const handleNumberInputChange = (e) => {
     let rawValue = e.target.value.replace(/[^0-9.]/g, '');
     const parts = rawValue.split('.');
@@ -339,7 +414,6 @@ const AuctionPage = () => {
     setDisplayValue(formatNumber(value));
   };
 
-  // Handle place bid with custom modal
   const handlePlaceBid = async () => {
     if (paused) {
       showToast('Phiên đấu giá đang tạm dừng, không thể đặt giá!', 'error');
@@ -350,26 +424,21 @@ const AuctionPage = () => {
       navigate('/login');
       return;
     }
-
     if (!displayValue || displayValue.trim() === '') {
       showToast('Vui lòng nhập số tiền đấu giá!', 'error');
       return;
     }
-
     const currentBidValue = parseInt(displayValue.replace(/\./g, '')) || 0;
     const bidStep = parseFloat(auctionItem?.bid_step) || 10000000;
     const minBid = currentPrice + bidStep;
-
     if (currentBidValue < minBid) {
       showToast(`Số tiền phải >= ${formatPrice(minBid)}!`, 'error');
       return;
     }
-
     if (!isBiddingOngoing) {
       showToast('Phiên đấu giá chưa bắt đầu hoặc đã kết thúc.', 'error');
       return;
     }
-
     setPendingBid(currentBidValue);
     setShowConfirmModal(true);
   };
@@ -377,6 +446,7 @@ const AuctionPage = () => {
   const handleConfirmBid = async () => {
     try {
       const fullUrl = `${API_URL}bids`;
+      console.log('📞 Gọi API đặt giá:', fullUrl, { session_id: id, amount: pendingBid });
       const response = await axios.post(
         fullUrl,
         {
@@ -390,16 +460,16 @@ const AuctionPage = () => {
           },
         }
       );
+      console.log('📋 Response đặt giá:', response.data);
       const result = response.data;
       if (result.status) {
         showToast('Đặt giá thành công!', 'success');
         setDisplayValue('');
-        // Không cần gọi fetchBids vì Socket.io sẽ xử lý
       } else {
         showToast(result.message || 'Lỗi đặt giá', 'error');
       }
     } catch (err) {
-      console.error('❌ Lỗi đặt giá:', err);
+      console.error('❌ Lỗi đặt giá:', err.message, err.response?.data);
       const errorMsg = err.response?.data?.message || err.message || 'Lỗi không xác định';
       showToast(errorMsg, 'error');
     } finally {
@@ -413,7 +483,6 @@ const AuctionPage = () => {
     setPendingBid(null);
   };
 
-  // Hàm ánh xạ category_id với tên danh mục
   const getCategoryName = (categoryId) => {
     const category = categories.find((cat) => cat.category_id === categoryId);
     return category ? category.name : 'N/A';
@@ -447,13 +516,11 @@ const AuctionPage = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>Phiên đấu giá {item.name}</div>
-
       {paused && (
         <div className={styles.pausedNotice}>
           ⏸ Phiên đấu giá đang tạm dừng — Vui lòng chờ đấu giá viên tiếp tục!
         </div>
       )}
-
       <div className={styles['lot-numbers']}>
         {countdown.status === 'not_started' ? (
           <div className={styles['countdown-label']}>Thời gian còn lại để bắt đầu:</div>
@@ -468,7 +535,6 @@ const AuctionPage = () => {
         <div className={styles['lot-number']}>{countdown.minutes}</div>
         <div className={styles['lot-number']}>{countdown.seconds}</div>
       </div>
-
       <div className={styles.content}>
         <div className={styles['left-section']}>
           <div className={styles['section-title']}>THÔNG TIN SẢN PHẨM</div>
@@ -521,7 +587,6 @@ const AuctionPage = () => {
             <div className={styles['info-value']}>{formatPrice(currentPrice)}</div>
           </div>
         </div>
-
         <div className={styles['right-section']}>
           <div className={styles['participants-section']}>
             <div className={styles['section-title']}>THÀNH PHẦN THAM DỰ</div>
@@ -542,7 +607,6 @@ const AuctionPage = () => {
               <div className={styles['info-value']}>{auctionItem.bidder_representative?.full_name || 'N/A'}</div>
             </div>
           </div>
-
           <div className={styles['bid-section']}>
             <div className={styles['section-title']}>
               {isAuctionEnded ? 'KẾT QUẢ ĐẤU GIÁ' : 'THAM GIA ĐẤU GIÁ'}
@@ -597,7 +661,6 @@ const AuctionPage = () => {
           </div>
         </div>
       </div>
-
       <div className={styles['participants-table']}>
         <div className={styles['table-title']}>DANH SÁCH LƯỢT ĐẶT GIÁ</div>
         <table>
@@ -631,7 +694,6 @@ const AuctionPage = () => {
           </tbody>
         </table>
       </div>
-
       <div className={styles['participants-table']}>
         <div className={styles['table-title']}>DANH SÁCH NGƯỜI ĐĂNG KÝ ĐẤU GIÁ</div>
         <table>
@@ -663,7 +725,6 @@ const AuctionPage = () => {
           </tbody>
         </table>
       </div>
-
       {toast.show && (
         <div
           className={`${styles.toast} ${styles[toast.type] || ''}`}
@@ -693,7 +754,6 @@ const AuctionPage = () => {
           </span>
         </div>
       )}
-
       <ConfirmModal
         isOpen={showConfirmModal}
         onClose={handleCancelBid}
