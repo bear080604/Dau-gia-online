@@ -321,7 +321,87 @@ const Profile = () => {
     fetchMyAuctions();
   }, [userData.id, token, navigate]);
 
-  // Hàm map trạng thái
+  // Hàm lấy lịch sử đấu giá từ API /auction-profiles
+  const fetchAuctionHistory = async () => {
+    if (!userData.id || !token) {
+      setError('Không thể lấy lịch sử đấu giá: Vui lòng đăng nhập');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}auction-profiles`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      console.log('API /auction-profiles response:', data);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+          navigate('/login');
+          return;
+        }
+        throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
+      }
+
+      if (data.status && Array.isArray(data.profiles)) {
+        const formattedAuctionHistory = data.profiles
+          .filter((profile) => profile.user_id === userData.id) // Chỉ lấy hồ sơ của người dùng hiện tại
+          .map((profile, index) => ({
+            stt: index + 1,
+            tenPhien: profile.name || 'Chưa có tên phiên', 
+            tenTaiSan: profile.session?.item?.name || 'Chưa có tên tài sản', // Lấy tên tài sản từ item
+            trangThai: mapProfileStatus(profile.status),
+            thoiGianDauGia: profile.created_at
+              ? new Date(profile.created_at).toLocaleString('vi-VN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  timeZone: 'Asia/Ho_Chi_Minh',
+                })
+              : 'Chưa có',
+            ketQua: profile.is_paid
+              ? profile.status === 'DaDuyet'
+                ? 'Được tham gia'
+                : profile.status === 'TuChoi'
+                ? 'Bị từ chối'
+                : 'Chờ duyệt'
+              : 'Chưa nộp cọc',
+            xemChiTiet: `/auction-item/${profile.item?.id || ''}`,
+          }));
+
+        setAuctionHistory(formattedAuctionHistory);
+      } else {
+        throw new Error('Dữ liệu hồ sơ đấu giá không hợp lệ');
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching auction history:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch lịch sử đấu giá khi tab hoặc userData.id thay đổi
+  useEffect(() => {
+    if (activeTab === 'auction-history' && userData.id && token) {
+      fetchAuctionHistory();
+    }
+  }, [activeTab, userData.id, token, navigate]);
+
+  // Hàm map trạng thái sản phẩm
   const mapStatus = (status) => {
     const statusMap = {
       ChoDuyet: 'Chờ duyệt',
@@ -333,36 +413,15 @@ const Profile = () => {
     return statusMap[status] || status;
   };
 
-  // Dữ liệu giả cho Lịch sử đấu giá
-  useEffect(() => {
-    const auctionHistoryData = [
-      {
-        stt: 1,
-        tenTaiSan: 'Nhà đất quận 1',
-        trangThai: 'Kết thúc',
-        thoiGianDauGia: '2025-10-10 14:00:00',
-        ketQua: 'Thắng',
-        xemChiTiet: '/auction/1',
-      },
-      {
-        stt: 2,
-        tenTaiSan: 'Xe máy Honda',
-        trangThai: 'Kết thúc',
-        thoiGianDauGia: '2025-10-12 10:30:00',
-        ketQua: 'Thua',
-        xemChiTiet: '/auction/2',
-      },
-      {
-        stt: 3,
-        tenTaiSan: 'Laptop Dell',
-        trangThai: 'Đang diễn ra',
-        thoiGianDauGia: '2025-10-14 15:00:00',
-        ketQua: 'Đang chờ',
-        xemChiTiet: '/auction/3',
-      },
-    ];
-    setAuctionHistory(auctionHistoryData);
-  }, []);
+  // Hàm map trạng thái hồ sơ đấu giá
+  const mapProfileStatus = (status) => {
+    const statusMap = {
+      ChoDuyet: 'Chờ duyệt',
+      DaDuyet: 'Đã duyệt',
+      TuChoi: 'Từ chối',
+    };
+    return statusMap[status] || status;
+  };
 
   const handleTabChange = (tab) => setActiveTab(tab);
 
@@ -729,13 +788,13 @@ const Profile = () => {
     if (error) return (
       <div className={styles.error}>
         <p>{error}</p>
-        {activeTab === 'my-auctions' && (
+        {activeTab === 'auction-history' && (
           <button
             className={styles.btn}
             onClick={() => {
               setLoading(true);
               setError(null);
-              fetchMyAuctions();
+              fetchAuctionHistory();
             }}
           >
             Thử lại
@@ -786,7 +845,7 @@ const Profile = () => {
                             src={userData.idCardFrontUrl}
                             alt="CCCD Mặt trước"
                             style={{
-                              maxWidth: '100px',
+                              Width: '100%',
                               maxHeight: '150px',
                               objectFit: 'contain',
                               border: '1px solid #ddd',
@@ -826,7 +885,7 @@ const Profile = () => {
                             src={userData.idCardBackUrl}
                             alt="CCCD Mặt sau"
                             style={{
-                              maxWidth: '100px',
+                              Width: '100%',
                               maxHeight: '150px',
                               objectFit: 'contain',
                               border: '1px solid #ddd',
@@ -1043,9 +1102,10 @@ const Profile = () => {
                   <thead>
                     <tr>
                       <th>STT</th>
+                      <th>Tên phiên</th>
                       <th>Tên tài sản</th>
                       <th>Trạng thái</th>
-                      <th>Thời gian đấu giá</th>
+                      <th>Thời gian nộp hồ sơ</th>
                       <th>Kết quả</th>
                       <th>Xem chi tiết</th>
                     </tr>
@@ -1054,18 +1114,27 @@ const Profile = () => {
                     {auctionHistory.map((item) => (
                       <tr key={item.stt}>
                         <td>{item.stt}</td>
+                        <td>{item.tenPhien}</td>
                         <td>{item.tenTaiSan}</td>
                         <td>
                           <span
                             className={`${styles.contractStatus} ${
-                              item.trangThai === 'Kết thúc' ? styles.statusPaid : styles.statusWaiting
+                              item.trangThai === 'Đã duyệt' ? styles.statusPaid : styles.statusWaiting
                             }`}
                           >
                             {item.trangThai}
                           </span>
                         </td>
                         <td>{item.thoiGianDauGia}</td>
-                        <td>{item.ketQua}</td>
+                        <td>
+                          <span
+                            className={`${styles.contractStatus} ${
+                              item.ketQua === 'Được tham gia' ? styles.statusPaid : styles.statusWaiting
+                            }`}
+                          >
+                            {item.ketQua}
+                          </span>
+                        </td>
                         <td>
                           <Link
                             to={item.xemChiTiet}
@@ -1484,17 +1553,6 @@ const Profile = () => {
                     id="accountHolder"
                     value={bankData.accountHolder}
                     readOnly
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Chi nhánh</label>
-                  <input
-                    type="text"
-                    className={styles.formControl}
-                    id="bankBranch"
-                    value={bankData.bankBranch}
-                    onChange={handleBankInputChange}
-                    placeholder="Nhập chi nhánh ngân hàng"
                   />
                 </div>
               </div>

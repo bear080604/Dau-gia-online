@@ -237,7 +237,7 @@
 
 .photoSection {
   display: flex;
-  gap: 20px;
+  gap: 50px;
   margin-top: 10px;
 }
 
@@ -248,7 +248,7 @@
 .photoLabel {
   font-weight: 600;
   color: #555;
-  margin-bottom: 8px;
+  margin-bottom: 25px;
   display: block;
 }
 
