@@ -29,7 +29,6 @@ function LoginForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Kiểm tra null
     if (!formData.email.trim()) {
       setErrorMessage('Vui lòng nhập email.');
       return;
@@ -60,8 +59,8 @@ function LoginForm() {
             localStorage.setItem('authToken', token);
           }
           login(result.user, token);
-          window.location.href = result.user.role === 'Administrator' ? '/admin' :
-                                result.user.role === 'DauGiaVien' ? '/admin' : '/';
+          // Giả sử role_id 2 là Admin, 3 là NhanVien (dựa trên bảng role bạn cung cấp)
+          window.location.href = result.user.role_id === 2 ? '/admin' : '/';
         } else {
           setErrorMessage('Đăng nhập thất bại: Dữ liệu người dùng không hợp lệ.');
         }

@@ -6,11 +6,11 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const ProtectedRoute = ({ children, restrictIfLoggedIn = false }) => {
   const { user } = useUser();
-  const hasShownToast = useRef(false); // Theo dõi xem thông báo đã hiển thị chưa
+  const hasShownToast = useRef(false);
 
   useEffect(() => {
     if (restrictIfLoggedIn && user && !hasShownToast.current) {
-      hasShownToast.current = true; // Đánh dấu thông báo đã hiển thị
+      hasShownToast.current = true;
       toast.info('Bạn đã đăng nhập rồi!', {
         position: 'top-right',
         autoClose: 3000,
@@ -30,13 +30,11 @@ const ProtectedRoute = ({ children, restrictIfLoggedIn = false }) => {
   }
 
   if (!user) {
-   
     return <Navigate to="/login" replace />;
   }
 
-
-  if (user.role !== 'DauGiaVien' && user.role !== 'Administrator') {
-   
+  // Kiểm tra role_id (giả sử 2 là Admin, 3 là NhanVien)
+  if (user.role_id !== 2 && user.role_id !== 3) {
     return <Navigate to="/access-denied" replace />;
   }
 
