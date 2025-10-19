@@ -34,6 +34,8 @@ import News from './pages/news';
 import NewsDetail from './pages/newsDetail';
 import Adminnews from './pages/AdminNews';
 import AdminNewsCategories from './pages/AdminNewsCategories';
+import AdminRoles from './pages/AdminRoles';
+import AdminPermissions from './pages/AdminPermissions';
 
 
 function App() {
@@ -212,6 +214,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <RegisterAuctionPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/roles"
+              element={
+                <ProtectedRoute>
+                  <AdminRoles />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/permissions"
+              element={
+                <ProtectedRoute>
+                  <AdminPermissions />
                 </ProtectedRoute>
               }
             />

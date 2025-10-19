@@ -128,37 +128,38 @@ function AuctionAsset() {
   };
 
   // Fetch auction organizations (users with role ToChucDauGia)
-  useEffect(() => {
-    const fetchAuctionOrgs = async () => {
-      try {
-        setIsLoadingAuctionOrgs(true);
-        const response = await axios.get(`${BASE_URL}/api/showuser`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        console.log('Dữ liệu API tổ chức đấu giá:', response.data);
-        const users = response.data.users || [];
-        const toChucDauGiaUsers = users
-          .filter((user) => user.role === 'ToChucDauGia')
-          .map((user) => ({
-            id: user.user_id.toString(),
-            name: user.full_name,
-          }));
-        setAuctionOrgs(toChucDauGiaUsers);
-      } catch (error) {
-        console.error('Lỗi khi lấy tổ chức đấu giá:', error.response?.data || error);
-        alert(
-          `Không thể tải danh sách tổ chức đấu giá: ${
-            error.response?.data?.message || 'Vui lòng thử lại.'
-          }`
-        );
-      } finally {
-        setIsLoadingAuctionOrgs(false);
-      }
-    };
-    fetchAuctionOrgs();
-  }, []);
+// Fetch auction organizations (users with role_id = 8 for AuctionOrganization)
+useEffect(() => {
+  const fetchAuctionOrgs = async () => {
+    try {
+      setIsLoadingAuctionOrgs(true);
+      const response = await axios.get(`${BASE_URL}/api/showuser`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      console.log('Dữ liệu API tổ chức đấu giá:', response.data);
+      const users = response.data.users || [];
+      const toChucDauGiaUsers = users
+        .filter((user) => user.role_id === 8) // Sửa từ user.role thành user.role_id
+        .map((user) => ({
+          id: user.user_id.toString(),
+          name: user.full_name,
+        }));
+      setAuctionOrgs(toChucDauGiaUsers);
+    } catch (error) {
+      console.error('Lỗi khi lấy tổ chức đấu giá:', error.response?.data || error);
+      alert(
+        `Không thể tải danh sách tổ chức đấu giá: ${
+          error.response?.data?.message || 'Vui lòng thử lại.'
+        }`
+      );
+    } finally {
+      setIsLoadingAuctionOrgs(false);
+    }
+  };
+  fetchAuctionOrgs();
+}, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
