@@ -243,6 +243,7 @@
 
 .photoItem {
   text-align: center;
+  width: 50%;
 }
 
 .photoLabel {
@@ -253,8 +254,7 @@
 }
 
 .photoPlaceholder {
-  width: 200px;
-  height: 120px;
+  max-width: 100%;
   background: #e0e0e0;
   border: 1px dashed #999;
   display: flex;
@@ -271,6 +271,12 @@
   color: #3498db;
 }
 
+.idCardFrontUrl{
+  width: 80%;
+}
+.idCardBackUrl{
+  max-width: 100%;
+}
 /* Popup Styles */
 .popupOverlay {
   display: none;

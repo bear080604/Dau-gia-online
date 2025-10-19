@@ -742,7 +742,7 @@ const Detail = () => {
   if (loading) {
     return (
       <div className='detailsp-container'>
-        <div className='detailsp-loading'>Đang tải dữ liệu từ API...</div>
+        <div className='detailsp-loading'>Đang tải dữ liệu...</div>
       </div>
     );
   }
@@ -751,7 +751,7 @@ const Detail = () => {
     return (
       <div className='detailsp-container'>
         <div className='detailsp-error-message'>
-          <p>Lỗi tải dữ liệu từ API (có thể do CORS hoặc server không chạy). Vui lòng kiểm tra backend và thử lại.</p>
+          <p>Lỗi tải dữ liệu(có thể do CORS hoặc server không chạy). Vui lòng kiểm tra và thử lại.</p>
           <button className='detailsp-retry-btn' onClick={() => window.location.reload()}>
             Thử lại
           </button>
@@ -769,9 +769,10 @@ const Detail = () => {
       )}
 
       <div className='detailsp-auction-content'>
-        <h2 className='detailsp-title'>
-          {`${auctionItem.item?.name || ''} - ${auctionItem.item?.description || ''}`}
+        <h2 className=''>
+          {`${auctionItem.item?.name || ''}`}
         </h2>
+        <p>{`${auctionItem.item?.description || ''}`}</p>
         <div className='detailsp-content-wrapper'>
           <div className='detailsp-image-section'>
             <img className='detailsp-main-image' alt='Auction Item' src={getMainImage()} />
