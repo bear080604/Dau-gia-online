@@ -1,4 +1,3 @@
-// Contact.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './contact.module.css';
 
@@ -42,7 +41,11 @@ const Contact = () => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
+        }
 
+        // Fetch auction organizations
         const orgResponse = await fetch(USER_API_URL, {
           headers: {
             'Accept': 'application/json',
@@ -50,13 +53,25 @@ const Contact = () => {
           }
         });
         const orgData = await orgResponse.json();
-        if (orgData.status && orgData.users) {
-          const orgs = orgData.users.filter(user => user.role === 'ToChucDauGia');
+        console.log('Dữ liệu API tổ chức đấu giá:', orgData); // Debug dữ liệu API
+        if (orgData.status && Array.isArray(orgData.users)) {
+          const orgs = orgData.users
+            .filter(user => user.role_id === 8) // Sửa từ role sang role_id
+            .map(user => ({
+              user_id: user.user_id,
+              full_name: user.full_name,
+              email: user.email
+            }));
+          console.log('Danh sách tổ chức đấu giá:', orgs); // Debug danh sách tổ chức
           setAuctionOrgs(orgs);
+          if (orgs.length === 0) {
+            setGlobalError('Không tìm thấy tổ chức đấu giá nào hợp lệ.');
+          }
         } else {
-          setGlobalError('Không tìm thấy tổ chức đấu giá.');
+          setGlobalError('Dữ liệu tổ chức đấu giá không đúng định dạng.');
         }
 
+        // Fetch categories
         const catResponse = await fetch(CATEGORIES_API_URL, {
           headers: {
             'Accept': 'application/json',
@@ -64,12 +79,14 @@ const Contact = () => {
           }
         });
         const catData = await catResponse.json();
-        if (catData.status && catData.data) {
+        console.log('Dữ liệu API danh mục:', catData); // Debug dữ liệu danh mục
+        if (catData.status && Array.isArray(catData.data)) {
           setCategories(catData.data);
         } else {
-          setGlobalError('Không tìm thấy danh mục.');
+          setGlobalError('Dữ liệu danh mục không đúng định dạng.');
         }
       } catch (error) {
+        console.error('Lỗi khi tải dữ liệu:', error);
         setGlobalError('Lỗi khi tải dữ liệu: ' + error.message);
       }
     };
@@ -164,9 +181,7 @@ const Contact = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === 'starting_price') {
-      // Loại bỏ tất cả dấu chấm trước khi xử lý
       const cleanValue = value.replace(/\./g, '');
-      // Định dạng lại với dấu chấm (ví dụ: 100000000 -> 100.000.000)
       const formattedValue = cleanValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
       setFormData(prev => ({ ...prev, [name]: formattedValue }));
     } else {
@@ -212,7 +227,7 @@ const Contact = () => {
       isValid = false;
     }
 
-    const price = parseFloat(starting_price.replace(/\./g, '')); // Loại bỏ dấu chấm để kiểm tra
+    const price = parseFloat(starting_price.replace(/\./g, ''));
     if (!starting_price || price < 1) {
       setFieldError('starting_price', 'Giá >= 1 VND');
       isValid = false;
@@ -286,7 +301,7 @@ const Contact = () => {
     submitData.append('auction_org_id', formData.auction_org_id);
     submitData.append('name', formData.name.trim());
     submitData.append('description', formData.description.trim());
-    submitData.append('starting_price', formData.starting_price.replace(/\./g, '')); // Gửi số nguyên
+    submitData.append('starting_price', formData.starting_price.replace(/\./g, ''));
     if (formData.image) {
       submitData.append('image', formData.image);
     }
@@ -463,15 +478,25 @@ const Contact = () => {
                 value={formData.auction_org_id}
                 onChange={handleInputChange}
                 required
+                disabled={auctionOrgs.length === 0} // Vô hiệu hóa nếu không có tổ chức
               >
                 <option value="">-- Chọn tổ chức đấu giá --</option>
-                {auctionOrgs.map(org => (
-                  <option key={org.user_id} value={org.user_id}>
-                    {org.full_name} ({org.email})
-                  </option>
-                ))}
+                {auctionOrgs.length > 0 ? (
+                  auctionOrgs.map(org => (
+                    <option key={org.user_id} value={org.user_id}>
+                      {org.full_name} ({org.email})
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>Không có tổ chức đấu giá hợp lệ</option>
+                )}
               </select>
               {errors.auction_org_id && <div className={styles.validationError}>{errors.auction_org_id}</div>}
+              {auctionOrgs.length === 0 && (
+                <div className={styles.validationError}>
+                  Không có tổ chức đấu giá nào hợp lệ. Vui lòng liên hệ quản trị viên.
+                </div>
+              )}
             </div>
 
             <div className={styles.formGroup}>

@@ -132,37 +132,65 @@ const AuctionPage = () => {
       }
     });
 
-    socket.on('bid.placed', async (bidData) => {
+ socket.on('bid.placed', async (bidData) => {
       console.log('💸 Giá thầu mới (bid.placed):', bidData);
       const newBid = bidData.bid || bidData;
       console.log('🔍 Kiểm tra session_id:', newBid.session_id, 'vs', parseInt(id));
       if (newBid.session_id === parseInt(id)) {
         newBid.id = newBid.bid_id;
-        let userName = newBid.user?.full_name || 'N/A';
-        if (!newBid.user?.full_name && newBid.user_id) {
+        
+        // Fetch thông tin user nếu chưa có
+        let userFullName = 'N/A';
+        if (newBid.user_id) {
           try {
-            console.log(`📞 Gọi API lấy user: ${API_URL}showuser/${newBid.user_id}`);
-            const response = await axios.get(`${API_URL}showuser/${newBid.user_id}`, {
+            console.log(`📞 Gọi API lấy tất cả users: ${API_URL}showuser`);
+            const response = await axios.get(`${API_URL}showuser`, {
               headers: { Authorization: `Bearer ${token}` },
             });
-            console.log('📋 Response user:', response.data);
-            userName = response.data.user?.full_name || 'N/A';
+            console.log('📋 Response users:', response.data);
+            
+            // Tìm user theo user_id từ mảng users
+            if (response.data.users && Array.isArray(response.data.users)) {
+              const foundUser = response.data.users.find(u => u.user_id === newBid.user_id);
+              if (foundUser) {
+                userFullName = foundUser.full_name || 'N/A';
+                console.log('✅ Tìm thấy user:', foundUser);
+              } else {
+                console.warn(`⚠️ Không tìm thấy user_id ${newBid.user_id} trong danh sách`);
+              }
+            }
           } catch (err) {
-            console.error('❌ Lỗi fetch user:', err.message, err.response?.data);
-            userName = 'N/A';
+            console.error('❌ Lỗi fetch users:', err.message, err.response?.data);
+            // Nếu API thất bại, thử dùng thông tin từ newBid (nếu có)
+            userFullName = newBid.user?.full_name || 'N/A';
           }
+        } else {
+          userFullName = newBid.user?.full_name || 'N/A';
         }
+        
+        // Format giá để hiển thị trong toast
+        const formattedAmount = parseFloat(newBid.amount).toLocaleString('vi-VN') + ' VNĐ';
+        
         setBids((prev) => {
           if (prev.some((b) => b.id === newBid.id)) {
             console.log(`⚠️ Giá thầu ${newBid.id} đã tồn tại, bỏ qua`);
             return prev;
           }
-          const updatedBids = [...prev, { ...newBid, user: { full_name: userName } }];
+          const bidWithUser = { 
+            ...newBid, 
+            user: { 
+              full_name: userFullName,
+              user_id: newBid.user_id 
+            } 
+          };
+          console.log('📝 Bid mới với user:', bidWithUser);
+          const updatedBids = [bidWithUser, ...prev];
           const maxAmount = Math.max(...updatedBids.map((b) => parseFloat(b.amount)));
           setCurrentPrice(maxAmount);
-          showToast(`💰 Giá thầu mới: ${formatPrice(newBid.amount)} từ ${userName}`, 'success');
           return updatedBids;
         });
+        
+        showToast(`💰 Giá thầu mới: ${formattedAmount} từ ${userFullName}`, 'success');
       }
     });
 

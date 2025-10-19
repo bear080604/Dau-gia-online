@@ -298,41 +298,66 @@ function AuctionSession() {
     }
   };
 
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      if (!token) {
-        throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
-      }
-      const response = await axios.get(`${API_URL}products`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.data && Array.isArray(response.data.data)) {
-        const filteredProducts = response.data.data
-          .filter((product) => product.status === 'ChoDauGia' && (!product.sessions || product.sessions.length === 0))
-          .map((product) => ({
-            ...product,
-            auction_org_id: product.auction_org_id ? product.auction_org_id.toString() : '',
-          }));
-        setProducts(filteredProducts);
-      } else {
-        setError('Dữ liệu sản phẩm không đúng định dạng.');
-      }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      if (error.response && error.response.status === 401) {
-        alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
-        window.location.href = '/login';
-      } else if (error.response && error.response.status === 403) {
-        alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator).');
-      } else {
-        setError('Không thể tải danh sách sản phẩm: ' + (error.response?.data?.message || error.message));
-      }
-    } finally {
-      setLoading(false);
+const fetchProducts = async () => {
+  setLoading(true);
+  try {
+    if (!token) {
+      throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
     }
-  };
+    const [productsResponse, sessionsResponse] = await Promise.all([
+      axios.get(`${API_URL}products`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      axios.get(`${API_URL}auction-sessions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    ]);
 
+    console.log('Dữ liệu API sản phẩm:', productsResponse.data);
+    console.log('Dữ liệu API phiên đấu giá:', sessionsResponse.data);
+
+    // Lấy danh sách item_id từ các phiên đấu giá đang hoạt động hoặc đã kết thúc thành công
+    const sessionItemIds = sessionsResponse.data.sessions
+      ? sessionsResponse.data.sessions
+          .filter((session) => session.status !== 'KetThuc' || session.current_winner_id !== null)
+          .map((session) => session.item_id)
+      : [];
+    console.log('Danh sách item_id từ sessions (đang hoạt động hoặc đã thắng):', sessionItemIds);
+
+    if (productsResponse.data && Array.isArray(productsResponse.data.data)) {
+      const filteredProducts = productsResponse.data.data
+        .filter((product) => {
+          const isValidStatus = product.status === 'ChoDauGia';
+          const hasNoActiveOrWonSessions = !sessionItemIds.includes(product.id);
+          console.log(`Sản phẩm ${product.id}: status=${product.status}, hasNoActiveOrWonSessions=${hasNoActiveOrWonSessions}`);
+          return isValidStatus && hasNoActiveOrWonSessions;
+        })
+        .map((product) => ({
+          ...product,
+          auction_org_id: product.auction_org_id ? product.auction_org_id.toString() : '',
+        }));
+      console.log('Danh sách sản phẩm hợp lệ:', filteredProducts);
+      setProducts(filteredProducts);
+    } else {
+      console.error('Cấu trúc dữ liệu sản phẩm không đúng:', productsResponse.data);
+      setError('Dữ liệu sản phẩm không đúng định dạng.');
+      setProducts([]);
+    }
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách sản phẩm:', error.response?.data || error);
+    if (error.response && error.response.status === 401) {
+      alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
+      window.location.href = '/login';
+    } else if (error.response && error.response.status === 403) {
+      alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator).');
+    } else {
+      setError('Không thể tải danh sách sản phẩm: ' + (error.response?.data?.message || error.message));
+    }
+    setProducts([]);
+  } finally {
+    setLoading(false);
+  }
+};
   useEffect(() => {
     if (token) {
       fetchSessions();
