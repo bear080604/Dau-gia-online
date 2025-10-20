@@ -38,27 +38,22 @@ const AdminPanel = () => {
         }
 
         const profilesUrl = `${process.env.REACT_APP_API_URL}auction-profiles`;
-       
         const profilesResponse = await axios.get(profilesUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
-      
         const profilesData = profilesResponse.data.profiles || [];
         setRegistrations(profilesData);
 
         const usersUrl = `${process.env.REACT_APP_API_URL}showuser`;
-        
         const usersResponse = await axios.get(usersUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
-      
         const usersData = usersResponse.data.users.reduce((acc, user) => {
           acc[user.user_id] = user;
           return acc;
         }, {});
         setUsers(usersData);
       } catch (err) {
-      
         setError(err.response?.data?.message || 'Failed to fetch data');
       } finally {
         setLoading(false);
@@ -83,7 +78,6 @@ const AdminPanel = () => {
       ));
       alert(response.data.message || `Đã cập nhật trạng thái thành ${newStatus}${reason ? ` với lý do: ${reason}` : ''}`);
     } catch (err) {
-     
       alert(err.response?.data?.message || 'Cập nhật trạng thái thất bại');
     }
   };
@@ -127,7 +121,7 @@ const AdminPanel = () => {
         paymentId: 1,
       });
       setIsDetailModalOpen(true);
-    } else {    }
+    }
   };
 
   const closeDetailModal = () => {
@@ -138,7 +132,6 @@ const AdminPanel = () => {
   const refundPayment = async (paymentId) => {
     try {
       const token = localStorage.getItem('token');
-      // Placeholder for refund API call (replace with actual endpoint)
       const url = `${process.env.REACT_APP_API_URL}/auction-profiles/${currentId}/refund`;
       await axios.post(url, { payment_id: paymentId }, {
         headers: { Authorization: `Bearer ${token}` },
@@ -148,7 +141,6 @@ const AdminPanel = () => {
       );
       alert(`Đã hoàn tiền cho thanh toán ID: ${paymentId} thuộc hồ sơ ${currentId}`);
     } catch (err) {
-   
       alert(err.response?.data?.message || 'Hoàn tiền thất bại');
     }
   };
@@ -230,8 +222,8 @@ const AdminPanel = () => {
                 <td>{reg.session_id ? `Phiên ${reg.session_id}` : 'Không xác định'}</td>
                 <td data-label="Tài Liệu Liên Quan">
                   {reg.document_url ? (
-                    <a href={reg.document_url} target="_blank" rel="noopener noreferrer">
-                      Xem tài liệu
+                    <a href={reg.document_url} download target="_blank" rel="noopener noreferrer">
+                      Tải tài liệu
                     </a>
                   ) : (
                     'Không có tài liệu'
@@ -319,8 +311,8 @@ const AdminPanel = () => {
               <div>
                 <label>Tài Liệu Liên Quan:</label>{' '}
                 {paymentDetails.documentUrl ? (
-                  <a href={paymentDetails.documentUrl} target="_blank" rel="noopener noreferrer">
-                    Xem tài liệu
+                  <a href={paymentDetails.documentUrl} download target="_blank" rel="noopener noreferrer">
+                    Tải tài liệu
                   </a>
                 ) : (
                   'Không có tài liệu'

@@ -56,7 +56,7 @@ const Contact = () => {
         console.log('Dữ liệu API tổ chức đấu giá:', orgData); // Debug dữ liệu API
         if (orgData.status && Array.isArray(orgData.users)) {
           const orgs = orgData.users
-            .filter(user => user.role_id === 8) // Sửa từ role sang role_id
+            .filter(user => user.role_id === 1) // Sửa từ role sang role_id
             .map(user => ({
               user_id: user.user_id,
               full_name: user.full_name,
