@@ -359,7 +359,7 @@ const Profile = () => {
           .filter((profile) => profile.user_id === userData.id) // Chỉ lấy hồ sơ của người dùng hiện tại
           .map((profile, index) => ({
             stt: index + 1,
-            tenPhien: profile.name || 'Chưa có tên phiên', 
+            tenPhien: profile.session.item || 'Chưa có tên phiên', 
             tenTaiSan: profile.session?.item?.name || 'Chưa có tên tài sản', // Lấy tên tài sản từ item
             trangThai: mapProfileStatus(profile.status),
             thoiGianDauGia: profile.created_at
