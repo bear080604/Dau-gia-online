@@ -206,7 +206,7 @@ const Home = () => {
           date: new Date(item.created_at).toLocaleDateString('vi-VN'),
           summary: item.content.substring(0, 100) + (item.content.length > 100 ? '...' : ''),
           imageUrl: item.thumbnail
-            ? `http://127.0.0.1:8000/storage/news/${item.thumbnail}`
+            ? `${item.thumbnail}`
             : 'https://via.placeholder.com/150x100?text=Image+Not+Found',
         }));
         setNews(formattedNews);

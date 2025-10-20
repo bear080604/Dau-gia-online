@@ -101,14 +101,13 @@ const Detail = () => {
     socket.on('connect', () => {
       console.log('✅ Kết nối Socket.io thành công');
       socket.emit('join.channel', `auction-session.${DEFAULT_SESSION_ID}`);
-      socket.emit('join.channel', 'auction-profiles'); // Thêm để nhận profile.updated
+      socket.emit('join.channel', 'auction-profiles');
     });
 
     socket.on('disconnect', () => {
       console.log('⚠️ Socket disconnected');
     });
 
-    // Xử lý sự kiện profile.updated
     socket.on('profile.updated', (profileData) => {
       console.log('🔄 Cập nhật hồ sơ:', profileData);
       const updatedProfile = profileData.profile || profileData;
@@ -364,11 +363,11 @@ const Detail = () => {
     let showCheckin = false;
     let showBid = false;
     if (profile.id && profile.status !== 'ChoDuyet') {
+      // Chỉ hiện nút điểm danh nếu đã duyệt và trong thời gian điểm danh (trước khi đấu giá bắt đầu)
       showCheckin = profile.status === 'DaDuyet' && now >= checkinStart && now < bidStart;
+      
+      // Hiện nút đấu giá nếu đã duyệt và đã đến giờ đấu giá
       showBid = (profile.status === 'DaDuyet' || profile.status === 'DaHoanTat') && now >= bidStart && now <= bidEnd;
-    } else {
-      showCheckin = now >= checkinStart && now < bidStart;
-      showBid = now >= bidStart && now <= bidEnd;
     }
 
     return { showRegister, showCheckin, showBid };
@@ -548,7 +547,29 @@ const Detail = () => {
     }
   };
 
-  // Sửa logic điểm danh: Kiểm tra profile.status, không gọi API
+  // Xử lý tham gia đấu giá
+  const handleJoinAuction = () => {
+    if (!token) {
+      showToast('Vui lòng đăng nhập trước!', 'error');
+      navigate('/login');
+      return;
+    }
+
+    if (!profile.id) {
+      showToast('Bạn chưa đăng ký tham gia đấu giá', 'warning');
+      return;
+    }
+
+    if (profile.status !== 'DaDuyet' && profile.status !== 'DaHoanTat') {
+      showToast('Hồ sơ của bạn chưa được duyệt', 'warning');
+      return;
+    }
+
+    // Chuyển hướng đến phòng đấu giá
+    navigate(`/Auction/${DEFAULT_SESSION_ID}`);
+  };
+
+  // Xử lý điểm danh
   const handleCheckin = () => {
     if (!token) {
       showToast('Vui lòng đăng nhập trước!', 'error');
@@ -824,6 +845,12 @@ const Detail = () => {
               {showCheckin && (
                 <button className='detailsp-checkin-btn' onClick={handleCheckin}>
                   Điểm danh
+                </button>
+              )}
+
+              {showBid && (
+                <button className='detailsp-bid-btn' onClick={handleJoinAuction}>
+                  Tham gia đấu giá
                 </button>
               )}
             </div>
