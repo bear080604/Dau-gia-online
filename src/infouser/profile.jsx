@@ -377,6 +377,57 @@ const fetchAuctionHistory = async () => {
       productData.data.forEach(item => {
         itemMap.set(item.id, item.name);
       });
+
+      const data = await response.json();
+      console.log('API /auction-profiles response:', data);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+          navigate('/login');
+          return;
+        }
+        throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
+      }
+
+      if (data.status && Array.isArray(data.profiles)) {
+        const formattedAuctionHistory = data.profiles
+          .filter((profile) => profile.user_id === userData.id) // Chỉ lấy hồ sơ của người dùng hiện tại
+          .map((profile, index) => ({
+            stt: index + 1,
+            tenPhien: profile.session.item || 'Chưa có tên phiên', 
+            tenTaiSan: profile.session?.item?.name || 'Chưa có tên tài sản', // Lấy tên tài sản từ item
+            trangThai: mapProfileStatus(profile.status),
+            thoiGianDauGia: profile.created_at
+              ? new Date(profile.created_at).toLocaleString('vi-VN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  timeZone: 'Asia/Ho_Chi_Minh',
+                })
+              : 'Chưa có',
+            ketQua: profile.is_paid
+              ? profile.status === 'DaDuyet'
+                ? 'Được tham gia'
+                : profile.status === 'TuChoi'
+                ? 'Bị từ chối'
+                : 'Chờ duyệt'
+              : 'Chưa nộp cọc',
+            xemChiTiet: `/auction-item/${profile.item?.id || ''}`,
+          }));
+
+        setAuctionHistory(formattedAuctionHistory);
+      } else {
+        throw new Error('Dữ liệu hồ sơ đấu giá không hợp lệ');
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching auction history:', err);
+    } finally {
+      setLoading(false);
     }
 
     if (profileData.status && Array.isArray(profileData.profiles)) {
