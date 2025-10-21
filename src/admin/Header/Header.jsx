@@ -21,6 +21,7 @@ const Sidebar = () => {
     return [
       { id: 'dashboard', icon: 'fas fa-home', label: 'Trang chủ', href: addAdminPrefix('/dashboard') },
       { id: 'assets', icon: 'fas fa-box-open', label: 'Tài sản đấu giá', href: addAdminPrefix('/auction-asset') },
+      { id: 'assets-categories', icon: 'fas fa-box-open', label: 'Danh mục tài sản', href: addAdminPrefix('/assets-categories') },
       { id: 'auctions', icon: 'fas fa-clock', label: 'Phiên đấu giá', href: addAdminPrefix('/auction-session') },
       { id: 'contracts', icon: 'fas fa-file-contract', label: 'Hợp đồng', href: addAdminPrefix('/contract') },
       { id: 'register-auction', icon: 'fa fa-ticket', label: 'Đăng ký đấu giá', href: addAdminPrefix('/register-auction') },
@@ -46,8 +47,8 @@ const Sidebar = () => {
     2: ['/contract'],
     3: ['/report'],
     22: ['/auction-asset'], // manage_products (cần thêm trang nếu có)
-    23: ['/news-categories'],
-    24: ['/auction-asset'],
+    23: ['/assets-categories'],
+    24: ['/auction-asset'],   
     25: ['/news'],
     26: ['/news-categories'],
     27: ['/profile'],
@@ -66,6 +67,7 @@ const Sidebar = () => {
     43: ['/users'],     // manage_users (giả sử thêm)
     44: ['/settings'],  // manage_settings
     45: ['/history'],   // view_history
+    46: ['/asset-categories']
   };
 
   // Lấy danh sách trang được phép từ API
