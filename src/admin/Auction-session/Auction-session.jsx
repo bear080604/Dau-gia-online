@@ -62,38 +62,37 @@ function AuctionSession() {
     console.log('User Info:', user);
   }, [token, user]);
 
-  // Fetch auction organizations (ToChucDauGia users)
-  useEffect(() => {
-    const fetchAuctionOrgs = async () => {
-      try {
-        setIsLoadingAuctionOrgs(true);
-        const response = await axios.get(`${API_URL}showuser`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log('Dữ liệu API tổ chức đấu giá:', response.data);
-        const users = response.data.users || [];
-        const toChucDauGiaUsers = users
-          .filter((user) => user.role === 'ToChucDauGia')
-          .map((user) => ({
-            id: user.user_id.toString(),
-            name: user.full_name,
-          }));
-        setAuctionOrgs(toChucDauGiaUsers);
-      } catch (error) {
-        console.error('Lỗi khi lấy tổ chức đấu giá:', error.response?.data || error);
-        setError(
-          `Không thể tải danh sách tổ chức đấu giá: ${
-            error.response?.data?.message || 'Vui lòng thử lại.'
-          }`
-        );
-      } finally {
-        setIsLoadingAuctionOrgs(false);
-      }
-    };
-    if (token) {
-      fetchAuctionOrgs();
+useEffect(() => {
+  const fetchAuctionOrgs = async () => {
+    try {
+      setIsLoadingAuctionOrgs(true);
+      const response = await axios.get(`${API_URL}showuser`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log('Dữ liệu API tổ chức đấu giá:', response.data);
+      const users = response.data.users || [];
+      const toChucDauGiaUsers = users
+        .filter((user) => user.role_id === 8 || (user.role && user.role.name === 'AuctionOrganization'))
+        .map((user) => ({
+          id: user.user_id.toString(),
+          name: user.full_name,
+        }));
+      setAuctionOrgs(toChucDauGiaUsers);
+    } catch (error) {
+      console.error('Lỗi khi lấy tổ chức đấu giá:', error.response?.data || error);
+      setError(
+        `Không thể tải danh sách tổ chức đấu giá: ${
+          error.response?.data?.message || 'Vui lòng thử lại.'
+        }`
+      );
+    } finally {
+      setIsLoadingAuctionOrgs(false);
     }
-  }, [token]);
+  };
+  if (token) {
+    fetchAuctionOrgs();
+  }
+}, [token]);
 
   // Auto-select auctionOrgId based on selected product
   useEffect(() => {

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styles from './Auction-asset.module.css';
+import { useNavigate } from 'react-router-dom';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function AuctionAsset() {
+   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -676,9 +678,8 @@ useEffect(() => {
       );
     }
   };
-
-  const handleCreateAuction = (asset) => {
-    alert('Link qua bên trang quản lý phiên đấu giá');
+ const handleCreateAuction = (asset) => {
+    navigate('/admin/auction-session');
   };
 
   const getStatusClass = (status) => {
@@ -734,7 +735,7 @@ useEffect(() => {
         </button>
       );
       buttons.push(
-        <button
+        <button 
           key="delete"
           className={`${styles.btn} ${styles.btnDanger}`}
           onClick={() => handleDeleteAsset(asset)}

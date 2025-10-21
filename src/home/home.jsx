@@ -55,12 +55,17 @@ const AuctionItem = React.memo(({ session }) => {
           >
             {displayStatus}
           </p>
-          <p className="auction-price">
+          <p className="auction-price" style={{  minHeight: '45px' }}>
             Giá khởi điểm: {Number(item?.starting_price || 0).toLocaleString()} VNĐ
           </p>
           {session.highest_bid && (
-            <p className="auction-current-price" style={{ color: '#16a34a', fontWeight: 'bold' }}>
+            <p className="auction-current-price" style={{ color: '#16a34a', fontWeight: 'bold', minHeight: '52px' }}>
               Giá cao nhất: {Number(session.highest_bid).toLocaleString()} VNĐ
+            </p>
+          )}
+          {!session.highest_bid && (
+            <p className="auction-current-price" style={{  minHeight: '52px' }}>
+             
             </p>
           )}
         </div>
@@ -377,9 +382,9 @@ const Home = () => {
                     onError={(e) => (e.target.src = 'https://via.placeholder.com/150x100?text=Image+Not+Found')}
                   />
                   <div className="news-details">
-                    <h3 className="news-title">{newsItem.title}</h3>
+                    <h3 className="news-title" style={{ minHeight: '56px'}}>{newsItem.title}</h3>
                     <p className="news-date">{newsItem.date}</p>
-                    <p className="news-summary">{newsItem.summary}</p>
+                    <p className="news-summary" style={{ minHeight: '72px'}}>{newsItem.summary}</p>
                   </div>
                   <div className="action">
                     <Link to={`/news/${newsItem.id}`} style={{ textDecoration: 'none' }}>

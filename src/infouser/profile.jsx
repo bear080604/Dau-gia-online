@@ -299,7 +299,7 @@ const Profile = () => {
               timeZone: 'Asia/Ho_Chi_Minh',
             })
           : 'Chưa có',
-        xemChiTiet: `/auction-item/${item.id}`,
+        xemChiTiet: `/auction/${item.id}`,
       }));
 
       setMyAuctions(formattedMyAuctions);
@@ -320,79 +320,103 @@ const Profile = () => {
 
     fetchMyAuctions();
   }, [userData.id, token, navigate]);
+const fetchAuctionHistory = async () => {
+  if (!userData.id || !token) {
+    setError('Không thể lấy lịch sử đấu giá: Vui lòng đăng nhập');
+    setLoading(false);
+    return;
+  }
 
-  // Hàm lấy lịch sử đấu giá từ API /auction-profiles
-  const fetchAuctionHistory = async () => {
-    if (!userData.id || !token) {
-      setError('Không thể lấy lịch sử đấu giá: Vui lòng đăng nhập');
-      setLoading(false);
-      return;
+  try {
+    setLoading(true);
+    setError(null);
+
+    // Gọi API /auction-profiles
+    const profileResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}auction-profiles`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const profileData = await profileResponse.json();
+    console.log('API /auction-profiles response:', profileData);
+
+    if (!profileResponse.ok) {
+      if (profileResponse.status === 401) {
+        localStorage.removeItem('token');
+        setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+        navigate('/login');
+        return;
+      }
+      throw new Error(`Lỗi API /auction-profiles: ${profileResponse.status} - ${profileResponse.statusText}`);
     }
 
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}auction-profiles`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+    // Gọi API /products để lấy danh sách tài sản
+    const productResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}products`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const productData = await productResponse.json();
+    console.log('API /products response:', productData);
+
+    if (!productResponse.ok) {
+      throw new Error(`Lỗi API /products: ${productResponse.status} - ${productResponse.statusText}`);
+    }
+
+    // Tạo map item_id -> name
+    const itemMap = new Map();
+    if (productData.data && Array.isArray(productData.data)) {
+      productData.data.forEach(item => {
+        itemMap.set(item.id, item.name);
       });
-
-      const data = await response.json();
-      console.log('API /auction-profiles response:', data);
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('token');
-          setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-          navigate('/login');
-          return;
-        }
-        throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
-      }
-
-      if (data.status && Array.isArray(data.profiles)) {
-        const formattedAuctionHistory = data.profiles
-          .filter((profile) => profile.user_id === userData.id) // Chỉ lấy hồ sơ của người dùng hiện tại
-          .map((profile, index) => ({
-            stt: index + 1,
-            tenPhien: profile.name || 'Chưa có tên phiên', 
-            tenTaiSan: profile.session?.item?.name || 'Chưa có tên tài sản', // Lấy tên tài sản từ item
-            trangThai: mapProfileStatus(profile.status),
-            thoiGianDauGia: profile.created_at
-              ? new Date(profile.created_at).toLocaleString('vi-VN', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  timeZone: 'Asia/Ho_Chi_Minh',
-                })
-              : 'Chưa có',
-            ketQua: profile.is_paid
-              ? profile.status === 'DaDuyet'
-                ? 'Được tham gia'
-                : profile.status === 'TuChoi'
-                ? 'Bị từ chối'
-                : 'Chờ duyệt'
-              : 'Chưa nộp cọc',
-            xemChiTiet: `/auction-item/${profile.item?.id || ''}`,
-          }));
-
-        setAuctionHistory(formattedAuctionHistory);
-      } else {
-        throw new Error('Dữ liệu hồ sơ đấu giá không hợp lệ');
-      }
-    } catch (err) {
-      setError(err.message);
-      console.error('Error fetching auction history:', err);
-    } finally {
-      setLoading(false);
     }
-  };
+
+    if (profileData.status && Array.isArray(profileData.profiles)) {
+      const formattedAuctionHistory = profileData.profiles
+        .filter((profile) => profile.user_id === userData.id)
+        .map((profile, index) => ({
+          stt: index + 1,
+          tenPhien: itemMap.get(profile.session?.item_id) || `Phiên đấu giá #${profile.session?.item_id || profile.session_id}`, // Lấy name từ /products
+          trangThai: mapProfileStatus(profile.status),
+          thoiGianDauGia: profile.created_at
+            ? new Date(profile.created_at).toLocaleString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                timeZone: 'Asia/Ho_Chi_Minh',
+              })
+            : 'Chưa có',
+          ketQua: profile.is_paid
+            ? profile.status === 'DaDuyet'
+              ? 'Được tham gia'
+              : profile.status === 'TuChoi'
+              ? 'Bị từ chối'
+              : 'Chờ duyệt'
+            : 'Chưa nộp cọc',
+          xemChiTiet: `/auction/${profile.session?.item_id || ''}`,
+        }));
+
+      setAuctionHistory(formattedAuctionHistory);
+    } else {
+      throw new Error('Dữ liệu hồ sơ đấu giá không hợp lệ');
+    }
+  } catch (err) {
+    setError(err.message);
+    console.error('Error fetching auction history:', err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Fetch lịch sử đấu giá khi tab hoặc userData.id thay đổi
   useEffect(() => {
@@ -1102,8 +1126,8 @@ const Profile = () => {
                   <thead>
                     <tr>
                       <th>STT</th>
-                      <th>Tên phiên</th>
-                      <th>Tên tài sản</th>
+                      <th>Tên phiên đấu giá </th>
+                     
                       <th>Trạng thái</th>
                       <th>Thời gian nộp hồ sơ</th>
                       <th>Kết quả</th>
@@ -1115,7 +1139,7 @@ const Profile = () => {
                       <tr key={item.stt}>
                         <td>{item.stt}</td>
                         <td>{item.tenPhien}</td>
-                        <td>{item.tenTaiSan}</td>
+                       
                         <td>
                           <span
                             className={`${styles.contractStatus} ${
