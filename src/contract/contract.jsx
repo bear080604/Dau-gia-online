@@ -11,8 +11,8 @@ const Contract = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
 
-  const CONTRACTS_API_URL = 'http://localhost:8000/api/contracts';
-  const ECONTRACTS_API_URL = 'http://localhost:8000/api/econtracts';
+  const CONTRACTS_API_URL = `${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}/api/contracts`;
+  const ECONTRACTS_API_URL = `${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}/api/econtracts`;
   const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:8000';
 
   const vnFormatter = new Intl.DateTimeFormat('vi-VN', {

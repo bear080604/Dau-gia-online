@@ -31,7 +31,7 @@ const AuctionItem = React.memo(({ session }) => {
         <div className="item-img">
           <img
             className="auction-image"
-            src={item?.image_url ? `http://localhost:8000${item.image_url}` : '/assets/img/xe.png'}
+            src={item?.image_url ? `${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}${item.image_url}` : '/assets/img/xe.png'}
             alt={item?.name || 'Sản phẩm'}
             loading="lazy"
             onError={(e) => (e.target.src = '/assets/img/xe.png')}
@@ -96,7 +96,7 @@ const Home = () => {
 
   // Kết nối Socket.io
   useEffect(() => {
-    const socket = io('http://localhost:6001');
+    const socket = io(process.env.REACT_APP_SOCKET_URL);
     socketRef.current = socket;
 
     socket.on('connect', () => {

@@ -5,7 +5,7 @@ import './detail.css';
 
 const Detail = () => {
   // Constants
-  const API_BASE = 'http://localhost:8000/api';
+  const API_BASE = `${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}/api`;
   const { id } = useParams();
   const navigate = useNavigate();
   const DEFAULT_SESSION_ID = parseInt(id, 10);
@@ -91,7 +91,7 @@ const Detail = () => {
 
   // Socket.io Integration
   useEffect(() => {
-    const socket = io('http://localhost:6001', {
+    const socket = io(process.env.REACT_APP_SOCKET_URL, {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
@@ -711,7 +711,7 @@ const Detail = () => {
     return images.map((img, i) => (
       <img
         key={i}
-        src={`http://localhost:8000${img}`}
+        src={`${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}${img}`}
         className={`detailsp-thumbnail ${i === currentImageIndex ? 'detailsp-active' : ''}`}
         alt={`Thumbnail ${i + 1}`}
         onClick={() => changeImage(i)}
@@ -729,7 +729,7 @@ const Detail = () => {
     if (images.length === 0) {
       images = [auctionItem.item?.image_url || PLACEHOLDER_IMAGE];
     }
-    return `http://localhost:8000${images[currentImageIndex] || PLACEHOLDER_IMAGE}`;
+    return `${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}${images[currentImageIndex] || PLACEHOLDER_IMAGE}`;
   };
 
   const renderDocuments = () => {
