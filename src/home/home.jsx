@@ -9,9 +9,26 @@ import 'swiper/css/pagination';
 import axios from 'axios';
 import io from 'socket.io-client';
 
+// Cache for deduplicating image requests
+const imageCache = new Map();
+
+// Preload images function
+const preloadImages = (urls) => {
+  urls.forEach((url) => {
+    if (url && !imageCache.has(url) && url.startsWith('http')) {
+      const img = new Image();
+      img.src = url;
+      img.onerror = () => {
+        console.warn(`Failed to preload image: ${url}`);
+        imageCache.set(url, { src: '/assets/img/placeholder.png' });
+      };
+      imageCache.set(url, img);
+    }
+  });
+};
+
 // Component AuctionItem - CHỈ DÙNG STATUS TỪ SOCKET
 const AuctionItem = React.memo(({ session }) => {
-  // Lấy status từ session (realtime từ socket)
   const getAuctionStatus = (status) => {
     const statusMap = {
       DangDienRa: 'Đang diễn ra',
@@ -24,6 +41,16 @@ const AuctionItem = React.memo(({ session }) => {
 
   const displayStatus = getAuctionStatus(session.status);
   const item = session.item;
+  const imageUrl = item?.image_url
+    ? `${process.env.REACT_APP_BASE_URL || 'https://your-production-url.com'}${item.image_url}`
+    : '/assets/img/xe.png';
+
+  // Preload image
+  useEffect(() => {
+    if (item?.image_url) {
+      preloadImages([imageUrl]);
+    }
+  }, [imageUrl]);
 
   return (
     <div className="list-auction">
@@ -31,10 +58,14 @@ const AuctionItem = React.memo(({ session }) => {
         <div className="item-img">
           <img
             className="auction-image"
-            src={item?.image_url ? `${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}${item.image_url}` : '/assets/img/xe.png'}
+            src={imageCache.get(imageUrl)?.src || imageUrl}
             alt={item?.name || 'Sản phẩm'}
             loading="lazy"
-            onError={(e) => (e.target.src = '/assets/img/xe.png')}
+            onError={(e) => {
+              if (e.target.src !== '/assets/img/xe.png') {
+                e.target.src = '/assets/img/xe.png';
+              }
+            }}
           />
         </div>
         <div className="auction-details">
@@ -55,7 +86,7 @@ const AuctionItem = React.memo(({ session }) => {
           >
             {displayStatus}
           </p>
-          <p className="auction-price" style={{  minHeight: '45px' }}>
+          <p className="auction-price" style={{ minHeight: '45px' }}>
             Giá khởi điểm: {Number(item?.starting_price || 0).toLocaleString()} VNĐ
           </p>
           {session.highest_bid && (
@@ -64,9 +95,7 @@ const AuctionItem = React.memo(({ session }) => {
             </p>
           )}
           {!session.highest_bid && (
-            <p className="auction-current-price" style={{  minHeight: '52px' }}>
-             
-            </p>
+            <p className="auction-current-price" style={{ minHeight: '52px' }}></p>
           )}
         </div>
         <div className="action">
@@ -81,9 +110,18 @@ const AuctionItem = React.memo(({ session }) => {
   );
 });
 
+// Debounce utility
+const debounce = (func, wait) => {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
+
 // Component chính
 const Home = () => {
-  const [sessions, setSessions] = useState([]); // Lưu trực tiếp sessions
+  const [sessions, setSessions] = useState([]);
   const [categories, setCategories] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -94,9 +132,12 @@ const Home = () => {
   const socketRef = useRef(null);
   const initialDataFetchedRef = useRef(false);
 
+  // Debounced state update for sessions
+  const debouncedSetSessions = useRef(debounce(setSessions, 100)).current;
+
   // Kết nối Socket.io
   useEffect(() => {
-    const socket = io(process.env.REACT_APP_SOCKET_URL);
+    const socket = io(process.env.REACT_APP_SOCKET_URL || 'https://your-production-socket-url.com');
     socketRef.current = socket;
 
     socket.on('connect', () => {
@@ -108,42 +149,34 @@ const Home = () => {
       console.log('⚠️ Socket disconnected');
     });
 
-    // Nhận dữ liệu phiên đấu giá ban đầu (nếu server emit)
     socket.on('auction-sessions', (data) => {
       console.log('📩 Nhận dữ liệu phiên đấu giá từ socket:', data);
       if (Array.isArray(data)) {
-        setSessions(data);
+        debouncedSetSessions(data);
       }
     });
 
-    // REALTIME: Cập nhật phiên đấu giá
     socket.on('auction.session.updated', (updatedData) => {
       console.log('🔄 Cập nhật phiên đấu giá realtime:', updatedData);
-
-      // Xử lý dữ liệu: lấy session từ updatedData.session hoặc dùng trực tiếp
       const updatedSession = updatedData.session || updatedData;
-
-      setSessions((prev) => {
+      debouncedSetSessions((prev) => {
         const index = prev.findIndex((s) => s.session_id === updatedSession.session_id);
         if (index !== -1) {
           const newSessions = [...prev];
-          newSessions[index] = { ...newSessions[index], ...updatedSession }; // Gộp dữ liệu để giữ item
+          newSessions[index] = { ...newSessions[index], ...updatedSession };
           console.log(`✨ Status updated: Session ${updatedSession.session_id} -> ${updatedSession.status}`);
           return newSessions;
         } else {
           console.log(`⚠️ Session ${updatedSession.session_id} không tồn tại, thêm mới`);
-          return [updatedSession, ...prev]; // Thêm session mới nếu không tìm thấy
+          return [updatedSession, ...prev];
         }
       });
     });
 
-    // REALTIME: Phiên đấu giá mới
     socket.on('auction.session.created', (newData) => {
       console.log('✨ Phiên đấu giá mới:', newData);
-
       const newSession = newData.session || newData;
-
-      setSessions((prev) => {
+      debouncedSetSessions((prev) => {
         if (prev.some((s) => s.session_id === newSession.session_id)) {
           console.log(`⚠️ Phiên ${newSession.session_id} đã tồn tại, bỏ qua`);
           return prev;
@@ -153,16 +186,15 @@ const Home = () => {
       });
     });
 
-    // REALTIME: Xóa phiên đấu giá
     socket.on('auction.session.deleted', (deletedData) => {
       console.log('🗑️ Phiên đấu giá bị xóa:', deletedData);
-
       const deletedSession = deletedData.session || deletedData;
-      setSessions((prev) => prev.filter((s) => s.session_id !== deletedSession.session_id));
+      debouncedSetSessions((prev) => prev.filter((s) => s.session_id !== deletedSession.session_id));
     });
 
     socket.on('error', (err) => {
       console.error('❌ Lỗi Socket.io:', err);
+      setError('Lỗi kết nối thời gian thực');
     });
 
     return () => {
@@ -171,16 +203,28 @@ const Home = () => {
     };
   }, []);
 
-  // Fetch dữ liệu ban đầu
+  // Fetch dữ liệu ban đầu với retry logic
   useEffect(() => {
     if (initialDataFetchedRef.current) return;
     initialDataFetchedRef.current = true;
+
+    const fetchWithRetry = async (url, options, retries = 3) => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const response = await axios.get(url, options);
+          return response;
+        } catch (err) {
+          if (i === retries - 1) throw err;
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
+    };
 
     const fetchInitialData = async () => {
       setLoading(true);
       try {
         // Fetch categories
-        const categoryResponse = await axios.get(`${process.env.REACT_APP_API_URL}categories`, {
+        const categoryResponse = await fetchWithRetry(`${process.env.REACT_APP_API_URL}categories`, {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -189,37 +233,42 @@ const Home = () => {
         setCategories(categoryResponse.data.status && categoryResponse.data.data ? categoryResponse.data.data : []);
 
         // Fetch auction sessions
-        const sessionsResponse = await axios.get(`${process.env.REACT_APP_API_URL}auction-sessions`, {
+        const sessionsResponse = await fetchWithRetry(`${process.env.REACT_APP_API_URL}auction-sessions`, {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
-
         const sessionsData = sessionsResponse.data.sessions || sessionsResponse.data.data || sessionsResponse.data || [];
         console.log('📊 Initial sessions loaded:', sessionsData);
-        setSessions(Array.isArray(sessionsData) ? sessionsData : []);
+        debouncedSetSessions(Array.isArray(sessionsData) ? sessionsData : []);
 
         // Fetch news
-        const newsResponse = await fetch('http://127.0.0.1:8000/api/news');
+        const newsResponse = await fetch(`${process.env.REACT_APP_API_URL}news`);
         if (!newsResponse.ok) throw new Error('Lỗi khi lấy tin tức');
         const newsData = await newsResponse.json();
-        const formattedNews = newsData.map((item) => ({
-          id: item.id,
-          category: item.category?.name || 'Khác',
-          title: item.title,
-          date: new Date(item.created_at).toLocaleDateString('vi-VN'),
-          summary: item.content.substring(0, 100) + (item.content.length > 100 ? '...' : ''),
-          imageUrl: item.thumbnail
-            ? `${item.thumbnail}`
-            : 'https://via.placeholder.com/150x100?text=Image+Not+Found',
-        }));
+        const formattedNews = newsData.map((item) => {
+          const imageUrl = item.thumbnail && item.thumbnail.startsWith('/')
+            ? `${process.env.REACT_APP_BASE_URL || 'https://your-production-url.com'}${item.thumbnail}`
+            : item.thumbnail || '/assets/img/placeholder.png';
+          return {
+            id: item.id,
+            category: item.category?.name || 'Khác',
+            title: item.title,
+            date: new Date(item.created_at).toLocaleDateString('vi-VN'),
+            summary: item.content.substring(0, 100) + (item.content.length > 100 ? '...' : ''),
+            imageUrl,
+          };
+        });
         setNews(formattedNews);
+
+        // Preload news images
+        preloadImages(formattedNews.map((item) => item.imageUrl));
 
         setError(null);
       } catch (err) {
         console.error('❌ Lỗi API:', err);
-        setError('Lỗi khi tải dữ liệu');
+        setError(`Lỗi khi tải dữ liệu: ${err.message}`);
       } finally {
         setLoading(false);
       }
@@ -233,7 +282,6 @@ const Home = () => {
     let filtered = sessions.filter((session) => {
       const item = session.item;
       if (!item) return false;
-
       const matchesSearch = item.name?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = categoryFilter === 'all' || item.category_id === parseInt(categoryFilter);
       return matchesSearch && matchesCategory;
@@ -249,8 +297,16 @@ const Home = () => {
 
   // Lấy 10 phiên mới nhất
   const latestSessions = useMemo(() => {
+
+
     const sorted = [...sessions].sort((a, b) => b.session_id - a.session_id).slice(0, 10);
     console.log('🔍 Latest sessions:', sorted.map((s) => ({ id: s.session_id, status: s.status })));
+    // Preload images for latest sessions
+    preloadImages(
+      sorted
+        .filter((s) => s.item?.image_url)
+        .map((s) => `${process.env.REACT_APP_BASE_URL || 'https://your-production-url.com'}${s.item.image_url}`)
+    );
     return sorted;
   }, [sessions]);
 
@@ -273,10 +329,10 @@ const Home = () => {
             640: { slidesPerView: 2 },
             1024: { slidesPerView: 5 },
           }}
-          key={latestSessions.map((s) => s.session_id).join('-')} // Ép Swiper re-render
+          key={latestSessions.map((s) => s.session_id).join('-')}
         >
           {latestSessions.map((session) => (
-            <SwiperSlide key={session.session_id}>
+            <SwiperSlide key= {session.session_id}>
               <AuctionItem session={session} />
             </SwiperSlide>
           ))}
@@ -343,7 +399,7 @@ const Home = () => {
               640: { slidesPerView: 2 },
               1024: { slidesPerView: 5 },
             }}
-            key={filteredSessions.map((s) => s.session_id).join('-')} // Ép Swiper re-render
+            key={filteredSessions.map((s) => s.session_id).join('-')}
           >
             {filteredSessions.slice(0, 10).map((session) => (
               <SwiperSlide key={session.session_id}>
@@ -376,15 +432,23 @@ const Home = () => {
                 <div className="news-item">
                   <img
                     className="news-image"
-                    src={newsItem.imageUrl}
+                    src={imageCache.get(newsItem.imageUrl)?.src || newsItem.imageUrl}
                     alt={newsItem.title}
                     loading="lazy"
-                    onError={(e) => (e.target.src = 'https://via.placeholder.com/150x100?text=Image+Not+Found')}
+                    onError={(e) => {
+                      if (e.target.src !== '/assets/img/placeholder.png') {
+                        e.target.src = '/assets/img/placeholder.png';
+                      }
+                    }}
                   />
                   <div className="news-details">
-                    <h3 className="news-title" style={{ minHeight: '56px'}}>{newsItem.title}</h3>
+                    <h3 className="news-title" style={{ minHeight: '56px' }}>
+                      {newsItem.title}
+                    </h3>
                     <p className="news-date">{newsItem.date}</p>
-                    <p className="news-summary" style={{ minHeight: '72px'}}>{newsItem.summary}</p>
+                    <p className="news-summary" style={{ minHeight: '72px' }}>
+                      {newsItem.summary}
+                    </p>
                   </div>
                   <div className="action">
                     <Link to={`/news/${newsItem.id}`} style={{ textDecoration: 'none' }}>
