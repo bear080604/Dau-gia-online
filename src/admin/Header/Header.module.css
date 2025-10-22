@@ -1,4 +1,4 @@
-/* Sidebar.module.css */
+/* Sidebar.module.css
 .sidebar {
   width: 280px;
   background-color: #ffffff;
@@ -16,10 +16,13 @@
   margin-bottom: 1.5rem;
 }
 .logo{
-  max-width: 70%;
+  max-width: 100px;
 }
 .logoImg{
-  width: 100%;
+  width: 50%;
+}
+.image{
+  width: 80%;
 }
 .sidebarHeader h2 {
   color: #4f46e5;
@@ -102,4 +105,4 @@
     height: auto;
     position: relative;
   }
-}
+} */

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // ✅ chỉ import 1 lần
 import { useUser } from '../UserContext';
 import axios from 'axios';
 import styles from './header.module.css';
@@ -17,41 +17,36 @@ const Header = () => {
   const [notifications, setNotifications] = useState([]);
   const [categories, setCategories] = useState([]);
   const [notificationError, setNotificationError] = useState(null);
-
-  const [searchQuery, setSearchQuery] = useState(''); // State cho từ khóa tìm kiếm
-  const [suggestions, setSuggestions] = useState([]); // State cho danh sách đề xuất
-  const searchRef = useRef(null); // Ref để xử lý click bên ngoài
-
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
+  const searchRef = useRef(null);
+  const navigate = useNavigate();
 
-  // Fetch danh mục từ API
+  // Fetch danh mục
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}categories`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch categories');
-        }
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}categories`
+        );
+        if (!response.ok) throw new Error('Failed to fetch categories');
         const result = await response.json();
         if (result.status && result.data) {
-          const mappedCategories = result.data.map(category => ({
+          const mappedCategories = result.data.map((category) => ({
             icon: getIconForCategory(category.name),
             text: category.name,
             href: `/category/${category.category_id}`,
           }));
           setCategories(mappedCategories);
-        } else {
-          throw new Error('Invalid API response');
-        }
-      } catch (error) {
+        } else throw new Error('Invalid API response');
+      } catch {
         setCategories([]);
       }
     };
-
     fetchCategories();
   }, []);
 
-  // Hàm ánh xạ tên danh mục với icon
   const getIconForCategory = (categoryName) => {
     switch (categoryName) {
       case 'Bất động sản':
@@ -69,57 +64,37 @@ const Header = () => {
     }
   };
 
-  // Fetch thông báo từ API
+  // Fetch thông báo
   useEffect(() => {
     const fetchNotifications = async () => {
-      if (!user || !user.user_id) {
-        setNotifications([]);
-        setNotificationError(null);
-        return;
-      }
-
+      if (!user?.user_id) return setNotifications([]);
       try {
         const token = localStorage.getItem('token');
-        if (!token) {
-          setNotifications([]);
-          setNotificationError(null);
-          return;
-        }
-
-        const response = await fetch(
+        const res = await fetch(
           `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}notifications/${user.user_id}`,
           {
             headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/json',
+              Authorization: `Bearer ${token}`,
+              Accept: 'application/json',
             },
           }
         );
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch notifications: ${response.status} ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        if (result.status && result.notifications) {
+        if (!res.ok) throw new Error('Failed to fetch notifications');
+        const data = await res.json();
+        if (data.status && data.notifications) {
           setNotifications(
-            result.notifications.map(notif => ({
-              id: notif.notification_id,
-              text: notif.message,
-              isRead: notif.is_read,
-              timestamp: new Date(notif.created_at),
+            data.notifications.map((n) => ({
+              id: n.notification_id,
+              text: n.message,
+              isRead: n.is_read,
+              timestamp: new Date(n.created_at),
             }))
           );
-          setNotificationError(null);
-        } else {
-          throw new Error('Invalid API response structure');
         }
-      } catch (error) {
-        setNotifications([]);
-        setNotificationError(`Không thể tải thông báo: ${error.message}`);
+      } catch (e) {
+        setNotificationError(e.message);
       }
     };
-
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
@@ -129,318 +104,130 @@ const Header = () => {
   useEffect(() => {
     const fetchContracts = async () => {
       try {
-        const apiUrl = `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}contracts`;
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-          throw new Error('Failed to fetch contract data');
-        }
-        const data = await response.json();
+        const res = await fetch(
+          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}contracts`
+        );
+        if (!res.ok) throw new Error('Failed to fetch contract data');
+        const data = await res.json();
         setContractData(data);
-      } catch (error) {
+      } catch {
         setContractData({ status: false, contracts: [] });
       }
     };
-
     fetchContracts();
   }, []);
 
-  // Fetch sản phẩm cho tìm kiếm có đề xuất
+  // Search gợi ý
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (!searchQuery.trim()) {
-        setSuggestions([]);
-        return;
-      }
-
+      if (!searchQuery.trim()) return setSuggestions([]);
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}products`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        const products = response.data.data || [];
-        const productsWithSessions = products.filter(
-          (p) => Array.isArray(p.sessions) && p.sessions.length > 0
+        const res = await axios.get(
+          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}products`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
-        // Lọc sản phẩm dựa trên từ khóa tìm kiếm
-        const filteredSuggestions = productsWithSessions
-          .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
-          .map(p => ({
-            id: p.sessions[0]?.id,
+        const products = res.data.data || [];
+        const filtered = products
+          .filter((p) =>
+            p.name.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+          .slice(0, 5)
+          .map((p) => ({
+            id: p.sessions?.[0]?.id,
             name: p.name,
-            href: `/auction-session/${p.sessions[0]?.id}`,
-            image: p.image || '/assets/img/default-product.jpg', // Giả sử API trả về trường image
-            price: p.price || 'N/A', // Giả sử API trả về trường price
-          }))
-          .slice(0, 5); // Giới hạn 5 đề xuất
-        setSuggestions(filteredSuggestions);
-      } catch (error) {
-        console.error('Error fetching search suggestions:', error);
+            href: `/auction-session/${p.sessions?.[0]?.id}`,
+            image: p.image || '/assets/img/default-product.jpg',
+            price: p.price || 0,
+          }));
+        setSuggestions(filtered);
+      } catch {
         setSuggestions([]);
       }
     };
-
-    const debounce = setTimeout(fetchSuggestions, 300); // Debounce để tránh gọi API quá nhanh
-    return () => clearTimeout(debounce);
+    const t = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(t);
   }, [searchQuery]);
 
-  // Update clock
+  // Clock
   useEffect(() => {
-    const updateClock = () => {
-      const now = new Date();
-      setCurrentTime(now.toLocaleString('vi-VN'));
-    };
-
-    updateClock();
-    const interval = setInterval(updateClock, 1000);
-    return () => clearInterval(interval);
+    const tick = () => setCurrentTime(new Date().toLocaleString('vi-VN'));
+    tick();
+    const i = setInterval(tick, 1000);
+    return () => clearInterval(i);
   }, []);
 
-  // User authentication and contract filtering
+  // Xử lý hợp đồng chưa thanh toán
   useEffect(() => {
-    if (user && contractData && contractData.status && contractData.contracts.length > 0) {
-      const userContracts = contractData.contracts
-        .filter(
-          (contract) =>
-            contract.winner_id === user.user_id &&
-            contract.status === 'ChoThanhToan' &&
-            new Date(contract.signed_date).getTime() + 24 * 60 * 60 * 1000 >= new Date().getTime()
-        )
-        .sort((a, b) => new Date(b.signed_date) - new Date(a.signed_date));
-
-      setLatestUnpaidContract(userContracts[0] || null);
-    }
+    if (!user || !contractData?.status) return;
+    const userContracts = contractData.contracts
+      .filter(
+        (c) =>
+          c.winner_id === user.user_id &&
+          c.status === 'ChoThanhToan' &&
+          new Date(c.signed_date).getTime() + 86400000 > Date.now()
+      )
+      .sort((a, b) => new Date(b.signed_date) - new Date(a.signed_date));
+    setLatestUnpaidContract(userContracts[0] || null);
   }, [user, contractData]);
 
-  // Countdown timer for the latest unpaid contract
+  // Countdown
   useEffect(() => {
-    if (!latestUnpaidContract) {
-      setCountdown('Không có hợp đồng');
-      return;
-    }
-
-    const getTargetDate = (signedDate) => {
-      const signed = new Date(signedDate);
-      signed.setHours(signed.getHours() + 24);
-      return signed;
+    if (!latestUnpaidContract)
+      return setCountdown('Không có hợp đồng');
+    const update = () => {
+      const end = new Date(latestUnpaidContract.signed_date);
+      end.setHours(end.getHours() + 24);
+      const diff = end - new Date();
+      if (diff <= 0) return setCountdown('Hết thời gian');
+      const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
+      const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+      const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+      setCountdown(`${h}:${m}:${s}`);
     };
-
-    const formatCountdown = (ms) => {
-      if (ms <= 0) return 'Hết thời gian';
-      const totalSec = Math.floor(ms / 1000);
-      const h = Math.floor(totalSec / 3600);
-      const m = Math.floor((totalSec % 3600) / 60);
-      const s = totalSec % 60;
-      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    };
-
-    const updateCountdown = () => {
-      const target = getTargetDate(latestUnpaidContract.signed_date);
-      const now = new Date();
-      const diff = target - now;
-      setCountdown(formatCountdown(diff));
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
+    update();
+    const i = setInterval(update, 1000);
+    return () => clearInterval(i);
   }, [latestUnpaidContract]);
 
-  // User logout using API
+  // Logout
   const handleLogout = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      console.log('LocalStorage keys:', Object.keys(localStorage));
-      console.log('Token retrieved:', token);
-      if (!token) {
-        throw new Error('Không tìm thấy token đăng nhập trong localStorage');
-      }
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
-      console.log('API URL:', `${apiUrl}logout`);
-      const response = await fetch(`${apiUrl}logout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      });
-
-      console.log('Response status:', response.status);
-      if (!response.ok) {
-        const text = await response.text();
-        console.log('Response text:', text);
-        throw new Error(`Yêu cầu thất bại với mã trạng thái ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('Response JSON:', result);
-      if (response.ok && result.status) {
-        await logout();
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}logout`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const result = await res.json();
+      if (res.ok && result.status) {
+        logout();
         localStorage.removeItem('token');
         alert('Đăng xuất thành công');
-        window.location.href = '/login';
-      } else {
-        throw new Error(result.message || 'Đăng xuất thất bại');
-      }
+        navigate('/login');
+      } else throw new Error(result.message);
     } catch (err) {
-      console.error('Lỗi đăng xuất:', err);
       alert('Lỗi đăng xuất: ' + err.message);
     }
   };
 
-  // Mobile search handlers
-  const toggleMobileSearch = () => {
-    setIsMobileSearchActive(!isMobileSearchActive);
-    setSearchQuery('');
-    setSuggestions([]);
-  };
-
-  const handleClickOutsideSearch = (e) => {
-    if (
-      searchRef.current &&
-      !searchRef.current.contains(e.target) &&
-      !e.target.closest(`.${styles.mobileSearchToggle}`)
-    ) {
-      setIsMobileSearchActive(false);
-      setSearchQuery('');
-      setSuggestions([]);
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener('click', handleClickOutsideSearch);
-    return () => document.removeEventListener('click', handleClickOutsideSearch);
-  }, []);
-
-  // Mobile navigation handlers
-  const openMobileNav = () => {
-    setIsMobileNavActive(true);
-    setIsMobileSearchActive(false);
-    document.body.style.overflow = 'hidden';
-  };
-
-  const closeMobileNav = () => {
-    setIsMobileNavActive(false);
-    setIsMobileCategoryActive(false);
-    document.body.style.overflow = '';
-  };
-
-  const toggleMobileCategory = () => {
-    setIsMobileCategoryActive(!isMobileCategoryActive);
-  };
-
-  const toggleNotification = (e) => {
-    e.stopPropagation();
-    setIsNotificationOpen(!isNotificationOpen);
-  };
-
-  const closeNotification = (e) => {
-    // Nếu click vào chuông thì không đóng
-    if (e.target.closest(`.${styles.notifi}`) ||
-        e.target.closest(`.${styles.userIconContainer}`) ||
-        e.target.closest(`.${styles.authLinks}`)) {
-      return;
-    }
-
-    // Nếu click bên ngoài notification popup thì đóng
-    if (isNotificationOpen && !e.target.closest(`.${styles.notificationPopup}`)) {
-      setIsNotificationOpen(false);
-      setShowAllNotifications(false); // Reset when closing
-    }
-  };
-
-  useEffect(() => {
-    // Thêm event listener cho toàn bộ document
-    if (isNotificationOpen) {
-      document.addEventListener('click', closeNotification);
-      return () => document.removeEventListener('click', closeNotification);
-    }
-  }, [isNotificationOpen]);
-
-  // Mark notification as read
-  const markAsRead = async (id) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/${id}/read`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`Failed to mark notification as read: ${response.statusText}`);
-      }
-      setNotifications((prev) =>
-        prev.map((notif) =>
-          notif.id === id ? { ...notif, isRead: true } : notif
-        )
-      );
-    } catch (error) {
-    }
-  };
-
-  // Mark all notifications as read
-  const markAllAsRead = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/user/${user.user_id}/read-all`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`Failed to mark all notifications as read: ${response.statusText}`);
-      }
-      setNotifications((prev) =>
-        prev.map((notif) => ({ ...notif, isRead: true }))
-      );
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-    }
-  };
-
-  // Calculate time ago
-  const getTimeAgo = (timestamp) => {
-    const now = new Date();
-    const diffMs = now - timestamp;
-    const diffMin = Math.floor(diffMs / (1000 * 60));
-
-    if (diffMin < 1) return 'Vừa xong';
-    if (diffMin === 1) return '1 phút trước';
-    if (diffMin < 60) return `${diffMin} phút trước`;
-    const diffHours = Math.floor(diffMin / 60);
-    if (diffHours === 1) return '1 giờ trước';
-    return `${diffHours} giờ trước`;
-  };
-
-  // Handle search input change
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
-  // Handle search form submit
+  // Search submit
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`; // Chuyển hướng đến trang tìm kiếm
-    }
+    if (searchQuery.trim()) navigate(`/auction-session?q=${encodeURIComponent(searchQuery)}`);
   };
 
-  // Navigation menu items
   const navItems = [
     { icon: 'fa-info-circle', text: 'GIỚI THIỆU', href: '/about' },
     {
@@ -450,112 +237,50 @@ const Header = () => {
       isCategory: true,
       subItems: categories,
     },
-    { icon: 'fa-gavel', text: 'ĐẤU GIÁ TRỰC TUYẾN', href: 'auction-session' },
-    { icon: 'fa-newspaper', text: 'TIN TỨC - THÔNG BÁO', href: 'news' },
+    { icon: 'fa-gavel', text: 'ĐẤU GIÁ TRỰC TUYẾN', href: '/auction-session' },
+    { icon: 'fa-newspaper', text: 'TIN TỨC - THÔNG BÁO', href: '/news' },
     { icon: 'fa-book', text: 'HƯỚNG DẪN SỬ DỤNG', href: '#' },
-    { icon: 'fa-phone', text: 'LIÊN HỆ BÁN TÀI SẢN', href: 'contact' },
+    { icon: 'fa-phone', text: 'LIÊN HỆ BÁN TÀI SẢN', href: '/contact' },
   ];
 
   return (
-    <div style={{ position: 'relative' }}>
-      {/* Top Bar */}
+    <div>
+      {/* ==== TOP BAR ==== */}
       <div className={styles.topBar}>
         <div className={styles.hotline}>
-          <i aria-hidden="true" className="fa fa-phone"></i>
-          HOTLINE: (028) 39406853 - (028) 62561989
+          <i className="fa fa-phone" /> HOTLINE: (028) 39406853 - (028) 62561989
         </div>
         <div className={styles.authLinks}>
           {user ? (
             <>
               <span>Xin chào, {user.full_name}</span>
               <div className={styles.userIconContainer}>
-                <Link to="/profile" aria-label="Go to profile">
-                  <i className={`fa fa-user ${styles.userIcon}`} aria-hidden="true"></i>
+                <Link to="/profile">
+                  <i className={`fa fa-user ${styles.userIcon}`} />
                 </Link>
-                {user.role === 'admin' && (
-                  <div className={styles.adminDropdown}>
-                    <Link to="/admin" aria-label="Go to admin panel">
-                      Admin
-                    </Link>
-                  </div>
-                )}
-              </div>
-              {/* Notification Bell */}
-              <div className={styles.notifi} onClick={toggleNotification}>
-                <i className="fa fa-bell" aria-hidden="true"></i>
-                {notifications.filter(notif => !notif.isRead).length > 0 && (
-                  <span className={styles.unreadCount}>
-                    {notifications.filter(notif => !notif.isRead).length}
-                  </span>
-                )}
               </div>
               <a href="#" onClick={handleLogout}>
-                Đăng Xuất <i className="fa fa-sign-out" aria-hidden="true"></i>
+                Đăng Xuất <i className="fa fa-sign-out" />
               </a>
             </>
           ) : (
             <>
-              <a href="/login">Đăng Nhập</a>
-              <a href="#">|</a>
-              <a href="/register">Đăng Ký</a>
+              <Link to="/login">Đăng Nhập</Link>
+              <span>|</span>
+              <Link to="/register">Đăng Ký</Link>
             </>
           )}
         </div>
       </div>
 
-      {/* Notification Popup */}
-      {isNotificationOpen && (
-        <div className={styles.notificationPopup} role="dialog" aria-label="Thông báo">
-          <div className={styles.notificationContent}>
-            <span
-              className={styles.notificationClose}
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsNotificationOpen(false);
-              }}
-              role="button"
-              tabIndex={0}
-              aria-label="Đóng thông báo"
-            >
-              &times;
-            </span>
-            <h3>Thông Báo</h3>
-            {notificationError ? (
-              <p className={styles.error}>{notificationError}</p>
-            ) : notifications.length > 0 ? (
-              <ul>
-                {notifications.slice(0, 5).map((notif) => (
-                  <li
-                    key={notif.id}
-                    className={notif.isRead ? styles.read : styles.unread}
-                    onClick={() => markAsRead(notif.id)}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    {notif.isRead && <span className={styles.readIcon}>✔</span>}
-                    {notif.text}
-                    <span className={styles.timeAgo}>({getTimeAgo(notif.timestamp)})</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>Không có thông báo nào</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Header Main */}
+      {/* ==== SEARCH ==== */}
       <header className={styles.headerMain}>
         <div className={styles.logo}>
-          <div className={styles.logoImg}>
-            <a href="/">
-              <img src="\assets\img\logo.jpg" alt="Logo" />
-            </a>
-          </div>
+          <Link to="/">
+            <img className={styles.logoImg} src="/assets/img/logo.jpg" alt="Logo" />
+          </Link>
         </div>
 
-        {/* Desktop Search */}
         <div className={styles.searchContainer} ref={searchRef}>
           <form onSubmit={handleSearchSubmit} className={styles.searchBox}>
             <input
@@ -563,31 +288,21 @@ const Header = () => {
               placeholder="Nhập tên tài sản cần tìm ..."
               type="text"
               value={searchQuery}
-              onChange={handleSearchChange}
+              onChange={(e) => setSearchQuery(e.target.value)}
               autoComplete="off"
             />
             <button type="submit">
-              <i aria-hidden="true" className="fa fa-search"></i>
+              <i className="fa fa-search" />
             </button>
           </form>
           {suggestions.length > 0 && (
             <ul className={styles.suggestions}>
-              {suggestions.map((suggestion) => (
-                <li key={suggestion.id} className={styles.suggestionItem}>
-                  <Link to={suggestion.href} onClick={() => setSearchQuery('')}>
-                    <div className={styles.suggestionContent}>
-                      <img
-                        src={suggestion.image}
-                        alt={suggestion.name}
-                        className={styles.suggestionImage}
-                      />
-                      <div className={styles.suggestionDetails}>
-                        <span className={styles.suggestionName}>{suggestion.name}</span>
-                        <span className={styles.suggestionPrice}>
-                          Giá: {suggestion.price.toLocaleString('vi-VN')} VNĐ
-                        </span>
-                      </div>
-                    </div>
+              {suggestions.map((s) => (
+                <li key={s.id}>
+                  <Link to={s.href}>
+                    <img src={s.image} alt={s.name} />
+                    <span>{s.name}</span>
+                    <span>{s.price.toLocaleString('vi-VN')} VNĐ</span>
                   </Link>
                 </li>
               ))}
@@ -595,61 +310,15 @@ const Header = () => {
           )}
         </div>
 
-        {/* Mobile Search */}
-        <div className={styles.mobileSearchContainer} ref={searchRef}>
-          <button className={styles.mobileSearchToggle} onClick={toggleMobileSearch}>
-            <i aria-hidden="true" className="fa fa-search"></i>
-          </button>
-          <div className={`${styles.mobileSearchBox} ${isMobileSearchActive ? styles.active : ''}`}>
-            <form onSubmit={handleSearchSubmit}>
-              <input
-                placeholder="Nhập tên tài sản..."
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                autoComplete="off"
-              />
-              <button type="submit">
-                <i aria-hidden="true" className="fa fa-search"></i>
-              </button>
-            </form>
-            {suggestions.length > 0 && (
-              <ul className={styles.suggestions}>
-                {suggestions.map((suggestion) => (
-                  <li key={suggestion.id} className={styles.suggestionItem}>
-                    <Link to={suggestion.href} onClick={() => setSearchQuery('')}>
-                      <div className={styles.suggestionContent}>
-                        <img
-                          src={suggestion.image}
-                          alt={suggestion.name}
-                          className={styles.suggestionImage}
-                        />
-                        <div className={styles.suggestionDetails}>
-                          <span className={styles.suggestionName}>{suggestion.name}</span>
-                          <span className={styles.suggestionPrice}>
-                            Giá: {suggestion.price.toLocaleString('vi-VN')} VNĐ
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-
         <div className={styles.headerRight}>
           {user && latestUnpaidContract && (
-            <Link to={`/contract`} style={{ textDecoration: 'none' }}>
-              <div aria-live="polite" className={styles.headContractBox} role="status">
-                <div aria-hidden="true" className={styles.headIcon}>
-                  HD
+            <Link to="/contract" className={styles.headContractBox}>
+              <div className={styles.headIcon}>HD</div>
+              <div className={styles.headContent}>
+                <div className={styles.headTitle}>
+                  Hợp đồng: {latestUnpaidContract.session.item.name}
                 </div>
-                <div className={styles.headContent}>
-                  <div className={styles.headTitle}>Hợp đồng: {latestUnpaidContract.session.item.name}</div>
-                  <div className={styles.headDueTime}>Còn lại: {countdown}</div>
-                </div>
+                <div className={styles.headDueTime}>Còn lại: {countdown}</div>
               </div>
             </Link>
           )}
@@ -657,20 +326,19 @@ const Header = () => {
         </div>
       </header>
 
-      {/* Desktop Navigation Bar */}
+      {/* ==== NAV BAR ==== */}
       <nav className={styles.navBar}>
         <ul className={styles.navMenu}>
-          {navItems.map((item, index) => (
-            <li key={index} className={item.isCategory ? styles.categories : ''}>
-              <a href={item.href}>
-                <i aria-hidden="true" className={`fa ${item.icon}`}></i>
-                <span>{item.text}</span>
-              </a>
-              {item.isCategory && item.subItems && (
+          {navItems.map((item, i) => (
+            <li key={i}>
+              <Link to={item.href}>
+                <i className={`fa ${item.icon}`} /> {item.text}
+              </Link>
+              {item.isCategory && item.subItems?.length > 0 && (
                 <ul className={styles.categoryHidden}>
-                  {item.subItems.map((subItem, subIndex) => (
-                    <li key={subIndex}>
-                      <a href={subItem.href}>{subItem.text}</a>
+                  {item.subItems.map((sub, j) => (
+                    <li key={j}>
+                      <Link to={sub.href}>{sub.text}</Link>
                     </li>
                   ))}
                 </ul>
@@ -679,69 +347,6 @@ const Header = () => {
           ))}
         </ul>
       </nav>
-
-      {/* Mobile Navigation Toggle Button */}
-      <button
-        aria-label="Mở menu"
-        className={`${styles.mobileNavToggle} ${isMobileNavActive ? styles.active : ''}`}
-        onClick={openMobileNav}
-      >
-        <i className="fa fa-bars"></i>
-      </button>
-
-      {/* Mobile Navigation Overlay */}
-      <div
-        className={`${styles.mobileNavOverlay} ${isMobileNavActive ? styles.active : ''}`}
-        onClick={closeMobileNav}
-      ></div>
-
-      {/* Mobile Navigation Sidebar */}
-      <div
-        className={`${styles.mobileNavSidebar} ${isMobileNavActive ? styles.active : ''}`}
-      >
-        <div className={styles.mobileNavHeader}>
-          <h3>Menu Điều Hướng</h3>
-          <button aria-label="Đóng menu" className={styles.mobileNavClose} onClick={closeMobileNav}>
-            <i className="fa fa-times" />
-          </button>
-        </div>
-        <ul className={styles.mobileNavMenu}>
-          {navItems.map((item, index) => (
-            <li key={index}>
-              {item.isCategory ? (
-                <>
-                  <button
-                    className={`${styles.mobileCategoryToggle} ${isMobileCategoryActive ? styles.active : ''}`}
-                    onClick={toggleMobileCategory}
-                  >
-                    <div>
-                      <i aria-hidden="true" className={`fa ${item.icon}`}></i>
-                      {item.text}
-                    </div>
-                    <i aria-hidden="true" className={`fa fa-chevron-down ${styles.arrow}`}></i>
-                  </button>
-                  <ul
-                    className={`${styles.mobileCategoryMenu} ${isMobileCategoryActive ? styles.active : ''}`}
-                  >
-                    {item.subItems.map((subItem, subIndex) => (
-                      <li key={subIndex}>
-                        <a href={subItem.href}>
-                          <i className={`fa ${subItem.icon}`}></i> {subItem.text}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <a href={item.href} onClick={closeMobileNav}>
-                  <i aria-hidden="true" className={`fa ${item.icon}`}></i>
-                  {item.text}
-                </a>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
     </div>
   );
 };
