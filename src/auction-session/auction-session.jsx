@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import io from 'socket.io-client';
 import styles from './auction-session.module.css';
@@ -18,7 +19,16 @@ function AuctionSession() {
   const itemsPerPage = 6;
   const socketRef = useRef(null);
 
-  // Hàm lấy trạng thái phiên đấu giá từ server
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Lấy từ khóa từ URL (?q=...)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const keyword = params.get('q') || '';
+    setSearchTerm(keyword);
+  }, [location.search]);
+
   const getAuctionStatus = (status) => {
     const statusMap = {
       Mo: 'Chưa bắt đầu',
@@ -43,50 +53,35 @@ function AuctionSession() {
       console.log('⚠️ Socket disconnected');
     });
 
-    // REALTIME: Cập nhật phiên đấu giá
+    // Realtime cập nhật
     socket.on('auction.session.updated', (updatedData) => {
-      console.log('🔄 Cập nhật phiên đấu giá realtime:', updatedData);
       const updatedSession = updatedData.session || updatedData;
-
       setAuctionItems((prev) => {
         const index = prev.findIndex((s) => s.session_id === updatedSession.session_id);
         if (index !== -1) {
           const newItems = [...prev];
           newItems[index] = { ...newItems[index], ...updatedSession };
-          console.log(`✨ Status updated: Session ${updatedSession.session_id} -> ${updatedSession.status}`);
           return newItems;
         } else {
-          console.log(`⚠️ Session ${updatedSession.session_id} không tồn tại, thêm mới`);
           return [updatedSession, ...prev];
         }
       });
     });
 
-    // REALTIME: Phiên đấu giá mới
     socket.on('auction.session.created', (newData) => {
-      console.log('✨ Phiên đấu giá mới:', newData);
       const newSession = newData.session || newData;
-
       setAuctionItems((prev) => {
-        if (prev.some((s) => s.session_id === newSession.session_id)) {
-          console.log(`⚠️ Phiên ${newSession.session_id} đã tồn tại, bỏ qua`);
-          return prev;
-        }
-        console.log(`✅ Thêm phiên mới ${newSession.session_id}`);
+        if (prev.some((s) => s.session_id === newSession.session_id)) return prev;
         return [newSession, ...prev];
       });
     });
 
-    // REALTIME: Xóa phiên đấu giá
     socket.on('auction.session.deleted', (deletedData) => {
-      console.log('🗑️ Phiên đấu giá bị xóa:', deletedData);
       const deletedSession = deletedData.session || deletedData;
       setAuctionItems((prev) => prev.filter((s) => s.session_id !== deletedSession.session_id));
     });
 
-    socket.on('error', (err) => {
-      console.error('❌ Lỗi Socket.io:', err);
-    });
+    socket.on('error', (err) => console.error('❌ Lỗi Socket.io:', err));
 
     return () => {
       socket.emit('leave.channel', 'auction-sessions');
@@ -94,12 +89,11 @@ function AuctionSession() {
     };
   }, []);
 
-  // Fetch dữ liệu ban đầu
+  // Fetch dữ liệu
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch danh mục
         const categoryResponse = await axios.get(`${process.env.REACT_APP_API_URL}categories`, {
           headers: {
             'Content-Type': 'application/json',
@@ -108,21 +102,16 @@ function AuctionSession() {
         });
         if (categoryResponse.data.status && categoryResponse.data.data) {
           setCategories(categoryResponse.data.data);
-        } else {
-          throw new Error('Invalid categories API response');
         }
 
-        // Fetch auction sessions
         const sessionsResponse = await axios.get(`${process.env.REACT_APP_API_URL}auction-sessions`, {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
-        const sessionsData = sessionsResponse.data.sessions || sessionsResponse.data.data || sessionsResponse.data || [];
-        console.log('📊 Initial sessions loaded:', sessionsData);
+        const sessionsData = sessionsResponse.data.sessions || sessionsResponse.data.data || [];
         setAuctionItems(Array.isArray(sessionsData) ? sessionsData : []);
-
         setError(null);
       } catch (err) {
         console.error('❌ Lỗi API:', err);
@@ -131,11 +120,10 @@ function AuctionSession() {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
-  // Lọc và sắp xếp auctionItems
+  // Lọc dữ liệu
   const filterAndSortItems = () => {
     let filtered = auctionItems.filter((session) => {
       const item = session.item;
@@ -173,6 +161,11 @@ function AuctionSession() {
     setCurrentPage(1);
   }, [searchTerm, categoryFilter, sortBy, startDate, endDate]);
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    navigate(`/auction-session?q=${encodeURIComponent(searchTerm)}`);
+  };
+
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
     const d = new Date(dateStr);
@@ -203,17 +196,17 @@ function AuctionSession() {
     <div className={styles.container}>
       <div className={styles.leftPanel}>
         <section className={styles.searchSection}>
-          <div className={styles.searchBox}>
+          <form onSubmit={handleSearchSubmit} className={styles.searchBox}>
             <input
               type="text"
               placeholder="Tìm kiếm phiên đấu giá..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <button>
+            <button type="submit">
               <i className="fa fa-search" aria-hidden="true"></i>
             </button>
-          </div>
+          </form>
 
           <div className={styles.filterSection}>
             <div className={styles.filterGroup}>
@@ -239,31 +232,11 @@ function AuctionSession() {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  style={{
-                    padding: '10px 12px',
-                    borderRadius: '5px',
-                    border: '1px solid #ccc',
-                    fontSize: '14px',
-                    outline: 'none',
-                    transition: 'all 0.2s',
-                  }}
-                  onFocus={(e) => (e.target.style.border = '1px solid #2772ba')}
-                  onBlur={(e) => (e.target.style.border = '1px solid #ccc')}
                 />
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  style={{
-                    padding: '10px 12px',
-                    borderRadius: '5px',
-                    border: '1px solid #ccc',
-                    fontSize: '14px',
-                    outline: 'none',
-                    transition: 'all 0.2s',
-                  }}
-                  onFocus={(e) => (e.target.style.border = '1px solid #2772ba')}
-                  onBlur={(e) => (e.target.style.border = '1px solid #ccc')}
                 />
               </div>
             </div>
@@ -291,9 +264,9 @@ function AuctionSession() {
 
       <div className={styles.rightPanel}>
         <div className={styles.resultsInfo}>
-          <span>
-            <h1 className={styles.pageTitle}>Tổng {filteredItems.length} phiên đấu giá</h1>
-          </span>
+          <h1 className={styles.pageTitle}>
+            Tổng {filteredItems.length} phiên đấu giá
+          </h1>
         </div>
 
         <div className={styles.auctionItems}>
@@ -320,25 +293,24 @@ function AuctionSession() {
                   >
                     <div className={styles.itemDetails}>
                       <div className={styles.itemHeader}>
-                        <div className={styles.itemTitle}>{session.item?.name || 'Chưa có tên'}</div>
+                        <div className={styles.itemTitle}>
+                          {session.item?.name || 'Chưa có tên'}
+                        </div>
                         <div className={styles.itemPrice}>
                           {parseFloat(session.item?.starting_price || 0).toLocaleString('vi-VN')} VNĐ
                         </div>
                       </div>
-                      <div className={styles.itemFooter} style={{ display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ fontSize: '13px', color: '#555' }}>
+                      <div className={styles.itemFooter}>
+                        <div>
                           <b>Thời gian đăng ký:</b>{' '}
                           {formatDate(session.register_start)} - {formatDate(session.register_end)}
                         </div>
-                        <br />
-                        <div style={{ fontSize: '13px', color: '#555' }}>
+                        <div>
                           <b>Thời gian đấu giá:</b>{' '}
                           {formatDate(session.bid_start)} - {formatDate(session.bid_end)}
                         </div>
-                        <br />
                         <div
                           style={{
-                            fontSize: '13px',
                             color:
                               session.status === 'Mo'
                                 ? '#16a34a'
@@ -363,7 +335,6 @@ function AuctionSession() {
         {totalPages > 1 && (
           <div className={styles.pagination}>
             <button
-              className={styles.paginationBtn}
               disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
             >
@@ -372,14 +343,13 @@ function AuctionSession() {
             {Array.from({ length: totalPages }, (_, i) => (
               <button
                 key={i + 1}
-                className={`${styles.paginationBtn} ${currentPage === i + 1 ? styles.paginationBtnActive : ''}`}
+                className={`${currentPage === i + 1 ? styles.paginationBtnActive : ''}`}
                 onClick={() => handlePageChange(i + 1)}
               >
                 {i + 1}
               </button>
             ))}
             <button
-              className={styles.paginationBtn}
               disabled={currentPage === totalPages}
               onClick={() => handlePageChange(currentPage + 1)}
             >
