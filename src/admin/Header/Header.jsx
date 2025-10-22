@@ -1,584 +1,156 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../UserContext';
-import axios from 'axios';
 import styles from './Header.module.css';
 
-const Header = () => {
-  const { user, logout } = useUser();
-  const [currentTime, setCurrentTime] = useState('');
-  const [countdown, setCountdown] = useState('23:59:59');
-  const [isMobileSearchActive, setIsMobileSearchActive] = useState(false);
-  const [isMobileNavActive, setIsMobileNavActive] = useState(false);
-  const [isMobileCategoryActive, setIsMobileCategoryActive] = useState(false);
-  const [latestUnpaidContract, setLatestUnpaidContract] = useState(null);
-  const [contractData, setContractData] = useState(null);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [notificationError, setNotificationError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-  const [showAllNotifications, setShowAllNotifications] = useState(false);
-  const searchRef = useRef(null);
+const Sidebar = () => {
+  const { user } = useUser();
+  const [activeItem, setActiveItem] = useState('settings');
+  const [allowedItems, setAllowedItems] = useState([]);
   const navigate = useNavigate();
 
-  // Fetch danh mục
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}categories`
-        );
-        if (!response.ok) throw new Error('Failed to fetch categories');
-        const result = await response.json();
-        if (result.status && result.data) {
-          const mappedCategories = result.data.map((category) => ({
-            icon: getIconForCategory(category.name),
-            text: category.name,
-            href: `/category/${category.category_id}`,
-          }));
-          setCategories(mappedCategories);
-        } else throw new Error('Invalid API response');
-      } catch {
-        setCategories([]);
-      }
-    };
-    fetchCategories();
-  }, []);
+  // Lấy REACT_APP_API_URL từ biến môi trường
+  const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
 
-  const getIconForCategory = (categoryName) => {
-    switch (categoryName) {
-      case 'Bất động sản':
-        return 'fa-home';
-      case 'Xe cộ':
-        return 'fa-car';
-      case 'Đồ cổ':
-        return 'fa-gem';
-      case 'Thiết bị điện tử':
-        return 'fa-laptop';
-      case 'Người yêu':
-        return 'fa-heart';
-      default:
-        return 'fa-folder';
-    }
+  const addAdminPrefix = (href) => {
+    if (href === '#') return href;
+    return `/admin${href.startsWith('/') ? href : `/${href}`}`;
   };
 
-  // Fetch thông báo
+  const getSidebarItems = () => {
+    return [
+      { id: 'dashboard', icon: 'fas fa-home', label: 'Trang chủ', href: addAdminPrefix('/dashboard') },
+      { id: 'assets', icon: 'fas fa-box-open', label: 'Tài sản đấu giá', href: addAdminPrefix('/auction-asset') },
+      { id: 'assets-categories', icon: 'fas fa-box-open', label: 'Danh mục tài sản', href: addAdminPrefix('/assets-categories') },
+      { id: 'auctions', icon: 'fas fa-clock', label: 'Phiên đấu giá', href: addAdminPrefix('/auction-session') },
+      { id: 'contracts', icon: 'fas fa-file-contract', label: 'Hợp đồng', href: addAdminPrefix('/contract') },
+      { id: 'register-auction', icon: 'fa fa-ticket', label: 'Đăng ký đấu giá', href: addAdminPrefix('/register-auction') },
+      { id: 'news', icon: 'fas fa-file-contract', label: 'Tin tức', href: addAdminPrefix('/news') },
+      { id: 'news-categories', icon: 'fas fa-file-contract', label: 'Danh mục tin tức', href: addAdminPrefix('/news-categories') },
+      { id: 'reports', icon: 'fas fa-chart-bar', label: 'Báo cáo', href: addAdminPrefix('/report') },
+      { id: 'users', icon: 'fas fa-users', label: 'Quản lý người dùng', href: addAdminPrefix('/users') },
+      { id: 'bids', icon: 'fas fa-file-alt', label: 'Hồ sơ đấu giá', href: addAdminPrefix('/profile') },
+      { id: 'notifications', icon: 'fas fa-bell', label: 'Thông báo', href: addAdminPrefix('/notification') },
+      { id: 'payments', icon: 'fas fa-money-bill-wave', label: 'Thanh toán', href: addAdminPrefix('/payment') },
+      { id: 'econtracts', icon: 'fas fa-file-signature', label: 'Hợp đồng điện tử', href: addAdminPrefix('/econtract') },
+      { id: 'roles', icon: 'fas fa-user-tag', label: 'Vai trò', href: addAdminPrefix('/roles') },
+      { id: 'permissions', icon: 'fas fa-key', label: 'Quyền hạn', href: addAdminPrefix('/permissions') },
+      { id: 'settings', icon: 'fas fa-cog', label: 'Cài đặt', href: addAdminPrefix('/settings') },
+      { id: 'support', icon: 'fas fa-headset', label: 'Hỗ trợ', href: '#' },
+      { id: 'security', icon: 'fas fa-shield-alt', label: 'Bảo mật', href: '#' },
+      { id: 'logs', icon: 'fas fa-history', label: 'Lịch sử log', href: addAdminPrefix('/history') },
+    ];
+  };
+
+  // Ánh xạ quyền hạn với các trang
+  const permissionsMapping = {
+    2: ['/contract'],
+    3: ['/report'],
+    22: ['/auction-asset'], // manage_products (cần thêm trang nếu có)
+    23: ['/assets-categories'],
+    24: ['/auction-asset'],   
+    25: ['/news'],
+    26: ['/news-categories'],
+    27: ['/profile'],
+    28: ['/profile'],
+    29: ['/payment'],
+    30: ['/payment'],
+    31: ['/auction-session'],
+    32: ['/register-auction'],
+    33: ['/payment'],
+    34: ['/payment'],
+    35: ['/report'],
+    36: ['/notification'],
+    37: ['/econtract'],
+    38: ['/roles', '/permissions'],
+    42: ['/dashboard'], // manage_dashboard
+    43: ['/users'],     // manage_users (giả sử thêm)
+    44: ['/settings'],  // manage_settings
+    45: ['/history'],   // view_history
+    46: ['/asset-categories']
+  };
+
+  // Lấy danh sách trang được phép từ API
   useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!user?.user_id) return setNotifications([]);
-      try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}notifications/${user.user_id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: 'application/json',
-            },
+    const fetchPermissions = async () => {
+      if (user?.role_id) {
+        console.log('Checking permissions for role_id:', user.role_id);
+        try {
+          const response = await fetch(`${API_URL}roles/${user.role_id}/permissions`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
-        );
-        if (!res.ok) throw new Error('Failed to fetch notifications');
-        const data = await res.json();
-        if (data.status && data.notifications) {
-          setNotifications(
-            data.notifications.map((n) => ({
-              id: n.notification_id,
-              text: n.message,
-              isRead: n.is_read,
-              timestamp: new Date(n.created_at),
-            }))
-          );
-          setNotificationError(null);
-        } else {
-          setNotificationError('Invalid API response structure');
-          setNotifications([]);
-        }
-      } catch (e) {
-        setNotificationError(e.message || 'Không thể tải thông báo');
-        setNotifications([]);
-      }
-    };
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
-  }, [user]);
-
-  // Fetch contracts
-  useEffect(() => {
-    const fetchContracts = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}contracts`
-        );
-        if (!res.ok) throw new Error('Failed to fetch contract data');
-        const data = await res.json();
-        setContractData(data);
-      } catch {
-        setContractData({ status: false, contracts: [] });
-      }
-    };
-    fetchContracts();
-  }, []);
-
-  // Search suggestions
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (!searchQuery.trim()) return setSuggestions([]);
-      try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}products`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
+          const data = await response.json();
+          console.log('Raw API response:', data);
+          if (data && Array.isArray(data.permissions)) {
+            const permissionIds = data.permissions.map(permission => permission.permission_id);
+            console.log('Extracted permission IDs:', permissionIds);
+            const allowedPaths = permissionIds.flatMap((id) => permissionsMapping[id] || []);
+            console.log('Allowed paths mapped:', allowedPaths);
+            const allItems = getSidebarItems();
+            const filteredItems = allItems.filter((item) =>
+              allowedPaths.includes(item.href.replace('/admin', '')) || item.href === '#'
+            );
+            setAllowedItems(filteredItems);
+            console.log('Filtered sidebar items:', filteredItems);
+          } else {
+            console.log('No permissions array found in response:', data);
           }
-        );
-        const products = res.data.data || [];
-        const filtered = products
-          .filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
-          .slice(0, 5)
-          .map((p) => ({
-            id: p.sessions?.[0]?.id || p.product_id || Math.random(),
-            name: p.name,
-            href: `/auction-session/${p.sessions?.[0]?.id || ''}`,
-            image: p.image || '/assets/img/default-product.jpg',
-            price: p.price || 0,
-          }));
-        setSuggestions(filtered);
-      } catch {
-        setSuggestions([]);
-      }
-    };
-    const t = setTimeout(fetchSuggestions, 300);
-    return () => clearTimeout(t);
-  }, [searchQuery]);
-
-  // Clock
-  useEffect(() => {
-    const tick = () => setCurrentTime(new Date().toLocaleString('vi-VN'));
-    tick();
-    const i = setInterval(tick, 1000);
-    return () => clearInterval(i);
-  }, []);
-
-  // Handle latest unpaid contract
-  useEffect(() => {
-    if (!user || !contractData?.status) return;
-    const userContracts = contractData.contracts
-      .filter(
-        (c) =>
-          c.winner_id === user.user_id &&
-          c.status === 'ChoThanhToan' &&
-          new Date(c.signed_date).getTime() + 86400000 > Date.now()
-      )
-      .sort((a, b) => new Date(b.signed_date) - new Date(a.signed_date));
-    setLatestUnpaidContract(userContracts[0] || null);
-  }, [user, contractData]);
-
-  // Countdown
-  useEffect(() => {
-    if (!latestUnpaidContract) {
-      setCountdown('Không có hợp đồng');
-      return;
-    }
-    const update = () => {
-      const end = new Date(latestUnpaidContract.signed_date);
-      end.setHours(end.getHours() + 24);
-      const diff = end - new Date();
-      if (diff <= 0) return setCountdown('Hết thời gian');
-      const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
-      const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
-      const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
-      setCountdown(`${h}:${m}:${s}`);
-    };
-    update();
-    const i = setInterval(update, 1000);
-    return () => clearInterval(i);
-  }, [latestUnpaidContract]);
-
-  // Logout
-  const handleLogout = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}logout`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
+        } catch (error) {
+          console.error('Error fetching permissions:', error);
         }
-      );
-      const result = await res.json();
-      if (res.ok && result.status) {
-        await logout();
-        localStorage.removeItem('token');
-        alert('Đăng xuất thành công');
-        navigate('/login');
       } else {
-        throw new Error(result.message || 'Đăng xuất thất bại');
+        console.log('No role_id found for user:', user);
       }
-    } catch (err) {
-      alert('Lỗi đăng xuất: ' + (err.message || err));
-    }
-  };
+    };
 
-  // Mobile search toggles & outside click
-  const toggleMobileSearch = () => {
-    setIsMobileSearchActive(!isMobileSearchActive);
-    setSearchQuery('');
-    setSuggestions([]);
-  };
+    fetchPermissions();
+  }, [user?.role_id, API_URL]);
 
-  const handleClickOutsideSearch = (e) => {
-    if (searchRef.current && !searchRef.current.contains(e.target)) {
-      setIsMobileSearchActive(false);
-      setSearchQuery('');
-      setSuggestions([]);
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener('click', handleClickOutsideSearch);
-    return () => document.removeEventListener('click', handleClickOutsideSearch);
-  }, []);
-
-  const openMobileNav = () => {
-    setIsMobileNavActive(true);
-    setIsMobileSearchActive(false);
-    document.body.style.overflow = 'hidden';
-  };
-
-  const closeMobileNav = () => {
-    setIsMobileNavActive(false);
-    setIsMobileCategoryActive(false);
-    document.body.style.overflow = '';
-  };
-
-  const toggleMobileCategory = () => {
-    setIsMobileCategoryActive(!isMobileCategoryActive);
-  };
-
-  const toggleNotification = (e) => {
-    e.stopPropagation();
-    setIsNotificationOpen(!isNotificationOpen);
-  };
-
-  const closeNotification = (e) => {
-    if (
-      e.target.closest(`.${styles.notifi}`) ||
-      e.target.closest(`.${styles.userIconContainer}`) ||
-      e.target.closest(`.${styles.authLinks}`)
-    ) {
-      return;
-    }
-    if (isNotificationOpen && !e.target.closest(`.${styles.notificationPopup}`)) {
-      setIsNotificationOpen(false);
-      setShowAllNotifications(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isNotificationOpen) {
-      document.addEventListener('click', closeNotification);
-      return () => document.removeEventListener('click', closeNotification);
-    }
-  }, [isNotificationOpen]);
-
-  const markAsRead = async (id) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/${id}/read`,
-        {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-        }
-      );
-      if (!response.ok) throw new Error('Failed to mark notification as read');
-      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
-    } catch (err) {
-      // ignore
-    }
-  };
-
-  const markAllAsRead = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/user/${user?.user_id}/read-all`,
-        {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-        }
-      );
-      if (!response.ok) throw new Error('Failed to mark all notifications as read');
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const getTimeAgo = (timestamp) => {
-    const now = new Date();
-    const diffMs = now - timestamp;
-    const diffMin = Math.floor(diffMs / (1000 * 60));
-    if (diffMin < 1) return 'Vừa xong';
-    if (diffMin === 1) return '1 phút trước';
-    if (diffMin < 60) return `${diffMin} phút trước`;
-    const diffHours = Math.floor(diffMin / 60);
-    if (diffHours === 1) return '1 giờ trước';
-    return `${diffHours} giờ trước`;
-  };
-
-  const handleSearchChange = (e) => setSearchQuery(e.target.value);
-
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) navigate(`/auction-session?q=${encodeURIComponent(searchQuery)}`);
-  };
-
-  const navItems = [
-    { icon: 'fa-info-circle', text: 'GIỚI THIỆU', href: '/about' },
-    {
-      icon: 'fa-th-list',
-      text: 'DANH MỤC TÀI SẢN',
-      href: '#',
-      isCategory: true,
-      subItems: categories,
-    },
-    { icon: 'fa-gavel', text: 'ĐẤU GIÁ TRỰC TUYẾN', href: '/auction-session' },
-    { icon: 'fa-newspaper', text: 'TIN TỨC - THÔNG BÁO', href: '/news' },
-    { icon: 'fa-book', text: 'HƯỚNG DẪN SỬ DỤNG', href: '#' },
-    { icon: 'fa-phone', text: 'LIÊN HỆ BÁN TÀI SẢN', href: '/contact' },
+  const sections = [
+    { title: 'Bảng điều khiển', items: allowedItems.slice(0, 5) },
+    { title: 'Công cụ', items: allowedItems.slice(5, 10) },
+    { title: 'Hệ thống', items: allowedItems.slice(10) },
   ];
 
+  const handleItemClick = (id, href) => {
+    setActiveItem(id);
+    if (href !== '#') {
+      navigate(href);
+    }
+  };
+
   return (
-    <div style={{ position: 'relative' }}>
-      {/* Top Bar */}
-      <div className={styles.topBar}>
-        <div className={styles.hotline}>
-          <i aria-hidden="true" className="fa fa-phone"></i>
-          HOTLINE: (028) 39406853 - (028) 62561989
-        </div>
-        <div className={styles.authLinks}>
-          {user ? (
-            <>
-              <span>Xin chào, {user.full_name}</span>
-              <div className={styles.userIconContainer}>
-                <Link to="/profile" aria-label="Go to profile">
-                  <i className={`fa fa-user ${styles.userIcon}`} aria-hidden="true"></i>
-                </Link>
-                {user.role === 'admin' && (
-                  <div className={styles.adminDropdown}>
-                    <Link to="/admin" aria-label="Go to admin panel">
-                      Admin
-                    </Link>
-                  </div>
-                )}
-              </div>
-              <div className={styles.notifi} onClick={toggleNotification}>
-                <i className="fa fa-bell" aria-hidden="true"></i>
-                {notifications.filter((n) => !n.isRead).length > 0 && (
-                  <span className={styles.unreadCount}>{notifications.filter((n) => !n.isRead).length}</span>
-                )}
-              </div>
-              <a href="#" onClick={handleLogout}>
-                Đăng Xuất <i className="fa fa-sign-out" aria-hidden="true"></i>
-              </a>
-            </>
-          ) : (
-            <>
-              <Link to="/login">Đăng Nhập</Link>
-              <span>|</span>
-              <Link to="/register">Đăng Ký</Link>
-            </>
-          )}
+    <div className={styles.sidebar}>
+      <div className={styles.sidebarHeader}>
+        <div className={styles.logo}>
+          <img className={styles.logoImg} src="\assets\img\logo.jpg" alt="Logo" />
         </div>
       </div>
 
-      {/* Notification Popup */}
-      {isNotificationOpen && (
-        <div className={styles.notificationPopup} role="dialog" aria-label="Thông báo">
-          <div className={styles.notificationContent}>
-            <span
-              className={styles.notificationClose}
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsNotificationOpen(false);
-              }}
-              role="button"
-              tabIndex={0}
-              aria-label="Đóng thông báo"
-            >
-              &times;
-            </span>
-            <h3>Thông Báo</h3>
-            {notificationError ? (
-              <p className={styles.error}>{notificationError}</p>
-            ) : notifications.length > 0 ? (
-              <ul>
-                {notifications.slice(0, 5).map((notif) => (
-                  <li
-                    key={notif.id}
-                    className={notif.isRead ? styles.read : styles.unread}
-                    onClick={() => markAsRead(notif.id)}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    {notif.isRead && <span className={styles.readIcon}>✔</span>}
-                    {notif.text}
-                    <span className={styles.timeAgo}>({getTimeAgo(notif.timestamp)})</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>Không có thông báo nào</p>
-            )}
+      {sections.map((section, index) => (
+        section.items.length > 0 && (
+          <div key={index} className={styles.sidebarSection}>
+            <h3>{section.title}</h3>
+            {section.items.map((item) => (
+              <a
+                key={item.id}
+                href={item.href}
+                className={`${styles.sidebarItem} ${activeItem === item.id ? styles.active : ''}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleItemClick(item.id, item.href);
+                }}
+              >
+                <i className={item.icon}></i>
+                <span>{item.label}</span>
+              </a>
+            ))}
           </div>
-        </div>
-      )}
-
-      {/* Header Main */}
-      <header className={styles.headerMain}>
-        <div className={styles.logo}>
-          <div className={styles.logoImg}>
-            <a href="/">
-              <img  src="\assets\img\logo.jpg" alt="Logo" />
-            </a>
-          </div>
-        </div>
-
-        {/* Desktop Search */}
-        <div className={styles.searchContainer} ref={searchRef}>
-          <form onSubmit={handleSearchSubmit} className={styles.searchBox}>
-            <input
-              name="q"
-              placeholder="Nhập tên tài sản cần tìm ..."
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              autoComplete="off"
-            />
-            <button type="submit">
-              <i aria-hidden="true" className="fa fa-search"></i>
-            </button>
-          </form>
-          {suggestions.length > 0 && (
-            <ul className={styles.suggestions}>
-              {suggestions.map((s) => (
-                <li key={s.id} className={styles.suggestionItem}>
-                  <Link to={s.href} onClick={() => setSearchQuery('')}>
-                    <div className={styles.suggestionContent}>
-                      <img src={s.image} alt={s.name} className={styles.suggestionImage} />
-                      <div className={styles.suggestionDetails}>
-                        <span className={styles.suggestionName}>{s.name}</span>
-                        <span className={styles.suggestionPrice}>
-                          Giá: {s.price.toLocaleString('vi-VN')} VNĐ
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Mobile Search */}
-        <div className={styles.mobileSearchContainer}>
-          <button className={styles.mobileSearchToggle} onClick={toggleMobileSearch}>
-            <i aria-hidden="true" className="fa fa-search"></i>
-          </button>
-          <div className={`${styles.mobileSearchBox} ${isMobileSearchActive ? styles.active : ''}`}>
-            <form onSubmit={handleSearchSubmit}>
-              <input
-                placeholder="Nhập tên tài sản..."
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                autoComplete="off"
-              />
-              <button type="submit">
-                <i aria-hidden="true" className="fa fa-search"></i>
-              </button>
-            </form>
-            {suggestions.length > 0 && (
-              <ul className={styles.suggestions}>
-                {suggestions.map((s) => (
-                  <li key={s.id} className={styles.suggestionItem}>
-                    <Link to={s.href} onClick={() => setSearchQuery('')}>
-                      <div className={styles.suggestionContent}>
-                        <img src={s.image} alt={s.name} className={styles.suggestionImage} />
-                        <div className={styles.suggestionDetails}>
-                          <span className={styles.suggestionName}>{s.name}</span>
-                          <span className={styles.suggestionPrice}>
-                            Giá: {s.price.toLocaleString('vi-VN')} VNĐ
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.headerRight}>
-          {user && latestUnpaidContract && (
-            <Link to="/contract" style={{ textDecoration: 'none' }}>
-              <div aria-live="polite" className={styles.headContractBox} role="status">
-                <div aria-hidden="true" className={styles.headIcon}>
-                  HD
-                </div>
-                <div className={styles.headContent}>
-                  <div className={styles.headTitle}>Hợp đồng: {latestUnpaidContract.session.item.name}</div>
-                  <div className={styles.headDueTime}>Còn lại: {countdown}</div>
-                </div>
-              </div>
-            </Link>
-          )}
-          <div className={styles.datetime}>{currentTime}</div>
-        </div>
-      </header>
-
-      {/* Nav Bar */}
-      <nav className={styles.navBar}>
-        <ul className={styles.navMenu}>
-          {navItems.map((item, idx) => (
-            <li key={idx} className={item.isCategory ? styles.categories : ''}>
-              <Link to={item.href}>
-                <i aria-hidden="true" className={`fa ${item.icon}`}></i>
-                <span>{item.text}</span>
-              </Link>
-              {item.isCategory && item.subItems && (
-                <ul className={styles.categoryHidden}>
-                  {item.subItems.map((sub, sIdx) => (
-                    <li key={sIdx}>
-                      <Link to={sub.href}>{sub.text}</Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ul>
-      </nav>
+        )
+      ))}
     </div>
   );
 };
 
-export default Header;
+export default Sidebar;
