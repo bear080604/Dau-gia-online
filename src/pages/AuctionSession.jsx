@@ -1,6 +1,6 @@
 import React from "react";
 import AuctionSession from "../auction-session/auction-session";
-
+import  Footer from "../footer/footer";
 import Header from "../header/header";
 
 function AuctionSessionPageUser() {
@@ -8,6 +8,7 @@ function AuctionSessionPageUser() {
     <div>
         <Header />
       <AuctionSession />
+      <Footer />
     </div>
   );
 }

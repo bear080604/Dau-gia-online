@@ -53,7 +53,7 @@ const Payment = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/contracts/${contractId}`, {
+      const response = await fetch(`${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}/api/contracts/${contractId}`, {
         headers: { 
           "Authorization": `Bearer ${token}`, 
           "Accept": "application/json" 
@@ -81,7 +81,7 @@ const Payment = () => {
     if (!token) return 'N/A';
 
     try {
-      const response = await fetch('http://localhost:8000/api/showuser', {
+      const response = await fetch(`${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}/api/showuser`, {
         headers: { 
           "Authorization": `Bearer ${token}`, 
           "Accept": "application/json" 
@@ -119,7 +119,7 @@ const Payment = () => {
     try {
       const token = localStorage.getItem('token');
 
-      const response = await fetch(`http://127.0.0.1:8000/api/contracts/${contractId}/pay-online`, {
+      const response = await fetch(`${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}/api/contracts/${contractId}/pay-online`, {
         method: 'POST',
         headers: {
           "Authorization": `Bearer ${token}`,

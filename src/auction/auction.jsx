@@ -45,6 +45,7 @@ const AuctionPage = () => {
   const [toast, setToast] = useState({ message: '', type: '', show: false });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingBid, setPendingBid] = useState(null);
+  const [sliderSteps, setSliderSteps] = useState(0); // State cho số bước giá trên slider
   const socketRef = useRef(null);
 
   const API_URL = process.env.REACT_APP_API_URL;
@@ -56,7 +57,6 @@ const AuctionPage = () => {
   const isAuctionEnded = bidEnd && now > bidEnd;
   const isAuctionNotStarted = bidStart && now < bidStart;
 
-  // Định nghĩa showToast
   const showToast = (message, type = 'success') => {
     setToast({ message, type, show: true });
     setTimeout(() => setToast({ message: '', type: '', show: false }), 5000);
@@ -64,13 +64,13 @@ const AuctionPage = () => {
 
   // Kết nối Socket.io
   useEffect(() => {
-    console.log('🆔 ID từ URL:', id); // Debug ID
-    console.log('🔑 Token:', token ? 'Có token' : 'Không có token'); // Debug token
-    const socket = io('http://localhost:6001', {
+    console.log('🆔 ID từ URL:', id);
+    console.log('🔑 Token:', token ? 'Có token' : 'Không có token');
+    const socket = io(process.env.REACT_APP_SOCKET_URL, {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      transports: ['websocket'], // Chỉ dùng websocket để tránh polling
+      transports: ['websocket'],
     });
     socketRef.current = socket;
 
@@ -96,7 +96,6 @@ const AuctionPage = () => {
       showToast('Lỗi kết nối Socket.io', 'error');
     });
 
-    // Debug tất cả sự kiện
     socket.onAny((event, ...args) => {
       console.log(`📡 Nhận sự kiện Socket.io: ${event}`, args);
     });
@@ -132,14 +131,13 @@ const AuctionPage = () => {
       }
     });
 
- socket.on('bid.placed', async (bidData) => {
+    socket.on('bid.placed', async (bidData) => {
       console.log('💸 Giá thầu mới (bid.placed):', bidData);
       const newBid = bidData.bid || bidData;
       console.log('🔍 Kiểm tra session_id:', newBid.session_id, 'vs', parseInt(id));
       if (newBid.session_id === parseInt(id)) {
         newBid.id = newBid.bid_id;
-        
-        // Fetch thông tin user nếu chưa có
+
         let userFullName = 'N/A';
         if (newBid.user_id) {
           try {
@@ -148,8 +146,7 @@ const AuctionPage = () => {
               headers: { Authorization: `Bearer ${token}` },
             });
             console.log('📋 Response users:', response.data);
-            
-            // Tìm user theo user_id từ mảng users
+
             if (response.data.users && Array.isArray(response.data.users)) {
               const foundUser = response.data.users.find(u => u.user_id === newBid.user_id);
               if (foundUser) {
@@ -161,27 +158,25 @@ const AuctionPage = () => {
             }
           } catch (err) {
             console.error('❌ Lỗi fetch users:', err.message, err.response?.data);
-            // Nếu API thất bại, thử dùng thông tin từ newBid (nếu có)
             userFullName = newBid.user?.full_name || 'N/A';
           }
         } else {
           userFullName = newBid.user?.full_name || 'N/A';
         }
-        
-        // Format giá để hiển thị trong toast
+
         const formattedAmount = parseFloat(newBid.amount).toLocaleString('vi-VN') + ' VNĐ';
-        
+
         setBids((prev) => {
           if (prev.some((b) => b.id === newBid.id)) {
             console.log(`⚠️ Giá thầu ${newBid.id} đã tồn tại, bỏ qua`);
             return prev;
           }
-          const bidWithUser = { 
-            ...newBid, 
-            user: { 
+          const bidWithUser = {
+            ...newBid,
+            user: {
               full_name: userFullName,
-              user_id: newBid.user_id 
-            } 
+              user_id: newBid.user_id
+            }
           };
           console.log('📝 Bid mới với user:', bidWithUser);
           const updatedBids = [bidWithUser, ...prev];
@@ -189,7 +184,7 @@ const AuctionPage = () => {
           setCurrentPrice(maxAmount);
           return updatedBids;
         });
-        
+
         showToast(`💰 Giá thầu mới: ${formattedAmount} từ ${userFullName}`, 'success');
       }
     });
@@ -434,12 +429,28 @@ const AuctionPage = () => {
       rawValue = parts[0] + '.' + parts.slice(1).join('').slice(0, 3 * (parts.length - 1));
     }
     setDisplayValue(rawValue);
+    if (rawValue) {
+      const value = parseInt(rawValue.replace(/\./g, '')) || 0;
+      const bidStep = parseFloat(auctionItem?.bid_step) || 10000000;
+      const steps = Math.floor((value - currentPrice) / bidStep);
+      if (steps >= 0 && steps <= 100) {
+        setSliderSteps(steps);
+      }
+    }
   };
 
   const handleBlur = () => {
     if (displayValue === '') return;
     const value = parseInt(displayValue.replace(/\./g, '')) || 0;
     setDisplayValue(formatNumber(value));
+  };
+
+  const handleSliderChange = (e) => {
+    const steps = parseInt(e.target.value);
+    const bidStep = parseFloat(auctionItem?.bid_step) || 10000000;
+    const newBidValue = currentPrice + steps * bidStep;
+    setSliderSteps(steps);
+    setDisplayValue(formatNumber(newBidValue));
   };
 
   const handlePlaceBid = async () => {
@@ -459,12 +470,13 @@ const AuctionPage = () => {
     const currentBidValue = parseInt(displayValue.replace(/\./g, '')) || 0;
     const bidStep = parseFloat(auctionItem?.bid_step) || 10000000;
     const minBid = currentPrice + bidStep;
+    const maxBid = currentPrice + 100 * bidStep; // Giới hạn tối đa 100 bước giá
     if (currentBidValue < minBid) {
       showToast(`Số tiền phải >= ${formatPrice(minBid)}!`, 'error');
       return;
     }
-    if (!isBiddingOngoing) {
-      showToast('Phiên đấu giá chưa bắt đầu hoặc đã kết thúc.', 'error');
+    if (currentBidValue > maxBid) {
+      showToast(`Số tiền không được vượt quá ${formatPrice(maxBid)} (tối đa 100 bước giá)!`, 'error');
       return;
     }
     setPendingBid(currentBidValue);
@@ -493,6 +505,7 @@ const AuctionPage = () => {
       if (result.status) {
         showToast('Đặt giá thành công!', 'success');
         setDisplayValue('');
+        setSliderSteps(0); // Reset slider sau khi đặt giá thành công
       } else {
         showToast(result.message || 'Lỗi đặt giá', 'error');
       }
@@ -536,6 +549,7 @@ const AuctionPage = () => {
   const item = auctionItem.item;
   const bidStep = parseFloat(auctionItem.bid_step) || 10000000;
   const minBid = currentPrice + bidStep;
+  const maxBid = currentPrice + 100 * bidStep; // Tối đa 100 bước giá
   const n = calculateN();
   const countdown = getCountdownParts();
   const highestBid = bids.length > 0 ? Math.max(...bids.map((b) => parseFloat(b.amount))) : currentPrice;
@@ -642,7 +656,7 @@ const AuctionPage = () => {
             {isBiddingOngoing ? (
               <>
                 <div className={styles['bid-info']}>
-                  <div>Số tiền đấu giá (tối thiểu: {formatPrice(minBid)})</div>
+                  <div>Số tiền đấu giá (tối thiểu: {formatPrice(minBid)}, tối đa: {formatPrice(maxBid)})</div>
                   <input
                     type="text"
                     value={displayValue}
@@ -656,6 +670,18 @@ const AuctionPage = () => {
                   />
                   <div className={styles['bid-amount']}>
                     {displayValue ? formatNumber(parseInt(displayValue.replace(/\./g, ''))) : '0'}<br />VNĐ
+                  </div>
+                  <div style={{ margin: '10px 0' }}>
+                    <label>Số bước giá: {sliderSteps}</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={sliderSteps}
+                      onChange={handleSliderChange}
+                      disabled={paused || isAuctionEnded || !isBiddingOngoing}
+                      style={{ width: '100%' }}
+                    />
                   </div>
                   <div style={{ fontSize: '12px', color: '#2772BA' }}>
                     Số tiền đấu giá = Giá hiện tại ({formatNumber(currentPrice)} VNĐ) + {n} x Bước giá (

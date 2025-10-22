@@ -31,7 +31,7 @@ function AuctionSession() {
 
   // Kết nối Socket.io
   useEffect(() => {
-    const socket = io('http://localhost:6001');
+    const socket = io(process.env.REACT_APP_SOCKET_URL);
     socketRef.current = socket;
 
     socket.on('connect', () => {
@@ -308,7 +308,7 @@ function AuctionSession() {
                 <div key={session.session_id} className={styles.auctionItem}>
                   <div className={styles.itemImage}>
                     <img
-                      src={session.item?.image_url ? `http://localhost:8000${session.item.image_url}` : '/assets/img/xe.png'}
+                      src={session.item?.image_url ? `${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}${session.item.image_url}` : '/assets/img/xe.png'}
                       alt={session.item?.name}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       onError={(e) => (e.target.src = '/assets/img/xe.png')}
