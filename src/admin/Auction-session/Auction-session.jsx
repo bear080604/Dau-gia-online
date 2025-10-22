@@ -735,9 +735,7 @@ const fetchProducts = async () => {
             <tr>
               <th>Mã Phiên</th>
               <th>Tài sản</th>
-              <th>Người tạo</th>
-              <th>Tổ chức đấu giá</th>
-              <th>Thời gian hiện tại</th>
+              <th>Giá khởi điểm</th>
               <th>Thời gian bắt đầu</th>
               <th>Thời gian kết thúc</th>
               <th>Trạng thái</th>
@@ -750,9 +748,9 @@ const fetchProducts = async () => {
               <tr key={session.id}>
                 <td data-label="Mã Phiên">{session.id}</td>
                 <td data-label="Tài sản">{session.item}</td>
-                <td data-label="Người tạo">{session.creator}</td>
-                <td data-label="Tổ chức đấu giá">{session.auctionOrgName}</td>
-                <td data-label="Thời gian hiện tại">{now.format('YYYY-MM-DD HH:mm:ss')}</td>
+                {/* <td data-label="Người tạo">{session.creator}</td> */}
+                {/* <td data-label="Tổ chức đấu giá">{session.auctionOrgName}</td> */}
+                {/* <td data-label="Thời gian hiện tại">{now.format('YYYY-MM-DD HH:mm:ss')}</td> */}
                 <td data-label="Thời gian bắt đầu">{session.startTime}</td>
                 <td data-label="Thời gian kết thúc">{session.endTime}</td>
                 <td data-label="Trạng thái">

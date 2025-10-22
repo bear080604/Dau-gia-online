@@ -728,7 +728,7 @@ useEffect(() => {
       buttons.push(
         <button
           key="edit"
-          className={`${styles.btn} ${styles.btnPrimary}`}
+          className={`${styles.btn} ${styles.btnEdit}`}
           onClick={() => openAssetModal('edit', asset)}
         >
           <i className="fa fa-pencil" aria-hidden="true"></i>
@@ -836,10 +836,8 @@ useEffect(() => {
             <th>Tên tài sản</th>
             <th>Danh mục</th>
             <th>Chủ sở hữu</th>
-            <th>Tổ chức đấu giá</th>
             <th>Giá khởi điểm</th>
             <th>Trạng thái</th>
-            <th>Ngày tạo</th>
             <th>Hành động</th>
           </tr>
         </thead>
@@ -855,9 +853,7 @@ useEffect(() => {
                 <td data-label="Tên tài sản">{asset.name}</td>
                 <td data-label="Danh mục">{asset.category}</td>
                 <td data-label="Chủ sở hữu">{asset.owner}</td>
-                <td data-label="Tổ chức đấu giá">
-                  {auctionOrgs.find((org) => org.id === asset.auctionOrgId)?.name || 'Không xác định'}
-                </td>
+                
                 <td data-label="Giá khởi điểm">{asset.startingPrice}</td>
                 <td data-label="Trạng thái">
                   <span
@@ -866,7 +862,6 @@ useEffect(() => {
                     {asset.status}
                   </span>
                 </td>
-                <td data-label="Ngày tạo">{asset.createdDate}</td>
                 <td data-label="Hành động">
                   <div className={styles.actionButtons}>
                     {getActionButtons(asset)}
@@ -946,32 +941,6 @@ useEffect(() => {
                   value={assetForm.owner}
                   disabled
                 />
-              </div>
-              <div>
-                <label htmlFor="auctionOrgId">Tổ chức đấu giá</label>
-                <select
-                  id="auctionOrgId"
-                  name="auctionOrgId"
-                  value={assetForm.auctionOrgId}
-                  onChange={handleFormChange}
-                >
-                  <option value="">Chọn tổ chức đấu giá</option>
-                  {isLoadingAuctionOrgs ? (
-                    <option value="" disabled>
-                      Đang tải tổ chức đấu giá...
-                    </option>
-                  ) : auctionOrgs.length > 0 ? (
-                    auctionOrgs.map((org) => (
-                      <option key={org.id} value={org.id}>
-                        {org.name}
-                      </option>
-                    ))
-                  ) : (
-                    <option value="" disabled>
-                      Không có tổ chức đấu giá
-                    </option>
-                  )}
-                </select>
               </div>
               <div>
                 <label htmlFor="startingPrice">Giá khởi điểm (VND)</label>
