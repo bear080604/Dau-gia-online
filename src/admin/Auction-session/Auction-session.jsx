@@ -39,6 +39,7 @@ function AuctionSession() {
     bidStep: '',
     highestBid: '',
     currentWinnerId: '',
+    starting_price: ''
   });
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -212,6 +213,7 @@ useEffect(() => {
       currentWinnerId: session.current_winner_id || 'Chưa có',
       winnerName,
       profiles: session.profiles || [],
+      starting_price: session.item?.starting_price
     };
   };
 
@@ -441,6 +443,7 @@ const fetchProducts = async () => {
         bidStep: session.bidStep.replace(/[^\d]/g, '') || '',
         highestBid: session.highestBid.replace(/[^\d]/g, '') || '',
         currentWinnerId: '',
+        starting_price: sessionForm.starting_price
       });
       setIsAuctionOrgDisabled(!!(selectedProduct && selectedProduct.auction_org_id));
       setSelectedSession(session);
@@ -562,6 +565,7 @@ const fetchProducts = async () => {
         bid_step: sessionForm.bidStep ? Number(sessionForm.bidStep.replace(/[^\d]/g, '')) : null,
         highest_bid: sessionForm.highestBid ? Number(sessionForm.highestBid.replace(/[^\d]/g, '')) : null,
         current_winner_id: null,
+        starting_price: sessionForm.starting_price
       };
       if (!formData.start_time || !formData.end_time || !formData.bid_start || !formData.bid_end) {
         throw new Error('Vui lòng nhập đầy đủ các thời gian bắt buộc.');
@@ -739,7 +743,7 @@ const fetchProducts = async () => {
               <th>Thời gian bắt đầu</th>
               <th>Thời gian kết thúc</th>
               <th>Trạng thái</th>
-              <th>Phương thức</th>
+              {/* <th>Phương thức</th> */}
               <th>Hành động</th>
             </tr>
           </thead>
@@ -748,7 +752,9 @@ const fetchProducts = async () => {
               <tr key={session.id}>
                 <td data-label="Mã Phiên">{session.id}</td>
                 <td data-label="Tài sản">{session.item}</td>
-                {/* <td data-label="Người tạo">{session.creator}</td> */}
+                <td data-label="Giá khởi điểm">
+                  {Number(session.starting_price).toLocaleString('vi-VN')} ₫
+                </td>
                 {/* <td data-label="Tổ chức đấu giá">{session.auctionOrgName}</td> */}
                 {/* <td data-label="Thời gian hiện tại">{now.format('YYYY-MM-DD HH:mm:ss')}</td> */}
                 <td data-label="Thời gian bắt đầu">{session.startTime}</td>
@@ -758,7 +764,7 @@ const fetchProducts = async () => {
                     {session.status}
                   </span>
                 </td>
-                <td data-label="Phương thức">{session.method}</td>
+                {/* <td data-label="Phương thức">{session.method}</td> */}
                 <td data-label="Hành động">
                   <div className={styles.actionButtons}>
                     {getActionButtons(session)}

@@ -203,7 +203,9 @@
 }
 
 .btn {
-  padding: 0.5rem 1rem;
+  width: 36px;
+  height: 36px;
+  padding: 0.5rem;
   border-radius: 0.375rem;
   font-size: 0.85rem;
   font-weight: 500;
@@ -234,7 +236,7 @@
 }
 
 .btnSuccess {
-  background-color: #22c55e;
+  background-color: rgb(96, 216, 130);
   color: white;
 }
 

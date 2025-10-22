@@ -226,14 +226,14 @@ function AuctionSession() {
             </div>
 
             <div className={styles.filterGroup}>
-              <label>Lọc theo thời gian đăng ký:</label>
+              <label >Lọc theo thời gian đăng ký:</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <input
+                <input className={styles.inputTime}
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                 />
-                <input
+                <input className={styles.inputTime}
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
@@ -301,11 +301,11 @@ function AuctionSession() {
                         </div>
                       </div>
                       <div className={styles.itemFooter}>
-                        <div>
+                        <div className={styles.Timeline}>
                           <b>Thời gian đăng ký:</b>{' '}
                           {formatDate(session.register_start)} - {formatDate(session.register_end)}
                         </div>
-                        <div>
+                        <div className={styles.Timeline}>
                           <b>Thời gian đấu giá:</b>{' '}
                           {formatDate(session.bid_start)} - {formatDate(session.bid_end)}
                         </div>
