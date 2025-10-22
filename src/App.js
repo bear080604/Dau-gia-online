@@ -34,6 +34,10 @@ import News from './pages/news';
 import NewsDetail from './pages/newsDetail';
 import Adminnews from './pages/AdminNews';
 import AdminNewsCategories from './pages/AdminNewsCategories';
+import AdminRoles from './pages/AdminRoles';
+import AdminPermissions from './pages/AdminPermissions';
+import AssetCategoriesPage from './pages/AdminAssetcategories';
+
 
 
 function App() {
@@ -184,6 +188,15 @@ function App() {
               }
             />
             <Route
+              path="/admin/assets-categories"
+              element={
+                <ProtectedRoute>
+                  <AssetCategoriesPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
               path="/admin/profile"
               element={
                 <ProtectedRoute>
@@ -212,6 +225,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <RegisterAuctionPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/roles"
+              element={
+                <ProtectedRoute>
+                  <AdminRoles />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/permissions"
+              element={
+                <ProtectedRoute>
+                  <AdminPermissions />
                 </ProtectedRoute>
               }
             />

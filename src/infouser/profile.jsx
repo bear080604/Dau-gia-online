@@ -13,9 +13,10 @@ const Profile = () => {
   const [contracts, setContracts] = useState([]);
   const [auctionHistory, setAuctionHistory] = useState([]);
   const [myAuctions, setMyAuctions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [banks, setBanks] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [bankError, setBankError] = useState(null); // Thêm state cho lỗi tài khoản ngân hàng
+  const [bankError, setBankError] = useState(null);
   const [userData, setUserData] = useState({
     id: null,
     fullName: '',
@@ -85,6 +86,9 @@ const Profile = () => {
           },
         });
 
+        const data = await response.json();
+        console.log('API /user response:', data);
+
         if (!response.ok) {
           if (response.status === 401) {
             localStorage.removeItem('token');
@@ -95,9 +99,8 @@ const Profile = () => {
           throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
         }
 
-        const data = await response.json();
         if (data.status && data.user) {
-          setUserData({
+          const newUserData = {
             id: data.user.user_id || null,
             fullName: data.user.full_name || 'Chưa cập nhật',
             username: data.user.email ? data.user.email.split('@')[0] : 'Chưa cập nhật',
@@ -126,12 +129,15 @@ const Profile = () => {
             bankAccount: data.user.bank_account || 'Chưa cập nhật',
             createdAt: data.user.created_at || 'Chưa cập nhật',
             emailVerifiedAt: data.user.email_verified_at || 'Chưa cập nhật',
-          });
+          };
+          setUserData(newUserData);
+          console.log('Set userData.id:', newUserData.id);
         } else {
           throw new Error('Định dạng dữ liệu không hợp lệ');
         }
       } catch (err) {
         setError(err.message);
+        console.error('Error fetching user data:', err);
       } finally {
         setLoading(false);
       }
@@ -140,13 +146,43 @@ const Profile = () => {
     fetchUserData();
   }, [navigate, token]);
 
+  // Lấy danh sách ngân hàng từ VietQR API
+  const fetchBanks = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('https://api.vietqr.io/v2/banks', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      console.log('API VietQR /banks response:', data);
+
+      if (!response.ok) {
+        throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
+      }
+
+      if (data.code === '00' && Array.isArray(data.data)) {
+        setBanks(data.data);
+      } else {
+        throw new Error('Dữ liệu ngân hàng không hợp lệ');
+      }
+    } catch (err) {
+      setBankError('Lỗi tải danh sách ngân hàng: ' + err.message);
+      console.error('Error fetching banks:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Lấy dữ liệu hợp đồng
   useEffect(() => {
+    if (!userData.id) return;
+
     const fetchContracts = async () => {
-      if (!userData.id) {
-        setLoading(false);
-        return;
-      }
       try {
         setLoading(true);
         const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}contracts`, {
@@ -202,60 +238,236 @@ const Profile = () => {
     fetchContracts();
   }, [userData.id, navigate, token]);
 
-  // Dữ liệu giả định cho Lịch sử đấu giá và Đấu giá của tôi
-  useEffect(() => {
-    const auctionHistoryData = [
-      {
-        stt: 1,
-        tenTaiSan: 'Nhà đất quận 1',
-        trangThai: 'Kết thúc',
-        thoiGianDauGia: '2025-10-10 14:00:00',
-        ketQua: 'Thắng',
-        xemChiTiet: '/auction/1',
-      },
-      {
-        stt: 2,
-        tenTaiSan: 'Xe máy Honda',
-        trangThai: 'Kết thúc',
-        thoiGianDauGia: '2025-10-12 10:30:00',
-        ketQua: 'Thua',
-        xemChiTiet: '/auction/2',
-      },
-      {
-        stt: 3,
-        tenTaiSan: 'Laptop Dell',
-        trangThai: 'Đang diễn ra',
-        thoiGianDauGia: '2025-10-14 15:00:00',
-        ketQua: 'Đang chờ',
-        xemChiTiet: '/auction/3',
-      },
-    ];
-    setAuctionHistory(auctionHistoryData);
+  // Hàm lấy danh sách sản phẩm đấu giá của người dùng
+  const fetchMyAuctions = async () => {
+    console.log('Gọi API cho user_id:', userData.id);
+    if (!userData.id) {
+      console.error('userData.id is null or undefined');
+      setError('Không thể lấy ID người dùng');
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}products?owner_id=${userData.id}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
 
-    const myAuctionsData = [
-      {
-        stt: 1,
-        tenTaiSan: 'Căn hộ quận 2',
-        trangThai: 'Kết thúc',
-        thoiGian: '2025-10-11 16:00:00',
-        nguoiTrungDauGia: 'Nguyễn Văn A',
-        xemChiTiet: '/auction/4',
-      },
-      {
-        stt: 2,
-        tenTaiSan: 'Ô tô Toyota',
-        trangThai: 'Đang diễn ra',
-        thoiGian: '2025-10-13 09:00:00',
-        nguoiTrungDauGia: 'Chưa có',
-        xemChiTiet: '/auction/5',
-      },
-    ];
-    setMyAuctions(myAuctionsData);
-  }, []);
+      const data = await response.json();
+      console.log('API /products response:', data);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+          navigate('/login');
+          return;
+        }
+        if (response.status === 404) {
+          setMyAuctions([]);
+          throw new Error('Không tìm thấy sản phẩm nào của bạn.');
+        }
+        throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
+      }
+
+      const items = Array.isArray(data) ? data : data.data || [];
+      if (!Array.isArray(items)) {
+        throw new Error('Dữ liệu sản phẩm không đúng định dạng');
+      }
+
+      const formattedMyAuctions = items.map((item, index) => ({
+        stt: index + 1,
+        id: item.id,
+        tenTaiSan: item.name || 'Chưa có tên',
+        trangThai: mapStatus(item.status),
+        thoiGian: item.created_at
+          ? new Date(item.created_at).toLocaleString('vi-VN', {
+              hour: '2-digit',
+              minute: '2-digit',
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              timeZone: 'Asia/Ho_Chi_Minh',
+            })
+          : 'Chưa có',
+        xemChiTiet: `/auction/${item.id}`,
+      }));
+
+      setMyAuctions(formattedMyAuctions);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching my auctions:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch danh sách sản phẩm đấu giá của người dùng
+  useEffect(() => {
+    if (!userData.id || !token) {
+      setLoading(false);
+      return;
+    }
+
+    fetchMyAuctions();
+  }, [userData.id, token, navigate]);
+
+const fetchAuctionHistory = async () => {
+  if (!userData.id || !token) {
+    setError('Không thể lấy lịch sử đấu giá: Vui lòng đăng nhập');
+    setLoading(false);
+    return;
+  }
+
+  const BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+
+  try {
+    setLoading(true);
+    setError(null);
+
+    // Gọi đồng thời 2 API: auction-profiles và products
+    const [profileRes, productRes] = await Promise.all([
+      fetch(`${BASE}auction-profiles`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      }),
+      fetch(`${BASE}products`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      }),
+    ]);
+
+    // Kiểm tra lỗi xác thực
+    if (profileRes.status === 401 || productRes.status === 401) {
+      localStorage.removeItem('token');
+      setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+      navigate('/login');
+      return;
+    }
+
+    if (!profileRes.ok) {
+      const err = await profileRes.text();
+      throw new Error(`Lỗi API /auction-profiles: ${profileRes.status} - ${err}`);
+    }
+    if (!productRes.ok) {
+      const err = await productRes.text();
+      throw new Error(`Lỗi API /products: ${productRes.status} - ${err}`);
+    }
+
+    const profileData = await profileRes.json();
+    const productData = await productRes.json();
+
+    // Chuẩn hoá mảng products
+    const productsArray = Array.isArray(productData) ? productData : productData.data || [];
+    const itemMap = new Map();
+    productsArray.forEach((p) => {
+      if (p && (p.id !== undefined)) itemMap.set(p.id, p.name || '');
+    });
+
+    // Chuẩn hoá mảng profiles
+    const profilesArray = Array.isArray(profileData)
+      ? profileData
+      : profileData.profiles || profileData.data || [];
+
+    if (!Array.isArray(profilesArray)) {
+      throw new Error('Dữ liệu hồ sơ đấu giá không hợp lệ');
+    }
+
+    const formattedAuctionHistory = profilesArray
+      .filter((profile) => profile.user_id === userData.id)
+      .map((profile, index) => {
+        const session = profile.session || {};
+        const sessionItemId = session.item_id || session.item?.id || profile.session_id;
+        const itemNameFromProducts = itemMap.get(sessionItemId);
+        const tenPhien = itemNameFromProducts || session?.item?.name || `Phiên đấu giá #${sessionItemId || ''}`;
+
+        return {
+          stt: index + 1,
+          tenPhien,
+          tenTaiSan: session?.item?.name || itemNameFromProducts || 'Chưa có tên tài sản',
+          trangThai: mapProfileStatus(profile.status),
+          thoiGianDauGia: profile.created_at
+            ? new Date(profile.created_at).toLocaleString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                timeZone: 'Asia/Ho_Chi_Minh',
+              })
+            : 'Chưa có',
+          ketQua: profile.is_paid
+            ? profile.status === 'DaDuyet'
+              ? 'Được tham gia'
+              : profile.status === 'TuChoi'
+              ? 'Bị từ chối'
+              : 'Chờ duyệt'
+            : 'Chưa nộp cọc',
+          xemChiTiet: `/auction/${sessionItemId || ''}`,
+        };
+      });
+
+    setAuctionHistory(formattedAuctionHistory);
+  } catch (err) {
+    setError(err.message || 'Lỗi khi tải lịch sử đấu giá');
+    console.error('Error fetching auction history:', err);
+  } finally {
+    setLoading(false);
+  }
+};
+// ...existing code...
+
+  // Fetch lịch sử đấu giá khi tab hoặc userData.id thay đổi
+  useEffect(() => {
+    if (activeTab === 'auction-history' && userData.id && token) {
+      fetchAuctionHistory();
+    }
+  }, [activeTab, userData.id, token, navigate]);
+
+  // Hàm map trạng thái sản phẩm
+  const mapStatus = (status) => {
+    const statusMap = {
+      ChoDuyet: 'Chờ duyệt',
+      ChoDauGia: 'Chờ đấu giá',
+      DangDauGia: 'Đang đấu giá',
+      DaBan: 'Đã bán',
+      Huy: 'Hủy',
+    };
+    return statusMap[status] || status;
+  };
+
+  // Hàm map trạng thái hồ sơ đấu giá
+  const mapProfileStatus = (status) => {
+    const statusMap = {
+      ChoDuyet: 'Chờ duyệt',
+      DaDuyet: 'Đã duyệt',
+      TuChoi: 'Từ chối',
+    };
+    return statusMap[status] || status;
+  };
 
   const handleTabChange = (tab) => setActiveTab(tab);
+
   const openProfilePopup = () => setShowProfilePopup(true);
   const closeProfilePopup = () => setShowProfilePopup(false);
+
   const openBankPopup = () => {
     setBankPopupMode('add');
     setBankData({
@@ -265,7 +477,9 @@ const Profile = () => {
       accountHolder: userData.fullName,
     });
     setShowBankPopup(true);
+    fetchBanks();
   };
+
   const closeBankPopup = () => {
     setShowBankPopup(false);
     setBankError(null);
@@ -281,6 +495,7 @@ const Profile = () => {
       accountHolder: userData.fullName,
     });
     setShowBankPopup(true);
+    fetchBanks();
   };
 
   const handleDeleteBank = async () => {
@@ -515,61 +730,61 @@ const Profile = () => {
   };
 
   const handleUploadImage = async (side) => {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.onchange = async (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const formDataUpload = new FormData();
-      formDataUpload.append(side === 'front' ? 'id_card_front' : 'id_card_back', file);
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        const formDataUpload = new FormData();
+        formDataUpload.append(side === 'front' ? 'id_card_front' : 'id_card_back', file);
 
-      try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formDataUpload,
-        });
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+            body: formDataUpload,
+          });
 
-        const data = await response.json();
+          const data = await response.json();
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            localStorage.removeItem('token');
-            setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-            navigate('/login');
-            return;
+          if (!response.ok) {
+            if (response.status === 401) {
+              localStorage.removeItem('token');
+              setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+              navigate('/login');
+              return;
+            }
+            if (response.status === 422) {
+              const errors = data.errors || {};
+              const errorMessages = Object.values(errors).flat().join(', ');
+              throw new Error(errorMessages || 'Dữ liệu không hợp lệ');
+            }
+            throw new Error(data.message || 'Lỗi khi tải ảnh');
           }
-          if (response.status === 422) {
-            const errors = data.errors || {};
-            const errorMessages = Object.values(errors).flat().join(', ');
-            throw new Error(errorMessages || 'Dữ liệu không hợp lệ');
-          }
-          throw new Error(data.message || 'Lỗi khi tải ảnh');
-        }
 
-        if (data.status && data.user) {
-          setUserData((prev) => ({
-            ...prev,
-            idCardFront: data.user.id_card_front || prev.idCardFront,
-            idCardFrontUrl: data.user.id_card_front_url || prev.idCardFrontUrl,
-            idCardBack: data.user.id_card_back || prev.idCardBack,
-            idCardBackUrl: data.user.id_card_back_url || prev.idCardBackUrl,
-          }));
-          alert(`Tải ảnh mặt ${side === 'front' ? 'trước' : 'sau'} thành công`);
-        } else {
-          throw new Error('Phản hồi không hợp lệ từ server');
+          if (data.status && data.user) {
+            setUserData((prev) => ({
+              ...prev,
+              idCardFront: data.user.id_card_front || prev.idCardFront,
+              idCardFrontUrl: data.user.id_card_front_url || prev.idCardFrontUrl,
+              idCardBack: data.user.id_card_back || prev.idCardBack,
+              idCardBackUrl: data.user.id_card_back_url || prev.idCardBackUrl,
+            }));
+            alert(`Tải ảnh mặt ${side === 'front' ? 'trước' : 'sau'} thành công`);
+          } else {
+            throw new Error('Phản hồi không hợp lệ từ server');
+          }
+        } catch (err) {
+          setError(err.message);
+          alert(`Lỗi: ${err.message}`);
         }
-      } catch (err) {
-        setError(err.message);
-        alert(`Lỗi: ${err.message}`);
       }
-    }
+    };
+    input.click();
   };
-  input.click();
-};
 
   const handleLogout = async (e) => {
     e.preventDefault();
@@ -610,7 +825,23 @@ const Profile = () => {
 
   const renderTabContent = () => {
     if (loading) return <p>Đang tải dữ liệu...</p>;
-    if (error) return <p className={styles.error}>{error}</p>;
+    if (error) return (
+      <div className={styles.error}>
+        <p>{error}</p>
+        {activeTab === 'auction-history' && (
+          <button
+            className={styles.btn}
+            onClick={() => {
+              setLoading(true);
+              setError(null);
+              fetchAuctionHistory();
+            }}
+          >
+            Thử lại
+          </button>
+        )}
+      </div>
+    );
 
     switch (activeTab) {
       case 'profile':
@@ -654,7 +885,7 @@ const Profile = () => {
                             src={userData.idCardFrontUrl}
                             alt="CCCD Mặt trước"
                             style={{
-                              maxWidth: '100px',
+                              Width: '100%',
                               maxHeight: '150px',
                               objectFit: 'contain',
                               border: '1px solid #ddd',
@@ -694,7 +925,7 @@ const Profile = () => {
                             src={userData.idCardBackUrl}
                             alt="CCCD Mặt sau"
                             style={{
-                              maxWidth: '100px',
+                              Width: '100%',
                               maxHeight: '150px',
                               objectFit: 'contain',
                               border: '1px solid #ddd',
@@ -744,7 +975,7 @@ const Profile = () => {
                     <button className={`${styles.btn} ${styles.btnEdit}`} onClick={() => handleEditBank(1)}>
                       <i className="fa fa-pencil" aria-hidden="true"></i>
                     </button>
-                    <button className={`${styles.btn} ${styles.btnDelete}`} onClick={() => handleDeleteBank(1)}>
+                    <button className={`${styles.btn} ${styles.btnDelete}`} onClick={() => handleDeleteBank()}>
                       <i className="fa fa-trash" aria-hidden="true"></i>
                     </button>
                   </div>
@@ -761,10 +992,9 @@ const Profile = () => {
         return (
           <div className={styles.tabPane} id="contracts">
             <div className={styles.infoSection}>
-              {loading && <p>Đang tải dữ liệu...</p>}
-              {error && <p className={styles.error}>{error}</p>}
-              {!loading && !error && contracts.length === 0 && <p>Không có hợp đồng nào.</p>}
-              {!loading && !error && contracts.length > 0 && (
+              {contracts.length === 0 ? (
+                <p>Không có hợp đồng nào.</p>
+              ) : (
                 <table className={styles.contractTable}>
                   <thead>
                     <tr>
@@ -912,9 +1142,10 @@ const Profile = () => {
                   <thead>
                     <tr>
                       <th>STT</th>
-                      <th>Tên tài sản</th>
+                      <th>Tên phiên đấu giá </th>
+                     
                       <th>Trạng thái</th>
-                      <th>Thời gian đấu giá</th>
+                      <th>Thời gian nộp hồ sơ</th>
                       <th>Kết quả</th>
                       <th>Xem chi tiết</th>
                     </tr>
@@ -923,18 +1154,27 @@ const Profile = () => {
                     {auctionHistory.map((item) => (
                       <tr key={item.stt}>
                         <td>{item.stt}</td>
-                        <td>{item.tenTaiSan}</td>
+                        <td>{item.tenPhien}</td>
+                       
                         <td>
                           <span
                             className={`${styles.contractStatus} ${
-                              item.trangThai === 'Kết thúc' ? styles.statusPaid : styles.statusWaiting
+                              item.trangThai === 'Đã duyệt' ? styles.statusPaid : styles.statusWaiting
                             }`}
                           >
                             {item.trangThai}
                           </span>
                         </td>
                         <td>{item.thoiGianDauGia}</td>
-                        <td>{item.ketQua}</td>
+                        <td>
+                          <span
+                            className={`${styles.contractStatus} ${
+                              item.ketQua === 'Được tham gia' ? styles.statusPaid : styles.statusWaiting
+                            }`}
+                          >
+                            {item.ketQua}
+                          </span>
+                        </td>
                         <td>
                           <Link
                             to={item.xemChiTiet}
@@ -957,7 +1197,7 @@ const Profile = () => {
           <div className={styles.tabPane} id="my-auctions">
             <div className={styles.infoSection}>
               {myAuctions.length === 0 ? (
-                <p>Không có đấu giá của bạn.</p>
+                <p>Không có sản phẩm đấu giá nào của bạn.</p>
               ) : (
                 <table className={styles.contractTable}>
                   <thead>
@@ -965,33 +1205,33 @@ const Profile = () => {
                       <th>STT</th>
                       <th>Tên tài sản</th>
                       <th>Trạng thái</th>
-                      <th>Thời gian</th>
-                      <th>Người trúng đấu giá</th>
+                      <th>Thời gian tạo</th>
                       <th>Xem chi tiết</th>
                     </tr>
                   </thead>
                   <tbody>
                     {myAuctions.map((item) => (
-                      <tr key={item.stt}>
+                      <tr key={item.id}>
                         <td>{item.stt}</td>
                         <td>{item.tenTaiSan}</td>
                         <td>
                           <span
                             className={`${styles.contractStatus} ${
-                              item.trangThai === 'Kết thúc' ? styles.statusPaid : styles.statusWaiting
+                              item.trangThai === 'Đã bán' || item.trangThai === 'Hủy'
+                                ? styles.statusPaid
+                                : styles.statusWaiting
                             }`}
                           >
                             {item.trangThai}
                           </span>
                         </td>
                         <td>{item.thoiGian}</td>
-                        <td>{item.nguoiTrungDauGia}</td>
                         <td>
                           <Link
                             to={item.xemChiTiet}
                             className={`${styles.actionBtn} ${styles.viewDetails}`}
                           >
-                            <i className="fas fa-eye"></i> Xem
+                            <i className="fas fa-eye"></i> Xem chi tiết
                           </Link>
                         </td>
                       </tr>
@@ -1029,7 +1269,6 @@ const Profile = () => {
     }
   };
 
-  // Check if user has Administrator or DauGiaVien role
   const isAdminOrDauGiaVien = userData.accountType === 'Quản trị viên' || userData.accountType === 'Đấu giá viên';
 
   return (
@@ -1317,21 +1556,22 @@ const Profile = () => {
             </div>
             <div className={styles.popupBody}>
               {bankError && <p className={styles.error}>{bankError}</p>}
+              {loading && <p>Đang tải danh sách ngân hàng...</p>}
               <div className={styles.bankForm}>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Ngân hàng</label>
                   <select
-                    className={styles.formControl}
+                    className={`${styles.formControl} ${styles.bankSelect}`}
                     id="bankName"
                     value={bankData.bankName}
                     onChange={handleBankInputChange}
                   >
                     <option value="">Chọn ngân hàng</option>
-                    <option value="Vietcombank">Vietcombank</option>
-                    <option value="Agribank">Agribank</option>
-                    <option value="VietinBank">VietinBank</option>
-                    <option value="BIDV">BIDV</option>
-                    <option value="Techcombank">Techcombank</option>
+                    {banks.map((bank) => (
+                      <option key={bank.id} value={bank.name} data-logo={bank.logo}>
+                        {bank.shortName}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className={styles.formGroup}>
@@ -1353,17 +1593,6 @@ const Profile = () => {
                     id="accountHolder"
                     value={bankData.accountHolder}
                     readOnly
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Chi nhánh</label>
-                  <input
-                    type="text"
-                    className={styles.formControl}
-                    id="bankBranch"
-                    value={bankData.bankBranch}
-                    onChange={handleBankInputChange}
-                    placeholder="Nhập chi nhánh ngân hàng"
                   />
                 </div>
               </div>

@@ -344,6 +344,126 @@
 .detailsp-overlay.detailsp-hidden {
   display: none;
 }
+/* Nút Tham gia đấu giá */
+.detailsp-bid-btn {
+  width: 100%;
+  padding: 15px 30px;
+  margin-top: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.detailsp-bid-btn:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.detailsp-bid-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+}
+
+/* Hiệu ứng pulse khi đang trong thời gian đấu giá */
+.detailsp-bidding-status .detailsp-bid-btn {
+  animation: pulse-bid 2s infinite;
+}
+
+@keyframes pulse-bid {
+  0% {
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(102, 126, 234, 0.8);
+  }
+  100% {
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  }
+}
+
+/* Nút Điểm danh - để phân biệt với nút đấu giá */
+.detailsp-checkin-btn {
+  width: 100%;
+  padding: 15px 30px;
+  margin-top: 15px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.detailsp-checkin-btn:hover {
+  background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
+}
+
+.detailsp-checkin-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(245, 87, 108, 0.4);
+}
+
+/* Nút Đăng ký đấu giá */
+.detailsp-register-bid-btn {
+  width: 100%;
+  padding: 15px 30px;
+  margin-top: 15px;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.detailsp-register-bid-btn:hover {
+  background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(17, 153, 142, 0.6);
+}
+
+.detailsp-register-bid-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(17, 153, 142, 0.4);
+}
+
+/* Icon cho các nút (nếu muốn thêm) */
+.detailsp-bid-btn::before {
+  content: "🔨 ";
+  margin-right: 8px;
+}
+
+.detailsp-checkin-btn::before {
+  content: "✓ ";
+  margin-right: 8px;  
+}
+
+.detailsp-register-bid-btn::before {
+  content: "📝 ";
+  margin-right: 8px;
+}
+
 
 .detailsp-modal,
 .detailsp-success-box {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../UserContext';
 import styles from './Header.module.css';
@@ -6,18 +6,22 @@ import styles from './Header.module.css';
 const Sidebar = () => {
   const { user } = useUser();
   const [activeItem, setActiveItem] = useState('settings');
+  const [allowedItems, setAllowedItems] = useState([]);
   const navigate = useNavigate();
+
+  // Lấy REACT_APP_API_URL từ biến môi trường
+  const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
 
   const addAdminPrefix = (href) => {
     if (href === '#') return href;
     return `/admin${href.startsWith('/') ? href : `/${href}`}`;
   };
 
-  // Danh sách mục sidebar dựa trên vai trò
-  const getSidebarItems = (role) => {
-    const allItems = [
+  const getSidebarItems = () => {
+    return [
       { id: 'dashboard', icon: 'fas fa-home', label: 'Trang chủ', href: addAdminPrefix('/dashboard') },
       { id: 'assets', icon: 'fas fa-box-open', label: 'Tài sản đấu giá', href: addAdminPrefix('/auction-asset') },
+      { id: 'assets-categories', icon: 'fas fa-box-open', label: 'Danh mục tài sản', href: addAdminPrefix('/assets-categories') },
       { id: 'auctions', icon: 'fas fa-clock', label: 'Phiên đấu giá', href: addAdminPrefix('/auction-session') },
       { id: 'contracts', icon: 'fas fa-file-contract', label: 'Hợp đồng', href: addAdminPrefix('/contract') },
       { id: 'register-auction', icon: 'fa fa-ticket', label: 'Đăng ký đấu giá', href: addAdminPrefix('/register-auction') },
@@ -29,33 +33,84 @@ const Sidebar = () => {
       { id: 'notifications', icon: 'fas fa-bell', label: 'Thông báo', href: addAdminPrefix('/notification') },
       { id: 'payments', icon: 'fas fa-money-bill-wave', label: 'Thanh toán', href: addAdminPrefix('/payment') },
       { id: 'econtracts', icon: 'fas fa-file-signature', label: 'Hợp đồng điện tử', href: addAdminPrefix('/econtract') },
+      { id: 'roles', icon: 'fas fa-user-tag', label: 'Vai trò', href: addAdminPrefix('/roles') },
+      { id: 'permissions', icon: 'fas fa-key', label: 'Quyền hạn', href: addAdminPrefix('/permissions') },
       { id: 'settings', icon: 'fas fa-cog', label: 'Cài đặt', href: addAdminPrefix('/settings') },
       { id: 'support', icon: 'fas fa-headset', label: 'Hỗ trợ', href: '#' },
       { id: 'security', icon: 'fas fa-shield-alt', label: 'Bảo mật', href: '#' },
       { id: 'logs', icon: 'fas fa-history', label: 'Lịch sử log', href: addAdminPrefix('/history') },
     ];
-
-    switch (role) {
-      case 'Administrator':
-        return allItems;
-      case 'ChuyenVienTTC':
-        return allItems.filter(item => ['dashboard', 'auctions', 'reports', 'bids', 'payments', 'econtracts', 'register-auction'].includes(item.id));
-      case 'DauGiaVien':
-        return allItems.filter(item => ['dashboard', 'assets', 'auctions', 'contracts', 'reports', 'bids', 'notifications', 'payments', 'econtracts', 'register-auction'].includes(item.id));
-      case 'DonViThuc':
-        return allItems.filter(item => ['dashboard', 'auctions', 'contracts', 'reports', 'payments', 'econtracts'].includes(item.id));
-      case 'ToChucDauGia':
-        return allItems.filter(item => ['dashboard', 'assets', 'auctions', 'contracts', 'reports', 'bids', 'payments', 'econtracts'].includes(item.id));
-      default:
-        return [];
-    }
   };
 
-  const sidebarItems = getSidebarItems(user?.role);
+  // Ánh xạ quyền hạn với các trang
+  const permissionsMapping = {
+    2: ['/contract'],
+    3: ['/report'],
+    22: ['/auction-asset'], // manage_products (cần thêm trang nếu có)
+    23: ['/assets-categories'],
+    24: ['/auction-asset'],   
+    25: ['/news'],
+    26: ['/news-categories'],
+    27: ['/profile'],
+    28: ['/profile'],
+    29: ['/payment'],
+    30: ['/payment'],
+    31: ['/auction-session'],
+    32: ['/register-auction'],
+    33: ['/payment'],
+    34: ['/payment'],
+    35: ['/report'],
+    36: ['/notification'],
+    37: ['/econtract'],
+    38: ['/roles', '/permissions'],
+    42: ['/dashboard'], // manage_dashboard
+    43: ['/users'],     // manage_users (giả sử thêm)
+    44: ['/settings'],  // manage_settings
+    45: ['/history'],   // view_history
+    46: ['/asset-categories']
+  };
+
+  // Lấy danh sách trang được phép từ API
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      if (user?.role_id) {
+        console.log('Checking permissions for role_id:', user.role_id);
+        try {
+          const response = await fetch(`${API_URL}roles/${user.role_id}/permissions`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          console.log('Raw API response:', data);
+          if (data && Array.isArray(data.permissions)) {
+            const permissionIds = data.permissions.map(permission => permission.permission_id);
+            console.log('Extracted permission IDs:', permissionIds);
+            const allowedPaths = permissionIds.flatMap((id) => permissionsMapping[id] || []);
+            console.log('Allowed paths mapped:', allowedPaths);
+            const allItems = getSidebarItems();
+            const filteredItems = allItems.filter((item) =>
+              allowedPaths.includes(item.href.replace('/admin', '')) || item.href === '#'
+            );
+            setAllowedItems(filteredItems);
+            console.log('Filtered sidebar items:', filteredItems);
+          } else {
+            console.log('No permissions array found in response:', data);
+          }
+        } catch (error) {
+          console.error('Error fetching permissions:', error);
+        }
+      } else {
+        console.log('No role_id found for user:', user);
+      }
+    };
+
+    fetchPermissions();
+  }, [user?.role_id, API_URL]);
+
   const sections = [
-    { title: 'Bảng điều khiển', items: sidebarItems.slice(0, 5) },
-    { title: 'Công cụ', items: sidebarItems.slice(5, 10) },
-    { title: 'Hệ thống', items: sidebarItems.slice(10) },
+    { title: 'Bảng điều khiển', items: allowedItems.slice(0, 5) },
+    { title: 'Công cụ', items: allowedItems.slice(5, 10) },
+    { title: 'Hệ thống', items: allowedItems.slice(10) },
   ];
 
   const handleItemClick = (id, href) => {
