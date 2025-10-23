@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import styles from './Users.module.css';
+
+const API_URL = 'http://127.0.0.1:8000/api/';
 
 function Users() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,41 +28,26 @@ function Users() {
   const [formError, setFormError] = useState(null);
 
   const itemsPerPage = 5;
-  
-  useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const response = await fetch('http://127.0.0.1:8000/api/roles', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) throw new Error('Không thể lấy danh sách vai trò');
-        const data = await response.json();
-        setRoles(Array.isArray(data.roles) ? data.roles : []);
-      } catch (err) {
-        console.error('Lỗi khi lấy roles:', err.message);
-      }
-    };
-    fetchRoles();
-  }, []);
+
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/showuser', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) throw new Error('Không thể lấy danh sách người dùng');
-        const data = await response.json();
-        const mappedUsers = Array.isArray(data.users)
-          ? data.users.map(user => ({
+        setLoading(true);
+        const [rolesResponse, usersResponse] = await Promise.all([
+          axios.get(`${API_URL}roles`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`${API_URL}showuser`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        setRoles(Array.isArray(rolesResponse.data.roles) ? rolesResponse.data.roles : []);
+
+        const mappedUsers = Array.isArray(usersResponse.data.users)
+          ? usersResponse.data.users.map(user => ({
               id: user.user_id,
               name: user.full_name,
               email: user.email,
@@ -68,23 +56,23 @@ function Users() {
               role_name: user.role?.name || 'Chưa có vai trò',
               email_verify: user.email_verified_at ? 'Đã xác minh' : 'Chưa xác minh',
               admin_verify:
-              user.admin_verify_status === 'approved'
-                ? 'Đã xét duyệt'
-                : user.admin_verify_status === 'rejected'
-                ? 'Bị từ chối'
-                : 'Chờ xét duyệt',
+                user.admin_verify_status === 'approved'
+                  ? 'Đã xét duyệt'
+                  : user.admin_verify_status === 'rejected'
+                  ? 'Bị từ chối'
+                  : 'Chờ xét duyệt',
               createdDate: user.created_at,
               deletedAt: user.deleted_at,
             }))
           : [];
         setUsers(mappedUsers);
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || 'Không thể lấy dữ liệu');
       } finally {
         setLoading(false);
       }
     };
-    fetchUsers();
+    fetchData();
   }, []);
 
   const applyFilters = () => {
@@ -207,11 +195,10 @@ function Users() {
         return;
       }
 
-      // Lưu thông tin user (không bao gồm role)
       const url = modalMode === 'add' 
-        ? 'http://127.0.0.1:8000/api/register' 
-        : `http://127.0.0.1:8000/api/users/${selectedUser.id}/update`;
-      const method = modalMode === 'add' ? 'POST' : 'PUT';
+        ? `${API_URL}register` 
+        : `${API_URL}user/update/${selectedUser.id}`;
+      const method = modalMode === 'add' ? 'post' : 'put';
 
       const payload = {
         full_name: userForm.name,
@@ -219,35 +206,26 @@ function Users() {
         phone: userForm.phone || undefined,
       };
 
-      const response = await fetch(url, {
+      const response = await axios({
         method,
+        url,
+        data: payload,
         headers: {
-          ...(modalMode === 'add' ? {} : { 'Authorization': `Bearer ${localStorage.getItem('token')}` }),
+          ...(modalMode === 'add' ? {} : { Authorization: `Bearer ${token}` }),
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        if (data.errors) {
-          const errorMessages = Object.values(data.errors).flat().join(', ');
-          throw new Error(errorMessages);
-        }
-        throw new Error(data.message || 'Lỗi khi lưu người dùng');
-      }
-
-      // Cập nhật danh sách users trong state
       const newUser = {
-        id: modalMode === 'add' ? data.user.user_id : selectedUser.id,
+        id: modalMode === 'add' ? response.data.user.user_id : selectedUser.id,
         name: userForm.name,
         email: userForm.email,
         phone: userForm.phone,
         role_id: modalMode === 'add' ? null : selectedUser.role_id,
         role_name: modalMode === 'add' ? 'Chưa có vai trò' : selectedUser.role_name,
-        createdDate: data.user.created_at,
-        deletedAt: data.user.deleted_at || null,
+        createdDate: response.data.user.created_at,
+        deletedAt: response.data.user.deleted_at || null,
       };
 
       setUsers(prevUsers =>
@@ -258,7 +236,9 @@ function Users() {
 
       closeUserModal();
     } catch (err) {
-      setFormError(err.message || 'Lỗi khi lưu người dùng');
+      setFormError(err.response?.data?.errors
+        ? Object.values(err.response.data.errors).flat().join(', ')
+        : err.response?.data?.message || 'Lỗi khi lưu người dùng');
     }
   };
 
@@ -277,43 +257,45 @@ function Users() {
         return;
       }
 
-      // Xóa role cũ nếu có
+      const requests = [];
       if (selectedUser.role_id) {
         const oldRole = roles.find(r => r.role_id === parseInt(selectedUser.role_id));
         if (oldRole) {
-          await fetch(`http://127.0.0.1:8000/api/users/${selectedUser.id}/roles`, {
-            method: 'DELETE',
+          requests.push(
+            axios.delete(`${API_URL}users/${selectedUser.id}/roles`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+              data: { roles: [oldRole.name] },
+            })
+          );
+        }
+      }
+
+      requests.push(
+        axios.post(`${API_URL}users/${selectedUser.id}/roles`, 
+          { roles: [newRole.name] },
+          {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            body: JSON.stringify({ roles: [oldRole.name] }),
-          });
-        }
+          }
+        )
+      );
+
+      const [deleteResponse, postResponse] = await Promise.all(requests);
+
+      if (deleteResponse && !deleteResponse.data?.status) {
+        throw new Error(deleteResponse.data?.message || 'Lỗi khi xóa vai trò cũ');
+      }
+      if (!postResponse.data?.status) {
+        throw new Error(postResponse.data?.message || 'Lỗi khi gán vai trò mới');
       }
 
-      // Gán role mới
-      const roleResponse = await fetch(`http://127.0.0.1:8000/api/users/${selectedUser.id}/roles`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ roles: [newRole.name] }),
-      });
-
-      const roleData = await roleResponse.json();
-      if (!roleResponse.ok) {
-        if (roleData.errors) {
-          const errorMessages = Object.values(roleData.errors).flat().join(', ');
-          throw new Error(errorMessages);
-        }
-        throw new Error(roleData.message || 'Lỗi khi đổi vai trò');
-      }
-
-      // Cập nhật state
       setUsers(prevUsers =>
         prevUsers.map(u =>
           u.id === selectedUser.id
@@ -324,24 +306,73 @@ function Users() {
 
       closeRoleModal();
     } catch (err) {
-      setFormError(err.message || 'Lỗi khi đổi vai trò');
+      setFormError(err.response?.data?.errors
+        ? Object.values(err.response.data.errors).flat().join(', ')
+        : err.response?.data?.message || 'Lỗi khi đổi vai trò');
     }
   };
 
   const handleDeleteUser = async (user) => {
     if (window.confirm('Bạn có chắc muốn xóa người dùng này?')) {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/users/${user.id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
+        const response = await axios.delete(`${API_URL}users/${user.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        if (!response.ok) throw new Error('Lỗi khi xóa người dùng');
+        if (!response.data?.status) {
+          throw new Error(response.data?.message || 'Lỗi khi xóa người dùng');
+        }
         setUsers(prevUsers => prevUsers.filter(u => u.id !== user.id));
       } catch (err) {
-        setFormError(err.message);
+        setFormError(err.response?.data?.message || 'Lỗi khi xóa người dùng');
       }
+    }
+  };
+
+  const handleApproveUser = async (user) => {
+    try {
+      const response = await axios.put(`${API_URL}user/approve/${user.id}`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+      if (!response.data.status) {
+        throw new Error(response.data.message || 'Lỗi khi duyệt người dùng');
+      }
+      setUsers(prevUsers =>
+        prevUsers.map(u =>
+          u.id === user.id
+            ? { ...u, admin_verify: 'Đã xét duyệt', admin_verify_status: 'approved' }
+            : u
+        )
+      );
+    } catch (err) {
+      setFormError(err.response?.data?.message || 'Lỗi khi duyệt người dùng');
+    }
+  };
+
+  const handleRejectUser = async (user) => {
+    try {
+      const response = await axios.put(`${API_URL}user/reject/${user.id}`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+      if (!response.data.status) {
+        throw new Error(response.data.message || 'Lỗi khi từ chối người dùng');
+      }
+      setUsers(prevUsers =>
+        prevUsers.map(u =>
+          u.id === user.id
+            ? { ...u, admin_verify: 'Bị từ chối', admin_verify_status: 'rejected' }
+            : u
+        )
+      );
+    } catch (err) {
+      setFormError(err.response?.data?.message || 'Lỗi khi từ chối người dùng');
     }
   };
 
@@ -413,7 +444,7 @@ function Users() {
           </thead>
           <tbody>
             {currentUsers.map(user => (
-              <tr key={user.id} className={styles.dataTableRow}>
+              <tr key={user.id} className={styles.dataTableCell}>
                 <td className={styles.dataTableCell} data-label="ID">{user.id}</td>
                 <td className={styles.dataTableCell} data-label="Họ và tên">{user.name}</td>
                 <td className={styles.dataTableCell} data-label="Email">{user.email}</td>
@@ -459,6 +490,24 @@ function Users() {
                     >
                       <i className="fa fa-user-tag"></i>
                     </button>
+                    {user.admin_verify === 'Chờ xét duyệt' && (
+                      <>
+                        <button
+                          className={`${styles.btnSuccess} bg-green-600 hover:bg-green-700`}
+                          onClick={() => handleApproveUser(user)}
+                          aria-label="Duyệt người dùng"
+                        >
+                          <i className="fa fa-check"></i>
+                        </button>
+                        <button
+                          className={`${styles.btnDanger} bg-red-600 hover:bg-red-700`}
+                          onClick={() => handleRejectUser(user)}
+                          aria-label="Từ chối người dùng"
+                        >
+                          <i className="fa fa-times"></i>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -545,7 +594,6 @@ function Users() {
               <p><strong>Vai trò:</strong> {selectedUser.role_name}</p>
               <p><strong>Ngày tạo:</strong> {selectedUser.createdDate}</p>
               <p><strong>Trạng thái duyệt:</strong> {selectedUser.admin_verify}</p>
-              {/* <p><strong>Trạng thái duyệt:</strong> {selectedUser.admin_verify || 'Đang hoạt động'}</p> */}
             </div>
             <div className={styles.modalFooter}>
               <button className={styles.btnSecondary} onClick={closeViewModal}>
