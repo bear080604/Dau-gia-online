@@ -74,33 +74,24 @@ const Sidebar = () => {
   useEffect(() => {
     const fetchPermissions = async () => {
       if (user?.role_id) {
-        console.log('Checking permissions for role_id:', user.role_id);
         try {
           const response = await fetch(`${API_URL}roles/${user.role_id}/permissions`);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           const data = await response.json();
-          console.log('Raw API response:', data);
           if (data && Array.isArray(data.permissions)) {
             const permissionIds = data.permissions.map(permission => permission.permission_id);
-            console.log('Extracted permission IDs:', permissionIds);
             const allowedPaths = permissionIds.flatMap((id) => permissionsMapping[id] || []);
-            console.log('Allowed paths mapped:', allowedPaths);
             const allItems = getSidebarItems();
             const filteredItems = allItems.filter((item) =>
               allowedPaths.includes(item.href.replace('/admin', '')) || item.href === '#'
             );
             setAllowedItems(filteredItems);
-            console.log('Filtered sidebar items:', filteredItems);
-          } else {
-            console.log('No permissions array found in response:', data);
           }
         } catch (error) {
           console.error('Error fetching permissions:', error);
         }
-      } else {
-        console.log('No role_id found for user:', user);
       }
     };
 

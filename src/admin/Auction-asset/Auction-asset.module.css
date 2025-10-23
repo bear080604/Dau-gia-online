@@ -280,7 +280,9 @@
 }
 
 .btn {
-  padding: 0.5rem 1rem;
+  width: 36px;
+  height: 36px;
+  padding: 0.5rem;
   border-radius: 0.375rem;
   font-size: 0.85rem;
   font-weight: 500;
@@ -290,13 +292,17 @@
   margin-right: 0.5rem;
 }
 
+.btnEdit {
+  background-color: rgb(69, 15, 247);
+  color: white;
+}
 .btnPrimary {
-  background-color: #4f46e5;
+  background-color: rgb(96, 216, 130);
   color: white;
 }
 
 .btnPrimary:hover {
-  background-color: #4338ca;
+  background-color: rgb(84, 164, 106);
 }
 
 .btnDanger {

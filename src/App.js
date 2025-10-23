@@ -1,7 +1,11 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { UserProvider } from './UserContext';
 import ProtectedRoute from './ProtectedRoute';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+// Public pages
 import Home from './pages/Home';
 import Detail from './pages/Detail';
 import Register from './pages/Register';
@@ -12,9 +16,14 @@ import AuctionSessionPageUser from './pages/AuctionSession';
 import ContactPage from './pages/contact';
 import ContractPage from './pages/contract';
 import PaymentPage from './pages/payment';
+import ProfilePage from './pages/profile';
+import AccessDenied from './AccessDenied';
+import News from './pages/news';
+import NewsDetail from './pages/newsDetail';
 
-import AdminSettings from './pages/AdminSettings';
+// Admin pages
 import Admindashboard from './pages/AdminDashboard';
+import AdminSettings from './pages/AdminSettings';
 import AdminReport from './pages/AdminReport';
 import AdminContract from './pages/AdminContract';
 import AdminEContract from './pages/AdminEContract';
@@ -26,33 +35,36 @@ import AdminNotification from './pages/AdminNotification';
 import AdminAuctionAsset from './pages/AdminAuctionAsset';
 import AdminProfile from './pages/AdminProfile';
 import AuctionSessionPage from './pages/AdminAuction-session';
-import ProfilePage from './pages/profile';
-import AccessDenied from './AccessDenied';
-import { ToastContainer } from 'react-toastify';
 import RegisterAuctionPage from './pages/AdminRegisterAuction';
-import News from './pages/news';
-import NewsDetail from './pages/newsDetail';
 import Adminnews from './pages/AdminNews';
 import AdminNewsCategories from './pages/AdminNewsCategories';
 import AdminRoles from './pages/AdminRoles';
 import AdminPermissions from './pages/AdminPermissions';
 import AssetCategoriesPage from './pages/AdminAssetcategories';
 
-
+// 🌟 ScrollToTop khi chuyển route
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
 
 function App() {
   return (
     <UserProvider>
       <Router>
+        <ScrollToTop />
         <div className="App">
-          <ToastContainer />
+          <ToastContainer position="top-right" autoClose={3000} />
           <Routes>
-            {/* Public Routes (không cần bảo vệ) */}
+            {/* ✅ Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/home" element={<Home />} />
             <Route path="/detail/:id" element={<Detail />} />
-            <Route path="/auction/:id" element={<Auction />} />
             <Route path="/auction" element={<Auction />} />
+            <Route path="/auction/:id" element={<Auction />} />
             <Route path="/auction-session" element={<AuctionSessionPageUser />} />
             <Route path="/auction-session/:id" element={<Detail />} />
             <Route path="/contact" element={<ContactPage />} />
@@ -61,10 +73,10 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/access-denied" element={<AccessDenied />} />
             <Route path="/news" element={<News />} />
-              <Route path="/about" element={<AboutPage />} />
             <Route path="/news/:id" element={<NewsDetail />} />
+            <Route path="/about" element={<AboutPage />} />
 
-            {/* Public Routes (ngăn truy cập nếu đã đăng nhập) */}
+            {/* 🔐 Auth Routes (ngăn nếu đã login) */}
             <Route
               path="/register"
               element={
@@ -82,7 +94,7 @@ function App() {
               }
             />
 
-            {/* Protected Admin Routes (yêu cầu DauGiaVien) */}
+            {/* 🛡️ Admin Routes */}
             <Route
               path="/admin"
               element={
@@ -195,7 +207,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            
             <Route
               path="/admin/profile"
               element={
@@ -217,9 +228,9 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminAdshowauction />
-             </ProtectedRoute>
-             }
-             />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/admin/register-auction"
               element={

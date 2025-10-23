@@ -52,10 +52,7 @@ function AuctionAsset() {
   };
 
   const formatAssetData = (asset, categories) => {
-    console.log('Formatting asset:', asset);
-    console.log('Categories:', categories);
     const category = categories.find((cat) => cat.name === asset.category);
-    console.log('Found category:', category);
     const imageUrl = asset.image_url ? `${BASE_URL}${asset.image_url}` : 'https://example.com/placeholder.jpg';
 
     return {
@@ -105,26 +102,21 @@ function AuctionAsset() {
   // Fetch extra images for a specific asset
   const fetchExtraImages = async (itemId) => {
     try {
-      console.log('Fetching extra images for itemId:', itemId);
       const response = await axios.get(`${BASE_URL}/api/auction-items/${itemId}/images`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      console.log('API response for extra images:', response.data);
       const images = response.data.data || [];
       const imageUrls = images.map((img) => {
         const path = typeof img === 'string' ? img : img.url || img.image_url || '';
         if (!path) {
-          console.warn(`Invalid image path for itemId ${itemId}:`, img);
           return null;
         }
         return path.startsWith('http') ? path : `${BASE_URL}${path}`;
       }).filter(Boolean);
-      console.log('Generated extra image URLs:', imageUrls);
       return imageUrls;
     } catch (error) {
-      console.error(`Error fetching extra images for itemId ${itemId}:`, error.response?.data || error);
       return [];
     }
   };
@@ -140,7 +132,6 @@ useEffect(() => {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      console.log('Dữ liệu API tổ chức đấu giá:', response.data);
       const users = response.data.users || [];
       const toChucDauGiaUsers = users
         .filter((user) => user.role_id === 8) // Sửa từ user.role thành user.role_id
@@ -150,7 +141,6 @@ useEffect(() => {
         }));
       setAuctionOrgs(toChucDauGiaUsers);
     } catch (error) {
-      console.error('Lỗi khi lấy tổ chức đấu giá:', error.response?.data || error);
       alert(
         `Không thể tải danh sách tổ chức đấu giá: ${
           error.response?.data?.message || 'Vui lòng thử lại.'
@@ -167,7 +157,6 @@ useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await axios.get(`${BASE_URL}/api/categories`);
-        console.log('Dữ liệu API danh mục:', response.data);
         const categoriesData = response.data.data || [];
         const normalizedCategories = categoriesData.map((cat) => ({
           id: cat.category_id || cat.id,
@@ -176,7 +165,6 @@ useEffect(() => {
         }));
         setCategories(normalizedCategories);
       } catch (error) {
-        console.error('Lỗi khi lấy danh mục:', error.response?.data || error);
         alert(
           `Không thể tải danh mục: ${
             error.response?.data?.message || 'Vui lòng thử lại.'
@@ -193,18 +181,15 @@ useEffect(() => {
     const fetchAssets = async () => {
       try {
         setIsLoadingAssets(true);
-        console.log('Token:', localStorage.getItem('token'));
         const response = await axios.get(`${BASE_URL}/api/products`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
-        console.log('Dữ liệu API tài sản:', response.data);
         const assetsData = response.data.data || [];
         const formattedAssets = await Promise.all(
           assetsData.map(async (asset) => {
             if (!asset.id) {
-              console.warn('Asset missing ID:', asset);
               return { ...formatAssetData(asset, categories), extraImages: [] };
             }
             const formatted = formatAssetData(asset, categories);
@@ -215,10 +200,8 @@ useEffect(() => {
             return { ...formatted, extraImages };
           })
         );
-        console.log('Formatted Assets:', formattedAssets);
         setAssets(formattedAssets.sort((a, b) => new Date(b.rawCreatedAt || 0) - new Date(a.rawCreatedAt || 0)));
       } catch (error) {
-        console.error('Lỗi khi lấy dữ liệu tài sản:', error.response?.data || error);
         alert(
           `Không thể tải dữ liệu tài sản: ${
             error.response?.data?.message || 'Vui lòng thử lại.'
@@ -728,7 +711,7 @@ useEffect(() => {
       buttons.push(
         <button
           key="edit"
-          className={`${styles.btn} ${styles.btnPrimary}`}
+          className={`${styles.btn} ${styles.btnEdit}`}
           onClick={() => openAssetModal('edit', asset)}
         >
           <i className="fa fa-pencil" aria-hidden="true"></i>
@@ -836,10 +819,8 @@ useEffect(() => {
             <th>Tên tài sản</th>
             <th>Danh mục</th>
             <th>Chủ sở hữu</th>
-            <th>Tổ chức đấu giá</th>
             <th>Giá khởi điểm</th>
             <th>Trạng thái</th>
-            <th>Ngày tạo</th>
             <th>Hành động</th>
           </tr>
         </thead>
@@ -855,9 +836,7 @@ useEffect(() => {
                 <td data-label="Tên tài sản">{asset.name}</td>
                 <td data-label="Danh mục">{asset.category}</td>
                 <td data-label="Chủ sở hữu">{asset.owner}</td>
-                <td data-label="Tổ chức đấu giá">
-                  {auctionOrgs.find((org) => org.id === asset.auctionOrgId)?.name || 'Không xác định'}
-                </td>
+                
                 <td data-label="Giá khởi điểm">{asset.startingPrice}</td>
                 <td data-label="Trạng thái">
                   <span
@@ -866,7 +845,6 @@ useEffect(() => {
                     {asset.status}
                   </span>
                 </td>
-                <td data-label="Ngày tạo">{asset.createdDate}</td>
                 <td data-label="Hành động">
                   <div className={styles.actionButtons}>
                     {getActionButtons(asset)}
@@ -946,32 +924,6 @@ useEffect(() => {
                   value={assetForm.owner}
                   disabled
                 />
-              </div>
-              <div>
-                <label htmlFor="auctionOrgId">Tổ chức đấu giá</label>
-                <select
-                  id="auctionOrgId"
-                  name="auctionOrgId"
-                  value={assetForm.auctionOrgId}
-                  onChange={handleFormChange}
-                >
-                  <option value="">Chọn tổ chức đấu giá</option>
-                  {isLoadingAuctionOrgs ? (
-                    <option value="" disabled>
-                      Đang tải tổ chức đấu giá...
-                    </option>
-                  ) : auctionOrgs.length > 0 ? (
-                    auctionOrgs.map((org) => (
-                      <option key={org.id} value={org.id}>
-                        {org.name}
-                      </option>
-                    ))
-                  ) : (
-                    <option value="" disabled>
-                      Không có tổ chức đấu giá
-                    </option>
-                  )}
-                </select>
               </div>
               <div>
                 <label htmlFor="startingPrice">Giá khởi điểm (VND)</label>

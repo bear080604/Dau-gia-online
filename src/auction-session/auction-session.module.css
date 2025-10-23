@@ -129,7 +129,18 @@ select {
   transition: transform 0.3s ease;
   display: flex;
 }
-
+.inputTime{
+  border: 1px solid rgb(225, 224, 224);
+  padding: 10px 10px;
+  border-radius: 5px;
+}
+.itemFooter{
+  display: flex;
+  flex-direction: column;
+}
+.Timeline{
+  color: #2772ba;
+}
 .auctionItem:hover {
   transform: translateY(-3px);
 }
