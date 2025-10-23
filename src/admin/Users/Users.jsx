@@ -25,7 +25,7 @@ function Users() {
   const [formError, setFormError] = useState(null);
 
   const itemsPerPage = 5;
-
+  
   useEffect(() => {
     const fetchRoles = async () => {
       try {
@@ -66,6 +66,13 @@ function Users() {
               phone: user.phone,
               role_id: user.role_id,
               role_name: user.role?.name || 'Chưa có vai trò',
+              email_verify: user.email_verified_at ? 'Đã xác minh' : 'Chưa xác minh',
+              admin_verify:
+              user.admin_verify_status === 'approved'
+                ? 'Đã xét duyệt'
+                : user.admin_verify_status === 'rejected'
+                ? 'Bị từ chối'
+                : 'Chờ xét duyệt',
               createdDate: user.created_at,
               deletedAt: user.deleted_at,
             }))
@@ -399,7 +406,8 @@ function Users() {
               <th className={styles.dataTableCell}>Email</th>
               <th className={styles.dataTableCell}>Số điện thoại</th>
               <th className={styles.dataTableCell}>Vai trò</th>
-              <th className={styles.dataTableCell}>Ngày tạo</th>
+              <th className={styles.dataTableCell}>Xác minh email</th>
+              <th className={styles.dataTableCell}>Xét duyệt</th>
               <th className={styles.dataTableCell}>Hành động</th>
             </tr>
           </thead>
@@ -419,8 +427,9 @@ function Users() {
                     {user.role_name}
                   </span>
                 </td>
-                <td className={styles.dataTableCell} data-label="Ngày tạo">{user.createdDate}</td>
-                <td className={styles.dataTableCell} data-label="Hành động">
+                <td className={styles.dataTableCell} data-label="Xác minh email">{user.email_verify}</td>
+                <td className={styles.dataTableCell} data-label="Xét duyệt">{user.admin_verify}</td>
+                <td className={styles.dataTableCell} data-label="Thao tác">
                   <div className="flex gap-2">
                     <button
                       className={styles.btnPrimary}
@@ -535,7 +544,8 @@ function Users() {
               <p><strong>Số điện thoại:</strong> {selectedUser.phone}</p>
               <p><strong>Vai trò:</strong> {selectedUser.role_name}</p>
               <p><strong>Ngày tạo:</strong> {selectedUser.createdDate}</p>
-              <p><strong>Trạng thái xóa:</strong> {selectedUser.deletedAt || 'Đang hoạt động'}</p>
+              <p><strong>Trạng thái duyệt:</strong> {selectedUser.admin_verify}</p>
+              {/* <p><strong>Trạng thái duyệt:</strong> {selectedUser.admin_verify || 'Đang hoạt động'}</p> */}
             </div>
             <div className={styles.modalFooter}>
               <button className={styles.btnSecondary} onClick={closeViewModal}>
