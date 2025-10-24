@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function AuctionAsset() {
-   const navigate = useNavigate();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -23,6 +23,12 @@ function AuctionAsset() {
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [isLoadingAssets, setIsLoadingAssets] = useState(true);
   const [isLoadingAuctionOrgs, setIsLoadingAuctionOrgs] = useState(true);
+  const [ownerDetails, setOwnerDetails] = useState({
+    full_name: 'N/A',
+    email: 'N/A',
+    phone: 'N/A',
+    address: 'N/A',
+  });
   const [assetForm, setAssetForm] = useState({
     name: '',
     category: '',
@@ -129,40 +135,40 @@ function AuctionAsset() {
     }
   };
 
-  // Fetch auction organizations (users with role ToChucDauGia)
-// Fetch auction organizations (users with role_id = 8 for AuctionOrganization)
-useEffect(() => {
-  const fetchAuctionOrgs = async () => {
-    try {
-      setIsLoadingAuctionOrgs(true);
-      const response = await axios.get(`${BASE_URL}/api/showuser`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      console.log('Dữ liệu API tổ chức đấu giá:', response.data);
-      const users = response.data.users || [];
-      const toChucDauGiaUsers = users
-        .filter((user) => user.role_id === 8) // Sửa từ user.role thành user.role_id
-        .map((user) => ({
-          id: user.user_id.toString(),
-          name: user.full_name,
-        }));
-      setAuctionOrgs(toChucDauGiaUsers);
-    } catch (error) {
-      console.error('Lỗi khi lấy tổ chức đấu giá:', error.response?.data || error);
-      alert(
-        `Không thể tải danh sách tổ chức đấu giá: ${
-          error.response?.data?.message || 'Vui lòng thử lại.'
-        }`
-      );
-    } finally {
-      setIsLoadingAuctionOrgs(false);
-    }
-  };
-  fetchAuctionOrgs();
-}, []);
+  // Fetch auction organizations (users with role_id = 8 for AuctionOrganization)
+  useEffect(() => {
+    const fetchAuctionOrgs = async () => {
+      try {
+        setIsLoadingAuctionOrgs(true);
+        const response = await axios.get(`${BASE_URL}/api/showuser`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        console.log('Dữ liệu API tổ chức đấu giá:', response.data);
+        const users = response.data.users || [];
+        const toChucDauGiaUsers = users
+          .filter((user) => user.role_id === 8)
+          .map((user) => ({
+            id: user.user_id.toString(),
+            name: user.full_name,
+          }));
+        setAuctionOrgs(toChucDauGiaUsers);
+      } catch (error) {
+        console.error('Lỗi khi lấy tổ chức đấu giá:', error.response?.data || error);
+        alert(
+          `Không thể tải danh sách tổ chức đấu giá: ${
+            error.response?.data?.message || 'Vui lòng thử lại.'
+          }`
+        );
+      } finally {
+        setIsLoadingAuctionOrgs(false);
+      }
+    };
+    fetchAuctionOrgs();
+  }, []);
 
+  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -189,6 +195,7 @@ useEffect(() => {
     fetchCategories();
   }, []);
 
+  // Fetch assets
   useEffect(() => {
     const fetchAssets = async () => {
       try {
@@ -208,7 +215,6 @@ useEffect(() => {
               return { ...formatAssetData(asset, categories), extraImages: [] };
             }
             const formatted = formatAssetData(asset, categories);
-            // Use extraImages from API response if available, otherwise fetch
             const extraImages = asset.images?.length
               ? asset.images.map((img) => (img.url.startsWith('http') ? img.url : `${BASE_URL}${img.url}`))
               : await fetchExtraImages(asset.id);
@@ -231,6 +237,7 @@ useEffect(() => {
     fetchAssets();
   }, [categories]);
 
+  // Set owner ID from user data
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
@@ -364,6 +371,45 @@ useEffect(() => {
   const openViewModal = async (asset) => {
     setSelectedAsset(asset);
     console.log('Selected Asset Extra Images:', asset.extraImages);
+    
+    // Fetch owner details from /api/showuser
+    try {
+      const response = await axios.get(`${BASE_URL}/api/showuser`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      console.log('Dữ liệu API người dùng:', response.data);
+      const users = response.data.users || [];
+      const owner = users.find((user) => user.user_id === parseInt(asset.ownerId));
+      if (owner) {
+        setOwnerDetails({
+          full_name: owner.full_name || 'N/A',
+          email: owner.email || 'N/A',
+          phone: owner.phone || 'N/A',
+          address: owner.address || 'N/A',
+        });
+        console.log('Tìm thấy chủ sở hữu:', owner);
+      } else {
+        console.warn(`Không tìm thấy user_id ${asset.ownerId} trong danh sách`);
+        setOwnerDetails({
+          full_name: asset.owner || 'N/A',
+          email: 'N/A',
+          phone: 'N/A',
+          address: 'N/A',
+        });
+      }
+    } catch (error) {
+      console.error('Lỗi khi lấy thông tin chủ sở hữu:', error.response?.data || error);
+      setOwnerDetails({
+        full_name: asset.owner || 'N/A',
+        email: 'N/A',
+        phone: 'N/A',
+        address: 'N/A',
+      });
+    }
+
+    // Fetch bid history
     try {
       const response = await axios.get(`${BASE_URL}/api/auction-items/${asset.id}/bids`, {
         headers: {
@@ -382,6 +428,12 @@ useEffect(() => {
     setShowViewModal(false);
     setBidHistory([]);
     setSelectedAsset(null);
+    setOwnerDetails({
+      full_name: 'N/A',
+      email: 'N/A',
+      phone: 'N/A',
+      address: 'N/A',
+    });
   };
 
   const openRejectModal = (asset) => {
@@ -678,7 +730,8 @@ useEffect(() => {
       );
     }
   };
- const handleCreateAuction = (asset) => {
+
+  const handleCreateAuction = (asset) => {
     navigate('/admin/auction-session');
   };
 
@@ -853,7 +906,6 @@ useEffect(() => {
                 <td data-label="Tên tài sản">{asset.name}</td>
                 <td data-label="Danh mục">{asset.category}</td>
                 <td data-label="Chủ sở hữu">{asset.owner}</td>
-                
                 <td data-label="Giá khởi điểm">{asset.startingPrice}</td>
                 <td data-label="Trạng thái">
                   <span
@@ -1078,45 +1130,24 @@ useEffect(() => {
       {/* View Asset Modal */}
       {showViewModal && selectedAsset && (
         <div className={styles.modal} onClick={closeViewModal}>
-          <div
-            className={styles.modalContent}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>Chi Tiết Tài Sản</h2>
-              <span className={styles.modalClose} onClick={closeViewModal}>
-                ×
-              </span>
+              <span className={styles.modalClose} onClick={closeViewModal}>×</span>
             </div>
             <div className={styles.modalBody}>
-              <p>
-                <strong>Mã tài sản:</strong> {selectedAsset.id}
-              </p>
-              <p>
-                <strong>Tên tài sản:</strong> {selectedAsset.name}
-              </p>
-              <p>
-                <strong>Danh mục:</strong> {selectedAsset.category}
-              </p>
-              <p>
-                <strong>Chủ sở hữu:</strong> {selectedAsset.owner}
-              </p>
-              <p>
-                <strong>Tổ chức đấu giá:</strong>{' '}
-                {auctionOrgs.find((org) => org.id === selectedAsset.auctionOrgId)?.name || 'Không xác định'}
-              </p>
-              <p>
-                <strong>Giá khởi điểm:</strong> {selectedAsset.startingPrice}
-              </p>
-              <p>
-                <strong>Trạng thái:</strong> {selectedAsset.status}
-              </p>
-              <p>
-                <strong>Ngày tạo:</strong> {selectedAsset.createdDate}
-              </p>
-              <p>
-                <strong>Mô tả:</strong> {selectedAsset.description}
-              </p>
+              <p><strong>Mã tài sản:</strong> {selectedAsset.id}</p>
+              <p><strong>Tên tài sản:</strong> {selectedAsset.name}</p>
+              <p><strong>Danh mục:</strong> {selectedAsset.category}</p>
+              <p><strong>Chủ sở hữu:</strong> {ownerDetails.full_name}</p>
+              <p><strong>Email:</strong> {ownerDetails.email}</p>
+              <p><strong>Số điện thoại:</strong> {ownerDetails.phone}</p>
+              <p><strong>Địa chỉ:</strong> {ownerDetails.address}</p>
+              <p><strong>Tổ chức đấu giá:</strong> {auctionOrgs.find((org) => org.id === selectedAsset.auctionOrgId)?.name || 'Không xác định'}</p>
+              <p><strong>Giá khởi điểm:</strong> {selectedAsset.startingPrice}</p>
+              <p><strong>Trạng thái:</strong> {selectedAsset.status}</p>
+              <p><strong>Ngày tạo:</strong> {selectedAsset.createdDate}</p>
+              <p><strong>Mô tả:</strong> {selectedAsset.description}</p>
               <div>
                 <strong>Ảnh chính:</strong>
                 <div className={styles.imagePreview}>
