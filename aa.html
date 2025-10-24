@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modern Product Carousel</title>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- LightSlider CSS & JS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightslider/1.1.6/css/lightslider.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightslider/1.1.6/js/lightslider.min.js"></script>
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .Fields-section {
+    padding: 40px 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f8f9fa;
+  }
+  
+  .Fields-container {
+    max-width: 1200px;
+    width: 100%;
+  }
+  
+  .Fields-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  
+  .Fields-header h1 {
+    font-size: 36px;
+    margin-bottom: 10px;
+    color: #333333;
+    position: relative;
+    display: inline-block;
+    font-weight: 700;
+  }
+  
+  .Fields-header h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: #AE3333;
+    border-radius: 2px;
+  }
+  
+  .Fields-box {
+    background: white;
+    margin: 5px;
+    border-radius: 10px;
+    text-align: center;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    height: 450px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+  }
+  
+  .Fields-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  .Fields-image {
+    position: relative;
+    margin-bottom: 15px;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+  }
+  
+  .Fields-box img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  .Fields-box:hover img {
+    transform: scale(1.05);
+  }
+  
+  .Fields-box h3 {
+    margin: 10px 0 15px;
+    font-size: 20px;
+    color: #AE3333;
+    font-weight: 600;
+    padding: 0 15px;
+  }
+  
+  .Fields-box p {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 15px;
+    flex-grow: 1;
+    padding: 0 15px 20px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Custom slider styles */
+  .Fields-slider-wrapper {
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 1200px) {
+    .Fields-container {
+      max-width: 100%;
+      padding: 0 15px;
+    }
+    
+    .Fields-box {
+      height: 420px;
+    }
+    
+    .Fields-box img {
+      height: 180px;
+    }
+    
+    .Fields-box p {
+      font-size: 17px;
+      -webkit-line-clamp: 4;
+    }
+  }
+  
+  @media (max-width: 992px) {
+    .Fields-header h1 {
+      font-size: 32px;
+    }
+    
+    .Fields-box {
+      height: 400px;
+    }
+    
+    .Fields-box img {
+      height: 170px;
+    }
+    
+    .Fields-box h3 {
+      font-size: 19px;
+    }
+    
+    .Fields-box p {
+      font-size: 16px;
+      -webkit-line-clamp: 4;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .Fields-section {
+      padding: 30px 15px;
+    }
+    
+    .Fields-header {
+      margin-bottom: 30px;
+    }
+    
+    .Fields-header h1 {
+      font-size: 28px;
+    }
+    
+    .Fields-box {
+      height: 380px;
+      margin: 3px;
+    }
+    
+    .Fields-box img {
+      height: 160px;
+    }
+    
+    .Fields-box h3 {
+      font-size: 18px;
+      margin: 8px 0 12px;
+    }
+    
+    .Fields-box p {
+      font-size: 15px;
+      padding: 0 12px 15px;
+      -webkit-line-clamp: 4;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .Fields-section {
+      padding: 20px 10px;
+    }
+    
+    .Fields-header {
+      margin-bottom: 25px;
+    }
+    
+    .Fields-header h1 {
+      font-size: 24px;
+    }
+    
+    .Fields-header h1::after {
+      width: 60px;
+      height: 3px;
+    }
+    
+    .Fields-box {
+      height: 350px;
+      margin: 2px;
+    }
+    
+    .Fields-box img {
+      height: 140px;
+    }
+    
+    .Fields-box h3 {
+      font-size: 17px;
+      margin: 5px 0 10px;
+    }
+    
+    .Fields-box p {
+      font-size: 14px;
+      padding: 0 10px 12px;
+      -webkit-line-clamp: 4;
+      line-height: 1.4;
+    }
+  }
+  
+  @media (max-width: 400px) {
+    .Fields-box {
+      height: 320px;
+    }
+    
+    .Fields-box img {
+      height: 130px;
+    }
+    
+    .Fields-box p {
+      -webkit-line-clamp: 3;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="Fields-section">
+<div class="Fields-container">
+  <div class="Fields-header">
+    <h1>Lĩnh vực đầu tư</h1>
+  </div>
+
+  <ul id="Fields-slider">
+    <li class="Fields-box">
+      <div class="Fields-image">
+        <img src="/Phát triển Bất động sản.png" alt="Tư vấn Tài chính">
+      </div>
+      <h3>Tư vấn Tài chính</h3>
+      <p>Cung cấp tư vấn tài chính chiến lược, mô hình đầu tư, tái cấu trúc doanh nghiệp và hỗ trợ M&A. Chúng tôi giúp doanh nghiệp tối ưu hóa nguồn lực tài chính và đạt được mục tiêu dài hạn.</p>
+    </li>
+    
+    <li class="Fields-box">
+      <div class="Fields-image">
+        <img src="/Phát triển Bất động sản.png" alt="Phát triển Bất động sản">
+      </div>
+      <h3>Phát triển Bất động sản</h3>
+      <p>Phát triển các dự án nhà ở, khu nghỉ dưỡng sang trọng, thương mại và dự án hỗn hợp hiện đại. Các dự án của chúng tôi tập trung vào thiết kế bền vững và hiệu quả sử dụng không gian.</p>
+    </li>
+    
+    <li class="Fields-box">
+      <div class="Fields-image">
+        <img src="/Phát triển Bất động sản.png" alt="Xây dựng">
+      </div>
+      <h3>Xây dựng</h3>
+      <p>Thực hiện các dự án dân dụng và cơ sở hạ tầng chất lượng cao, từ các tòa nhà thương mại đến cầu đường và khu công nghiệp.</p>
+    </li>
+    
+    <li class="Fields-box">
+      <div class="Fields-image">
+        <img src="/Phát triển Bất động sản.png" alt="Information Technology">
+      </div>
+      <h3>Information Technology</h3>
+      <p>Developing modern IT solutions, including software, AI applications, and scalable infrastructure to improve efficiency and drive digital transformation</p>
+    </li>
+    
+    <li class="Fields-box">
+      <div class="Fields-image">
+        <img src="/Phát triển Bất động sản.png" alt="Financial Consulting">
+      </div>
+      <h3>Financial Consulting</h3>
+      <p>Providing strategic financial consulting, investment models, corporate restructuring, and M&A advisory.</p>
+    </li>
+    
+    <li class="Fields-box">
+      <div class="Fields-image">
+        <img src="/Phát triển Bất động sản.png" alt="Real Estate">
+      </div>
+      <h3>Real Estate</h3>
+      <p>Developing modern residential, luxury resort, commercial and mixed-use complexes. Our projects focus on sustainable design and efficient use of space.</p>
+    </li>
+  </ul>
+</div>
+</div>
+<script>
+$(document).ready(function() {
+  $("#Fields-slider").lightSlider({
+    item: 3.5,
+    slideMargin: 20,
+    loop: false,
+    enableDrag: true,
+    pager: false,
+    controls: false,
+    adaptiveHeight: true,
+    responsive: [
+      {
+        breakpoint: 1200,
+        settings: {
+          item: 3.5,
+          slideMove: 1,
+          slideMargin: 15
+        }
+      },
+      {
+        breakpoint: 992,
+        settings: {
+          item: 2.5,
+          slideMove: 1,
+          slideMargin: 15
+        }
+      },
+      {
+        breakpoint: 768,
+        settings: {
+          item: 2.2,
+          slideMove: 1,
+          slideMargin: 10
+        }
+      },
+      {
+        breakpoint: 576,
+        settings: {
+          item: 1.5,
+          slideMove: 1,
+          slideMargin: 8
+        }
+      },
+      {
+        breakpoint: 400,
+        settings: {
+          item: 1.2,
+          slideMove: 1,
+          slideMargin: 5
+        }
+      }
+    ]
+  });
+});
+</script>
+
+</body>
+</html>

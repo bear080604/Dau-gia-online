@@ -52,7 +52,6 @@ function LoginForm() {
 
       if (response.ok) {
         const result = await response.json();
-        console.log('Đăng nhập thành công:', result);
         if (result && result.user) {
           const token = result.token || null;
           if (token) {
