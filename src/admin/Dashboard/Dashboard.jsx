@@ -1,31 +1,175 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Chart from 'chart.js/auto';
 import styles from './Dashboard.module.css';
 
 const Dashboard = () => {
   const [activePeriod, setActivePeriod] = useState('week');
+  const [sessions, setSessions] = useState([]);
+  const [contracts, setContracts] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [bids, setBids] = useState([]); // State cho dữ liệu bids từ API
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
-  const chartData = {
-    week: {
-      labels: ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"],
-      values: [120, 150, 140, 180, 160, 200, 156]
-    },
-    month: {
-      labels: ["Tuần 1", "Tuần 2", "Tuần 3", "Tuần 4"],
-      values: [650, 720, 680, 750]
-    },
-    quarter: {
-      labels: ["Tháng 1", "Tháng 2", "Tháng 3"],
-      values: [2800, 3200, 3100]
+  // Static labels (giữ nguyên)
+  const staticLabels = {
+    week: ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"],
+    month: ["Tuần 1", "Tuần 2", "Tuần 3", "Tuần 4"],
+    quarter: ["Tháng 1", "Tháng 2", "Tháng 3"]
+  };
+
+  // Fetch data from all APIs
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [sessionsRes, contractsRes, usersRes, productsRes, bidsRes] = await Promise.all([
+          fetch('http://localhost:8000/api/auction-sessions'),
+          fetch('http://localhost:8000/api/contracts'),
+          fetch('http://localhost:8000/api/showuser'),
+          fetch('http://localhost:8000/api/products'),
+          fetch('http://localhost:8000/api/showbids')
+        ]);
+
+        if (!sessionsRes.ok) throw new Error(`Sessions API error: ${sessionsRes.status}`);
+        if (!contractsRes.ok) throw new Error(`Contracts API error: ${contractsRes.status}`);
+        if (!usersRes.ok) throw new Error(`Users API error: ${usersRes.status}`);
+        if (!productsRes.ok) throw new Error(`Products API error: ${productsRes.status}`);
+        if (!bidsRes.ok) throw new Error(`Bids API error: ${bidsRes.status}`);
+
+        const sessionsData = await sessionsRes.json();
+        const contractsData = await contractsRes.json();
+        const usersData = await usersRes.json();
+        const productsData = await productsRes.json();
+        const bidsData = await bidsRes.json();
+
+        if (sessionsData.status) setSessions(sessionsData.sessions || []);
+        if (contractsData.status) setContracts(contractsData.contracts || []);
+        if (usersData.status) setUsers(usersData.users || []);
+        setProducts(productsData.data || []);
+        if (bidsData.status) setBids(bidsData.bids || []);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Generate dynamic chart data based on bids and period
+  const dynamicChartData = useMemo(() => {
+    const now = new Date('2025-10-27T00:00:00'); // Current date: Oct 27, 2025
+    const values = new Array(staticLabels[activePeriod].length).fill(0);
+
+    bids.forEach(bid => {
+      const bidDate = new Date(bid.bid_time);
+      bidDate.setHours(0, 0, 0, 0); // Normalize to day
+
+      let index = -1;
+      if (activePeriod === 'week') {
+        // Calculate day of week for current week (Mon=0, Sun=6)
+        const currentWeekStart = new Date(now);
+        currentWeekStart.setDate(now.getDate() - now.getDay()); // Start of week (Monday)
+        const daysFromWeekStart = (bidDate - currentWeekStart) / (1000 * 60 * 60 * 24);
+        if (daysFromWeekStart >= 0 && daysFromWeekStart < 7) {
+          index = Math.floor(daysFromWeekStart);
+        }
+      } else if (activePeriod === 'month') {
+        // Simple: group by week of month
+        const weekNum = Math.floor((bidDate.getDate() - 1) / 7);
+        index = Math.min(weekNum, 3); // Cap at 4 weeks
+      } else if (activePeriod === 'quarter') {
+        // Group by month in quarter (Oct-Dec for Q4 2025)
+        const month = bidDate.getMonth(); // 0=Jan, 9=Oct
+        if (month === 9) index = 0; // Oct = Tháng 10 (but labels are Jan-Mar, adjust if needed)
+        else if (month === 10) index = 1; // Nov
+        else if (month === 11) index = 2; // Dec
+      }
+
+      if (index >= 0) {
+        values[index]++;
+      }
+    });
+
+    // Fallback to some default if no data
+    return { labels: staticLabels[activePeriod], values: values.length > 0 ? values : [0, 10, 20, 30] }; // Example fallback
+  }, [bids, activePeriod]);
+
+  // Status mapping for sessions
+  const getStatusBadge = (status, bidEnd) => {
+    const now = new Date('2025-10-27T00:00:00');
+    const endDate = new Date(bidEnd);
+    if (endDate < now) return { text: 'Kết thúc', class: styles.statusActive };
+    if (status === 'Mo') return { text: 'Đang diễn ra', class: styles.statusActive };
+    return { text: 'Chờ duyệt', class: styles.statusInactive };
+  };
+
+  // Contract status mapping
+  const getContractStatus = (status) => {
+    switch (status) {
+      case 'ChoThanhToan': return 'Chờ thanh toán';
+      case 'DaThanhToan': return 'Đã thanh toán';
+      default: return status;
     }
   };
+
+  // Format VND
+  const formatVND = (price) => {
+    if (!price) return '0đ';
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(parseFloat(price)).replace('₫', 'đ');
+  };
+
+  // Relative time
+  const getRelativeTime = (createdAt) => {
+    const now = new Date('2025-10-27T00:00:00');
+    const created = new Date(createdAt);
+    const diffMs = now - created;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    const diffWeeks = Math.floor(diffDays / 7);
+
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    if (diffDays < 7) return `${diffDays} ngày trước`;
+    return `${diffWeeks} tuần trước`;
+  };
+
+  // Metrics calculations
+  const todaySessionsCount = sessions.filter(session => {
+    const now = new Date('2025-10-27T00:00:00');
+    const start = new Date(session.bid_start);
+    const end = new Date(session.bid_end);
+    return start <= now && end >= now;
+  }).length;
+
+  const todayContractsCount = contracts.filter(contract => {
+    const signedDate = new Date(contract.signed_date);
+    const today = new Date('2025-10-27T00:00:00');
+    const tomorrow = new Date('2025-10-28T00:00:00');
+    return signedDate >= today && signedDate < tomorrow;
+  }).length;
+
+  const completedContracts = contracts.filter(c => c.status !== 'ChoThanhToan').length;
+  const paymentCompletionRate = contracts.length > 0 ? Math.round((completedContracts / contracts.length) * 100) : 0;
+
+  const todayNewUsers = users.filter(user => {
+    const createdDate = new Date(user.created_at);
+    const today = new Date('2025-10-27T00:00:00');
+    const tomorrow = new Date('2025-10-28T00:00:00');
+    return createdDate >= today && createdDate < tomorrow;
+  }).length;
 
   useEffect(() => {
     if (chartRef.current) {
       const ctx = chartRef.current.getContext('2d');
-      const data = chartData[activePeriod];
+      const data = dynamicChartData; // Use dynamic data
 
       if (chartInstance.current) {
         chartInstance.current.destroy();
@@ -47,7 +191,7 @@ const Dashboard = () => {
             },
             {
               label: "Xu hướng",
-              data: data.values,
+              data: data.values, // Same data for trend line
               type: "line",
               borderColor: "#f43f5e",
               backgroundColor: "rgba(244, 63, 94, 0.1)",
@@ -138,11 +282,14 @@ const Dashboard = () => {
         chartInstance.current.destroy();
       }
     };
-  }, [activePeriod]);
+  }, [activePeriod, dynamicChartData]); // Depend on dynamicChartData
 
   const handlePeriodChange = (period) => {
     setActivePeriod(period);
   };
+
+  if (loading) return <div className={styles.mainContent}><p>Đang tải dữ liệu...</p></div>;
+  if (error) return <div className={styles.mainContent}><p>Lỗi: {error}</p></div>;
 
   return (
     <div className={styles.mainContent}>
@@ -167,7 +314,7 @@ const Dashboard = () => {
             <span>Phiên đấu giá hôm nay</span>
             <i className="fas fa-gavel"></i>
           </div>
-          <div className={styles.metricValue}>12</div>
+          <div className={styles.metricValue}>{todaySessionsCount}</div>
           <div className={`${styles.metricChange} ${styles.metricChangeUp}`}>
             <i className="fas fa-arrow-up"></i>
             <span>+15% so với hôm qua</span>
@@ -179,7 +326,7 @@ const Dashboard = () => {
             <span>Hợp đồng ký kết</span>
             <i className="fas fa-file-contract"></i>
           </div>
-          <div className={styles.metricValue}>8</div>
+          <div className={styles.metricValue}>{todayContractsCount || contracts.length}</div>
           <div className={`${styles.metricChange} ${styles.metricChangeDown}`}>
             <i className="fas fa-arrow-down"></i>
             <span>-3% so với hôm qua</span>
@@ -191,7 +338,7 @@ const Dashboard = () => {
             <span>Người dùng mới</span>
             <i className="fas fa-user-plus"></i>
           </div>
-          <div className={styles.metricValue}>25</div>
+          <div className={styles.metricValue}>{todayNewUsers}</div>
           <div className={`${styles.metricChange} ${styles.metricChangeUp}`}>
             <i className="fas fa-arrow-up"></i>
             <span>+30% so với hôm qua</span>
@@ -203,7 +350,7 @@ const Dashboard = () => {
             <span>Thanh toán hoàn tất</span>
             <i className="fas fa-check-circle"></i>
           </div>
-          <div className={styles.metricValue}>95%</div>
+          <div className={styles.metricValue}>{paymentCompletionRate}%</div>
           <div className={`${styles.metricChange} ${styles.metricChangeUp}`}>
             <i className="fas fa-arrow-up"></i>
             <span>+5% so với hôm qua</span>
@@ -259,66 +406,34 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>#PG-2456</td>
-                <td>Bất động sản quận 1</td>
-                <td>2.750.000.000đ</td>
-                <td>
-                  <span className={`${styles.statusBadge} ${styles.statusActive}`}>
-                    Kết thúc
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td>#PG-2455</td>
-                <td>Xe hơi Mercedes</td>
-                <td>1.350.000.000đ</td>
-                <td>
-                  <span className={`${styles.statusBadge} ${styles.statusActive}`}>
-                    Đang diễn ra
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td>#PG-2454</td>
-                <td>Đồng hồ Rolex</td>
-                <td>180.000.000đ</td>
-                <td>
-                  <span className={`${styles.statusBadge} ${styles.statusInactive}`}>
-                    Chờ duyệt
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td>#PG-2453</td>
-                <td>Tranh nghệ thuật</td>
-                <td>500.000.000đ</td>
-                <td>
-                  <span className={`${styles.statusBadge} ${styles.statusActive}`}>
-                    Đã ký hợp đồng
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td>#PG-2452</td>
-                <td>Máy ảnh Canon</td>
-                <td>50.000.000đ</td>
-                <td>
-                  <span className={`${styles.statusBadge} ${styles.statusWarning}`}>
-                    Tạm dừng
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td>#PG-2451</td>
-                <td>Điện thoại iPhone</td>
-                <td>30.000.000đ</td>
-                <td>
-                  <span className={`${styles.statusBadge} ${styles.statusActive}`}>
-                    Kết thúc
-                  </span>
-                </td>
-              </tr>
+              {sessions.map((session) => {
+                const linkedContract = contracts.find(c => c.session_id === session.session_id);
+                const statusInfo = getStatusBadge(session.status, session.bid_end);
+                const finalPrice = linkedContract ? linkedContract.final_price : session.highest_bid;
+                return (
+                  <tr key={session.session_id}>
+                    <td>#PG-{session.session_id}</td>
+                    <td>{session.item?.name || 'N/A'}</td>
+                    <td>{formatVND(finalPrice)}</td>
+                    <td>
+                      <span className={`${styles.statusBadge} ${statusInfo.class}`}>
+                        {statusInfo.text}
+                        {linkedContract && (
+                          <>
+                            <br />
+                            <small>{getContractStatus(linkedContract.status)}</small>
+                          </>
+                        )}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+              {sessions.length === 0 && (
+                <tr>
+                  <td colSpan="4">Không có dữ liệu</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -341,66 +456,23 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>#TS-001</td>
-                <td>Bất động sản quận 2</td>
-                <td>Nguyễn Văn A</td>
-                <td>1.500.000.000đ</td>
-                <td>2 giờ trước</td>
-                <td>
-                  <button className={`${styles.btn} ${styles.btnPrimary}`}>Xem chi tiết</button>
-                </td>
-              </tr>
-              <tr>
-                <td>#TS-002</td>
-                <td>Xe máy Honda</td>
-                <td>Trần Thị B</td>
-                <td>50.000.000đ</td>
-                <td>5 giờ trước</td>
-                <td>
-                  <button className={`${styles.btn} ${styles.btnPrimary}`}>Xem chi tiết</button>
-                </td>
-              </tr>
-              <tr>
-                <td>#TS-003</td>
-                <td>Tranh vẽ nghệ thuật</td>
-                <td>Lê Văn C</td>
-                <td>200.000.000đ</td>
-                <td>1 ngày trước</td>
-                <td>
-                  <button className={`${styles.btn} ${styles.btnPrimary}`}>Xem chi tiết</button>
-                </td>
-              </tr>
-              <tr>
-                <td>#TS-004</td>
-                <td>Đồng hồ cổ</td>
-                <td>Phạm Thị D</td>
-                <td>80.000.000đ</td>
-                <td>3 ngày trước</td>
-                <td>
-                  <button className={`${styles.btn} ${styles.btnPrimary}`}>Xem chi tiết</button>
-                </td>
-              </tr>
-              <tr>
-                <td>#TS-005</td>
-                <td>Máy tính laptop</td>
-                <td>Hoàng Văn E</td>
-                <td>25.000.000đ</td>
-                <td>4 ngày trước</td>
-                <td>
-                  <button className={`${styles.btn} ${styles.btnPrimary}`}>Xem chi tiết</button>
-                </td>
-              </tr>
-              <tr>
-                <td>#TS-006</td>
-                <td>Đất nền ngoại ô</td>
-                <td>Vũ Thị F</td>
-                <td>800.000.000đ</td>
-                <td>1 tuần trước</td>
-                <td>
-                  <button className={`${styles.btn} ${styles.btnPrimary}`}>Xem chi tiết</button>
-                </td>
-              </tr>
+              {products.map((product) => (
+                <tr key={product.id}>
+                  <td>#TS-{product.id}</td>
+                  <td>{product.name}</td>
+                  <td>{product.owner?.name || 'N/A'}</td>
+                  <td>{formatVND(product.starting_price)}</td>
+                  <td>{getRelativeTime(product.created_at)}</td>
+                  <td>
+                    <button className={`${styles.btn} ${styles.btnPrimary}`}>Xem chi tiết</button>
+                  </td>
+                </tr>
+              ))}
+              {products.length === 0 && (
+                <tr>
+                  <td colSpan="6">Không có dữ liệu</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -412,9 +484,9 @@ const Dashboard = () => {
             <h4 className={styles.additionalTitle}>Tỷ lệ hoàn thành hợp đồng</h4>
             <span className={styles.dataAction}>Chi tiết</span>
           </div>
-          <div className={styles.metricValue}>92%</div>
+          <div className={styles.metricValue}>{paymentCompletionRate}%</div>
           <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: '92%' }}></div>
+            <div className={styles.progressFill} style={{ width: `${paymentCompletionRate}%` }}></div>
           </div>
         </div>
 
@@ -423,9 +495,9 @@ const Dashboard = () => {
             <h4 className={styles.additionalTitle}>Số lượng danh mục tài sản</h4>
             <span className={styles.dataAction}>Quản lý</span>
           </div>
-          <div className={styles.metricValue}>15</div>
+          <div className={styles.metricValue}>{products.length}</div>
           <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: '75%', backgroundColor: '#f59e0b' }}></div>
+            <div className={styles.progressFill} style={{ width: `${Math.min((products.length / 20) * 100, 100)}%`, backgroundColor: '#f59e0b' }}></div>
           </div>
         </div>
 
