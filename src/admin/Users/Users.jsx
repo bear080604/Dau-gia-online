@@ -677,6 +677,60 @@ const handleSaveUser = async () => {
       setFormError(err.response?.data?.message || 'Lỗi khi từ chối người dùng');
     }
   };
+
+  const handleExportAllUsersExcel = async () => {
+    try {
+      const response = await axios.get(`${API_URL}api/users/export-excel`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'users.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      setFormError(err.response?.data?.message || 'Lỗi khi xuất file Excel');
+    }
+  };
+
+  const handleExportUserPDF = async (userId) => {
+    try {
+      const response = await axios.get(`${API_URL}api/users/export-pdf/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `user_${userId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      setFormError(err.response?.data?.message || 'Lỗi khi xuất file PDF');
+    }
+  };
+
+  const handleExportUserExcel = async (userId) => {
+    try {
+      const response = await axios.get(`${API_URL}api/users/export-excel/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `user_${userId}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      setFormError(err.response?.data?.message || 'Lỗi khi xuất file Excel');
+    }
+  };
 const renderImage = (url, type, errorKey) => {
   if (!url || imageErrors[errorKey]) {
     return (
@@ -737,14 +791,24 @@ const renderImage = (url, type, errorKey) => {
             ))}
           </select>
         </div>
-        <button
-          className={styles.addBtn}
-          onClick={() => openUserModal('add')}
-          aria-label="Thêm người dùng mới"
-        >
-          <i className="fas fa-plus"></i>
-          Thêm người dùng mới
-        </button>
+        <div className={styles.actionButtons}>
+          <button
+            className={`${styles.addBtn} ${styles.exportBtn}`}
+            onClick={handleExportAllUsersExcel}
+            aria-label="Xuất Excel tất cả người dùng"
+          >
+            <i className="fas fa-file-excel"></i>
+            Xuất Excel
+          </button>
+          <button
+            className={styles.addBtn}
+            onClick={() => openUserModal('add')}
+            aria-label="Thêm người dùng mới"
+          >
+            <i className="fas fa-plus"></i>
+            Thêm người dùng mới
+          </button>
+        </div>
       </div>
 
       <div className={styles.dataTable}>
@@ -787,7 +851,7 @@ const renderImage = (url, type, errorKey) => {
                           className={`${styles.btnSuccess} bg-green-600 hover:bg-green-700`}
                           onClick={() => handleApproveUser(user)}
                           aria-label="Duyệt người dùng"
-                        >
+                        > 
                           <i className="fa fa-check"></i>
                         </button>
                         <button
@@ -797,12 +861,26 @@ const renderImage = (url, type, errorKey) => {
                         >
                           <i className="fa fa-times"></i>
                         </button>
-                          <button
+                        <button
                           className={styles.btnSuccess}
                           onClick={() => openViewModal(user)}
                           aria-label="Xem chi tiết người dùng"
                         >
                           <i className="fa fa-eye"></i>
+                        </button>
+                        <button
+                          className={styles.btnSuccess}
+                          onClick={() => handleExportUserPDF(user.id)}
+                          aria-label="Xuất PDF người dùng"
+                        >
+                          <i className="fa fa-file-pdf"></i>
+                        </button>
+                        <button
+                          className={styles.btnSuccess}
+                          onClick={() => handleExportUserExcel(user.id)}
+                          aria-label="Xuất Excel người dùng"
+                        >
+                          <i className="fa fa-file-excel"></i>
                         </button>
                       </>
                     ) : (
@@ -827,6 +905,20 @@ const renderImage = (url, type, errorKey) => {
                           aria-label="Xem chi tiết người dùng"
                         >
                           <i className="fa fa-eye"></i>
+                        </button>
+                        <button
+                          className={styles.btnSuccess}
+                          onClick={() => handleExportUserPDF(user.id)}
+                          aria-label="Xuất PDF người dùng"
+                        >
+                          <i className="fa fa-file-pdf"></i>
+                        </button>
+                        <button
+                          className={styles.btnSuccess}
+                          onClick={() => handleExportUserExcel(user.id)}
+                          aria-label="Xuất Excel người dùng"
+                        >
+                          <i className="fa fa-file-excel"></i>
                         </button>
                       </>
                     )}
