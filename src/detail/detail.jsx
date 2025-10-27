@@ -16,7 +16,7 @@ const Detail = () => {
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ];
   const PLACEHOLDER_IMAGE = '/assets/placeholder.png';
-  const AA_STORAGE_PATH = '/storage/auction_images/';  // Cleaned up from 'var aa'
+  const AA_STORAGE_PATH = '';  // Cleaned up from 'var aa'
 
   // State variables
   const [auctionItem, setAuctionItem] = useState({});

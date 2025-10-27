@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../UserContext';
-import styles from './Header.module.css';  // Note: Nên đổi thành Sidebar.module.css nếu tách riêng
+import styles from './Header.module.css';
 
 const Sidebar = () => {
   const { user } = useUser();
-  const [activeItem, setActiveItem] = useState('');
+  const [activeItem, setActiveItem] = useState('settings');
   const [allowedItems, setAllowedItems] = useState([]);
   const navigate = useNavigate();
-  const location = useLocation();
 
   // Lấy REACT_APP_API_URL từ biến môi trường
   const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
@@ -47,7 +46,7 @@ const Sidebar = () => {
   const permissionsMapping = {
     2: ['/contract'],
     3: ['/report'],
-    22: ['/auction-asset'], // manage_products
+    22: ['/auction-asset'], // manage_products (cần thêm trang nếu có)
     23: ['/assets-categories'],
     24: ['/auction-asset'],   
     25: ['/news'],
@@ -65,56 +64,39 @@ const Sidebar = () => {
     37: ['/econtract'],
     38: ['/roles', '/permissions'],
     42: ['/dashboard'], // manage_dashboard
-    43: ['/users'],     // manage_users
+    43: ['/users'],     // manage_users (giả sử thêm)
     44: ['/settings'],  // manage_settings
     45: ['/history'],   // view_history
     46: ['/asset-categories']
   };
 
-  // ✅ useEffect với cache localStorage (thay toàn bộ phần cũ)
+  // Lấy danh sách trang được phép từ API
   useEffect(() => {
     const fetchPermissions = async () => {
-      if (!user?.role_id) return;
-
-      // ✅ 1. Kiểm tra cache
-      const cached = localStorage.getItem(`role_permissions_${user.role_id}`);
-      if (cached) {
-        setAllowedItems(JSON.parse(cached));
-        return;
-      }
-
-      // ✅ 2. Nếu chưa có cache → gọi API
-      try {
-        const response = await fetch(`${API_URL}roles/${user.role_id}/permissions`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const data = await response.json();
-        if (data && Array.isArray(data.permissions)) {
-          const permissionIds = data.permissions.map(permission => permission.permission_id);
-          const allowedPaths = permissionIds.flatMap((id) => permissionsMapping[id] || []);
-          const allItems = getSidebarItems();
-          const filteredItems = allItems.filter((item) =>
-            allowedPaths.includes(item.href.replace('/admin', '')) || item.href === '#'
-          );
-
-          // ✅ Lưu cache + cập nhật UI
-          setAllowedItems(filteredItems);
-          localStorage.setItem(`role_permissions_${user.role_id}`, JSON.stringify(filteredItems));
+      if (user?.role_id) {
+        try {
+          const response = await fetch(`${API_URL}roles/${user.role_id}/permissions`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          if (data && Array.isArray(data.permissions)) {
+            const permissionIds = data.permissions.map(permission => permission.permission_id);
+            const allowedPaths = permissionIds.flatMap((id) => permissionsMapping[id] || []);
+            const allItems = getSidebarItems();
+            const filteredItems = allItems.filter((item) =>
+              allowedPaths.includes(item.href.replace('/admin', '')) || item.href === '#'
+            );
+            setAllowedItems(filteredItems);
+          }
+        } catch (error) {
+          console.error('Error fetching permissions:', error);
         }
-      } catch (error) {
-        console.error('Error fetching permissions:', error);
       }
     };
 
     fetchPermissions();
   }, [user?.role_id, API_URL]);
-
-  // useEffect cho activeItem dựa trên URL (giữ nguyên)
-  useEffect(() => {
-    const allItems = getSidebarItems();
-    const currentItem = allItems.find(item => location.pathname === item.href);
-    setActiveItem(currentItem ? currentItem.id : '');
-  }, [location.pathname]);
 
   const sections = [
     { title: 'Bảng điều khiển', items: allowedItems.slice(0, 5) },
@@ -129,25 +111,11 @@ const Sidebar = () => {
     }
   };
 
-  // Fallback render nếu chưa có items (trống tạm thời)
-  if (allowedItems.length === 0 && user?.role_id) {
-    return (
-      <div className={styles.sidebar}>
-        <div className={styles.sidebarHeader}>
-          <div className={styles.logo}>
-            <img className={styles.logoImg} src="/assets/img/logo.jpg" alt="Logo" />
-          </div>
-        </div>
-        <div className={styles.loadingPlaceholder}>Đang tải menu...</div>  {/* Optional: Thêm text placeholder */}
-      </div>
-    );
-  }
-
   return (
     <div className={styles.sidebar}>
       <div className={styles.sidebarHeader}>
         <div className={styles.logo}>
-          <img className={styles.logoImg} src="/assets/img/logo.jpg" alt="Logo" />
+          <img className={styles.logoImg} src="\assets\img\logo.jpg" alt="Logo" />
         </div>
       </div>
 

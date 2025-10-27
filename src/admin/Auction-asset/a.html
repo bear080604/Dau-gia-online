@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Tài Sản Đấu Giá</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+                Roboto, sans-serif;
+        }
+
+        .mainContent {
+            position: absolute;
+            top: 0;
+            left: 280px;
+            width: calc(100% - 280px);
+            height: 100vh;
+            padding: 2rem;
+            background-color: #f9fafb;
+            overflow-y: auto;
+        }
+
+        .fileNamePreview a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .fileNamePreview a:hover {
+            text-decoration: underline;
+        }
+
+        /* Auction-asset.module.css */
+        .imagePreview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .imageContainer {
+            position: relative;
+            width: 100px; /* Kích thước cố định cho ảnh */
+            height: 100px;
+        }
+
+        .previewImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Đảm bảo ảnh không bị méo */
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .removeImageBtn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 20px;
+            text-align: center;
+        }
+
+        .removeImageBtn:hover {
+            background-color: #cc0000;
+        }
+
+        .fileNamePreview {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .fileNamePreview a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .fileNamePreview a:hover {
+            text-decoration: underline;
+        }
+
+        /* Thêm style cho status nếu cần */
+        .statusChoduyet { background-color: #f0ad4e; }
+        .statusChodau { background-color: #5bc0de; }
+        .statusDangdau { background-color: #5cb85c; }
+        .statusDaban { background-color: #0275d8; }
+        .statusHuy { background-color: #d9534f; }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-right: 1rem;
+        }
+
+        .searchBar {
+            display: flex;
+            align-items: center;
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .searchBar:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .searchBar input {
+            border: none;
+            outline: none;
+            flex: 1;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            background: transparent;
+        }
+
+        .searchBar i {
+            color: #6b7280;
+            margin-right: 0.5rem;
+        }
+
+        .userProfile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .notificationBell {
+            position: relative;
+            font-size: 1.25rem;
+            color: #6b7280;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .notificationBell:hover {
+            color: #4f46e5;
+        }
+
+        .profileAvatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background-color: #4f46e5;
+            color: white;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .pageTitle {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1f2a44;
+            margin-bottom: 0.5rem;
+        }
+
+        .pageSubtitle {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .actionsBar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .addBtn {
+            background-color: #4f46e5;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .addBtn:hover {
+            background-color: #4338ca;
+        }
+
+        .addBtn i {
+            font-size: 1rem;
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .filterSelect {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            background-color: #ffffff;
+            font-size: 0.9rem;
+        }
+
+        .dataTable {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            table-layout: fixed; /* Fix layout để tránh bể */
+        }
+
+        .dataTable th {
+            text-align: left;
+            padding: 1rem;
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+            width: auto; /* Auto width */
+        }
+
+        .dataTable td {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.9rem;
+            word-wrap: break-word; /* Ngăn text dài làm bể cột */
+        }
+
+        .dataTable tr {
+            display: table-row; /* Đổi từ none sang table-row mặc định */
+        }
+
+        .dataTable tr.active {
+            display: table-row;
+        }
+
+        .dataTable tr.inactive {
+            display: none;
+        }
+
+        .dataTable tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .dataTable tr:last-child td {
+            border-bottom: none;
+        }
+
+        .statusBadge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .statusChoduyet {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .statusChodau {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .statusDangdau {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .statusDaban {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #22c55e;
+        }
+
+        .statusHuy {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .btn {
+            width: 36px;
+            height: 36px;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            margin-right: 0.5rem;
+        }
+
+        .btnEdit {
+            background-color: rgb(69, 15, 247);
+            color: white;
+        }
+
+        .btnPrimary {
+            background-color: rgb(96, 216, 130);
+            color: white;
+        }
+
+        .btnPrimary:hover {
+            background-color: rgb(84, 164, 106);
+        }
+
+        .btnDanger {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .btnDanger:hover {
+            background-color: #dc2626;
+        }
+
+        .btnSuccess {
+            background-color: #22c55e;
+            color: white;
+        }
+
+        .btnSuccess:hover {
+            background-color: #16a34a;
+        }
+
+        .btnWarning {
+            background-color: #f59e0b;
+            color: white;
+        }
+
+        .btnWarning:hover {
+            background-color: #d97706;
+        }
+
+        .btnSecondary {
+            background-color: #6b7280;
+            color: white;
+        }
+
+        .btnSecondary:hover {
+            background-color: #4b5563;
+        }
+
+        .actionButtons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            white-space: nowrap; /* Ngăn wrap làm bể */
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .paginationBtn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e5e7eb;
+            background-color: #ffffff;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .paginationBtn:hover {
+            background-color: #f9fafb;
+        }
+
+        .paginationBtnActive {
+            background-color: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modalContent {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modalHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modalTitle {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modalClose {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .modalClose:hover {
+            color: #374151;
+        }
+
+        .modalBody {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .modalBody label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .modalBody input,
+        .modalBody select,
+        .modalBody textarea {
+            padding: 0.5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            font-size: 0.85rem;
+            width: 100%;
+        }
+
+        .modalBody textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .modalBody p {
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modalBody p strong {
+            font-weight: 600;
+        }
+
+        .modalBody input[readonly] {
+            background-color: #f9fafb;
+            cursor: not-allowed;
+        }
+
+        .modalFooter {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .orderHistory {
+            margin-top: 1rem;
+        }
+
+        .orderHistory h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .orderTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .orderTable th {
+            border: 1px solid #e5e7eb;
+        }
+
+        .orderTable td {
+            border: 1px solid #e5e7eb;
+            padding: 0.5rem;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        .orderTable th {
+            background: #f9fafb;
+            font-weight: 500;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mainContent {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .searchBar {
+                max-width: 100%;
+            }
+
+            .actionsBar {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .modalContent {
+                margin: 1rem;
+                max-width: 90%;
+            }
+
+            .dataTable {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap; /* Fix bể trên mobile */
+            }
+
+            .dataTable thead {
+                display: none;
+            }
+
+            .dataTable tbody,
+            .dataTable tr,
+            .dataTable td {
+                display: block;
+                width: 100%;
+            }
+
+            .dataTable td {
+                position: relative;
+                padding-left: 50%;
+                padding-right: 1rem;
+            }
+
+            .dataTable td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 1rem;
+                width: 45%;
+                font-weight: 600;
+                white-space: nowrap;
+            }
+
+            .actionButtons {
+                justify-content: flex-start;
+            }
+        }
+
+        /* No data message */
+        .noData {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="mainContent">
+        <div class="header">
+            <div class="searchBar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Tìm kiếm tài sản..." id="searchInput">
+            </div>
+            <div class="userProfile">
+                <div class="notificationBell">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="profileAvatar">QT</div>
+            </div>
+        </div>
+
+        <h1 class="pageTitle">Quản Lý Tài Sản Đấu Giá</h1>
+        <p class="pageSubtitle">Quản lý và theo dõi các tài sản được đưa ra đấu giá</p>
+
+        <div class="actionsBar">
+            <div class="filters">
+                <select class="filterSelect" id="statusFilter">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="Chờ duyệt">Chờ duyệt</option>
+                    <option value="Chờ đấu giá">Chờ đấu giá</option>
+                    <option value="Đang đấu giá">Đang đấu giá</option>
+                    <option value="Đã bán">Đã bán</option>
+                    <option value="Hủy">Hủy</option>
+                </select>
+                <select class="filterSelect" id="categoryFilter">
+                    <option value="">Tất cả danh mục</option>
+                    <!-- Options sẽ được populate từ API -->
+                </select>
+            </div>
+            <button class="addBtn" onclick="openAddModal()">
+                <i class="fas fa-plus"></i>
+                Thêm tài sản mới
+            </button>
+        </div>
+
+        <table class="dataTable" id="dataTable">
+            <thead>
+                <tr>
+                    <th>Mã TS</th>
+                    <th>Tên tài sản</th>
+                    <th>Danh mục</th>
+                    <th>Chủ sở hữu</th>
+                    <th>Giá khởi điểm</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Rows sẽ được populate từ API -->
+            </tbody>
+        </table>
+
+        <div id="noDataMessage" class="noData" style="display: none;">
+            Không có dữ liệu tài sản nào. Hãy thử thêm mới hoặc kiểm tra API.
+        </div>
+
+        <div class="pagination" id="pagination">
+            <!-- Pagination buttons will be generated by JS -->
+        </div>
+
+        <!-- Add/Edit Asset Modal -->
+        <div id="assetModal" class="modal">
+            <div class="modalContent">
+                <div class="modalHeader">
+                    <h2 class="modalTitle" id="modalTitle">Thêm tài sản mới</h2>
+                    <span class="modalClose" onclick="closeModal('assetModal')">&times;</span>
+                </div>
+                <div class="modalBody">
+                    <div>
+                        <label for="name">Tên tài sản</label>
+                        <input type="text" id="name" placeholder="Nhập tên tài sản">
+                    </div>
+                    <div>
+                        <label for="category">Danh mục</label>
+                        <select id="category">
+                            <option value="">Chọn danh mục</option>
+                            <!-- Options sẽ được populate từ API -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="owner">Chủ sở hữu</label>
+                        <input type="text" id="owner" value="" readonly>
+                    </div>
+                    <div>
+                        <label for="startingPrice">Giá khởi điểm (VND)</label>
+                        <input type="number" id="startingPrice" placeholder="Nhập giá khởi điểm (VD: 1000000)" step="0.01">
+                    </div>
+                    <div>
+                        <label for="description">Mô tả</label>
+                        <textarea id="description" placeholder="Nhập mô tả tài sản"></textarea>
+                    </div>
+                    <div>
+                        <label for="images">Ảnh chính</label>
+                        <input type="file" id="images" accept="image/*">
+                        <div class="imagePreview" id="imagePreview">
+                            <!-- Preview sẽ được thêm bởi JS -->
+                        </div>
+                    </div>
+                    <div>
+                        <label for="extraImages">Hình ảnh bổ sung</label>
+                        <input type="file" id="extraImages" accept="image/*" multiple>
+                        <div class="imagePreview" id="extraImagePreview">
+                            <p>Không có hình ảnh bổ sung</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="urlFile">Tệp đính kèm</label>
+                        <input type="file" id="urlFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+                        <div class="fileNamePreview" id="fileNamePreview">Không có tệp đính kèm</div>
+                    </div>
+                    <div>
+                        <label for="status">Trạng thái</label>
+                        <select id="status">
+                            <option value="ChoDuyet">Chờ duyệt</option>
+                            <option value="ChoDauGia">Chờ đấu giá</option>
+                            <option value="DangDauGia">Đang đấu giá</option>
+                            <option value="DaBan">Đã bán</option>
+                            <option value="Huy">Hủy</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modalFooter">
+                    <button class="btn btnPrimary" onclick="saveAsset()">Lưu</button>
+                    <button class="btn btnSecondary" onclick="closeModal('assetModal')">Hủy</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Asset Modal -->
+        <div id="viewModal" class="modal">
+            <div class="modalContent">
+                <div class="modalHeader">
+                    <h2 class="modalTitle">Chi Tiết Tài Sản</h2>
+                    <span class="modalClose" onclick="closeModal('viewModal')">&times;</span>
+                </div>
+                <div class="modalBody" id="viewBody">
+                    <!-- Nội dung sẽ được điền bởi JS -->
+                </div>
+                <div class="modalFooter">
+                    <button class="btn btnSecondary" onclick="closeModal('viewModal')">Đóng</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reject Asset Modal -->
+        <div id="rejectModal" class="modal">
+            <div class="modalContent">
+                <div class="modalHeader">
+                    <h2 class="modalTitle">Từ Chối Tài Sản</h2>
+                    <span class="modalClose" onclick="closeModal('rejectModal')">&times;</span>
+                </div>
+                <div class="modalBody">
+                    <p id="rejectAssetName">Bạn đang từ chối tài sản: <strong></strong></p>
+                    <div>
+                        <label for="rejectReason">Lý do từ chối</label>
+                        <textarea id="rejectReason" placeholder="Nhập lý do từ chối tài sản..."></textarea>
+                    </div>
+                </div>
+                <div class="modalFooter">
+                    <button class="btn btnDanger" onclick="rejectAsset()">Xác nhận từ chối</button>
+                    <button class="btn btnSecondary" onclick="closeModal('rejectModal')">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Base URL
+        const API_BASE = 'http://localhost:8000/api';
+        const BASE_IMAGE_URL = 'http://localhost:8000';
+        const BASE_FILE_URL = 'http://localhost:8000';
+        let assets = [];
+        let categories = [];
+        let currentPage = 1;
+        const itemsPerPage = 5;
+        let currentAssetId = null;
+        let currentAssetData = null;
+
+        // Status mapping: API -> UI
+        const statusMap = {
+            'ChoDuyet': 'Chờ duyệt',
+            'ChoDauGia': 'Chờ đấu giá',
+            'DangDauGia': 'Đang đấu giá',
+            'DaBan': 'Đã bán',
+            'Huy': 'Hủy'
+        };
+        const reverseStatusMap = Object.fromEntries(Object.entries(statusMap).map(([k, v]) => [v, k]));
+
+        // Format price to VND
+        function formatPrice(price) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseFloat(price));
+        }
+
+        // Format date
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('vi-VN');
+        }
+
+        // Auth helper
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token'); // Assume token from login
+            return {
+                'Accept': 'application/json',
+                ...(token && { 'Authorization': `Bearer ${token}` })
+            };
+        }
+
+        // API call helper with auth
+        async function apiCall(url, options = {}) {
+            const defaultOptions = {
+                headers: getAuthHeaders(),
+                ...options
+            };
+            if (options.body instanceof FormData) {
+                // Không set Content-Type cho FormData
+                delete defaultOptions.headers['Content-Type'];
+            } else if (options.body) {
+                defaultOptions.headers['Content-Type'] = 'application/json';
+            }
+            const response = await fetch(url, defaultOptions);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
+            }
+            return response.json();
+        }
+
+        // Fetch categories (public)
+        async function fetchCategories() {
+            try {
+                const response = await fetch(`${API_BASE}/categories`);
+                const data = await response.json();
+                categories = data.data || [];
+                populateCategorySelects();
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+                alert('Lỗi khi tải danh mục!');
+            }
+        }
+
+        // Populate category selects
+        function populateCategorySelects() {
+            const categorySelect = document.getElementById('category');
+            const categoryFilter = document.getElementById('categoryFilter');
+            categorySelect.innerHTML = '<option value="">Chọn danh mục</option>';
+            categoryFilter.innerHTML = '<option value="">Tất cả danh mục</option>';
+            categories.forEach(cat => {
+                const option = `<option value="${cat.category_id}">${cat.name}</option>`;
+                categorySelect.insertAdjacentHTML('beforeend', option);
+                categoryFilter.insertAdjacentHTML('beforeend', `<option value="${cat.name}">${cat.name}</option>`);
+            });
+        }
+
+        // Fetch assets (assume public for index)
+        async function fetchAssets() {
+            try {
+                console.log('Fetching assets...'); // Debug log
+                const response = await fetch(`${API_BASE}/products`);
+                const data = await response.json();
+                console.log('API Response:', data); // Debug log
+                assets = (data.data || []).map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    category: typeof item.category === 'string' ? item.category : item.category?.name || item.category || 'N/A', // Fix: ensure string with fallback
+                    owner: item.owner?.name || 'N/A',       // Lấy trực tiếp tên từ object
+                    ownerId: item.owner?.id || null,        // Lưu id nếu cần (từ object)
+                    ownerEmail: item.owner?.email || 'N/A', // Lấy email trực tiếp
+                    price: formatPrice(item.starting_price),
+                    rawPrice: item.starting_price,
+                    status: statusMap[item.status] || item.status,
+                    rawStatus: item.status,
+                    description: item.description || '',
+                    createdDate: formatDate(item.created_at),
+                    imageUrl: item.image_url ? BASE_IMAGE_URL + item.image_url : null,
+                    urlFile: item.url_file ? BASE_FILE_URL + item.url_file : null,
+                    auctionOrgId: item.auction_org_id
+                }));
+                console.log('Mapped assets:', assets); // Debug log
+                initTable();
+            } catch (error) {
+                console.error('Error fetching assets:', error);
+                alert('Lỗi khi tải tài sản: ' + error.message);
+                showNoDataMessage();
+            }
+        }
+
+        // Get auction org name by ID (nếu cần hiển thị)
+        async function getAuctionOrgName(orgId) {
+            if (!orgId) return 'N/A';
+            try {
+                const data = await apiCall(`${API_BASE}/auction-orgs/${orgId}`); // Giả sử endpoint tồn tại
+                return data.data ? data.data.name : 'N/A';
+            } catch (error) {
+                console.error('Error fetching auction org:', error);
+                return 'N/A';
+            }
+        }
+
+        // Khởi tạo bảng
+        function initTable() {
+            const tbody = document.getElementById('tableBody');
+            const noDataMsg = document.getElementById('noDataMessage');
+            tbody.innerHTML = '';
+            if (assets.length === 0) {
+                showNoDataMessage();
+                return;
+            }
+            noDataMsg.style.display = 'none';
+            assets.forEach(asset => {
+                const tr = document.createElement('tr');
+                tr.classList.add('active'); // Mặc định active để hiển thị
+                tr.setAttribute('data-id', asset.id);
+                tr.setAttribute('data-name', asset.name);
+                tr.setAttribute('data-category', asset.category); // Already string
+                tr.setAttribute('data-owner', asset.owner);
+                tr.setAttribute('data-status', asset.status); // UI status string
+                tr.innerHTML = `
+                    <td data-label="Mã TS">${asset.id}</td>
+                    <td data-label="Tên tài sản">${asset.name}</td>
+                    <td data-label="Danh mục">${asset.category}</td>
+                    <td data-label="Chủ sở hữu">${asset.owner}</td>
+                    <td data-label="Giá khởi điểm">${asset.price}</td>
+                    <td data-label="Trạng thái">
+                        <span class="statusBadge status${asset.rawStatus}">${asset.status}</span>
+                    </td>
+                    <td data-label="Hành động">
+                        <div class="actionButtons">
+                            ${getActionButtons(asset.id, asset.status)}
+                            <button class="btn btnPrimary" onclick="openViewModal(${asset.id})"><i class="fa fa-eye"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            console.log('Table populated with', tbody.children.length, 'rows'); // Debug
+            renderPagination();
+            updateTable();
+        }
+
+        function getActionButtons(id, status) {
+            let buttons = '';
+            if (status === 'Chờ duyệt') {
+                buttons += `<button class="btn btnSuccess" onclick="approveAsset(${id})"><i class="fa fa-check"></i></button>
+                            <button class="btn btnDanger" onclick="openRejectModal(${id})"><i class="fa fa-times"></i></button>`;
+            } else if (status === 'Chờ đấu giá') {
+                buttons += `
+                            <button class="btn btnEdit" onclick="openEditModal(${id})"><i class="fa fa-pencil"></i></button>
+                            <button class="btn btnDanger" onclick="deleteAsset(${id})"><i class="fa fa-trash"></i></button>`;
+            } else {
+                buttons += `<button class="btn btnEdit" onclick="openEditModal(${id})"><i class="fa fa-pencil"></i></button>
+                            <button class="btn btnDanger" onclick="deleteAsset(${id})"><i class="fa fa-trash"></i></button>`;
+            }
+            return buttons;
+        }
+
+        function showNoDataMessage() {
+            document.getElementById('noDataMessage').style.display = 'block';
+            document.getElementById('pagination').innerHTML = '';
+        }
+
+        function updateTable() {
+            const rows = document.querySelectorAll('#tableBody tr');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value.toLowerCase();
+
+            let visibleCount = 0;
+            rows.forEach(row => {
+                const name = row.getAttribute('data-name').toLowerCase();
+                const owner = row.getAttribute('data-owner').toLowerCase();
+                const category = row.getAttribute('data-category').toLowerCase();
+                const status = row.getAttribute('data-status').toLowerCase();
+
+                const matchesSearch = name.includes(searchTerm) || owner.includes(searchTerm);
+                const matchesStatus = !statusFilter || status.includes(statusFilter);
+                const matchesCategory = !categoryFilter || category === categoryFilter;
+
+                if (matchesSearch && matchesStatus && matchesCategory) {
+                    row.style.display = 'table-row';
+                    row.classList.remove('inactive');
+                    row.classList.add('inactive'); // Wait, no: remove inactive, but we'll handle in showPage
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                    row.classList.add('inactive');
+                    row.classList.remove('active');
+                }
+            });
+
+            // Reset page nếu không có visible rows
+            if (visibleCount === 0) {
+                currentPage = 1;
+                document.getElementById('noDataMessage').style.display = 'block';
+            } else {
+                document.getElementById('noDataMessage').style.display = 'none';
+            }
+
+            // Pagination sau filter
+            const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+            const totalPages = Math.ceil(visibleRows.length / itemsPerPage);
+            if (currentPage > totalPages) currentPage = 1; // Reset page nếu filter làm giảm pages
+            renderPagination(totalPages);
+            showPage(currentPage, visibleRows);
+        }
+
+        function showPage(page, visibleRows) {
+            const rows = visibleRows || Array.from(document.querySelectorAll('#tableBody tr')).filter(row => row.style.display !== 'none');
+            // Fix: Ensure all visible rows are displayed first
+            rows.forEach(row => {
+                row.style.display = 'table-row';
+                row.classList.remove('active', 'inactive');
+            });
+            const start = (page - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageRows = rows.slice(start, end);
+            pageRows.forEach(row => row.classList.add('active'));
+            // Hide the rest
+            rows.forEach((row, index) => {
+                if (index < start || index >= end) {
+                    row.style.display = 'none';
+                    row.classList.add('inactive');
+                }
+            });
+        }
+
+        function renderPagination(totalPages = Math.ceil(assets.length / itemsPerPage)) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            if (totalPages <= 1) return;
+
+            // Add prev button
+            const prevBtn = document.createElement('button');
+            prevBtn.className = `paginationBtn ${currentPage === 1 ? 'paginationBtnDisabled' : ''}`;
+            prevBtn.textContent = '<';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateTable();
+                }
+            };
+            pagination.appendChild(prevBtn);
+
+            // Add page buttons
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.className = `paginationBtn ${i === currentPage ? 'paginationBtnActive' : ''}`;
+                btn.textContent = i;
+                btn.onclick = () => {
+                    currentPage = i;
+                    updateTable();
+                };
+                pagination.appendChild(btn);
+            }
+
+            // Add next button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = `paginationBtn ${currentPage === totalPages ? 'paginationBtnDisabled' : ''}`;
+            nextBtn.textContent = '>';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updateTable();
+                }
+            };
+            pagination.appendChild(nextBtn);
+        }
+
+        // Modal functions
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Thêm tài sản mới';
+            resetForm();
+            currentAssetId = null;
+
+            // Lấy user hiện tại từ localStorage
+            const loggedUser = JSON.parse(localStorage.getItem('user'));
+            const ownerInput = document.getElementById('owner');
+            if (ownerInput) {
+                ownerInput.value = loggedUser?.full_name || 'N/A';
+                ownerInput.dataset.userId = loggedUser?.user_id || ''; // lưu id để gửi API
+            }
+
+            document.getElementById('assetModal').classList.add('active');
+        }
+
+        async function openEditModal(id) {
+            currentAssetId = id;
+            try {
+                const data = await apiCall(`${API_BASE}/auction-items/${id}`);
+                currentAssetData = data.data || data; // Fix: handle nested data
+                document.getElementById('modalTitle').textContent = 'Chỉnh sửa tài sản';
+                document.getElementById('name').value = currentAssetData.name || '';
+                document.getElementById('category').value = currentAssetData.category_id || '';
+                const ownerInput = document.getElementById('owner');
+                ownerInput.value = currentAssetData.owner?.name || 'N/A';  // Hiển thị tên
+                ownerInput.dataset.userId = currentAssetData.owner?.id || '';  // Lưu id
+                document.getElementById('startingPrice').value = parseFloat(currentAssetData.starting_price) || '';
+                document.getElementById('description').value = currentAssetData.description || '';
+                document.getElementById('status').value = currentAssetData.status || 'ChoDuyet';
+                // Preview main image
+                if (currentAssetData.image_url) {
+                    const fullImageUrl = BASE_IMAGE_URL + currentAssetData.image_url;
+                    document.getElementById('imagePreview').innerHTML = `<div class="imageContainer"><img src="${fullImageUrl}" alt="Preview" class="previewImage"><button type="button" class="removeImageBtn" onclick="removeImage()">&times;</button></div>`;
+                }
+                // Extra images from data.images (assuming Resource includes them)
+                const extraImages = currentAssetData.images || [];
+                const extraPreviews = extraImages.map(img => {
+                    // Fix: fallback nếu key khác (image_url hoặc url)
+                    const imgUrl = img.image_url || img.url || '';
+                    if (!imgUrl) return ''; // Skip nếu không có url
+                    const fullImageUrl = BASE_IMAGE_URL + imgUrl;
+                    return `<div class="imageContainer"><img src="${fullImageUrl}" alt="Extra" class="previewImage"><button type="button" class="removeImageBtn" onclick="removeExtraImage('${img.image_id || img.id}')">&times;</button></div>`;
+                }).filter(preview => preview).join(''); // Filter bỏ empty
+                document.getElementById('extraImagePreview').innerHTML = extraPreviews || '<p>Không có hình ảnh bổ sung</p>';
+                // File
+                if (currentAssetData.url_file) {
+                    const fullFileUrl = BASE_FILE_URL + currentAssetData.url_file;
+                    // Fix: an toàn split nếu url_file có path
+                    const fileName = currentAssetData.url_file.split('/').pop() || 'file_unknown';
+                    document.getElementById('fileNamePreview').innerHTML = `Tệp đã chọn: <a href="${fullFileUrl}" target="_blank">${fileName}</a>`;
+                }
+            } catch (error) {
+                console.error('Error loading asset:', error);
+                if (error.message.includes('401') || error.message.includes('403')) {
+                    alert('Phiên đăng nhập hết hạn! Vui lòng đăng nhập lại.');
+                    // Redirect to login if needed
+                } else {
+                    alert('Lỗi khi tải tài sản: ' + error.message);
+                }
+            }
+            document.getElementById('assetModal').classList.add('active');
+        }
+
+        async function openViewModal(id) {
+            try {
+                const data = await apiCall(`${API_BASE}/auction-items/${id}`);
+                currentAssetData = data.data || data;
+                const auctionOrgName = await getAuctionOrgName(currentAssetData.auction_org_id);
+                const ownerId = currentAssetData.owner?.id;  // Từ object
+                const ownerName = currentAssetData.owner?.name || 'N/A';  // Trực tiếp
+                const ownerEmail = currentAssetData.owner?.email || 'N/A';  // Trực tiếp
+                const bidHistory = currentAssetData.sessions ? currentAssetData.sessions.flatMap(s => s.bids || []).map(bid => ({
+                    id: bid.id,
+                    user: bid.user?.name || 'N/A',
+                    amount: bid.amount,
+                    created_at: bid.created_at
+                })) : [];
+                const viewBody = document.getElementById('viewBody');
+                const fullImageUrl = currentAssetData.image_url ? BASE_IMAGE_URL + currentAssetData.image_url : '';
+                const fullFileUrl = currentAssetData.url_file ? BASE_FILE_URL + currentAssetData.url_file : '';
+                const fileName = currentAssetData.url_file ? currentAssetData.url_file.split('/').pop() || 'file_unknown' : '';
+                viewBody.innerHTML = `
+                    <p><strong>Mã tài sản:</strong> ${currentAssetData.id}</p>
+                    <p><strong>Tên tài sản:</strong> ${currentAssetData.name || 'N/A'}</p>
+                    <p><strong>Danh mục:</strong> ${currentAssetData.category?.name || currentAssetData.category || 'N/A'}</p>
+                    <p><strong>Chủ sở hữu:</strong> ${ownerName}</p>
+                    <p><strong>Email:</strong> ${ownerEmail}</p>
+                    <p><strong>Tổ chức đấu giá:</strong> ${auctionOrgName}</p>
+                    <p><strong>Giá khởi điểm:</strong> ${formatPrice(currentAssetData.starting_price)}</p>
+                    <p><strong>Trạng thái:</strong> ${statusMap[currentAssetData.status] || currentAssetData.status}</p>
+                    <p><strong>Ngày tạo:</strong> ${formatDate(currentAssetData.created_at)}</p>
+                    <p><strong>Mô tả:</strong> ${currentAssetData.description || 'N/A'}</p>
+                    <div>
+                        <strong>Ảnh chính:</strong>
+                        <div class="imagePreview">
+                            ${fullImageUrl ? `<img src="${fullImageUrl}" alt="Asset" class="previewImage">` : '<p>Không có ảnh</p>'}
+                        </div>
+                    </div>
+                    <div>
+                        <strong>Hình ảnh bổ sung:</strong>
+                        <div class="imagePreview">
+                            ${(currentAssetData.images || []).map(img => {
+                                const imgUrl = img.image_url || img.url || '';
+                                if (!imgUrl) return ''; // Skip nếu không có
+                                const fullImgUrl = BASE_IMAGE_URL + imgUrl;
+                                return `<img src="${fullImgUrl}" alt="Extra" class="previewImage">`;
+                            }).filter(url => url).join('') || '<p>Không có hình ảnh bổ sung</p>'}
+                        </div>
+                    </div>
+                    <div>
+                        <strong>Tệp đính kèm:</strong>
+                        ${fullFileUrl ? `<div class="fileNamePreview">Tệp: <a href="${fullFileUrl}" target="_blank">${fileName}</a></div>` : '<p>Không có tệp đính kèm</p>'}
+                    </div>
+                    <div class="orderHistory">
+                        <h3>Lịch sử lượt bid</h3>
+                        <table class="orderTable">
+                            <thead>
+                                <tr><th>Mã bid</th><th>Người bid</th><th>Giá bid</th><th>Thời gian</th></tr>
+                            </thead>
+                            <tbody>
+                                ${bidHistory.length > 0 ? bidHistory.map(bid => `<tr><td>${bid.id}</td><td>${bid.user}</td><td>${formatPrice(bid.amount)}</td><td>${formatDate(bid.created_at)}</td></tr>`).join('') : '<tr><td colSpan="4">Không có lịch sử bid</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading asset details:', error);
+                if (error.message.includes('401') || error.message.includes('403')) {
+                    alert('Phiên đăng nhập hết hạn! Vui lòng đăng nhập lại.');
+                } else {
+                    alert('Lỗi khi tải chi tiết tài sản: ' + error.message);
+                }
+            }
+            document.getElementById('viewModal').classList.add('active');
+        }
+
+        function openRejectModal(id) {
+            currentAssetId = id;
+            const asset = assets.find(a => a.id === id);
+            if (asset) {
+                document.getElementById('rejectAssetName').innerHTML = `Bạn đang từ chối tài sản: <strong>${asset.name}</strong>`;
+            }
+            document.getElementById('rejectModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            if (modalId === 'assetModal') {
+                resetForm();
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('name').value = '';
+            document.getElementById('category').value = '';
+            document.getElementById('owner').value = '';
+            document.getElementById('owner').dataset.userId = ''; // Reset id
+            document.getElementById('startingPrice').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('status').value = 'ChoDuyet';
+            document.getElementById('imagePreview').innerHTML = '';
+            document.getElementById('extraImagePreview').innerHTML = '<p>Không có hình ảnh bổ sung</p>';
+            document.getElementById('fileNamePreview').textContent = 'Không có tệp đính kèm';
+            document.getElementById('images').value = '';
+            document.getElementById('extraImages').value = '';
+            document.getElementById('urlFile').value = '';
+        }
+
+        // File handling
+        document.getElementById('images').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                document.getElementById('imagePreview').innerHTML = `<div class="imageContainer"><img src="${url}" alt="Preview" class="previewImage"><button type="button" class="removeImageBtn" onclick="removeImage()">&times;</button></div>`;
+            }
+        });
+
+        document.getElementById('extraImages').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const previews = files.map((file, idx) => {
+                const url = URL.createObjectURL(file);
+                return `<div class="imageContainer" data-file-index="${idx}"><img src="${url}" alt="Extra ${idx}" class="previewImage"><button type="button" class="removeImageBtn" onclick="removeExtraImagePreview(event)">&times;</button></div>`;
+            }).join('');
+            document.getElementById('extraImagePreview').innerHTML = previews || '<p>Không có hình ảnh bổ sung</p>';
+        });
+
+        document.getElementById('urlFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileNamePreview').textContent = `Tệp đã chọn: ${file.name}`;
+            }
+        });
+
+        function removeImage() {
+            document.getElementById('imagePreview').innerHTML = '';
+            document.getElementById('images').value = '';
+        }
+
+        // Fix: xử lý xóa preview extra image cho add mode (dùng data-file-index)
+        function removeExtraImagePreview(event) {
+            const container = event.target.closest('.imageContainer');
+            if (container) {
+                container.remove();
+                // Optional: nếu cần xóa file từ input, phức tạp hơn, có thể dùng FileList hack
+                // Nhưng tạm thời chỉ remove preview, user có thể upload lại
+            }
+            updateExtraPreviewEmptyState();
+        }
+
+        function updateExtraPreviewEmptyState() {
+            const preview = document.getElementById('extraImagePreview');
+            if (preview.children.length === 0 || preview.innerHTML.trim() === '') {
+                preview.innerHTML = '<p>Không có hình ảnh bổ sung</p>';
+            }
+        }
+
+        function removeExtraImage(imageId = null) {
+            if (imageId && currentAssetId) {
+                // API delete
+                apiCall(`${API_BASE}/auction-items/images/${imageId}`, { method: 'DELETE' })
+                    .then(() => {
+                        alert('Xóa ảnh thành công!');
+                        openEditModal(currentAssetId); // Reload modal
+                    })
+                    .catch(error => alert('Lỗi xóa ảnh: ' + error.message));
+            } else {
+                // For add mode - đã xử lý qua removeExtraImagePreview
+                updateExtraPreviewEmptyState();
+                // Clear input nếu cần (hack: replace input)
+                const input = document.getElementById('extraImages');
+                input.value = '';
+            }
+        }
+
+        // Save asset (add or update)
+        async function saveAsset() {
+            const formData = new FormData();
+            const name = document.getElementById('name').value.trim();
+            const categoryId = document.getElementById('category').value;
+            const ownerId = document.getElementById('owner').dataset.userId; // Lấy từ dataset
+            const startingPrice = document.getElementById('startingPrice').value;
+            const description = document.getElementById('description').value.trim();
+            const status = document.getElementById('status').value; // API key
+
+            if (!name || !categoryId || !ownerId || !startingPrice) {
+                alert('Vui lòng điền đầy đủ thông tin bắt buộc (Tên, Danh mục, Chủ sở hữu, Giá khởi điểm)!');
+                return;
+            }
+
+            formData.append('name', name);
+            formData.append('category_id', categoryId);
+            formData.append('owner_id', ownerId); // Gửi owner_id từ dataset
+            formData.append('starting_price', startingPrice); // Float from number input
+            formData.append('description', description);
+            formData.append('status', status);
+
+            const imageFile = document.getElementById('images').files[0];
+            if (imageFile) formData.append('image', imageFile);
+
+            const urlFile = document.getElementById('urlFile').files[0];
+            if (urlFile) formData.append('url_file', urlFile);
+
+            const extraFiles = document.getElementById('extraImages').files;
+            for (let i = 0; i < extraFiles.length; i++) {
+                formData.append('extra_images[]', extraFiles[i]);
+            }
+
+            // Fix: Use POST + _method for PUT
+            const url = currentAssetId ? `${API_BASE}/auction-items/${currentAssetId}` : `${API_BASE}/auction-items`;
+            if (currentAssetId) {
+                formData.append('_method', 'PUT');
+            }
+
+            try {
+                const result = await apiCall(url, { method: 'POST', body: formData });
+                if (result.status) {
+                    alert('Lưu thành công!');
+                    closeModal('assetModal');
+                    fetchAssets(); // Refresh
+                } else {
+                    alert('Lỗi: ' + (result.message || 'Không thể lưu!'));
+                }
+            } catch (error) {
+                console.error('Error saving asset:', error);
+                if (error.message.includes('401') || error.message.includes('403')) {
+                    alert('Phiên đăng nhập hết hạn! Vui lòng đăng nhập lại.');
+                } else {
+                    alert('Lỗi khi lưu: ' + error.message);
+                }
+            }
+        }
+
+        async function approveAsset(id) {
+            try {
+                const result = await apiCall(`${API_BASE}/auction-items/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ status: 'ChoDauGia' }) // API key
+                });
+                if (result.status) {
+                    alert('Duyệt thành công!');
+                    fetchAssets();
+                } else {
+                    alert('Lỗi: ' + (result.message || 'Không thể duyệt!'));
+                }
+            } catch (error) {
+                console.error('Error approving:', error);
+                if (error.message.includes('401') || error.message.includes('403')) {
+                    alert('Phiên đăng nhập hết hạn!');
+                } else {
+                    alert('Lỗi khi duyệt: ' + error.message);
+                }
+            }
+        }
+
+        async function deleteAsset(id) {
+            if (confirm(`Xóa tài sản ${id}?`)) {
+                try {
+                    const result = await apiCall(`${API_BASE}/auction-items/${id}`, { method: 'DELETE' });
+                    if (result.status) {
+                        alert('Xóa thành công!');
+                        fetchAssets();
+                    } else {
+                        alert('Lỗi: ' + (result.message || 'Không thể xóa!'));
+                    }
+                } catch (error) {
+                    console.error('Error deleting:', error);
+                    if (error.message.includes('401') || error.message.includes('403')) {
+                        alert('Phiên đăng nhập hết hạn!');
+                    } else {
+                        alert('Lỗi khi xóa: ' + error.message);
+                    }
+                }
+            }
+        }
+
+        async function createAuction(id) {
+            try {
+                const result = await apiCall(`${API_BASE}/auction-items/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ status: 'DangDauGia' }) // API key
+                });
+                if (result.status) {
+                    alert('Tạo phiên đấu giá thành công!');
+                    fetchAssets();
+                } else {
+                    alert('Lỗi: ' + (result.message || 'Không thể tạo!'));
+                }
+            } catch (error) {
+                console.error('Error creating auction:', error);
+                if (error.message.includes('401') || error.message.includes('403')) {
+                    alert('Phiên đăng nhập hết hạn!');
+                } else {
+                    alert('Lỗi khi tạo phiên đấu giá: ' + error.message);
+                }
+            }
+        }
+
+        async function rejectAsset() {
+            const reason = document.getElementById('rejectReason').value.trim();
+            if (!reason) {
+                alert('Vui lòng nhập lý do từ chối!');
+                return;
+            }
+            try {
+                const result = await apiCall(`${API_BASE}/auction-items/${currentAssetId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ status: 'Huy', description: reason }) // API key
+                });
+                if (result.status) {
+                    alert(`Từ chối thành công với lý do: ${reason}`);
+                    closeModal('rejectModal');
+                    fetchAssets();
+                } else {
+                    alert('Lỗi: ' + (result.message || 'Không thể từ chối!'));
+                }
+            } catch (error) {
+                console.error('Error rejecting:', error);
+                if (error.message.includes('401') || error.message.includes('403')) {
+                    alert('Phiên đăng nhập hết hạn!');
+                } else {
+                    alert('Lỗi khi từ chối: ' + error.message);
+                }
+            }
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', updateTable);
+        document.getElementById('statusFilter').addEventListener('change', updateTable);
+        document.getElementById('categoryFilter').addEventListener('change', updateTable);
+
+        // Click outside to close modal
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Reset filters để tránh ẩn row
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('categoryFilter').value = '';
+            await fetchCategories();
+            await fetchAssets();
+            updateTable(); // Gọi updateTable để đảm bảo hiển thị
+        });
+    </script>
+</body>
+</html>

@@ -309,7 +309,7 @@ const Dashboard = () => {
       </div>
 
       <div className={styles.metricsGrid}>
-        <div className={styles.metricCard}>
+        {/* <div className={styles.metricCard}>
           <div className={styles.metricTitle}>
             <span>Phiên đấu giá hôm nay</span>
             <i className="fas fa-gavel"></i>
@@ -319,7 +319,7 @@ const Dashboard = () => {
             <i className="fas fa-arrow-up"></i>
             <span>+15% so với hôm qua</span>
           </div>
-        </div>
+        </div> */}
 
         <div className={styles.metricCard}>
           <div className={styles.metricTitle}>
