@@ -22,23 +22,51 @@ const Profile = () => {
     fullName: '',
     username: '',
     accountType: '',
+    role_id: null,
     email: '',
     phone: '',
     address: '',
+    gender: 'male', // Thêm trường gender với giá trị mặc định
     idCardFront: null,
     idCardFrontUrl: null,
     idCardBack: null,
     idCardBackUrl: null,
     bankName: '',
     bankAccount: '',
+    bankBranch: '',
     createdAt: '',
-    emailVerifiedAt: ''
+    emailVerifiedAt: '',
+    organization_name: '',
+    position: '',
+    tax_code: '',
+    business_license: null,
+    business_license_issue_date: '',
+    business_license_issued_by: '',
+    auctioneer_card_front: null,
+    auctioneer_card_back: null,
+    certificate_number: '',
+    certificate_issue_date: '',
+    certificate_issued_by: '',
+    online_contact_method: '',
   });
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     phone: '',
     address: '',
+    gender: 'male', // Thêm trường gender với giá trị mặc định
+    organization_name: '',
+    position: '',
+    tax_code: '',
+    business_license: null,
+    business_license_issue_date: '',
+    business_license_issued_by: '',
+    auctioneer_card_front: null,
+    auctioneer_card_back: null,
+    certificate_number: '',
+    certificate_issue_date: '',
+    certificate_issued_by: '',
+    online_contact_method: '',
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -53,13 +81,25 @@ const Profile = () => {
   });
   const navigate = useNavigate();
 
-  // Đồng bộ formData với userData
   useEffect(() => {
     setFormData({
       fullName: userData.fullName,
       email: userData.email,
       phone: userData.phone,
       address: userData.address,
+      gender: userData.gender, // Cập nhật formData với gender
+      organization_name: userData.organization_name,
+      position: userData.position,
+      tax_code: userData.tax_code,
+      business_license: userData.business_license,
+      business_license_issue_date: userData.business_license_issue_date,
+      business_license_issued_by: userData.business_license_issued_by,
+      auctioneer_card_front: userData.auctioneer_card_front,
+      auctioneer_card_back: userData.auctioneer_card_back,
+      certificate_number: userData.certificate_number,
+      certificate_issue_date: userData.certificate_issue_date,
+      certificate_issued_by: userData.certificate_issued_by,
+      online_contact_method: userData.online_contact_method,
     });
     setBankData((prev) => ({
       ...prev,
@@ -67,7 +107,6 @@ const Profile = () => {
     }));
   }, [userData]);
 
-  // Lấy dữ liệu người dùng
   useEffect(() => {
     if (!token) {
       setError('Vui lòng đăng nhập để xem thông tin cá nhân');
@@ -118,20 +157,35 @@ const Profile = () => {
                 : data.user.role === 'DonViThuc'
                 ? 'Đơn vị thực'
                 : 'Chưa xác định',
+            role_id: data.user.role_id || null,
             email: data.user.email || 'Chưa cập nhật',
             phone: data.user.phone || 'Chưa cập nhật',
             address: data.user.address || 'Chưa cập nhật',
+            gender: data.user.gender || 'male', // Thêm gender với giá trị mặc định
             idCardFront: data.user.id_card_front || null,
             idCardFrontUrl: data.user.id_card_front_url || null,
             idCardBack: data.user.id_card_back || null,
             idCardBackUrl: data.user.id_card_back_url || null,
             bankName: data.user.bank_name || 'Chưa cập nhật',
             bankAccount: data.user.bank_account || 'Chưa cập nhật',
+            bankBranch: data.user.bank_branch || 'Chưa cập nhật',
             createdAt: data.user.created_at || 'Chưa cập nhật',
             emailVerifiedAt: data.user.email_verified_at || 'Chưa cập nhật',
+            organization_name: data.user.organization_name || 'Chưa cập nhật',
+            position: data.user.position || 'Chưa cập nhật',
+            tax_code: data.user.tax_code || 'Chưa cập nhật',
+            business_license: data.user.business_license || null,
+            business_license_issue_date: data.user.business_license_issue_date || 'Chưa cập nhật',
+            business_license_issued_by: data.user.business_license_issued_by || 'Chưa cập nhật',
+            auctioneer_card_front: data.user.auctioneer_card_front || null,
+            auctioneer_card_back: data.user.auctioneer_card_back || null,
+            certificate_number: data.user.certificate_number || 'Chưa cập nhật',
+            certificate_issue_date: data.user.certificate_issue_date || 'Chưa cập nhật',
+            certificate_issued_by: data.user.certificate_issued_by || 'Chưa cập nhật',
+            online_contact_method: data.user.online_contact_method || 'Chưa cập nhật',
           };
           setUserData(newUserData);
-          console.log('Set userData.id:', newUserData.id);
+          console.log('Set userData:', newUserData);
         } else {
           throw new Error('Định dạng dữ liệu không hợp lệ');
         }
@@ -146,7 +200,6 @@ const Profile = () => {
     fetchUserData();
   }, [navigate, token]);
 
-  // Lấy danh sách ngân hàng từ VietQR API
   const fetchBanks = async () => {
     try {
       setLoading(true);
@@ -178,7 +231,6 @@ const Profile = () => {
     }
   };
 
-  // Lấy dữ liệu hợp đồng
   useEffect(() => {
     if (!userData.id) return;
 
@@ -238,7 +290,6 @@ const Profile = () => {
     fetchContracts();
   }, [userData.id, navigate, token]);
 
-  // Hàm lấy danh sách sản phẩm đấu giá của người dùng
   const fetchMyAuctions = async () => {
     console.log('Gọi API cho user_id:', userData.id);
     if (!userData.id) {
@@ -311,7 +362,6 @@ const Profile = () => {
     }
   };
 
-  // Fetch danh sách sản phẩm đấu giá của người dùng
   useEffect(() => {
     if (!userData.id || !token) {
       setLoading(false);
@@ -321,127 +371,120 @@ const Profile = () => {
     fetchMyAuctions();
   }, [userData.id, token, navigate]);
 
-const fetchAuctionHistory = async () => {
-  if (!userData.id || !token) {
-    setError('Không thể lấy lịch sử đấu giá: Vui lòng đăng nhập');
-    setLoading(false);
-    return;
-  }
-
-  const BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
-
-  try {
-    setLoading(true);
-    setError(null);
-
-    // Gọi đồng thời 2 API: auction-profiles và products
-    const [profileRes, productRes] = await Promise.all([
-      fetch(`${BASE}auction-profiles`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      }),
-      fetch(`${BASE}products`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      }),
-    ]);
-
-    // Kiểm tra lỗi xác thực
-    if (profileRes.status === 401 || productRes.status === 401) {
-      localStorage.removeItem('token');
-      setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-      navigate('/login');
+  const fetchAuctionHistory = async () => {
+    if (!userData.id || !token) {
+      setError('Không thể lấy lịch sử đấu giá: Vui lòng đăng nhập');
+      setLoading(false);
       return;
     }
 
-    if (!profileRes.ok) {
-      const err = await profileRes.text();
-      throw new Error(`Lỗi API /auction-profiles: ${profileRes.status} - ${err}`);
-    }
-    if (!productRes.ok) {
-      const err = await productRes.text();
-      throw new Error(`Lỗi API /products: ${productRes.status} - ${err}`);
-    }
+    const BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
-    const profileData = await profileRes.json();
-    const productData = await productRes.json();
+    try {
+      setLoading(true);
+      setError(null);
 
-    // Chuẩn hoá mảng products
-    const productsArray = Array.isArray(productData) ? productData : productData.data || [];
-    const itemMap = new Map();
-    productsArray.forEach((p) => {
-      if (p && (p.id !== undefined)) itemMap.set(p.id, p.name || '');
-    });
+      const [profileRes, productRes] = await Promise.all([
+        fetch(`${BASE}auction-profiles`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        }),
+        fetch(`${BASE}products`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        }),
+      ]);
 
-    // Chuẩn hoá mảng profiles
-    const profilesArray = Array.isArray(profileData)
-      ? profileData
-      : profileData.profiles || profileData.data || [];
+      if (profileRes.status === 401 || productRes.status === 401) {
+        localStorage.removeItem('token');
+        setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+        navigate('/login');
+        return;
+      }
 
-    if (!Array.isArray(profilesArray)) {
-      throw new Error('Dữ liệu hồ sơ đấu giá không hợp lệ');
-    }
+      if (!profileRes.ok) {
+        const err = await profileRes.text();
+        throw new Error(`Lỗi API /auction-profiles: ${profileRes.status} - ${err}`);
+      }
+      if (!productRes.ok) {
+        const err = await productRes.text();
+        throw new Error(`Lỗi API /products: ${productRes.status} - ${err}`);
+      }
 
-    const formattedAuctionHistory = profilesArray
-      .filter((profile) => profile.user_id === userData.id)
-      .map((profile, index) => {
-        const session = profile.session || {};
-        const sessionItemId = session.item_id || session.item?.id || profile.session_id;
-        const itemNameFromProducts = itemMap.get(sessionItemId);
-        const tenPhien = itemNameFromProducts || session?.item?.name || `Phiên đấu giá #${sessionItemId || ''}`;
+      const profileData = await profileRes.json();
+      const productData = await productRes.json();
 
-        return {
-          stt: index + 1,
-          tenPhien,
-          tenTaiSan: session?.item?.name || itemNameFromProducts || 'Chưa có tên tài sản',
-          trangThai: mapProfileStatus(profile.status),
-          thoiGianDauGia: profile.created_at
-            ? new Date(profile.created_at).toLocaleString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit',
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                timeZone: 'Asia/Ho_Chi_Minh',
-              })
-            : 'Chưa có',
-          ketQua: profile.is_paid
-            ? profile.status === 'DaDuyet'
-              ? 'Được tham gia'
-              : profile.status === 'TuChoi'
-              ? 'Bị từ chối'
-              : 'Chờ duyệt'
-            : 'Chưa nộp cọc',
-          xemChiTiet: `/auction/${sessionItemId || ''}`,
-        };
+      const productsArray = Array.isArray(productData) ? productData : productData.data || [];
+      const itemMap = new Map();
+      productsArray.forEach((p) => {
+        if (p && p.id !== undefined) itemMap.set(p.id, p.name || '');
       });
 
-    setAuctionHistory(formattedAuctionHistory);
-  } catch (err) {
-    setError(err.message || 'Lỗi khi tải lịch sử đấu giá');
-    console.error('Error fetching auction history:', err);
-  } finally {
-    setLoading(false);
-  }
-};
-// ...existing code...
+      const profilesArray = Array.isArray(profileData)
+        ? profileData
+        : profileData.profiles || profileData.data || [];
 
-  // Fetch lịch sử đấu giá khi tab hoặc userData.id thay đổi
+      if (!Array.isArray(profilesArray)) {
+        throw new Error('Dữ liệu hồ sơ đấu giá không hợp lệ');
+      }
+
+      const formattedAuctionHistory = profilesArray
+        .filter((profile) => profile.user_id === userData.id)
+        .map((profile, index) => {
+          const session = profile.session || {};
+          const sessionItemId = session.item_id || session.item?.id || profile.session_id;
+          const itemNameFromProducts = itemMap.get(sessionItemId);
+          const tenPhien = itemNameFromProducts || session?.item?.name || `Phiên đấu giá #${sessionItemId || ''}`;
+
+          return {
+            stt: index + 1,
+            tenPhien,
+            tenTaiSan: session?.item?.name || itemNameFromProducts || 'Chưa có tên tài sản',
+            trangThai: mapProfileStatus(profile.status),
+            thoiGianDauGia: profile.created_at
+              ? new Date(profile.created_at).toLocaleString('vi-VN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  timeZone: 'Asia/Ho_Chi_Minh',
+                })
+              : 'Chưa có',
+            ketQua: profile.is_paid
+              ? profile.status === 'DaDuyet'
+                ? 'Được tham gia'
+                : profile.status === 'TuChoi'
+                ? 'Bị từ chối'
+                : 'Chờ duyệt'
+              : 'Chưa nộp cọc',
+            xemChiTiet: `/auction/${sessionItemId || ''}`,
+          };
+        });
+
+      setAuctionHistory(formattedAuctionHistory);
+    } catch (err) {
+      setError(err.message || 'Lỗi khi tải lịch sử đấu giá');
+      console.error('Error fetching auction history:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'auction-history' && userData.id && token) {
       fetchAuctionHistory();
     }
   }, [activeTab, userData.id, token, navigate]);
 
-  // Hàm map trạng thái sản phẩm
   const mapStatus = (status) => {
     const statusMap = {
       ChoDuyet: 'Chờ duyệt',
@@ -453,7 +496,6 @@ const fetchAuctionHistory = async () => {
     return statusMap[status] || status;
   };
 
-  // Hàm map trạng thái hồ sơ đấu giá
   const mapProfileStatus = (status) => {
     const statusMap = {
       ChoDuyet: 'Chờ duyệt',
@@ -491,7 +533,7 @@ const fetchAuctionHistory = async () => {
     setBankData({
       bankName: userData.bankName !== 'Chưa cập nhật' ? userData.bankName : '',
       bankAccount: userData.bankAccount !== 'Chưa cập nhật' ? userData.bankAccount : '',
-      bankBranch: '',
+      bankBranch: userData.bankBranch !== 'Chưa cập nhật' ? userData.bankBranch : '',
       accountHolder: userData.fullName,
     });
     setShowBankPopup(true);
@@ -510,6 +552,7 @@ const fetchAuctionHistory = async () => {
           body: JSON.stringify({
             bank_name: null,
             bank_account: null,
+            bank_branch: null,
           }),
         });
 
@@ -529,6 +572,7 @@ const fetchAuctionHistory = async () => {
             ...prev,
             bankName: 'Chưa cập nhật',
             bankAccount: 'Chưa cập nhật',
+            bankBranch: 'Chưa cập nhật',
           }));
           alert('Xóa tài khoản ngân hàng thành công!');
         } else {
@@ -545,14 +589,14 @@ const fetchAuctionHistory = async () => {
     const { id, value } = e.target;
     setBankData((prev) => ({
       ...prev,
-      [id === 'bankName' ? 'bankName' : id === 'accountNumber' ? 'bankAccount' : id]: value,
+      [id === 'bankName' ? 'bankName' : id === 'bankAccount' ? 'bankAccount' : id]: value,
     }));
   };
 
   const handleSaveBank = async () => {
     try {
-      if (!bankData.bankName || !bankData.bankAccount) {
-        setBankError('Vui lòng nhập đầy đủ tên ngân hàng và số tài khoản');
+      if (!bankData.bankName || !bankData.bankAccount || !bankData.bankBranch) {
+        setBankError('Vui lòng nhập đầy đủ tên ngân hàng, số tài khoản và chi nhánh');
         return;
       }
 
@@ -565,6 +609,7 @@ const fetchAuctionHistory = async () => {
         body: JSON.stringify({
           bank_name: bankData.bankName,
           bank_account: bankData.bankAccount,
+          bank_branch: bankData.bankBranch,
         }),
       });
 
@@ -590,6 +635,7 @@ const fetchAuctionHistory = async () => {
           ...prev,
           bankName: data.user.bank_name || 'Chưa cập nhật',
           bankAccount: data.user.bank_account || 'Chưa cập nhật',
+          bankBranch: data.user.bank_branch || 'Chưa cập nhật',
         }));
         alert('Lưu tài khoản ngân hàng thành công!');
         closeBankPopup();
@@ -613,20 +659,43 @@ const fetchAuctionHistory = async () => {
 
   const handleSaveProfile = async () => {
     try {
-      const payload = {
-        full_name: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-      };
+      const payload = new FormData();
+      payload.append('full_name', formData.fullName);
+      payload.append('email', formData.email);
+      payload.append('phone', formData.phone);
+      payload.append('address', formData.address);
+      payload.append('gender', formData.gender); // Thêm gender vào payload
+
+      if (userData.role_id === 9) {
+        payload.append('organization_name', formData.organization_name);
+        payload.append('position', formData.position);
+        payload.append('tax_code', formData.tax_code);
+        if (formData.business_license) {
+          payload.append('business_license', formData.business_license);
+        }
+        payload.append('business_license_issue_date', formData.business_license_issue_date);
+        payload.append('business_license_issued_by', formData.business_license_issued_by);
+      }
+
+      if (userData.role_id === 5) {
+        if (formData.auctioneer_card_front) {
+          payload.append('auctioneer_card_front', formData.auctioneer_card_front);
+        }
+        if (formData.auctioneer_card_back) {
+          payload.append('auctioneer_card_back', formData.auctioneer_card_back);
+        }
+        payload.append('certificate_number', formData.certificate_number);
+        payload.append('certificate_issue_date', formData.certificate_issue_date);
+        payload.append('certificate_issued_by', formData.certificate_issued_by);
+        payload.append('online_contact_method', formData.online_contact_method);
+      }
 
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        body: payload,
       });
 
       const data = await response.json();
@@ -653,10 +722,23 @@ const fetchAuctionHistory = async () => {
           email: data.user.email || prev.email,
           phone: data.user.phone || prev.phone,
           address: data.user.address || prev.address,
+          gender: data.user.gender || prev.gender, // Cập nhật gender
           idCardFront: data.user.id_card_front || prev.idCardFront,
           idCardFrontUrl: data.user.id_card_front_url || prev.idCardFrontUrl,
           idCardBack: data.user.id_card_back || prev.idCardBack,
           idCardBackUrl: data.user.id_card_back_url || prev.idCardBackUrl,
+          organization_name: data.user.organization_name || prev.organization_name,
+          position: data.user.position || prev.position,
+          tax_code: data.user.tax_code || prev.tax_code,
+          business_license: data.user.business_license || prev.business_license,
+          business_license_issue_date: data.user.business_license_issue_date || prev.business_license_issue_date,
+          business_license_issued_by: data.user.business_license_issued_by || prev.business_license_issued_by,
+          auctioneer_card_front: data.user.auctioneer_card_front || prev.auctioneer_card_front,
+          auctioneer_card_back: data.user.auctioneer_card_back || prev.auctioneer_card_back,
+          certificate_number: data.user.certificate_number || prev.certificate_number,
+          certificate_issue_date: data.user.certificate_issue_date || prev.certificate_issue_date,
+          certificate_issued_by: data.user.certificate_issued_by || prev.certificate_issued_by,
+          online_contact_method: data.user.online_contact_method || prev.online_contact_method,
         }));
         alert('Cập nhật thông tin cá nhân thành công!');
         closeProfilePopup();
@@ -843,16 +925,37 @@ const fetchAuctionHistory = async () => {
       </div>
     );
 
+    const formatDate = (date) => {
+      return date && date !== 'Chưa cập nhật' ? new Date(date).toLocaleString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }) : 'Chưa cập nhật';
+    };
+
     switch (activeTab) {
       case 'profile':
         return (
           <div className={styles.tabPane} id="profile">
             <div className={styles.infoSection}>
+              <div className={styles.sectionTitle}>
+                {userData.role_id === 9 ? 'Thông tin cá nhân người đại diện doanh nghiệp' : 'Thông tin cá nhân'}
+              </div>
               <div className={styles.infoGrid}>
                 <div className={styles.infoItem}>
                   <span className={styles.infoLabel}>Họ và tên:</span>
                   <div className={styles.infoValue}>{userData.fullName}</div>
                 </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Giới tính:</span>
+                  <div className={styles.infoValue}>{userData.gender === 'male' ? 'Nam' : 'Nữ'}</div>
+                </div>
+                {userData.role_id === 9 && (
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Chức vụ:</span>
+                    <div className={styles.infoValue}>{userData.position}</div>
+                  </div>
+                )}
                 <div className={styles.infoItem}>
                   <span className={styles.infoLabel}>Email:</span>
                   <div className={styles.infoValue}>{userData.email}</div>
@@ -885,7 +988,7 @@ const fetchAuctionHistory = async () => {
                             src={userData.idCardFrontUrl}
                             alt="CCCD Mặt trước"
                             style={{
-                              Width: '100%',
+                              maxWidth: '100%',
                               maxHeight: '150px',
                               objectFit: 'contain',
                               border: '1px solid #ddd',
@@ -925,7 +1028,7 @@ const fetchAuctionHistory = async () => {
                             src={userData.idCardBackUrl}
                             alt="CCCD Mặt sau"
                             style={{
-                              Width: '100%',
+                              maxWidth: '100%',
                               maxHeight: '150px',
                               objectFit: 'contain',
                               border: '1px solid #ddd',
@@ -957,6 +1060,159 @@ const fetchAuctionHistory = async () => {
                 </div>
               </div>
             </div>
+            {userData.role_id === 9 && (
+              <>
+                <div className={styles.infoSection}>
+                  <div className={styles.sectionTitle}>Thông tin doanh nghiệp</div>
+                  <div className={styles.infoGrid}>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Tên tổ chức:</span>
+                      <div className={styles.infoValue}>{userData.organization_name}</div>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Mã số thuế:</span>
+                      <div className={styles.infoValue}>{userData.tax_code}</div>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Giấy phép kinh doanh:</span>
+                      <div className={styles.infoValue}>
+                        {userData.business_license ? (
+                          <a href={userData.business_license} target="_blank" rel="noopener noreferrer">
+                            Xem giấy phép
+                          </a>
+                        ) : (
+                          'Chưa cập nhật'
+                        )}
+                      </div>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Ngày cấp giấy phép:</span>
+                      <div className={styles.infoValue}>{formatDate(userData.business_license_issue_date)}</div>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Nơi cấp giấy phép:</span>
+                      <div className={styles.infoValue}>{userData.business_license_issued_by}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className={styles.infoSection}>
+                  <div className={styles.sectionTitle}>Tài khoản ngân hàng</div>
+                  <div className={styles.infoGrid}>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Ngân hàng:</span>
+                      <div className={styles.infoValue}>{userData.bankName}</div>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Chi nhánh ngân hàng:</span>
+                      <div className={styles.infoValue}>{userData.bankBranch}</div>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Số tài khoản:</span>
+                      <div className={styles.infoValue}>{userData.bankAccount}</div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+            {userData.role_id === 5 && (
+              <div className={styles.infoSection}>
+                <div className={styles.sectionTitle}>Thông tin đấu giá viên</div>
+                <div className={styles.infoGrid}>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Thẻ đấu giá (mặt trước):</span>
+                    <div className={styles.photoSection}>
+                      <div className={styles.photoItem}>
+                        {userData.auctioneer_card_front ? (
+                          <img
+                            src={userData.auctioneer_card_front}
+                            alt="Thẻ đấu giá mặt trước"
+                            style={{
+                              maxWidth: '100%',
+                              maxHeight: '150px',
+                              objectFit: 'contain',
+                              border: '1px solid #ddd',
+                              borderRadius: '4px',
+                            }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div
+                            className={styles.placeholderText}
+                            style={{
+                              padding: '50px 10px',
+                              textAlign: 'center',
+                              color: '#999',
+                              border: '2px dashed #ccc',
+                              borderRadius: '4px',
+                              backgroundColor: '#f9f9f9',
+                            }}
+                          >
+                            [Thẻ mặt trước]<br />
+                            <small>Chưa cập nhật</small>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Thẻ đấu giá (mặt sau):</span>
+                    <div className={styles.photoSection}>
+                      <div className={styles.photoItem}>
+                        {userData.auctioneer_card_back ? (
+                          <img
+                            src={userData.auctioneer_card_back}
+                            alt="Thẻ đấu giá mặt sau"
+                            style={{
+                              maxWidth: '100%',
+                              maxHeight: '150px',
+                              objectFit: 'contain',
+                              border: '1px solid #ddd',
+                              borderRadius: '4px',
+                            }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div
+                            className={styles.placeholderText}
+                            style={{
+                              padding: '50px 10px',
+                              textAlign: 'center',
+                              color: '#999',
+                              border: '2px dashed #ccc',
+                              borderRadius: '4px',
+                              backgroundColor: '#f9f9f9',
+                            }}
+                          >
+                            [Thẻ mặt sau]<br />
+                            <small>Chưa cập nhật</small>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Số chứng chỉ:</span>
+                    <div className={styles.infoValue}>{userData.certificate_number}</div>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Ngày cấp chứng chỉ:</span>
+                    <div className={styles.infoValue}>{formatDate(userData.certificate_issue_date)}</div>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Nơi cấp chứng chỉ:</span>
+                    <div className={styles.infoValue}>{userData.certificate_issued_by}</div>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>Phương thức liên hệ trực tuyến:</span>
+                    <div className={styles.infoValue}>{userData.online_contact_method}</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -1142,8 +1398,7 @@ const fetchAuctionHistory = async () => {
                   <thead>
                     <tr>
                       <th>STT</th>
-                      <th>Tên phiên đấu giá </th>
-                     
+                      <th>Tên phiên đấu giá</th>
                       <th>Trạng thái</th>
                       <th>Thời gian nộp hồ sơ</th>
                       <th>Kết quả</th>
@@ -1155,7 +1410,6 @@ const fetchAuctionHistory = async () => {
                       <tr key={item.stt}>
                         <td>{item.stt}</td>
                         <td>{item.tenPhien}</td>
-                       
                         <td>
                           <span
                             className={`${styles.contractStatus} ${
@@ -1251,7 +1505,7 @@ const fetchAuctionHistory = async () => {
   const renderContentTitle = () => {
     switch (activeTab) {
       case 'profile':
-        return 'Thông tin cá nhân';
+        return userData.role_id === 9 ? 'Thông tin cá nhân người đại diện doanh nghiệp' : 'Thông tin cá nhân';
       case 'bank':
         return 'Tài khoản ngân hàng';
       case 'contracts':
@@ -1289,7 +1543,7 @@ const fetchAuctionHistory = async () => {
                 handleTabChange('profile');
               }}
             >
-              Thông tin cá nhân
+              {userData.role_id === 9 ? 'Thông tin cá nhân người đại diện' : 'Thông tin cá nhân'}
             </a>
           </li>
           <li>
@@ -1413,6 +1667,32 @@ const fetchAuctionHistory = async () => {
                   />
                 </div>
                 <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Giới tính</label>
+                  <select
+                    className={styles.formControl}
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleInputChange}
+                  >
+                    <option value="male">Nam</option>
+                    <option value="female">Nữ</option>
+                  </select>
+                </div>
+                {userData.role_id === 9 && (
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Chức vụ</label>
+                    <input
+                      type="text"
+                      className={styles.formControl}
+                      name="position"
+                      value={formData.position || ''}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                )}
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Email</label>
                   <input
                     type="email"
@@ -1422,8 +1702,6 @@ const fetchAuctionHistory = async () => {
                     onChange={handleInputChange}
                   />
                 </div>
-              </div>
-              <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Số điện thoại</label>
                   <input
@@ -1434,6 +1712,8 @@ const fetchAuctionHistory = async () => {
                     onChange={handleInputChange}
                   />
                 </div>
+              </div>
+              <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Địa chỉ</label>
                   <input
@@ -1530,6 +1810,150 @@ const fetchAuctionHistory = async () => {
                   </div>
                 </div>
               </div>
+              {userData.role_id === 9 && (
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Thông tin doanh nghiệp</label>
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Tên tổ chức</label>
+                      <input
+                        type="text"
+                        className={styles.formControl}
+                        name="organization_name"
+                        value={formData.organization_name || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Mã số thuế</label>
+                      <input
+                        type="text"
+                        className={styles.formControl}
+                        name="tax_code"
+                        value={formData.tax_code || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Giấy phép kinh doanh</label>
+                      <input
+                        type="file"
+                        className={styles.formControl}
+                        name="business_license"
+                        onChange={(e) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            business_license: e.target.files[0],
+                          }));
+                        }}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Ngày cấp giấy phép</label>
+                      <input
+                        type="date"
+                        className={styles.formControl}
+                        name="business_license_issue_date"
+                        value={formData.business_license_issue_date || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Nơi cấp giấy phép</label>
+                      <input
+                        type="text"
+                        className={styles.formControl}
+                        name="business_license_issued_by"
+                        value={formData.business_license_issued_by || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+              {userData.role_id === 5 && (
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Thông tin đấu giá viên</label>
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Thẻ đấu giá (mặt trước)</label>
+                      <input
+                        type="file"
+                        className={styles.formControl}
+                        name="auctioneer_card_front"
+                        onChange={(e) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            auctioneer_card_front: e.target.files[0],
+                          }));
+                        }}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Thẻ đấu giá (mặt sau)</label>
+                      <input
+                        type="file"
+                        className={styles.formControl}
+                        name="auctioneer_card_back"
+                        onChange={(e) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            auctioneer_card_back: e.target.files[0],
+                          }));
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Số chứng chỉ</label>
+                      <input
+                        type="text"
+                        className={styles.formControl}
+                        name="certificate_number"
+                        value={formData.certificate_number || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Ngày cấp chứng chỉ</label>
+                      <input
+                        type="date"
+                        className={styles.formControl}
+                        name="certificate_issue_date"
+                        value={formData.certificate_issue_date || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Nơi cấp chứng chỉ</label>
+                      <input
+                        type="text"
+                        className={styles.formControl}
+                        name="certificate_issued_by"
+                        value={formData.certificate_issued_by || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Phương thức liên hệ trực tuyến</label>
+                      <input
+                        type="text"
+                        className={styles.formControl}
+                        name="online_contact_method"
+                        value={formData.online_contact_method || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className={styles.popupFooter}>
               <button className={styles.btn} onClick={closeProfilePopup}>
@@ -1583,6 +2007,17 @@ const fetchAuctionHistory = async () => {
                     value={bankData.bankAccount}
                     onChange={handleBankInputChange}
                     placeholder="Nhập số tài khoản"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Chi nhánh</label>
+                  <input
+                    type="text"
+                    className={styles.formControl}
+                    id="bankBranch"
+                    value={bankData.bankBranch}
+                    onChange={handleBankInputChange}
+                    placeholder="Nhập chi nhánh ngân hàng"
                   />
                 </div>
                 <div className={styles.formGroup}>
