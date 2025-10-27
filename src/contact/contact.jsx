@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from './contact.module.css';
 
 const API_URL = 'http://127.0.0.1:8000/api/auction-items';
-const USER_API_URL = 'http://127.0.0.1:8000/api/showuser';
 const CATEGORIES_API_URL = 'http://127.0.0.1:8000/api/categories';
 const AUTO_DISMISS_MS = 5000;
 
@@ -15,7 +14,7 @@ const Contact = () => {
     name: '',
     description: '',
     starting_price: '',
-    auction_org_id: '',
+    auction_org_id: '1', // Giá trị mặc định là ID của Công Ty Đấu Giá Hợp Danh Khải Bảo
     image: null,
     extra_images: [],
     url_file: null
@@ -29,49 +28,21 @@ const Contact = () => {
   const [globalError, setGlobalError] = useState('');
   const [checkAuthMsg, setCheckAuthMsg] = useState('Đang kiểm tra xác thực...');
   const [toasts, setToasts] = useState([]);
-  const [auctionOrgs, setAuctionOrgs] = useState([]);
   const [categories, setCategories] = useState([]);
 
   const fileInputRef = useRef(null);
   const extraImagesRef = useRef(null);
   const urlFileRef = useRef(null);
 
-  // Fetch auction organizations and categories on mount
+  // Chỉ giữ lại fetch danh mục (categories), bỏ hoàn toàn fetch tổ chức đấu giá
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCategories = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
           throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
         }
 
-        // Fetch auction organizations
-        const orgResponse = await fetch(USER_API_URL, {
-          headers: {
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const orgData = await orgResponse.json();
-        console.log('Dữ liệu API tổ chức đấu giá:', orgData); // Debug dữ liệu API
-        if (orgData.status && Array.isArray(orgData.users)) {
-          const orgs = orgData.users
-            .filter(user => user.role_id ===8) // Sửa từ role sang role_id
-            .map(user => ({
-              user_id: user.user_id,
-              full_name: user.full_name,
-              email: user.email
-            }));
-          console.log('Danh sách tổ chức đấu giá:', orgs); // Debug danh sách tổ chức
-          setAuctionOrgs(orgs);
-          if (orgs.length === 0) {
-            setGlobalError('Không tìm thấy tổ chức đấu giá nào hợp lệ.');
-          }
-        } else {
-          setGlobalError('Dữ liệu tổ chức đấu giá không đúng định dạng.');
-        }
-
-        // Fetch categories
         const catResponse = await fetch(CATEGORIES_API_URL, {
           headers: {
             'Accept': 'application/json',
@@ -79,18 +50,17 @@ const Contact = () => {
           }
         });
         const catData = await catResponse.json();
-        console.log('Dữ liệu API danh mục:', catData); // Debug dữ liệu danh mục
         if (catData.status && Array.isArray(catData.data)) {
           setCategories(catData.data);
         } else {
           setGlobalError('Dữ liệu danh mục không đúng định dạng.');
         }
       } catch (error) {
-        setGlobalError('Lỗi khi tải dữ liệu: ' + error.message);
+        setGlobalError('Lỗi khi tải danh mục: ' + error.message);
       }
     };
 
-    fetchData();
+    fetchCategories();
   }, []);
 
   // Auth check on mount
@@ -232,8 +202,9 @@ const Contact = () => {
       isValid = false;
     }
 
-    if (!auction_org_id || !auctionOrgs.some(org => org.user_id === parseInt(auction_org_id))) {
-      setFieldError('auction_org_id', 'ID tổ chức đấu giá không hợp lệ');
+    // Không kiểm tra auctionOrgs vì đã cố định
+    if (!auction_org_id || parseInt(auction_org_id) !== 1) {
+      setFieldError('auction_org_id', 'Tổ chức đấu giá không hợp lệ');
       isValid = false;
     }
 
@@ -335,7 +306,7 @@ const Contact = () => {
           name: '',
           description: '',
           starting_price: '',
-          auction_org_id: '',
+          auction_org_id: '1',
           image: null,
           extra_images: [],
           url_file: null
@@ -468,7 +439,8 @@ const Contact = () => {
               {errors.starting_price && <div className={styles.validationError}>{errors.starting_price}</div>}
             </div>
 
-            <div className={styles.formGroup}>
+            {/* CỐ ĐỊNH TỔ CHỨC ĐẤU GIÁ */}
+            <div className={styles.formGroup} style={{display: 'none'}}  >
               <label className={styles.formLabel} htmlFor="auction_org_id">Tổ chức đấu giá</label>
               <select
                 className={`${styles.formControl} ${errors.auction_org_id ? styles.error : ''}`}
@@ -477,25 +449,10 @@ const Contact = () => {
                 value={formData.auction_org_id}
                 onChange={handleInputChange}
                 required
-                disabled={auctionOrgs.length === 0} // Vô hiệu hóa nếu không có tổ chức
               >
-                <option value="">-- Chọn tổ chức đấu giá --</option>
-                {auctionOrgs.length > 0 ? (
-                  auctionOrgs.map(org => (
-                    <option key={org.user_id} value={org.user_id}>
-                      {org.full_name} ({org.email})
-                    </option>
-                  ))
-                ) : (
-                  <option value="" disabled>Không có tổ chức đấu giá hợp lệ</option>
-                )}
+                <option value="1">Công Ty Đấu Giá Hợp Danh Khải Bảo</option>
               </select>
               {errors.auction_org_id && <div className={styles.validationError}>{errors.auction_org_id}</div>}
-              {auctionOrgs.length === 0 && (
-                <div className={styles.validationError}>
-                  Không có tổ chức đấu giá nào hợp lệ. Vui lòng liên hệ quản trị viên.
-                </div>
-              )}
             </div>
 
             <div className={styles.formGroup}>

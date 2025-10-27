@@ -1128,7 +1128,7 @@ function AuctionAsset() {
               <p><strong>Email:</strong> {ownerDetails.email}</p>
               <p><strong>Số điện thoại:</strong> {ownerDetails.phone}</p>
               <p><strong>Địa chỉ:</strong> {ownerDetails.address}</p>
-              <p><strong>Tổ chức đấu giá:</strong> {auctionOrgs.find((org) => org.id === selectedAsset.auctionOrgId)?.name || 'Không xác định'}</p>
+              <p><strong>Tổ chức đấu giá:</strong> {auctionOrgs.find((org) => org.id === selectedAsset.auctionOrgId)?.name || 'Công Ty Đấu Giá Hợp Danh Khải Bảo'}</p>
               <p><strong>Giá khởi điểm:</strong> {selectedAsset.startingPrice}</p>
               <p><strong>Trạng thái:</strong> {selectedAsset.status}</p>
               <p><strong>Ngày tạo:</strong> {selectedAsset.createdDate}</p>
