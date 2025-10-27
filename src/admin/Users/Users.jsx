@@ -797,6 +797,13 @@ const renderImage = (url, type, errorKey) => {
                         >
                           <i className="fa fa-times"></i>
                         </button>
+                          <button
+                          className={styles.btnSuccess}
+                          onClick={() => openViewModal(user)}
+                          aria-label="Xem chi tiết người dùng"
+                        >
+                          <i className="fa fa-eye"></i>
+                        </button>
                       </>
                     ) : (
                       <>
