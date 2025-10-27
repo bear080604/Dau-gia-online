@@ -22,14 +22,15 @@ const Header = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
-    const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const searchRef = useRef(null);
   const navigate = useNavigate();
 
-   const togglePopup = (e) => {
+  const togglePopup = (e) => {
     e.stopPropagation(); // tránh đóng liền sau khi mở
     setOpen((prev) => !prev);
   };
+
   // Fetch danh mục
   useEffect(() => {
     const fetchCategories = async () => {
@@ -232,13 +233,48 @@ const Header = () => {
     }
   };
 
-
   // Search submit
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) navigate(`/auction-session?q=${encodeURIComponent(searchQuery)}`);
   };
-  
+
+  // === Mobile Search Toggle ===
+  const toggleMobileSearch = () => {
+    setIsMobileSearchActive(!isMobileSearchActive);
+  };
+
+  const handleClickOutsideSearch = (e) => {
+    if (
+      isMobileSearchActive &&
+      !e.target.closest(`.${styles.mobileSearchBox}`) &&
+      !e.target.closest(`.${styles.mobileSearchToggle}`)
+    ) {
+      setIsMobileSearchActive(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('click', handleClickOutsideSearch);
+    return () => document.removeEventListener('click', handleClickOutsideSearch);
+  }, [isMobileSearchActive]);
+
+  // === Mobile Navigation ===
+  const openMobileNav = () => {
+    setIsMobileNavActive(true);
+    setIsMobileSearchActive(false);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeMobileNav = () => {
+    setIsMobileNavActive(false);
+    setIsMobileCategoryActive(false);
+    document.body.style.overflow = '';
+  };
+
+  const toggleMobileCategory = () => {
+    setIsMobileCategoryActive(!isMobileCategoryActive);
+  };
 
   const navItems = [
     { icon: 'fa-info-circle', text: 'GIỚI THIỆU', href: '/about' },
@@ -331,6 +367,26 @@ const Header = () => {
           )}
         </div>
 
+        {/* Mobile Search */}
+        <div className={styles.mobileSearchContainer}>
+          <button className={styles.mobileSearchToggle} onClick={toggleMobileSearch}>
+            <i className="fa fa-search" />
+          </button>
+          <div className={`${styles.mobileSearchBox} ${isMobileSearchActive ? styles.active : ''}`}>
+            <form onSubmit={handleSearchSubmit}>
+              <input
+                placeholder="Nhập tên tài sản..."
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button type="submit">
+                <i className="fa fa-search" />
+              </button>
+            </form>
+          </div>
+        </div>
+
         <div className={styles.headerRight}>
           {user && latestUnpaidContract && (
             <Link to="/contract" className={styles.headContractBox}>
@@ -347,7 +403,7 @@ const Header = () => {
         </div>
       </header>
 
-      {/* ==== NAV BAR ==== */}
+      {/* ==== DESKTOP NAV BAR ==== */}
       <nav className={styles.navBar}>
         <ul className={styles.navMenu}>
           {navItems.map((item, i) => (
@@ -368,6 +424,69 @@ const Header = () => {
           ))}
         </ul>
       </nav>
+
+      {/* ==== MOBILE NAV TOGGLE ==== */}
+      <button
+        aria-label="Mở menu"
+        className={`${styles.mobileNavToggle} ${isMobileNavActive ? styles.active : ''}`}
+        onClick={openMobileNav}
+      >
+        <i className="fa fa-bars"></i>
+      </button>
+
+      {/* ==== MOBILE NAV OVERLAY ==== */}
+      <div
+        className={`${styles.mobileNavOverlay} ${isMobileNavActive ? styles.active : ''}`}
+        onClick={closeMobileNav}
+      ></div>
+
+      {/* ==== MOBILE NAV SIDEBAR ==== */}
+      <div
+        className={`${styles.mobileNavSidebar} ${isMobileNavActive ? styles.active : ''}`}
+      >
+        <div className={styles.mobileNavHeader}>
+          <h3>Menu Điều Hướng</h3>
+          <button aria-label="Đóng menu" className={styles.mobileNavClose} onClick={closeMobileNav}>
+            <i className="fa fa-times"></i>
+          </button>
+        </div>
+        <ul className={styles.mobileNavMenu}>
+          {navItems.map((item, index) => (
+            <li key={index}>
+              {item.isCategory ? (
+                <>
+                  <button
+                    className={`${styles.mobileCategoryToggle} ${isMobileCategoryActive ? styles.active : ''}`}
+                    onClick={toggleMobileCategory}
+                  >
+                    <div>
+                      <i className={`fa ${item.icon}`} aria-hidden="true"></i>
+                      {item.text}
+                    </div>
+                    <i className={`fa fa-chevron-down ${styles.arrow}`} aria-hidden="true"></i>
+                  </button>
+                  <ul
+                    className={`${styles.mobileCategoryMenu} ${isMobileCategoryActive ? styles.active : ''}`}
+                  >
+                    {item.subItems.map((sub, subIndex) => (
+                      <li key={subIndex}>
+                        <Link to={sub.href} onClick={closeMobileNav}>
+                          <i className={`fa ${sub.icon}`} aria-hidden="true"></i> {sub.text}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <Link to={item.href} onClick={closeMobileNav}>
+                  <i className={`fa ${item.icon}`} aria-hidden="true"></i>
+                  {item.text}
+                </Link>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };
