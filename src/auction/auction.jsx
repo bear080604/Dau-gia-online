@@ -632,10 +632,10 @@ const AuctionPage = () => {
         <div className={styles['right-section']}>
           <div className={styles['participants-section']}>
             <div className={styles['section-title']}>THÀNH PHẦN THAM DỰ</div>
-            <div className={styles['info-row']}>
+            {/* <div className={styles['info-row']}>
               <div className={styles['info-label']}>Thư ký phiên đấu giá:</div>
               <div className={styles['info-value']}>{auctionItem.secretary?.full_name || 'N/A'}</div>
-            </div>
+            </div> */}
             <div className={styles['info-row']}>
               <div className={styles['info-label']}>Đại diện bên có tài sản:</div>
               <div className={styles['info-value']}>{auctionItem.item?.owner?.full_name || 'N/A'}</div>
@@ -644,10 +644,10 @@ const AuctionPage = () => {
               <div className={styles['info-label']}>Đấu giá viên:</div>
               <div className={styles['info-value']}>{auctionItem.auction_org?.full_name || 'N/A'}</div>
             </div>
-            <div className={styles['info-row']}>
+            {/* <div className={styles['info-row']}>
               <div className={styles['info-label']}>Đại diện người tham gia đấu giá:</div>
               <div className={styles['info-value']}>{auctionItem.bidder_representative?.full_name || 'N/A'}</div>
-            </div>
+            </div> */}
           </div>
           <div className={styles['bid-section']}>
             <div className={styles['section-title']}>

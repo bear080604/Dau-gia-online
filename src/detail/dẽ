@@ -16,7 +16,6 @@ const Detail = () => {
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ];
   const PLACEHOLDER_IMAGE = '/assets/placeholder.png';
-  const AA_STORAGE_PATH = '/storage/auction_images/';  // Cleaned up from 'var aa'
 
   // State variables
   const [auctionItem, setAuctionItem] = useState({});
@@ -36,7 +35,7 @@ const Detail = () => {
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   const [showCheckinOverlay, setShowCheckinOverlay] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-  // Removed unused successMessage state
+  const [successMessage, setSuccessMessage] = useState('');
   const [countdown, setCountdown] = useState('00:00:00');
   const [nextEvent, setNextEvent] = useState({ type: '', label: '' });
   const [depositError, setDepositError] = useState('');
@@ -106,15 +105,8 @@ const Detail = () => {
       socket.emit('join.channel', 'auction-profiles');
     });
 
-    socket.on('disconnect', (reason) => {
-      console.log('⚠️ Socket disconnected:', reason);
-      // Optional retry logic
-      setTimeout(() => {
-        if (socketRef.current) {
-          socketRef.current.emit('join.channel', `auction-session.${DEFAULT_SESSION_ID}`);
-          socketRef.current.emit('join.channel', 'auction-profiles');
-        }
-      }, 2000);
+    socket.on('disconnect', () => {
+      console.log('⚠️ Socket disconnected');
     });
 
     socket.on('profile.updated', (profileData) => {
@@ -242,7 +234,16 @@ const Detail = () => {
       }
     }
 
-    // Removed old images logic - handled in separate useEffect now
+    let images = [];
+    if (newAuctionItem.item.images && Array.isArray(newAuctionItem.item.images)) {
+      images = newAuctionItem.item.images
+        .map((img) => img.url || img)
+        .filter((img) => img);
+    }
+    if (images.length === 0){
+      images = [newAuctionItem.item.image_url || PLACEHOLDER_IMAGE];
+    }
+    setNumImages(images.length);
   }, []);
 
   const calculateNextEvent = useCallback(() => {
@@ -519,7 +520,6 @@ const Detail = () => {
     } catch (err) {
       console.error('❌ Lỗi pay deposit:', err);
       showToast(err.message, 'error');
-      localStorage.removeItem('pending_profile_id');  // Clear on error
     }
   };
 
@@ -623,11 +623,10 @@ const Detail = () => {
     setSelectedFiles([file]);
   };
 
-  // Fixed changeImage with guard
-  const changeImage = (index) => {
-    const safeIndex = Math.max(0, Math.min(index, numImages - 1));
-    setCurrentImageIndex(safeIndex);
-  };
+const changeImage = (index) => {
+  if (index < 0 || index >= imagesFromApi.length) return;
+  setCurrentImageIndex(index);
+};
 
   const refreshAuctionData = useCallback(
     async (sessionId) => {
@@ -657,114 +656,6 @@ const Detail = () => {
     [apiFetch, showRegisterModal, showToast]
   );
 
-  // Fixed images fetch useEffect
-  useEffect(() => {
-    if (auctionItem?.item?.item_id) {
-      fetch(`${process.env.REACT_APP_BASE_URL}/api/auction-items/${auctionItem.item.item_id}/images`)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log('Images loaded:', data?.data?.length || 0);  // Debug log
-          if (data?.data?.length > 0) {
-            setImagesFromApi(data.data);
-          } else {
-            setImagesFromApi([]);
-          }
-        })
-        .catch((err) => {
-          console.error("Lỗi khi tải hình ảnh:", err);
-          setImagesFromApi([]);
-        });
-    } else {
-      setImagesFromApi([]);
-    }
-  }, [auctionItem?.item?.item_id]);
-
-  // New useEffect to sync numImages
-  useEffect(() => {
-    let totalImages = 0;
-    if (imagesFromApi.length > 0) {
-      totalImages = imagesFromApi.length;
-    } else {
-      // Fallback: dùng auctionItem nếu API fetch empty
-      const fallbackImages = auctionItem.item?.images 
-        ? auctionItem.item.images.filter(img => img.url || img).length 
-        : 1;  // Ít nhất 1 placeholder
-      totalImages = fallbackImages;
-    }
-    setNumImages(totalImages);
-
-    // Reset index nếu vượt quá (e.g., fetch thêm ảnh)
-    if (currentImageIndex >= totalImages) {
-      setCurrentImageIndex(0);
-    }
-  }, [imagesFromApi, auctionItem.item]);
-
-  // Fixed getMainImage
-  const getMainImage = () => {
-    const basePath = `${process.env.REACT_APP_BASE_URL}${AA_STORAGE_PATH}`;
-    if (imagesFromApi.length > 0 && imagesFromApi[currentImageIndex]) {
-      return `${basePath}${imagesFromApi[currentImageIndex].image_url}`;
-    }
-    // Fallback: single image từ auctionItem hoặc placeholder
-    const fallbackImg = auctionItem.item?.image_url || PLACEHOLDER_IMAGE;
-    return `${basePath}${fallbackImg}`;
-  };
-
-  // Fixed renderThumbnails
-  const renderThumbnails = () => {
-    const basePath = `${process.env.REACT_APP_BASE_URL}${AA_STORAGE_PATH}`;
-    if (imagesFromApi.length === 0) {
-      // Fallback thumbnail nếu empty
-      const fallbackImg = auctionItem.item?.image_url || PLACEHOLDER_IMAGE;
-      return (
-        <img
-          src={`${basePath}${fallbackImg}`}
-          className={`detailsp-thumbnail detailsp-active`}
-          alt="Thumbnail 1"
-        />
-      );
-    }
-
-    return imagesFromApi.map((img, i) => (
-      <img
-        key={i}
-        src={`${basePath}${img.image_url}`}
-        className={`detailsp-thumbnail ${i === currentImageIndex ? "detailsp-active" : ""}`}
-        alt={`Thumbnail ${i + 1}`}
-        onClick={() => changeImage(i)}
-      />
-    ));
-  };
-
-  const renderDocuments = () => {
-    const docs = auctionItem.documents?.length > 0 ? auctionItem.documents : auctionItem.profiles;
-
-    if (!docs || docs.length === 0) {
-      return <li>Không có hồ sơ</li>;
-    }
-
-    return docs.map((doc, i) => (
-      <li key={i} className='detailsp-document-item'>
-        <strong>{i + 1}. {doc.name || doc.user?.full_name || doc.user_name || 'Tài liệu'}</strong>
-        <br />
-        <small>
-          Trạng thái: {doc.status || 'Chưa rõ'}. Đặt cọc: {formatPrice(doc.deposit_amount || 0)}
-        </small>
-        <br />
-        {doc.document_url ? (
-          <a href={`${process.env.REACT_APP_BASE_URL}${doc.document_url}`} download className='detailsp-download-link'>
-            Tải hồ sơ
-          </a>
-        ) : doc.url ? (
-          <a href={`${process.env.REACT_APP_BASE_URL}${doc.url}`} download className='detailsp-download-link'>
-            Tải xuống
-          </a>
-        ) : null}
-      </li>
-    ));
-  };
-
-  // Init useEffect
   useEffect(() => {
     const init = async () => {
       setLoading(true);
@@ -806,6 +697,114 @@ const Detail = () => {
 
     init();
   }, [DEFAULT_SESSION_ID, fetchAuctionData, populateData, refreshProfileStatus, showToast]);
+  var aa = '/storage/auction_images/';
+
+  // const renderThumbnails = () => {
+  //   let images = [];
+  //   if (auctionItem.item?.images && Array.isArray(auctionItem.item.images)) {
+  //     images = auctionItem.item.images
+  //       .map((img) => img.url || img)
+  //       .filter((img) => img);
+  //   }
+  //   if (images.length === 0) {
+  //     images = [auctionItem.item?.image_url || PLACEHOLDER_IMAGE];
+  //   }
+  //   return images.map((img, i) => (
+  //     <img
+  //       key={i}
+  //       src={`${process.env.REACT_APP_BASE_URL}${aa}${img}`}
+  //       className={`detailsp-thumbnail ${i === currentImageIndex ? 'detailsp-active' : ''}`}
+  //       alt={`Thumbnail ${i + 1}`}
+  //       onClick={() => changeImage(i)}
+  //     />
+  //   ));
+  // };
+
+const renderThumbnails = () => {
+  if (imagesFromApi.length === 0) return null;
+
+  return imagesFromApi.map((img, i) => (
+    <img
+      key={i}
+      src={`${process.env.REACT_APP_BASE_URL}${aa}${img.image_url}`}
+      className={`detailsp-thumbnail ${i === currentImageIndex ? "detailsp-active" : ""}`}
+      alt={`Thumbnail ${i + 1}`}
+      onClick={() => changeImage(i)}
+    />
+  ));
+};
+
+
+useEffect(() => {
+  if (auctionItem?.item?.item_id) {
+    fetch(`${process.env.REACT_APP_BASE_URL}/api/auction-items/${auctionItem.item.item_id}/images`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.data?.length > 0) {
+          setImagesFromApi(data.data); // 🔹 tách riêng, không gộp vào auctionItem
+        } else {
+          setImagesFromApi([]); // nếu không có ảnh phụ
+        }
+      })
+      .catch((err) => console.error("Lỗi khi tải hình ảnh:", err));
+  }
+}, [auctionItem?.item?.item_id]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  const getMainImage = () => {
+    // tên file bên back end
+    let images = [];
+    if (auctionItem.item?.images && Array.isArray(auctionItem.item.images)) {
+      images = auctionItem.item.images
+        .map((img) => img.url || img)
+        .filter((img) => img);
+    }
+    if (images.length === 0) {
+      images = [auctionItem.item?.image_url || PLACEHOLDER_IMAGE];
+    }
+    return `${process.env.REACT_APP_BASE_URL}${aa}${images[currentImageIndex] || PLACEHOLDER_IMAGE}`;
+  };
+
+  const renderDocuments = () => {
+    const docs = auctionItem.documents?.length > 0 ? auctionItem.documents : auctionItem.profiles;
+
+    if (!docs || docs.length === 0) {
+      return <li>Không có hồ sơ</li>;
+    }
+
+    return docs.map((doc, i) => (
+      <li key={i} className='detailsp-document-item'>
+        <strong>{i + 1}. {doc.name || doc.user?.full_name || doc.user_name || 'Tài liệu'}</strong>
+        <br />
+        <small>
+          Trạng thái: {doc.status || 'Chưa rõ'}. Đặt cọc: {formatPrice(doc.deposit_amount || 0)}
+        </small>
+        <br />
+        {doc.document_url ? (
+          <a href={`${process.env.REACT_APP_BASE_URL}${doc.document_url}`} download className='detailsp-download-link'>
+            Tải hồ sơ
+          </a>
+        ) : doc.url ? (
+          <a href={`${process.env.REACT_APP_BASE_URL}${doc.url}`} download className='detailsp-download-link'>
+            Tải xuống
+          </a>
+        ) : null}
+      </li>
+    ));
+  };
 
   if (loading) {
     return (
@@ -842,33 +841,19 @@ const Detail = () => {
         </h2>
         <p>{`${auctionItem.item?.description || ''}`}</p>
         <div className='detailsp-content-wrapper'>
-          {/* Fixed Image Section JSX */}
           <div className='detailsp-image-section'>
-            <img 
-              className='detailsp-main-image' 
-              alt={`${auctionItem.item?.name || 'Auction Item'} - Ảnh ${currentImageIndex + 1}`} 
-              src={getMainImage()} 
-              onError={(e) => {  // Fallback nếu load lỗi
-                e.target.src = `${process.env.REACT_APP_BASE_URL}${AA_STORAGE_PATH}${PLACEHOLDER_IMAGE}`;
-              }}
-            />
+            <img className='detailsp-main-image' alt='Auction Item' src={getMainImage()} />
             <div className='detailsp-thumbnail-container'>
               <button
                 className='detailsp-nav-button'
                 onClick={() => changeImage((currentImageIndex - 1 + numImages) % numImages)}
-                aria-label="Ảnh trước"
-                disabled={numImages <= 1}  // Disable nếu chỉ 1 ảnh
               >
                 &lt;
               </button>
-              <div className='detailsp-thumbnails'>
-                {renderThumbnails()}
-              </div>
+              <div className='detailsp-thumbnails'>{renderThumbnails()}</div>
               <button
                 className='detailsp-nav-button'
                 onClick={() => changeImage((currentImageIndex + 1) % numImages)}
-                aria-label="Ảnh sau"
-                disabled={numImages <= 1}
               >
                 &gt;
               </button>
@@ -1009,8 +994,8 @@ const Detail = () => {
               <span className='detailsp-auctioneer'>{auctionItem.auction_org?.full_name || 'N/A'}</span>
             </li>
             <li className='detailsp-location'>
-              Địa điểm: Phòng 2.05 Lầu 2, Số 6 Lương Định Của, phường Bình Trưng, TP.HCM
-              {/* <span>{auctionItem.item?.category_id || 'N/A'}</span> */}
+              Địa điểm: Category ID
+              <span>{auctionItem.item?.category_id || 'N/A'}</span>
             </li>
           </ul>
         </div>
@@ -1029,7 +1014,7 @@ const Detail = () => {
       {showSuccessOverlay && (
         <div className='detailsp-overlay'>
           <div className='detailsp-success-box'>
-            <p>Hoàn tất thành công!</p>  {/* Hardcoded, as state was unused */}
+            <p>{successMessage}</p>
           </div>
         </div>
       )}

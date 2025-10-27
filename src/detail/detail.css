@@ -349,7 +349,7 @@
   width: 100%;
   padding: 15px 30px;
   margin-top: 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2772BA;
   color: white;
   border: none;
   border-radius: 8px;
@@ -363,7 +363,7 @@
 }
 
 .detailsp-bid-btn:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #2772BA;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
 }
@@ -395,7 +395,7 @@
   width: 100%;
   padding: 15px 30px;
   margin-top: 15px;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: #2772BA;
   color: white;
   border: none;
   border-radius: 8px;
@@ -403,20 +403,20 @@
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+  box-shadow: 0 4px 15px rgba(21, 0, 255, 0.4);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .detailsp-checkin-btn:hover {
-  background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+  background: #2772BA;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
+  box-shadow: 0 6px 20px rgba(21, 0, 255, 0.4);
 }
 
 .detailsp-checkin-btn:active {
   transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(245, 87, 108, 0.4);
+  box-shadow: 0 2px 10px rgba(21, 0, 255, 0.4);
 }
 
 /* Nút Đăng ký đấu giá */
@@ -424,7 +424,7 @@
   width: 100%;
   padding: 15px 30px;
   margin-top: 15px;
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  background: #2772BA;
   color: white;
   border: none;
   border-radius: 8px;
@@ -432,20 +432,20 @@
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+  box-shadow: 0 4px 15px rgba(21, 0, 255, 0.4);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .detailsp-register-bid-btn:hover {
-  background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+  background: #2772BA;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(17, 153, 142, 0.6);
+  box-shadow: 0 6px 20px rgba(21, 0, 255, 0.4);
 }
 
 .detailsp-register-bid-btn:active {
   transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(17, 153, 142, 0.4);
+  box-shadow: 0 2px 10px rgba(21, 0, 255, 0.4);
 }
 
 /* Icon cho các nút (nếu muốn thêm) */

@@ -35,7 +35,7 @@ const Footer = () => {
           <h2 className={styles.title}>ĐĂNG KÝ TƯ VẤN</h2>
           
           <form className={styles.form}>
-            <div className={styles.row}>
+            {/* <div className={styles.row}>
               <input 
                 type="text" 
                 placeholder="Họ và tên" 
@@ -46,9 +46,9 @@ const Footer = () => {
                 placeholder="Số điện thoại" 
                 className={`${styles.input} ${styles.phoneInput}`}
               />
-            </div>
+            </div> */}
             
-            <div className={styles.row}>
+            {/* <div className={styles.row}>
               <input 
                 type="text" 
                 placeholder="Địa chỉ" 
@@ -59,17 +59,17 @@ const Footer = () => {
                 placeholder="Email" 
                 className={styles.input}
               />
-            </div>
+            </div> */}
             
-            <textarea 
+            {/* <textarea 
               placeholder="Nội dung ..." 
               className={styles.textarea}
               rows="4"
-            />
+            /> */}
             
             <button type="submit" className={styles.submitBtn}>
-              GỬI NGAY
-              <i className="fas fa-arrow-right"></i>
+              Liên hệ
+              {/* <i className="fas fa-arrow-right"></i> */}
             </button>
           </form>
           
