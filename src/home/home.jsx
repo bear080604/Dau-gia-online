@@ -19,7 +19,6 @@ const preloadImages = (urls) => {
       const img = new Image();
       img.src = url;
       img.onerror = () => {
-        console.warn(`Failed to preload image: ${url}`);
         imageCache.set(url, { src: '/assets/img/placeholder.png' });
       };
       imageCache.set(url, img);
@@ -137,11 +136,10 @@ const Home = () => {
 
   // Kết nối Socket.io
   useEffect(() => {
-    const socket = io(process.env.REACT_APP_SOCKET_URL || 'https://your-production-socket-url.com');
+    const socket = io(process.env.REACT_APP_SOCKET_URL);
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log('✅ Kết nối Socket.io thành công');
       socket.emit('join.channel', 'auction-sessions');
     });
 
@@ -240,13 +238,14 @@ const Home = () => {
           },
         });
         const sessionsData = sessionsResponse.data.sessions || sessionsResponse.data.data || sessionsResponse.data || [];
-        console.log('📊 Initial sessions loaded:', sessionsData);
+
         debouncedSetSessions(Array.isArray(sessionsData) ? sessionsData : []);
 
         // Fetch news
         const newsResponse = await fetch(`${process.env.REACT_APP_API_URL}news`);
         if (!newsResponse.ok) throw new Error('Lỗi khi lấy tin tức');
         const newsData = await newsResponse.json();
+
         const formattedNews = newsData.map((item) => {
           const imageUrl = item.thumbnail && item.thumbnail.startsWith('/')
             ? `${process.env.REACT_APP_BASE_URL || 'https://your-production-url.com'}${item.thumbnail}`
@@ -274,6 +273,7 @@ const Home = () => {
       }
     };
 
+
     fetchInitialData();
   }, []);
 
@@ -300,7 +300,7 @@ const Home = () => {
 
 
     const sorted = [...sessions].sort((a, b) => b.session_id - a.session_id).slice(0, 10);
-    console.log('🔍 Latest sessions:', sorted.map((s) => ({ id: s.session_id, status: s.status })));
+
     // Preload images for latest sessions
     preloadImages(
       sorted
@@ -316,6 +316,7 @@ const Home = () => {
         <div className="section-title">
           <p>PHIÊN ĐẤU GIÁ MỚI NHẤT/NỔI BẬT</p>
         </div>
+
         {loading && <p>Đang tải dữ liệu...</p>}
         {error && <p className="error-message">{error}</p>}
         {!loading && latestSessions.length === 0 && !error && <p>Không có phiên đấu giá nào.</p>}
@@ -386,6 +387,7 @@ const Home = () => {
               </select>
             </div>
           </div>
+
           {loading && <p>Đang tải dữ liệu...</p>}
           {error && <p className="error-message">{error}</p>}
           {!loading && filteredSessions.length === 0 && !error && <p>Không có tài sản nào.</p>}
@@ -413,6 +415,7 @@ const Home = () => {
           <div className="section-title">
             <p>TIN TỨC VÀ THÔNG BÁO</p>
           </div>
+
           {loading && <p>Đang tải dữ liệu...</p>}
           {error && <p className="error-message">{error}</p>}
           {!loading && news.length === 0 && !error && <p>Không có tin tức nào.</p>}
@@ -434,12 +437,8 @@ const Home = () => {
                     className="news-image"
                     src={imageCache.get(newsItem.imageUrl)?.src || newsItem.imageUrl}
                     alt={newsItem.title}
+
                     loading="lazy"
-                    onError={(e) => {
-                      if (e.target.src !== '/assets/img/placeholder.png') {
-                        e.target.src = '/assets/img/placeholder.png';
-                      }
-                    }}
                   />
                   <div className="news-details">
                     <h3 className="news-title" style={{ minHeight: '56px' }}>

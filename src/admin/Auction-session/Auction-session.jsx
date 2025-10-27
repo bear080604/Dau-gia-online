@@ -58,10 +58,7 @@ function AuctionSession() {
   }, []);
 
   // Log token and user for debugging
-  useEffect(() => {
-    console.log('Initial Auth Token:', token);
-    console.log('User Info:', user);
-  }, [token, user]);
+
 
 useEffect(() => {
   const fetchAuctionOrgs = async () => {
@@ -70,7 +67,6 @@ useEffect(() => {
       const response = await axios.get(`${API_URL}showuser`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('Dữ liệu API tổ chức đấu giá:', response.data);
       const users = response.data.users || [];
       const toChucDauGiaUsers = users
         .filter((user) => user.role_id === 8 || (user.role && user.role.name === 'AuctionOrganization'))
@@ -80,7 +76,6 @@ useEffect(() => {
         }));
       setAuctionOrgs(toChucDauGiaUsers);
     } catch (error) {
-      console.error('Lỗi khi lấy tổ chức đấu giá:', error.response?.data || error);
       setError(
         `Không thể tải danh sách tổ chức đấu giá: ${
           error.response?.data?.message || 'Vui lòng thử lại.'
@@ -253,7 +248,6 @@ useEffect(() => {
       }
       return [];
     } catch (error) {
-      console.error('Error fetching bids:', error);
       if (error.response && error.response.status === 401) {
         alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
         window.location.href = '/login';
@@ -285,7 +279,6 @@ useEffect(() => {
         setError('Dữ liệu từ API không đúng định dạng.');
       }
     } catch (error) {
-      console.error('Error fetching sessions:', error);
       if (error.response && error.response.status === 401) {
         alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
         window.location.href = '/login';
@@ -314,8 +307,6 @@ const fetchProducts = async () => {
       }),
     ]);
 
-    console.log('Dữ liệu API sản phẩm:', productsResponse.data);
-    console.log('Dữ liệu API phiên đấu giá:', sessionsResponse.data);
 
     // Lấy danh sách item_id từ các phiên đấu giá đang hoạt động hoặc đã kết thúc thành công
     const sessionItemIds = sessionsResponse.data.sessions
@@ -323,29 +314,24 @@ const fetchProducts = async () => {
           .filter((session) => session.status !== 'KetThuc' || session.current_winner_id !== null)
           .map((session) => session.item_id)
       : [];
-    console.log('Danh sách item_id từ sessions (đang hoạt động hoặc đã thắng):', sessionItemIds);
 
     if (productsResponse.data && Array.isArray(productsResponse.data.data)) {
       const filteredProducts = productsResponse.data.data
         .filter((product) => {
           const isValidStatus = product.status === 'ChoDauGia';
           const hasNoActiveOrWonSessions = !sessionItemIds.includes(product.id);
-          console.log(`Sản phẩm ${product.id}: status=${product.status}, hasNoActiveOrWonSessions=${hasNoActiveOrWonSessions}`);
           return isValidStatus && hasNoActiveOrWonSessions;
         })
         .map((product) => ({
           ...product,
           auction_org_id: product.auction_org_id ? product.auction_org_id.toString() : '',
         }));
-      console.log('Danh sách sản phẩm hợp lệ:', filteredProducts);
       setProducts(filteredProducts);
     } else {
-      console.error('Cấu trúc dữ liệu sản phẩm không đúng:', productsResponse.data);
       setError('Dữ liệu sản phẩm không đúng định dạng.');
       setProducts([]);
     }
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách sản phẩm:', error.response?.data || error);
     if (error.response && error.response.status === 401) {
       alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
       window.location.href = '/login';

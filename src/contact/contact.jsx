@@ -86,7 +86,6 @@ const Contact = () => {
           setGlobalError('Dữ liệu danh mục không đúng định dạng.');
         }
       } catch (error) {
-        console.error('Lỗi khi tải dữ liệu:', error);
         setGlobalError('Lỗi khi tải dữ liệu: ' + error.message);
       }
     };

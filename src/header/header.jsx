@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'; // ✅ chỉ import 1 lầ
 import { useUser } from '../UserContext';
 import axios from 'axios';
 import styles from './header.module.css';
+import NotificationBell from "./NotificationBell";
 
 const Header = () => {
   const { user, logout } = useUser();
@@ -20,9 +21,15 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
+  const [showNotif, setShowNotif] = useState(false);
+    const [open, setOpen] = useState(false);
   const searchRef = useRef(null);
   const navigate = useNavigate();
 
+   const togglePopup = (e) => {
+    e.stopPropagation(); // tránh đóng liền sau khi mở
+    setOpen((prev) => !prev);
+  };
   // Fetch danh mục
   useEffect(() => {
     const fetchCategories = async () => {
@@ -227,6 +234,7 @@ const Header = () => {
     e.preventDefault();
     if (searchQuery.trim()) navigate(`/auction-session?q=${encodeURIComponent(searchQuery)}`);
   };
+  
 
   const navItems = [
     { icon: 'fa-info-circle', text: 'GIỚI THIỆU', href: '/about' },
@@ -253,6 +261,15 @@ const Header = () => {
         <div className={styles.authLinks}>
           {user ? (
             <>
+            <div>
+              <div onClick={togglePopup} style={{ cursor: "pointer" }}>
+                <i className="fa-solid fa-bell fa-lg"></i>
+              </div>
+
+              <NotificationBell open={open} onClose={() => setOpen(false)} />
+            </div>
+                
+
               <span>Xin chào, {user.full_name}</span>
               <div className={styles.userIconContainer}>
                 <Link to="/profile">

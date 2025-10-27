@@ -58,10 +58,7 @@ function AuctionAsset() {
   };
 
   const formatAssetData = (asset, categories) => {
-    console.log('Formatting asset:', asset);
-    console.log('Categories:', categories);
     const category = categories.find((cat) => cat.name === asset.category);
-    console.log('Found category:', category);
     const imageUrl = asset.image_url ? `${BASE_URL}${asset.image_url}` : 'https://example.com/placeholder.jpg';
 
     return {
@@ -111,26 +108,21 @@ function AuctionAsset() {
   // Fetch extra images for a specific asset
   const fetchExtraImages = async (itemId) => {
     try {
-      console.log('Fetching extra images for itemId:', itemId);
       const response = await axios.get(`${BASE_URL}/api/auction-items/${itemId}/images`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      console.log('API response for extra images:', response.data);
       const images = response.data.data || [];
       const imageUrls = images.map((img) => {
         const path = typeof img === 'string' ? img : img.url || img.image_url || '';
         if (!path) {
-          console.warn(`Invalid image path for itemId ${itemId}:`, img);
           return null;
         }
         return path.startsWith('http') ? path : `${BASE_URL}${path}`;
       }).filter(Boolean);
-      console.log('Generated extra image URLs:', imageUrls);
       return imageUrls;
     } catch (error) {
-      console.error(`Error fetching extra images for itemId ${itemId}:`, error.response?.data || error);
       return [];
     }
   };
@@ -173,7 +165,6 @@ function AuctionAsset() {
     const fetchCategories = async () => {
       try {
         const response = await axios.get(`${BASE_URL}/api/categories`);
-        console.log('Dữ liệu API danh mục:', response.data);
         const categoriesData = response.data.data || [];
         const normalizedCategories = categoriesData.map((cat) => ({
           id: cat.category_id || cat.id,
@@ -182,7 +173,6 @@ function AuctionAsset() {
         }));
         setCategories(normalizedCategories);
       } catch (error) {
-        console.error('Lỗi khi lấy danh mục:', error.response?.data || error);
         alert(
           `Không thể tải danh mục: ${
             error.response?.data?.message || 'Vui lòng thử lại.'
@@ -200,18 +190,15 @@ function AuctionAsset() {
     const fetchAssets = async () => {
       try {
         setIsLoadingAssets(true);
-        console.log('Token:', localStorage.getItem('token'));
         const response = await axios.get(`${BASE_URL}/api/products`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
-        console.log('Dữ liệu API tài sản:', response.data);
         const assetsData = response.data.data || [];
         const formattedAssets = await Promise.all(
           assetsData.map(async (asset) => {
             if (!asset.id) {
-              console.warn('Asset missing ID:', asset);
               return { ...formatAssetData(asset, categories), extraImages: [] };
             }
             const formatted = formatAssetData(asset, categories);
@@ -221,10 +208,8 @@ function AuctionAsset() {
             return { ...formatted, extraImages };
           })
         );
-        console.log('Formatted Assets:', formattedAssets);
         setAssets(formattedAssets.sort((a, b) => new Date(b.rawCreatedAt || 0) - new Date(a.rawCreatedAt || 0)));
       } catch (error) {
-        console.error('Lỗi khi lấy dữ liệu tài sản:', error.response?.data || error);
         alert(
           `Không thể tải dữ liệu tài sản: ${
             error.response?.data?.message || 'Vui lòng thử lại.'
