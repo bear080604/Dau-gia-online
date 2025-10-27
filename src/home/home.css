@@ -26,7 +26,7 @@
 .item-img,
 .auction-image {
   width: 100%;
-  height: 380px; /* cố định chiều cao khung hình */
+  height: 250px; /* cố định chiều cao khung hình */
   object-fit: cover; /* giữ tỉ lệ ảnh, cắt phần thừa cho vừa khung */
   display: block;
 }
