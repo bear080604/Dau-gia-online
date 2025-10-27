@@ -26,7 +26,10 @@ const Profile = () => {
     email: '',
     phone: '',
     address: '',
-    gender: 'male', // Thêm trường gender với giá trị mặc định
+    gender: 'male',
+    identity_number: '',
+    identity_issue_date: '',
+    identity_issued_by: '',
     idCardFront: null,
     idCardFrontUrl: null,
     idCardBack: null,
@@ -54,7 +57,10 @@ const Profile = () => {
     email: '',
     phone: '',
     address: '',
-    gender: 'male', // Thêm trường gender với giá trị mặc định
+    gender: 'male',
+    identity_number: '',
+    identity_issue_date: '',
+    identity_issued_by: '',
     organization_name: '',
     position: '',
     tax_code: '',
@@ -87,7 +93,10 @@ const Profile = () => {
       email: userData.email,
       phone: userData.phone,
       address: userData.address,
-      gender: userData.gender, // Cập nhật formData với gender
+      gender: userData.gender,
+      identity_number: userData.identity_number,
+      identity_issue_date: userData.identity_issue_date,
+      identity_issued_by: userData.identity_issued_by,
       organization_name: userData.organization_name,
       position: userData.position,
       tax_code: userData.tax_code,
@@ -161,7 +170,10 @@ const Profile = () => {
             email: data.user.email || 'Chưa cập nhật',
             phone: data.user.phone || 'Chưa cập nhật',
             address: data.user.address || 'Chưa cập nhật',
-            gender: data.user.gender || 'male', // Thêm gender với giá trị mặc định
+            gender: data.user.gender || 'male',
+            identity_number: data.user.identity_number || 'Chưa cập nhật',
+            identity_issue_date: data.user.identity_issue_date || 'Chưa cập nhật',
+            identity_issued_by: data.user.identity_issued_by || 'Chưa cập nhật',
             idCardFront: data.user.id_card_front || null,
             idCardFrontUrl: data.user.id_card_front_url || null,
             idCardBack: data.user.id_card_back || null,
@@ -664,7 +676,10 @@ const Profile = () => {
       payload.append('email', formData.email);
       payload.append('phone', formData.phone);
       payload.append('address', formData.address);
-      payload.append('gender', formData.gender); // Thêm gender vào payload
+      payload.append('gender', formData.gender);
+      payload.append('identity_number', formData.identity_number);
+      payload.append('identity_issue_date', formData.identity_issue_date);
+      payload.append('identity_issued_by', formData.identity_issued_by);
 
       if (userData.role_id === 9) {
         payload.append('organization_name', formData.organization_name);
@@ -722,7 +737,10 @@ const Profile = () => {
           email: data.user.email || prev.email,
           phone: data.user.phone || prev.phone,
           address: data.user.address || prev.address,
-          gender: data.user.gender || prev.gender, // Cập nhật gender
+          gender: data.user.gender || prev.gender,
+          identity_number: data.user.identity_number || prev.identity_number,
+          identity_issue_date: data.user.identity_issue_date || prev.identity_issue_date,
+          identity_issued_by: data.user.identity_issued_by || prev.identity_issued_by,
           idCardFront: data.user.id_card_front || prev.idCardFront,
           idCardFrontUrl: data.user.id_card_front_url || prev.idCardFrontUrl,
           idCardBack: data.user.id_card_back || prev.idCardBack,
@@ -973,6 +991,18 @@ const Profile = () => {
             <div className={styles.infoSection}>
               <div className={styles.sectionTitle}>Thông tin định danh</div>
               <div className={styles.infoGrid}>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Số CCCD:</span>
+                  <div className={styles.infoValue}>{userData.identity_number}</div>
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Ngày cấp:</span>
+                  <div className={styles.infoValue}>{formatDate(userData.identity_issue_date)}</div>
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Nơi cấp:</span>
+                  <div className={styles.infoValue}>{userData.identity_issued_by}</div>
+                </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoLabel}>Ảnh căn cước công dân:</span>
                   <div className={styles.photoSection}>
@@ -1726,7 +1756,43 @@ const Profile = () => {
                 </div>
               </div>
               <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Ảnh căn cước</label>
+                <label className={styles.formLabel}>Thông tin căn cước công dân</label>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Số CCCD</label>
+                    <input
+                      type="text"
+                      className={styles.formControl}
+                      name="identity_number"
+                      value={formData.identity_number}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Ngày cấp</label>
+                    <input
+                      type="date"
+                      className={styles.formControl}
+                      name="identity_issue_date"
+                      value={
+                        formData.identity_issue_date && formData.identity_issue_date !== 'Chưa cập nhật'
+                          ? new Date(formData.identity_issue_date).toISOString().split('T')[0]
+                          : ''
+                      }
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Nơi cấp</label>
+                    <input
+                      type="text"
+                      className={styles.formControl}
+                      name="identity_issued_by"
+                      value={formData.identity_issued_by}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
                 <div className={styles.photoSection}>
                   <div className={styles.photoItem}>
                     <span className={styles.photoLabel}>Mặt trước</span>
@@ -1966,7 +2032,6 @@ const Profile = () => {
           </div>
         </div>
       )}
-
       {showBankPopup && (
         <div className={`${styles.popupOverlay} ${styles.active}`} id="bankPopup">
           <div className={styles.popup}>
