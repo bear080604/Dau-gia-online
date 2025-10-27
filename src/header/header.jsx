@@ -217,17 +217,21 @@ const Header = () => {
           },
         }
       );
-      const result = await res.json();
-      if (res.ok && result.status) {
-        logout();
-        localStorage.removeItem('token');
-        alert('Đăng xuất thành công');
-        navigate('/login');
-      } else throw new Error(result.message);
+
+      // Không cần chờ API trả về cũng logout client luôn
+      logout(); // xóa user context + localStorage
+      localStorage.removeItem('token');
+
+      navigate('/login');
+      alert('Đăng xuất thành công');
     } catch (err) {
-      alert('Lỗi đăng xuất: ' + err.message);
+      console.error(err);
+      logout();
+      localStorage.removeItem('token');
+      navigate('/login');
     }
   };
+
 
   // Search submit
   const handleSearchSubmit = (e) => {
@@ -276,7 +280,7 @@ const Header = () => {
                   <i className={`fa fa-user ${styles.userIcon}`} />
                 </Link>
               </div>
-              <a href="#" onClick={handleLogout}>
+              <a href="/login" onClick={handleLogout}>
                 Đăng Xuất <i className="fa fa-sign-out" />
               </a>
             </>

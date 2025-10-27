@@ -35,12 +35,18 @@ export const UserProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    // Xóa dữ liệu trong state React
+    setUser(null);
+    setToken(null);
+
+    // Xóa trong localStorage
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('authToken');
 
+    // Gọi API đăng xuất (nếu cần)
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/logout`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/'}logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,10 +56,10 @@ export const UserProvider = ({ children }) => {
       });
 
       if (!response.ok) {
-        // Xử lý lỗi nếu cần
+        console.warn('Logout API returned non-OK response');
       }
     } catch (err) {
-      // Xử lý lỗi nếu cần
+      console.error('Logout error:', err);
     }
   };
 
