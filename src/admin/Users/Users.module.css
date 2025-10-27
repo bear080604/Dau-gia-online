@@ -25,6 +25,10 @@
   padding-right: 1rem;
 }
 
+.actionButtons{
+  display: flex;
+  gap: 0.5rem;
+}
 .searchBar {
   display: flex;
   align-items: center;
@@ -40,7 +44,9 @@
 .searchBar:hover {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
-
+.w-full{
+  width: 100%;
+}
 .searchBar input {
   border: none;
   outline: none;
@@ -164,7 +170,7 @@
 }
 
 .dataTable td {
-  padding: 1rem;
+  padding: 0.75rem;
   border-bottom: 1px solid #e5e7eb;
   font-size: 0.9rem;
   overflow-wrap: break-word;

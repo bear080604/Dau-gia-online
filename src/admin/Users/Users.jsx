@@ -798,7 +798,7 @@ const renderImage = (url, type, errorKey) => {
             aria-label="Xuất Excel tất cả người dùng"
           >
             <i className="fas fa-file-excel"></i>
-            Xuất Excel
+            Xuất Excel tất cả người dùng
           </button>
           <button
             className={styles.addBtn}
@@ -812,7 +812,7 @@ const renderImage = (url, type, errorKey) => {
       </div>
 
       <div className={styles.dataTable}>
-        <table className="w-full">
+        <table className="w-full" style={{ width: '100%' }}>
           <thead>
             <tr>
               <th className={styles.dataTableCell}>ID</th>
@@ -820,9 +820,10 @@ const renderImage = (url, type, errorKey) => {
               <th className={styles.dataTableCell}>Email</th>
               <th className={styles.dataTableCell}>Số điện thoại</th>
               <th className={styles.dataTableCell}>Vai trò</th>
+              <th className={styles.dataTableCell}>Ngày tạo</th>
               <th className={styles.dataTableCell}>Xác minh email</th>
               <th className={styles.dataTableCell}>Xét duyệt</th>
-              <th className={styles.dataTableCell}>Hành động</th>
+              <th className={styles.dataTableCell}>Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -841,6 +842,7 @@ const renderImage = (url, type, errorKey) => {
                     {user.role_name}
                   </span>
                 </td>
+                <td className={styles.dataTableCell} data-label="Ngày tạo">{user.createdDate}</td>
                 <td className={styles.dataTableCell} data-label="Xác minh email">{user.email_verify}</td>
                 <td className={styles.dataTableCell} data-label="Xét duyệt">{user.admin_verify}</td>
                 <td className={styles.dataTableCell} data-label="Thao tác">
@@ -875,13 +877,6 @@ const renderImage = (url, type, errorKey) => {
                         >
                           <i className="fa fa-file-pdf"></i>
                         </button>
-                        <button
-                          className={styles.btnSuccess}
-                          onClick={() => handleExportUserExcel(user.id)}
-                          aria-label="Xuất Excel người dùng"
-                        >
-                          <i className="fa fa-file-excel"></i>
-                        </button>
                       </>
                     ) : (
                       <>
@@ -912,13 +907,6 @@ const renderImage = (url, type, errorKey) => {
                           aria-label="Xuất PDF người dùng"
                         >
                           <i className="fa fa-file-pdf"></i>
-                        </button>
-                        <button
-                          className={styles.btnSuccess}
-                          onClick={() => handleExportUserExcel(user.id)}
-                          aria-label="Xuất Excel người dùng"
-                        >
-                          <i className="fa fa-file-excel"></i>
                         </button>
                       </>
                     )}
