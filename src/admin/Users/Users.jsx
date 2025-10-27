@@ -11,7 +11,7 @@ function Users() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [showRoleModal, setShowRoleModal] = useState(false);
+  // const [showRoleModal, setShowRoleModal] = useState(false); doi role
   const [modalMode, setModalMode] = useState('add');
   const [selectedUser, setSelectedUser] = useState(null);
   const [userForm, setUserForm] = useState({
@@ -20,7 +20,7 @@ function Users() {
     phone: '',
     role_id: '',
   });
-  const [selectedRole, setSelectedRole] = useState('');
+  // const [selectedRole, setSelectedRole] = useState('');
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -166,18 +166,18 @@ function Users() {
     setShowViewModal(false);
   };
 
-  const openRoleModal = (user) => {
-    setSelectedUser(user);
-    setSelectedRole(user.role_id || '');
-    setFormError(null);
-    setShowRoleModal(true);
-  };
+  // const openRoleModal = (user) => {
+  //   setSelectedUser(user);
+  //   setSelectedRole(user.role_id || '');
+  //   setFormError(null);
+  //   setShowRoleModal(true);
+  // };
 
-  const closeRoleModal = () => {
-    setShowRoleModal(false);
-    setSelectedRole('');
-    setFormError(null);
-  };
+  // const closeRoleModal = () => {
+  //   setShowRoleModal(false);
+  //   setSelectedRole('');
+  //   setFormError(null);
+  // };
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -195,9 +195,10 @@ function Users() {
         return;
       }
 
-      const url = modalMode === 'add' 
-        ? `${API_URL}register` 
-        : `${API_URL}user/update/${selectedUser.id}`;
+      const url =
+        modalMode === 'add'
+          ? `${API_URL}register`
+          : `${API_URL}user/update/${selectedUser.id}`;
       const method = modalMode === 'add' ? 'post' : 'put';
 
       const payload = {
@@ -213,102 +214,45 @@ function Users() {
         headers: {
           ...(modalMode === 'add' ? {} : { Authorization: `Bearer ${token}` }),
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
       });
 
-      const newUser = {
+      let updatedUser = {
         id: modalMode === 'add' ? response.data.user.user_id : selectedUser.id,
         name: userForm.name,
         email: userForm.email,
         phone: userForm.phone,
-        role_id: modalMode === 'add' ? null : selectedUser.role_id,
-        role_name: modalMode === 'add' ? 'Chưa có vai trò' : selectedUser.role_name,
+        role_id: userForm.role_id || selectedUser.role_id,
+        role_name:
+          roles.find(r => r.role_id === parseInt(userForm.role_id))?.name ||
+          selectedUser.role_name,
         createdDate: response.data.user.created_at,
         deletedAt: response.data.user.deleted_at || null,
       };
 
+      // Nếu đang ở chế độ chỉnh sửa và chọn vai trò mới → đổi role luôn
+      if (modalMode === 'edit' && userForm.role_id) {
+        await axios.post(
+          `${API_URL}users/${selectedUser.id}/roles`,
+          { role_id: parseInt(userForm.role_id) },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
       setUsers(prevUsers =>
         modalMode === 'add'
-          ? [...prevUsers, newUser]
-          : prevUsers.map(u => (u.id === newUser.id ? newUser : u))
+          ? [...prevUsers, updatedUser]
+          : prevUsers.map(u => (u.id === updatedUser.id ? updatedUser : u))
       );
 
       closeUserModal();
     } catch (err) {
-      setFormError(err.response?.data?.errors
-        ? Object.values(err.response.data.errors).flat().join(', ')
-        : err.response?.data?.message || 'Lỗi khi lưu người dùng');
-    }
-  };
-
-  const handleChangeRole = async () => {
-    try {
-      setFormError(null);
-      
-      if (!selectedRole) {
-        setFormError('Vui lòng chọn vai trò!');
-        return;
-      }
-
-      const newRole = roles.find(r => r.role_id === parseInt(selectedRole));
-      if (!newRole) {
-        setFormError('Vai trò không hợp lệ!');
-        return;
-      }
-
-      const requests = [];
-      if (selectedUser.role_id) {
-        const oldRole = roles.find(r => r.role_id === parseInt(selectedUser.role_id));
-        if (oldRole) {
-          requests.push(
-            axios.delete(`${API_URL}users/${selectedUser.id}/roles`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-              },
-              data: { roles: [oldRole.name] },
-            })
-          );
-        }
-      }
-
-      requests.push(
-        axios.post(`${API_URL}users/${selectedUser.id}/roles`, 
-          { roles: [newRole.name] },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-          }
-        )
+      setFormError(
+        err.response?.data?.errors
+          ? Object.values(err.response.data.errors).flat().join(', ')
+          : err.response?.data?.message || 'Lỗi khi lưu người dùng'
       );
-
-      const [deleteResponse, postResponse] = await Promise.all(requests);
-
-      if (deleteResponse && !deleteResponse.data?.status) {
-        throw new Error(deleteResponse.data?.message || 'Lỗi khi xóa vai trò cũ');
-      }
-      if (!postResponse.data?.status) {
-        throw new Error(postResponse.data?.message || 'Lỗi khi gán vai trò mới');
-      }
-
-      setUsers(prevUsers =>
-        prevUsers.map(u =>
-          u.id === selectedUser.id
-            ? { ...u, role_id: parseInt(selectedRole), role_name: newRole.name }
-            : u
-        )
-      );
-
-      closeRoleModal();
-    } catch (err) {
-      setFormError(err.response?.data?.errors
-        ? Object.values(err.response.data.errors).flat().join(', ')
-        : err.response?.data?.message || 'Lỗi khi đổi vai trò');
     }
   };
 
@@ -462,35 +406,7 @@ function Users() {
                 <td className={styles.dataTableCell} data-label="Xét duyệt">{user.admin_verify}</td>
                 <td className={styles.dataTableCell} data-label="Thao tác">
                   <div className="flex gap-2">
-                    <button
-                      className={styles.btnPrimary}
-                      onClick={() => openUserModal('edit', user)}
-                      aria-label="Chỉnh sửa người dùng"
-                    >
-                      <i className="fa fa-pencil"></i>
-                    </button>
-                    <button
-                      className={styles.btnDanger}
-                      onClick={() => handleDeleteUser(user)}
-                      aria-label="Xóa người dùng"
-                    >
-                      <i className="fa fa-trash"></i>
-                    </button>
-                    <button
-                      className={styles.btnSuccess}
-                      onClick={() => openViewModal(user)}
-                      aria-label="Xem chi tiết người dùng"
-                    >
-                      <i className="fa fa-eye"></i>
-                    </button>
-                    <button
-                      className={styles.btnInfo}
-                      onClick={() => openRoleModal(user)}
-                      aria-label="Đổi vai trò"
-                    >
-                      <i className="fa fa-user-tag"></i>
-                    </button>
-                    {user.admin_verify === 'Chờ xét duyệt' && (
+                    {user.admin_verify === 'Chờ xét duyệt' ? (
                       <>
                         <button
                           className={`${styles.btnSuccess} bg-green-600 hover:bg-green-700`}
@@ -505,6 +421,30 @@ function Users() {
                           aria-label="Từ chối người dùng"
                         >
                           <i className="fa fa-times"></i>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className={styles.btnPrimary}
+                          onClick={() => openUserModal('edit', user)}
+                          aria-label="Chỉnh sửa người dùng"
+                        >
+                          <i className="fa fa-pencil"></i>
+                        </button>
+                        <button
+                          className={styles.btnDanger}
+                          onClick={() => handleDeleteUser(user)}
+                          aria-label="Xóa người dùng"
+                        >
+                          <i className="fa fa-trash"></i>
+                        </button>
+                        <button
+                          className={styles.btnSuccess}
+                          onClick={() => openViewModal(user)}
+                          aria-label="Xem chi tiết người dùng"
+                        >
+                          <i className="fa fa-eye"></i>
                         </button>
                       </>
                     )}
@@ -564,6 +504,24 @@ function Users() {
                   className={styles.modalInput}
                 />
               </div>
+              {modalMode === 'edit' && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Vai trò</label>
+                  <select
+                    name="role_id"
+                    value={userForm.role_id}
+                    onChange={handleFormChange}
+                    className={styles.modalInput}
+                  >
+                    <option value="">-- Chọn vai trò --</option>
+                    {roles.map(role => (
+                      <option key={role.role_id} value={role.role_id}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
             <div className={styles.modalFooter}>
               <button className={styles.btnPrimary} onClick={handleSaveUser}>
@@ -604,7 +562,7 @@ function Users() {
         </div>
       )}
 
-      {showRoleModal && selectedUser && (
+      {/* {showRoleModal && selectedUser && (
         <div className={styles.modal} role="dialog" aria-modal="true" onClick={closeRoleModal}>
           <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
@@ -644,7 +602,7 @@ function Users() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

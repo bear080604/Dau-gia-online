@@ -238,6 +238,18 @@
 .btnPrimary {
   background-color: #4f46e5;
   color: white;
+  width: 36px;
+  height: 36px;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s 
+ease;
+  margin-right: 0.5rem;
 }
 
 .btnPrimary:hover {
@@ -247,6 +259,18 @@
 .btnDanger {
   background-color: #ef4444;
   color: white;
+  width: 36px;
+  height: 36px;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s 
+ease;
+  margin-right: 0.5rem;
 }
 
 .btnDanger:hover {
@@ -256,6 +280,18 @@
 .btnSuccess {
   background-color: #22c55e;
   color: white;
+  width: 36px;
+  height: 36px;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s 
+ease;
+  margin-right: 0.5rem;
 }
 
 .btnSuccess:hover {
@@ -263,8 +299,12 @@
 }
 
 .btnSecondary {
-  background-color: #6b7280;
+  background-color: #ffffff00;
   color: white;
+  width: 36px;
+  height: 36px;  
+  border: none;
+  display: none;
 }
 
 .btnSecondary:hover {
@@ -342,6 +382,8 @@
   font-size: 1.5rem;
   cursor: pointer;
   color: #6b7280;
+  background-color: #feffff00;
+  border: none;
 }
 
 .modalClose:hover {
