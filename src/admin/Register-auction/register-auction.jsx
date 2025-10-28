@@ -12,6 +12,7 @@ const AdminPanel = () => {
   const [paymentDetails, setPaymentDetails] = useState(null);
   const [registrations, setRegistrations] = useState([]);
   const [users, setUsers] = useState({});
+  const [sessions, setSessions] = useState({}); // Thêm state để lưu thông tin phiên đấu giá
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -37,6 +38,7 @@ const AdminPanel = () => {
           return;
         }
 
+        // Lấy danh sách hồ sơ đăng ký
         const profilesUrl = `${process.env.REACT_APP_API_URL}auction-profiles`;
         const profilesResponse = await axios.get(profilesUrl, {
           headers: { Authorization: `Bearer ${token}` },
@@ -44,6 +46,7 @@ const AdminPanel = () => {
         const profilesData = profilesResponse.data.profiles || [];
         setRegistrations(profilesData);
 
+        // Lấy danh sách người dùng
         const usersUrl = `${process.env.REACT_APP_API_URL}showuser`;
         const usersResponse = await axios.get(usersUrl, {
           headers: { Authorization: `Bearer ${token}` },
@@ -53,6 +56,23 @@ const AdminPanel = () => {
           return acc;
         }, {});
         setUsers(usersData);
+
+        // Lấy thông tin các phiên đấu giá để lấy tên tài sản
+        const sessionsUrl = `${process.env.REACT_APP_API_URL}auction-sessions`;
+        const sessionsResponse = await axios.get(sessionsUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        const sessionsData = sessionsResponse.data.sessions || [];
+        const sessionsMap = sessionsData.reduce((acc, session) => {
+          acc[session.session_id] = {
+            sessionName: session.item?.name || `Phiên ${session.session_id}`,
+            item: session.item
+          };
+          return acc;
+        }, {});
+        setSessions(sessionsMap);
+
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch data');
       } finally {
@@ -62,6 +82,19 @@ const AdminPanel = () => {
 
     fetchData();
   }, []);
+
+  // Hàm lấy tên phiên đấu giá dựa trên session_id
+  const getSessionName = (sessionId) => {
+    if (!sessionId) return 'Không xác định';
+    const session = sessions[sessionId];
+    return session ? session.sessionName : `Phiên ${sessionId}`;
+  };
+
+  // Hàm lấy thông tin chi tiết phiên đấu giá
+  const getSessionDetails = (sessionId) => {
+    if (!sessionId) return null;
+    return sessions[sessionId] || null;
+  };
 
   const updateStatus = async (id, newStatus, reason = '') => {
     try {
@@ -106,19 +139,22 @@ const AdminPanel = () => {
     const reg = registrations.find((r) => r.profile_id === id);
     if (reg) {
       const user = users[reg.user_id] || {};
+      const sessionDetails = getSessionDetails(reg.session_id);
+      
       setCurrentId(id);
       setPaymentDetails({
         id: reg.profile_id,
-        auction: reg.session_id ? `Phiên ${reg.session_id}` : 'Không xác định',
+        auction: sessionDetails ? sessionDetails.sessionName : `Phiên ${reg.session_id}`,
         documentUrl: reg.document_url || '#',
         user: user.full_name || `user${reg.user_id}@example.com`,
-        deposit: `${reg.deposit_amount} VND`,
+        deposit: `${reg.deposit_amount}`,
         status: statusMap[reg.status] || 'Chờ Duyệt',
         rejectReason: reg.reject_reason || 'Không có lý do',
         paymentMethod: 'Chuyển Khoản Ngân Hàng',
         paymentDate: '2025-10-10',
         paymentStatus: 'Chưa Hoàn Tiền',
         paymentId: 1,
+        sessionDetails: sessionDetails // Thêm thông tin chi tiết phiên đấu giá
       });
       setIsDetailModalOpen(true);
     }
@@ -219,7 +255,7 @@ const AdminPanel = () => {
           {Array.isArray(registrations) ? (
             registrations.map((reg) => (
               <tr key={reg.profile_id} data-id={reg.profile_id}>
-                <td>{reg.session_id ? `Phiên ${reg.session_id}` : 'Không xác định'}</td>
+                <td>{getSessionName(reg.session_id)}</td>
                 <td data-label="Tài Liệu Liên Quan">
                   {reg.document_url ? (
                     <a href={reg.document_url} download target="_blank" rel="noopener noreferrer">
@@ -230,7 +266,7 @@ const AdminPanel = () => {
                   )}
                 </td>
                 <td>{users[reg.user_id]?.full_name || `user${reg.user_id}@example.com`}</td>
-                <td>{`${reg.deposit_amount} VND`}</td>
+                <td>{Number(reg.deposit_amount).toLocaleString('vi-VN')} ₫</td>
                 <td>
                   <select
                     value={statusMap[reg.status] || 'Chờ Duyệt'}
@@ -308,6 +344,16 @@ const AdminPanel = () => {
             <h2>Chi Tiết Thanh Toán</h2>
             <div className={styles.detailContent}>
               <div><label>Phiên Đấu Giá:</label> <span>{paymentDetails.auction}</span></div>
+              {paymentDetails.sessionDetails && paymentDetails.sessionDetails.item && (
+                <>
+                  <div><label>Mô tả tài sản:</label> <span>{paymentDetails.sessionDetails.item.description}</span></div>
+                  <div><label>Giá khởi điểm:</label> 
+                  <span>
+                    {Number(paymentDetails.sessionDetails.item.starting_price).toLocaleString('vi-VN')} ₫
+                  </span>
+                  </div>
+                </>
+              )}
               <div>
                 <label>Tài Liệu Liên Quan:</label>{' '}
                 {paymentDetails.documentUrl ? (
@@ -319,7 +365,7 @@ const AdminPanel = () => {
                 )}
               </div>
               <div><label>User:</label> <span>{paymentDetails.user}</span></div>
-              <div><label>Tiền Đặt Trước:</label> <span>{paymentDetails.deposit}</span></div>
+              <div><label>Tiền Đặt Trước:</label> <span>{Number(paymentDetails.deposit).toLocaleString('vi-VN')} đ</span></div>
               <div><label>Trạng Thái Hồ Sơ:</label> <span>{paymentDetails.status}</span></div>
               <div><label>Lý Do Từ Chối:</label> <span>{paymentDetails.rejectReason}</span></div>
               <div><label>Phương Thức Thanh Toán:</label> <span>{paymentDetails.paymentMethod}</span></div>

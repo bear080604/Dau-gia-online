@@ -106,16 +106,11 @@
   max-width: 200px;
 }
 
-.table th:nth-child(3), /* Mô Tả */
-.table td:nth-child(3) {
-  width: 250px;
-  min-width: 250px;
-  max-width: 250px;
-}
+
 
 .table th:nth-child(4), /* Ngày Tạo */
 .table td:nth-child(4) {
-  width: 120px;
+  /* width: 120px; */
   min-width: 120px;
   max-width: 120px;
 }

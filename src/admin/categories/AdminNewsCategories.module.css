@@ -101,21 +101,16 @@
 
 .table th:nth-child(2), /* Tên Danh Mục */
 .table td:nth-child(2) {
-  width: 200px;
+  /* width: 200px; */
   min-width: 200px;
   max-width: 200px;
 }
 
-.table th:nth-child(3), /* Mô Tả */
-.table td:nth-child(3) {
-  width: 250px;
-  min-width: 250px;
-  max-width: 250px;
-}
+
 
 .table th:nth-child(4), /* Ngày Tạo */
 .table td:nth-child(4) {
-  width: 120px;
+  /* width: 120px; */
   min-width: 120px;
   max-width: 120px;
 }

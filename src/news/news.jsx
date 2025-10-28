@@ -25,7 +25,8 @@ const News = () => {
 
         // Fetch news
         const newsRes = await fetch('http://127.0.0.1:8000/api/news');
-        const news = await newsRes.json();
+        const allNews = await newsRes.json();
+        const news = allNews.filter(item => item.is_published === 1);
 
         // Map dữ liệu tin tức
         const formattedNews = news.map((item) => ({
