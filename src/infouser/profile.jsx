@@ -152,20 +152,25 @@ const Profile = () => {
             id: data.user.user_id || null,
             fullName: data.user.full_name || 'Chưa cập nhật',
             username: data.user.email ? data.user.email.split('@')[0] : 'Chưa cập nhật',
+       
             accountType:
-              data.user.role === 'User'
+              data.user.role_id === 1
                 ? 'Cá nhân'
-                : data.user.role === 'Administrator'
+                : data.user.role_id === 2
                 ? 'Quản trị viên'
-                : data.user.role === 'ToChucDauGia'
-                ? 'Tổ chức đấu giá'
-                : data.user.role === 'DauGiaVien'
+                : data.user.role_id === 5
                 ? 'Đấu giá viên'
+                : data.user.role_id === 9
+                ? 'Doanh nghiệp'
+                : // fallback sang giá trị role (chuỗi) cũ nếu cần
+                data.user.role === 'ToChucDauGia'
+                ? 'Tổ chức đấu giá'
                 : data.user.role === 'ChuyenVienTTC'
                 ? 'Chuyên viên TTC'
                 : data.user.role === 'DonViThuc'
                 ? 'Đơn vị thực'
                 : 'Chưa xác định',
+
             role_id: data.user.role_id || null,
             email: data.user.email || 'Chưa cập nhật',
             phone: data.user.phone || 'Chưa cập nhật',
