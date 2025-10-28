@@ -226,102 +226,129 @@ const AdminNewsCategories = () => {
       )}
 
       {/* Modal Thêm mới */}
-      {showAddModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h2>Thêm Danh Mục Mới</h2>
-            <form onSubmit={handleAdd}>
-              <div className={styles.formGroup}>
-                <label>Tên danh mục *</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  placeholder="Nhập tên danh mục"
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Mô tả</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Nhập mô tả danh mục"
-                  rows="3"
-                />
-              </div>
-              <div className={styles.modalActions}>
-                <button type="submit">Lưu</button>
-                <button type="button" onClick={() => setShowAddModal(false)}>Hủy</button>
-              </div>
-            </form>
-          </div>
+{showAddModal && (
+  <div className={styles.modalOverlay}>
+    <div className={styles.modalContent}>
+      <h2>Thêm Danh Mục Mới</h2>
+      <form onSubmit={handleAdd}>
+        <div className={styles.formGroup}>
+          <label>Tên danh mục *</label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+            placeholder="Nhập tên danh mục"
+          />
         </div>
-      )}
 
-      {/* Modal Sửa */}
-      {showEditModal && selectedCategory && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h2>Sửa Danh Mục</h2>
-            <form onSubmit={handleEdit}>
-              <div className={styles.formGroup}>
-                <label>Tên danh mục *</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Mô tả</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows="3"
-                />
-              </div>
-              <div className={styles.modalActions}>
-                <button type="submit">Cập nhật</button>
-                <button type="button" onClick={() => setShowEditModal(false)}>Hủy</button>
-              </div>
-            </form>
-          </div>
+        {/* ✅ Thêm phần mô tả */}
+        <div className={styles.formGroup}>
+          <label>Mô tả</label>
+          <textarea
+            value={formData.description}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
+            placeholder="Nhập mô tả cho danh mục (nếu có)"
+            rows="4"
+          ></textarea>
         </div>
-      )}
 
-      {/* Modal Xem Chi Tiết */}
-      {showViewModal && selectedCategory && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h2>Chi Tiết Danh Mục</h2>
-            <div className={styles.viewGroup}>
-              <label>Mã danh mục:</label>
-              <p>{selectedCategory.id}</p>
-            </div>
-            <div className={styles.viewGroup}>
-              <label>Tên danh mục:</label>
-              <p>{selectedCategory.name}</p>
-            </div>
-            <div className={styles.viewGroup}>
-              <label>Mô tả:</label>
-              <p>{selectedCategory.description || 'Không có mô tả'}</p>
-            </div>
-            <div className={styles.viewGroup}>
-              <label>Ngày tạo:</label>
-              <p>{new Date(selectedCategory.created_at).toLocaleDateString('vi-VN')}</p>
-            </div>
-            <div className={styles.viewGroup}>
-              <label>Ngày cập nhật:</label>
-              <p>{selectedCategory.updated_at ? new Date(selectedCategory.updated_at).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}</p>
-            </div>
-            <div className={styles.modalActions}>
-              <button type="button" onClick={() => setShowViewModal(false)}>Đóng</button>
-            </div>
-          </div>
+        <div className={styles.modalActions}>
+          <button type="submit">Lưu</button>
+          <button type="button" onClick={() => setShowAddModal(false)}>
+            Hủy
+          </button>
         </div>
-      )}
+      </form>
+    </div>
+  </div>
+)}
+
+{/* Modal Sửa */}
+{showEditModal && selectedCategory && (
+  <div className={styles.modalOverlay}>
+    <div className={styles.modalContent}>
+      <h2>Sửa Danh Mục</h2>
+      <form onSubmit={handleEdit}>
+        <div className={styles.formGroup}>
+          <label>Tên danh mục *</label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+          />
+        </div>
+
+        {/* ✅ Thêm phần mô tả */}
+        <div className={styles.formGroup}>
+          <label>Mô tả</label>
+          <textarea
+            value={formData.description}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
+            placeholder="Nhập mô tả danh mục"
+            rows="4"
+          ></textarea>
+        </div>
+
+        <div className={styles.modalActions}>
+          <button type="submit">Cập nhật</button>
+          <button type="button" onClick={() => setShowEditModal(false)}>
+            Hủy
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
+{/* Modal Xem Chi Tiết */}
+{showViewModal && selectedCategory && (
+  <div className={styles.modalOverlay}>
+    <div className={styles.modalContent}>
+      <h2>Chi Tiết Danh Mục</h2>
+      <div className={styles.viewGroup}>
+        <label>Mã danh mục:</label>
+        <p>{selectedCategory.id}</p>
+      </div>
+      <div className={styles.viewGroup}>
+        <label>Tên danh mục:</label>
+        <p>{selectedCategory.name}</p>
+      </div>
+
+      {/* ✅ Hiển thị mô tả */}
+      <div className={styles.viewGroup}>
+        <label>Mô tả:</label>
+        <p>{selectedCategory.description || 'Không có mô tả'}</p>
+      </div>
+
+      <div className={styles.viewGroup}>
+        <label>Ngày tạo:</label>
+        <p>
+          {new Date(selectedCategory.created_at).toLocaleDateString('vi-VN')}
+        </p>
+      </div>
+      <div className={styles.viewGroup}>
+        <label>Ngày cập nhật:</label>
+        <p>
+          {selectedCategory.updated_at
+            ? new Date(selectedCategory.updated_at).toLocaleDateString('vi-VN')
+            : 'Chưa cập nhật'}
+        </p>
+      </div>
+      <div className={styles.modalActions}>
+        <button type="button" onClick={() => setShowViewModal(false)}>
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };

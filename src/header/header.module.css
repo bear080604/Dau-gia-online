@@ -357,7 +357,7 @@
   font-size: 13px;
   transition: all 0.3s ease;
   border-right: 1px solid rgba(255, 255, 255, 0.15);
-  text-align: center;
+  /* text-align: center; */
   position: relative;
   overflow: hidden;
 }
