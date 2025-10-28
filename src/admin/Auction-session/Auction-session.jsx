@@ -21,9 +21,11 @@ function AuctionSession() {
   const [products, setProducts] = useState([]);
   const [auctionOrgs, setAuctionOrgs] = useState([]);
   const [isLoadingAuctionOrgs, setIsLoadingAuctionOrgs] = useState(true);
+  const [auctioneers, setAuctioneers] = useState([]);
   const [isAuctionOrgDisabled, setIsAuctionOrgDisabled] = useState(false);
   const [sessionForm, setSessionForm] = useState({
     item: '',
+    auctioneerId: '',
     creator: user?.id || '',
     creatorName: user?.full_name || '',
     startTime: '',
@@ -118,6 +120,18 @@ function AuctionSession() {
     }
   }, [sessionForm.item, products]);
 
+  useEffect(() => {
+    const fetchAuctioneers = async () => {
+      const res = await axios.get(`${API_URL}showuser`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const users = res.data.users || [];
+      const dauGiaVienList = users.filter(u => u.role_id === 5); // hoặc tên role “Auctioneer”
+      setAuctioneers(dauGiaVienList.map(u => ({ id: u.user_id, name: u.full_name })));
+    };
+    if (token) fetchAuctioneers();
+  }, [token]);
+
   const getAuctionStatus = (session) => {
     if (!session || !session.bid_start || !session.bid_end) {
       return 'Chưa bắt đầu';
@@ -183,6 +197,9 @@ function AuctionSession() {
       auctionOrgId && auctionOrgs.find((org) => org.id === auctionOrgId)?.name ||
       session.auction_org?.full_name ||
       'Chưa có';
+    
+     const auctioneerId = session.auctioneer_id?.toString();
+     const auctioneerName = session.auctioneer?.full_name || 'Chưa chỉ định';
 
     return {
       id: session.session_id,
@@ -198,6 +215,8 @@ function AuctionSession() {
       method: session.method || 'Đấu giá tự do',
       auctionOrgId,
       auctionOrgName,
+      auctioneerId: '',
+      auctioneerName: auctioneerName, // THÊM DÒNG NÀY
       registerStart,
       registerEnd,
       checkinTime,
@@ -420,6 +439,7 @@ function AuctionSession() {
         status: 'Mo',
         method: session.method,
         auctionOrgId: session.auctionOrgId || '',
+        auctioneerId: '',
         registerStart: session.registerStart || '',
         registerEnd: session.registerEnd || '',
         checkinTime: session.checkinTime || '',
@@ -443,6 +463,7 @@ function AuctionSession() {
         status: 'Mo',
         method: 'Đấu giá tự do',
         auctionOrgId: '',
+        auctioneerId: '',
         registerStart: '',
         registerEnd: '',
         checkinTime: '',
@@ -542,6 +563,7 @@ function AuctionSession() {
         status: 'Mo',
         method: sessionForm.method,
         auction_org_id: parseInt(sessionForm.auctionOrgId),
+        auctioneer_id: sessionForm.auctioneerId ? parseInt(sessionForm.auctioneerId) : null,
         register_start: sessionForm.registerStart || null,
         register_end: sessionForm.registerEnd || null,
         checkin_time: sessionForm.checkinTime || null,
@@ -909,6 +931,19 @@ function AuctionSession() {
                   )}
                 </select>
               </div>
+              <div className={styles.formGroup}>
+                <label>Đấu giá viên:</label>
+                <select
+                  name="auctioneerId"
+                  value={sessionForm.auctioneerId}
+                  onChange={handleFormChange}
+                >
+                  <option value="">-- Chọn đấu giá viên --</option>
+                  {auctioneers.map(a => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label htmlFor="startTime">Thời gian bắt đầu</label>
                 <input
@@ -1072,6 +1107,10 @@ function AuctionSession() {
               <p><strong>Tài sản:</strong> {selectedSession.item}</p>
               <p><strong>Người tạo:</strong> {selectedSession.creator}</p>
               <p><strong>Tổ chức đấu giá:</strong> {selectedSession.auctionOrgName}</p>
+              <div className={styles.viewGroup}>
+                <label>Đấu giá viên:</label>
+                <p>{selectedSession.auctioneerName}</p> 
+              </div>
               <p><strong>Thời gian bắt đầu:</strong> {selectedSession.startTime}</p>
               <p><strong>Thời gian kết thúc:</strong> {selectedSession.endTime}</p>
               <p><strong>Trạng thái:</strong> {selectedSession.status}</p>
