@@ -69,7 +69,7 @@ const Footer = () => {
             
             <button type="submit" className={styles.submitBtn}>
               Liên hệ
-              {/* <i className="fas fa-arrow-right"></i> */}
+            
             </button>
           </form>
           
@@ -88,8 +88,6 @@ const Footer = () => {
             Copyright by Khải Bảo. All Rights Reserved.
           </p>
         </div>
-
-        {/* Right Section - Company Info */}
         <div className={styles.rightSection}>
           {/* Company Header */}
           <div className={styles.companyHeader}>

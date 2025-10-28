@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { UserProvider } from './UserContext';
 import ProtectedRoute from './ProtectedRoute';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Loading from './components/Loading';
 
 // Public pages
 import Home from './pages/Home';
@@ -20,6 +21,8 @@ import ProfilePage from './pages/profile';
 import AccessDenied from './AccessDenied';
 import News from './pages/news';
 import NewsDetail from './pages/newsDetail';
+import GuidePage from './pages/guide';
+import CooperationPage from './pages/cooperation';
 
 // Admin pages
 import Admindashboard from './pages/AdminDashboard';
@@ -55,10 +58,30 @@ function App() {
   return (
     <UserProvider>
       <Router>
-        <ScrollToTop />
-        <div className="App">
-          <ToastContainer position="top-right" autoClose={3000} />
-          <Routes>
+        <AppContent />
+      </Router>
+    </UserProvider>
+  );
+}
+
+function AppContent() {
+  const [isLoading, setIsLoading] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => setIsLoading(false), 1000); // 1 second loading
+
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+
+  return (
+    <>
+      <ScrollToTop />
+      <div className="App">
+        {isLoading && <Loading />}
+        <ToastContainer position="top-right" autoClose={3000} />
+        <Routes>
             {/* ✅ Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/home" element={<Home />} />
@@ -75,6 +98,8 @@ function App() {
             <Route path="/news" element={<News />} />
             <Route path="/news/:id" element={<NewsDetail />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/guide" element={<GuidePage />} />
+            <Route path="/cooperation" element={<CooperationPage />} />
 
             {/* 🔐 Auth Routes (ngăn nếu đã login) */}
             <Route
@@ -257,8 +282,7 @@ function App() {
             />
           </Routes>
         </div>
-      </Router>
-    </UserProvider>
+    </>
   );
 }
 
