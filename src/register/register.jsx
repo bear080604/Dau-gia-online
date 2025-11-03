@@ -45,6 +45,16 @@ function Register() {
   const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
   const [searchBank, setSearchBank] = useState("");
   const dropdownRef = useRef(null);
+const [openGenderDropdown, setOpenGenderDropdown] = useState(false);
+useEffect(() => {
+  const handleClickOutside = (e) => {
+    if (!e.target.closest(`.${styles.customSelectWrapper}`)) {
+      setOpenGenderDropdown(false);
+    }
+  };
+  document.addEventListener("click", handleClickOutside);
+  return () => document.removeEventListener("click", handleClickOutside);
+}, []);
 
   useEffect(() => {
     axios
@@ -297,7 +307,7 @@ function Register() {
             <p className={styles.errorMsg}>{clientErrors.birth_date || errors.birth_date[0]}</p>
           )}
         </div>
-        <div className={styles.formGroup}>
+        {/* <div className={styles.formGroup}>
           <label>Giới tính <span className={styles.required}>*</span></label>
           <select
             name="gender"
@@ -314,7 +324,64 @@ function Register() {
           {(clientErrors.gender || errors.gender) && (
             <p className={styles.errorMsg}>{clientErrors.gender || errors.gender[0]}</p>
           )}
-        </div>
+        </div> */}
+
+
+        <div className={styles.formGroup}>
+  <label>
+    Giới tính <span className={styles.required}>*</span>
+  </label>
+
+  <div className={styles.customSelectWrapper}>
+    <div
+      className={`${styles.customSelect} ${clientErrors.gender || errors.gender ? styles.inputError : ""}`}
+      onClick={() => {
+        if (!isLoading) setOpenGenderDropdown((prev) => !prev);
+      }}
+    >
+      <span>
+        {
+          formData.gender === "male"
+            ? "Nam"
+            : formData.gender === "female"
+            ? "Nữ"
+            : formData.gender === "other"
+            ? "Khác"
+            : "Chọn giới tính"
+        }
+      </span>
+      <span className={styles.arrow}>{openGenderDropdown ? "▲" : "▼"}</span>
+    </div>
+
+    {openGenderDropdown && !isLoading && (
+      <ul className={styles.dropdownList}>
+        {["male", "female", "other"].map((value) => (
+          <li
+            key={value}
+            onClick={() => {
+              handleChange({
+                target: { name: "gender", value },
+              });
+              setOpenGenderDropdown(false);
+            }}
+            className={
+              formData.gender === value ? styles.activeOption : ""
+            }
+          >
+            {value === "male" ? "Nam" : value === "female" ? "Nữ" : "Khác"}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+
+  {(clientErrors.gender || errors.gender) && (
+    <p className={styles.errorMsg}>
+      {clientErrors.gender || errors.gender[0]}
+    </p>
+  )}
+</div>
+
         <div className={styles.formGroup}>
           <label>Email <span className={styles.required}>*</span></label>
           <input

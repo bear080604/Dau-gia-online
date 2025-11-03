@@ -18,10 +18,18 @@ function AuctionSession() {
   const [endDate, setEndDate] = useState('');
   const itemsPerPage = 6;
   const socketRef = useRef(null);
-
+const [openCategoryDropdown, setOpenCategoryDropdown] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-
+useEffect(() => {
+  const handleClickOutside = (e) => {
+    if (!e.target.closest(`.${styles.customSelectWrapper}`)) {
+      setOpenCategoryDropdown(false);
+    }
+  };
+  document.addEventListener("click", handleClickOutside);
+  return () => document.removeEventListener("click", handleClickOutside);
+}, []);
   // Lấy từ khóa từ URL (?q=...)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -209,7 +217,7 @@ function AuctionSession() {
           </form>
 
           <div className={styles.filterSection}>
-            <div className={styles.filterGroup}>
+            {/* <div className={styles.filterGroup}>
               <label htmlFor="categorySelect">Danh mục sản phẩm:</label>
               <select
                 id="categorySelect"
@@ -223,7 +231,66 @@ function AuctionSession() {
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
+
+        <div className={styles.filterGroup}>
+  <label htmlFor="categorySelect">Danh mục sản phẩm:</label>
+
+  <div className={styles.customSelectWrapper}>
+    <div
+      className={styles.customSelect}
+      onClick={() => setOpenCategoryDropdown((prev) => !prev)}
+    >
+      <span>
+        {categoryFilter === "all"
+          ? "Tất cả danh mục"
+          : categories.find(
+              (c) => String(c.category_id) === categoryFilter
+            )?.name || "Chọn danh mục"}
+      </span>
+      <span className={styles.arrow}>
+        {openCategoryDropdown ? "▲" : "▼"}
+      </span>
+    </div>
+
+    {openCategoryDropdown && (
+      <ul className={styles.dropdownList}>
+        <li
+          key="all"
+          onClick={() => {
+            setCategoryFilter("all");
+            setOpenCategoryDropdown(false);
+          }}
+          className={
+            categoryFilter === "all" ? styles.activeOption : ""
+          }
+        >
+          Tất cả danh mục
+        </li>
+
+        {categories.map((category) => (
+          <li
+            key={category.category_id}
+            onClick={() => {
+              setCategoryFilter(String(category.category_id)); // ép kiểu
+              setOpenCategoryDropdown(false);
+            }}
+            className={
+              categoryFilter === String(category.category_id)
+                ? styles.activeOption
+                : ""
+            }
+          >
+            {category.name}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</div>
+
+            
+
 
             <div className={styles.filterGroup}>
               <label >Lọc theo thời gian đăng ký:</label>

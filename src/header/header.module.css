@@ -252,6 +252,8 @@
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
+              text-decoration: none;
+  
 }
 
 .headContractBox::before {
@@ -698,6 +700,7 @@
     gap: 10px;
     border-radius: 10px;
     font-size: 0.95em;
+    
   }
 
   .headIcon {
@@ -893,7 +896,9 @@
     padding: 6px 4%;
     font-size: 12px;
   }
-
+.annn {
+    display:none;
+  }
   .hotline {
     font-size: 12px;
     flex-wrap: wrap;
@@ -972,7 +977,9 @@
     padding: 5px 3%;
     font-size: 11px;
   }
-
+  .annn {
+    display:none;
+  }
   .hotline {
     font-size: 11px;
   }
@@ -1333,19 +1340,35 @@
   z-index: 1001;
 }
 
-/* Search Container Positioning */
-.searchContainer {
-  position: relative;
-  flex: 1;
-  max-width: 500px;
-}
 
 .searchBox {
   position: relative;
 }
 
 .mobileSearchBox {
-  position: relative;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        width: calc(100vw - 40px);
+        max-width: 300px;
+        border-radius: 10px;
+        padding: 10px 15px 10px 10px;
+        z-index: 100;
+        display: none;
+        margin-top: 10px;
+}
+
+mobileSearchBox {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: calc(100vw - 40px);
+  max-width: 300px;
+  border-radius: 10px;
+  padding: 10px 15px 10px 10px;
+  z-index: 100;
+  display: none;
+  margin-top: 10px;
 }
 
 /* Loading spinner */
@@ -1367,7 +1390,9 @@
     right: 10px;
     max-height: 50vh;
   }
-  
+  .annn {
+    display:none;
+  }
   .mobileSearchBox.active {
     z-index: 1002;
   }

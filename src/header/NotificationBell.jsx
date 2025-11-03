@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-
+import "./notificstion.css"
 export default function NotificationPopup({ open, onClose }) {
   const [notifications, setNotifications] = useState([]);
   const popupRef = useRef(null);

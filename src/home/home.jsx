@@ -8,7 +8,7 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import axios from 'axios';
 import io from 'socket.io-client';
-
+import { ChevronDown, ChevronUp } from "lucide-react";
 // Cache for deduplicating image requests
 const imageCache = new Map();
 
@@ -41,6 +41,16 @@ const AuctionItem = React.memo(({ session, onToggleFavorite }) => {
   const [isLoading, setIsLoading] = useState(false);
   const token = localStorage.getItem('token');
   const isProcessingRef = useRef(false);
+const [openDropdown, setOpenDropdown] = useState(false);
+useEffect(() => {
+  const handleClickOutside = (e) => {
+    if (!e.target.closest(".custom-select")) {
+      setOpenDropdown(false);
+    }
+  };
+  document.addEventListener("click", handleClickOutside);
+  return () => document.removeEventListener("click", handleClickOutside);
+}, []);
 
   const getAuctionStatus = (status) => {
     const statusMap = {
@@ -229,6 +239,7 @@ const Home = () => {
   const [news, setNews] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [error, setError] = useState(null);
+   const [openDropdown, setOpenDropdown] = useState(false);
   const [loading, setLoading] = useState(true);
   const socketRef = useRef(null);
   const initialDataFetchedRef = useRef(false);
@@ -486,16 +497,66 @@ const Home = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="select-cate">
-              <select name="category" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+            {/* <div className="select-cate">
+              <select  name="category" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
                 <option value="all">Tất cả danh mục</option>
                 {categories.map((category) => (
-                  <option key={category.category_id} value={category.category_id}>
+                  <option  className="select-option" key={category.category_id} value={category.category_id}>
                     {category.name}
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
+
+
+            <div className="select-cate">
+  <div 
+    className="custom-select" 
+    onClick={() => setOpenDropdown(!openDropdown)} // toggle mở/đóng menu
+  >
+    <div className="selected">
+      {
+        categories.find(c => c.category_id === categoryFilter)?.name || "Tất cả danh mục"
+      }
+    </div>
+
+    {openDropdown && (
+      <ul className="options">
+        <li 
+          onClick={() => {
+            setCategoryFilter("all");
+            setOpenDropdown(false);
+          }}
+          className={categoryFilter === "all" ? "active" : ""}
+        >
+          Tất cả danh mục
+        </li>
+
+        {categories.map((category) => (
+          <li
+            key={category.category_id}
+            onClick={() => {
+              setCategoryFilter(category.category_id);
+              setOpenDropdown(false);
+            }}
+            className={categoryFilter === category.category_id ? "active" : ""}
+          >
+            {category.name}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
             <div className="method">
               <select name="method">
                 <option value="">Phương thức đấu giá</option>

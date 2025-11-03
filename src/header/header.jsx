@@ -310,7 +310,7 @@ const Header = () => {
             </div>
                 
 
-              <span>Xin chào, {user.full_name}</span>
+              <span className={styles.annn}>Xin chào, {user.full_name}</span>
               <div className={styles.userIconContainer}>
                 <Link to="/profile">
                   <i className={`fa fa-user ${styles.userIcon}`} />
@@ -372,8 +372,7 @@ const Header = () => {
           <button className={styles.mobileSearchToggle} onClick={toggleMobileSearch}>
             <i className="fa fa-search" />
           </button>
-          <div className={`${styles.mobileSearchBox} ${isMobileSearchActive ? styles.active : ''}`}>
-            <form onSubmit={handleSearchSubmit}>
+            <form onSubmit={handleSearchSubmit} className={`${styles.mobileSearchBox} ${isMobileSearchActive ? styles.active : ''}`}>
               <input
                 placeholder="Nhập tên tài sản..."
                 type="text"
@@ -384,8 +383,9 @@ const Header = () => {
                 <i className="fa fa-search" />
               </button>
             </form>
-          </div>
         </div>
+
+
 
         <div className={styles.headerRight}>
           {user && latestUnpaidContract && (

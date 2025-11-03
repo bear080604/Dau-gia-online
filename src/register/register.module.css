@@ -341,7 +341,7 @@ select.inputError {
   .registerContainer {
     padding: 15px;
   }
-
+ 
   .registerTitle {
     font-size: 1.5rem;
   }
@@ -350,6 +350,7 @@ select.inputError {
     flex-direction: column;
     gap: 8px;
   }
+  
 
   .toggleButton {
     width: 100%;
@@ -375,7 +376,66 @@ select.inputError {
     gap: 2px;
   }
 
+
   .bankShortName {
     font-size: 11px;
   }
+}
+
+
+.customSelectWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.customSelect {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px;
+  background-color: #fff;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.customSelect:hover {
+  border-color: #0b76ff;
+}
+
+.dropdownList {
+  position: absolute;
+  top: 105%;
+  left: 0;
+  width: 100%;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 10;
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.dropdownList li {
+  padding: 10px;
+  cursor: pointer;
+  white-space: normal; /* chữ dài tự xuống dòng */
+}
+
+.dropdownList li:hover {
+  background-color: #f1f5f9;
+}
+
+.activeOption {
+  background-color: #e0f2fe;
+  font-weight: 600;
+}
+
+.arrow {
+  font-size: 12px;
+  margin-left: 8px;
 }

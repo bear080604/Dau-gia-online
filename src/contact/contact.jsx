@@ -29,12 +29,22 @@ const Contact = () => {
   const [checkAuthMsg, setCheckAuthMsg] = useState('Đang kiểm tra xác thực...');
   const [toasts, setToasts] = useState([]);
   const [categories, setCategories] = useState([]);
-
+  const [openCategoryDropdown, setOpenCategoryDropdown] = useState(false);
   const fileInputRef = useRef(null);
   const extraImagesRef = useRef(null);
   const urlFileRef = useRef(null);
 
-  // Chỉ giữ lại fetch danh mục (categories), bỏ hoàn toàn fetch tổ chức đấu giá
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(`.${styles.customSelectWrapper}`)) {
+        setOpenCategoryDropdown(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  // Fetch categories - updated with debug logs and fallback
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -50,13 +60,26 @@ const Contact = () => {
           }
         });
         const catData = await catResponse.json();
+        
+        // DEBUG: Log để kiểm tra
+        console.log("Kết quả API categories:", catData);
+        
         if (catData.status && Array.isArray(catData.data)) {
           setCategories(catData.data);
+          console.log("Đã set categories:", catData.data); // DEBUG
         } else {
-          setGlobalError('Dữ liệu danh mục không đúng định dạng.');
+          // Fallback nếu cấu trúc khác (e.g., data.categories hoặc trực tiếp data)
+          const categoriesList = catData.data || catData.categories || catData || [];
+          setCategories(Array.isArray(categoriesList) ? categoriesList : []);
+          console.log("Fallback categories:", categoriesList); // DEBUG
+          if (!Array.isArray(categoriesList)) {
+            setGlobalError('Dữ liệu danh mục không đúng định dạng. Kiểm tra console.');
+          }
         }
       } catch (error) {
+        console.error('Lỗi fetch categories:', error); // DEBUG
         setGlobalError('Lỗi khi tải danh mục: ' + error.message);
+        setCategories([]); // Fallback rỗng
       }
     };
 
@@ -359,24 +382,68 @@ const Contact = () => {
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Thông tin sản phẩm</h2>
           <form onSubmit={handleSubmit} className={styles.assetForm}>
+
+            {/* Updated dropdown with safe checks and fallback */}
             <div className={styles.formGroup}>
               <label className={styles.formLabel} htmlFor="category_id">Danh mục</label>
-              <select
-                className={`${styles.formControl} ${errors.category_id ? styles.error : ''}`}
-                id="category_id"
-                name="category_id"
-                value={formData.category_id}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">-- Chọn danh mục --</option>
-                {categories.map(cat => (
-                  <option key={cat.category_id} value={cat.category_id}>
-                    {cat.name} - {cat.description}
-                  </option>
-                ))}
-              </select>
-              {errors.category_id && <div className={styles.validationError}>{errors.category_id}</div>}
+
+              <div className={styles.customSelectWrapper}>
+                <div
+                  className={`${styles.customSelect} ${errors.category_id ? styles.error : ''}`}
+                  onClick={() => setOpenCategoryDropdown(prev => !prev)}
+                >
+                  <span>
+                    {formData.category_id
+                      ? (() => {
+                          const cat = categories.find(c => String(c.category_id) === String(formData.category_id));
+                          return cat ? `${cat.name} - ${cat.description}` : '-- Chọn danh mục --';
+                        })()
+                      : '-- Chọn danh mục --'}
+                  </span>
+                  <span className={styles.arrow}>{openCategoryDropdown ? '▲' : '▼'}</span>
+                </div>
+
+                {openCategoryDropdown && (
+                  <ul className={styles.dropdownList}>
+                    {/* Fallback nếu chưa load */}
+                    {!Array.isArray(categories) || categories.length === 0 ? (
+                      <li className={styles.loadingOption}>Đang tải danh mục... (Kiểm tra console)</li>
+                    ) : (
+                      <>
+                        <li
+                          key="none"
+                          onClick={() => {
+                            handleInputChange({ target: { name: 'category_id', value: '' } });
+                            setOpenCategoryDropdown(false);
+                          }}
+                          className={!formData.category_id ? styles.activeOption : ''}
+                        >
+                          -- Chọn danh mục --
+                        </li>
+
+                        {categories.map((cat) => (
+                          <li
+                            key={cat.category_id}
+                            onClick={() => {
+                              handleInputChange({ target: { name: 'category_id', value: String(cat.category_id) } });
+                              setOpenCategoryDropdown(false);
+                            }}
+                            className={String(formData.category_id) === String(cat.category_id) ? styles.activeOption : ''}
+                          >
+                            <strong>{cat.name}</strong>
+                            <br />
+                            <small>{cat.description}</small>
+                          </li>
+                        ))}
+                      </>
+                    )}
+                  </ul>
+                )}
+              </div>
+
+              {errors.category_id && (
+                <div className={styles.validationError}>{errors.category_id}</div>
+              )}
             </div>
 
             <div className={styles.formGroup}>
