@@ -210,7 +210,7 @@ function Roles() {
 
       const url = modalMode === 'add' ? 'http://127.0.0.1:8000/api/roles' : `http://127.0.0.1:8000/api/roles/${selectedRole.role_id}`;
       const method = modalMode === 'add' ? 'POST' : 'PUT';
-
+      
       const response = await fetch(url, {
         method,
         headers: {

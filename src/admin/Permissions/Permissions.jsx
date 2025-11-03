@@ -115,7 +115,18 @@ function Permissions() {
       </div>
 
       <h1 className={styles.pageTitle}>Quản Lý Quyền Hạn</h1>
-      <p className={styles.pageSubtitle}>Xem danh sách quyền hạn hệ thống</p>
+      <p className={styles.pageSubtitle}>Quản lý quyền hạn hệ thống</p>
+
+      {/* <div className={styles.actionsBar}>
+        <button
+          className={styles.addBtn}
+          onClick={() => openPermissionModal('add')}
+          aria-label="Thêm quyền hạn mới"
+        >
+          <i className="fas fa-plus"></i>
+          Thêm quyền hạn mới
+        </button>
+      </div> */}
 
       {/* Bảng */}
       <div className={styles.dataTable}>
@@ -125,24 +136,39 @@ function Permissions() {
               <th className={styles.dataTableCell}>ID</th>
               <th className={styles.dataTableCell}>Tên quyền hạn</th>
               <th className={styles.dataTableCell}>Mô tả</th>
-              <th className={styles.dataTableCell}>Hành động</th>
             </tr>
           </thead>
           <tbody>
             {currentPermissions.map(permission => (
               <tr key={permission.permission_id} className={styles.dataTableRow}>
-                <td className={styles.dataTableCell}>{permission.permission_id}</td>
-                <td className={styles.dataTableCell}>{permission.name}</td>
-                <td className={styles.dataTableCell}>{permission.description}</td>
-                <td className={styles.dataTableCell}>
-                  <button
-                    className={styles.btnSuccess}
-                    onClick={() => openViewModal(permission)}
-                    aria-label="Xem chi tiết"
-                  >
-                    <i className="fa fa-eye"></i>
-                  </button>
-                </td>
+                <td className={styles.dataTableCell} data-label="ID">{permission.permission_id}</td>
+                <td className={styles.dataTableCell} data-label="Tên quyền hạn">{permission.name}</td>
+                <td className={styles.dataTableCell} data-label="Mô tả">{permission.description}</td>
+                {/* <td className={styles.dataTableCell} data-label="Hành động">
+                  <div className="flex gap-2">
+                    <button
+                      className={styles.btnPrimary}
+                      onClick={() => openPermissionModal('edit', permission)}
+                      aria-label="Chỉnh sửa quyền hạn"
+                    >
+                      <i className="fa fa-pencil"></i>
+                    </button>
+                    <button
+                      className={styles.btnDanger}
+                      onClick={() => handleDeletePermission(permission)}
+                      aria-label="Xóa quyền hạn"
+                    >
+                      <i className="fa fa-trash"></i>
+                    </button>
+                    <button
+                      className={styles.btnSuccess}
+                      onClick={() => openViewModal(permission)}
+                      aria-label="Xem chi tiết quyền hạn"
+                    >
+                      <i className="fa fa-eye"></i>
+                    </button>
+                  </div>
+                </td> */}
               </tr>
             ))}
           </tbody>

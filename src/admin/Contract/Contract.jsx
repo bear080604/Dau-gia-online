@@ -10,29 +10,16 @@ function Contract() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
   const [selectedContract, setSelectedContract] = useState(null);
   const [contracts, setContracts] = useState([]);
-  const [users, setUsers] = useState({}); // Map of user_id to full_name
-  const [userList, setUserList] = useState([]); // Full user data for validation
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
-    contractSession: '',
-    contractWinner: '',
-    finalPrice: '',
-    signedDate: '',
-    contractManager: '',
     contractStatus: 'ChoThanhToan',
+    contractFile: null,
   });
 
   const itemsPerPage = 5;
-
-  const statusMap = {
-    ChoThanhToan: 'Chờ thanh toán',
-    DaThanhToan: 'Đã thanh toán',
-    Huy: 'Hủy',
-  };
 
   const formatCurrency = (amount) => {
     if (!amount || parseFloat(amount) === 0) return 'N/A';
@@ -54,87 +41,56 @@ function Contract() {
     });
   };
 
-  // Fetch contracts and users from the backend
- useEffect(() => {
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+  // Fetch chỉ contracts
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
+        const contractRes = await axios.get(`${process.env.REACT_APP_API_URL}contracts`);
 
-        // Fetch contracts and users concurrently
-        const [contractResponse, userResponse] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}contracts`),
-          axios.get(`${process.env.REACT_APP_API_URL}showuser`),
-        ]);
+        // Transform hợp đồng
+        const transformedContracts = contractRes.data.contracts.map((contract) => ({
+          id: `#HD-${String(contract.contract_id).padStart(3, '0')}`,
+          sessionName: contract.session?.item?.name || 'N/A',
+          winner: contract.winner?.full_name || 'N/A',
+          finalPrice: formatCurrency(contract.final_price),
+          finalPriceValue: parseFloat(contract.final_price) || 0,
+          signedDate: formatDate(contract.signed_date),
+          rawSignedDate: contract.signed_date || '',
+          paymentStatus: contract.status,
+          statusClass:
+            contract.status === 'ChoThanhToan'
+              ? 'statusChothanhtoan'
+              : contract.status === 'DaThanhToan'
+              ? 'statusDathanhtoan'
+              : 'statusHuy',
+          rawContractId: contract.contract_id,
+          fileUrl: contract.file_path ? `http://localhost:8000${contract.file_path}` : '',
+        }));
 
-        // Store full user data for validation
-        setUserList(userResponse.data.users);
-
-      const usersData = userResponse.data.users.reduce((acc, user) => {
-        acc[user.user_id] = user.full_name;
-        return acc;
-      }, {});
-     
-      setUsers(usersData);
-
-const transformedContracts = contractResponse.data.contracts.map((contract, index) => {
-  try {
-    return {
-      id: `#HD-${String(contract.contract_id).padStart(3, '0')}`,
-      sessionId: `#PH-${String(contract.session_id).padStart(3, '0')}`,
-      sessionIdShort: `PH${String(contract.session_id).padStart(3, '0')}`,
-      winner: contract.winner && contract.winner.full_name
-        ? `${contract.winner.full_name} (ID: ${contract.winner_id || 'N/A'})`
-        : 'N/A',
-      winnerId: contract.winner_id ? String(contract.winner_id) : '',
-      finalPrice: formatCurrency(contract.final_price),
-      finalPriceValue: parseFloat(contract.final_price) || 0,
-      signedDate: formatDate(contract.signed_date),
-      rawSignedDate: contract.signed_date || '',
-      manager: contract.session && contract.session.created_by
-        ? `${usersData[contract.session.created_by] || 'Unknown'} (ID: ${contract.session.created_by})`
-        : 'Unknown',
-      managerId: contract.session?.created_by?.toString() || '1',
-      status: statusMap[contract.status] || contract.status,
-      statusClass:
-        contract.status === 'ChoThanhToan'
-          ? 'statusChothanhtoan'
-          : contract.status === 'DaThanhToan'
-          ? 'statusDathanhtoan'
-          : 'statusHuy',
-      paymentStatus: contract.status,
-      rawContractId: contract.contract_id,
+        setContracts(transformedContracts);
+        setLoading(false);
+      } catch (err) {
+        setError('Không thể tải dữ liệu.');
+        setLoading(false);
+      }
     };
-  } catch (error) {
-    console.error(`Error transforming contract at index ${index}:`, contract, error);
-    return null; // Skip problematic contract
-  }
-}).filter(contract => contract !== null); // Remove null entries
 
-     
-      setContracts(transformedContracts);
-      setLoading(false);
-    } catch (err) {
-     
-      setError('Không thể tải dữ liệu.');
-      setLoading(false);
-    }
-  };
-
-  fetchData();
-}, []);
-
+    fetchData();
+  }, []);
 
   const applyFilters = () => {
     return contracts.filter((contract) => {
       const searchMatch =
-        contract.sessionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contract.winner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contract.manager.toLowerCase().includes(searchTerm.toLowerCase());
+        contract.sessionName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        contract.winner.toLowerCase().includes(searchTerm.toLowerCase());
       const statusMatch =
-        !statusFilter || contract.status.toLowerCase().includes(statusFilter.toLowerCase());
-      const sessionMatch =
-        !sessionFilter || contract.sessionId.toLowerCase().includes(sessionFilter.toLowerCase());
+        !statusFilter ||
+        (contract.paymentStatus === 'ChoThanhToan' && statusFilter === 'Chờ thanh toán') ||
+        (contract.paymentStatus === 'DaThanhToan' && statusFilter === 'Thành công') ||
+        (contract.paymentStatus === 'Huy' && statusFilter === 'Hủy');
+      const sessionMatch = !sessionFilter || contract.sessionName.toLowerCase().includes(sessionFilter.toLowerCase());
       return searchMatch && statusMatch && sessionMatch;
     });
   };
@@ -165,28 +121,12 @@ const transformedContracts = contractResponse.data.contracts.map((contract, inde
     setCurrentPage(page);
   };
 
-  const openModal = (mode, contract = null) => {
-    setModalMode(mode);
+  const openModal = (contract) => {
     setSelectedContract(contract);
-    if (contract) {
-      setFormData({
-        contractSession: contract.sessionIdShort,
-        contractWinner: contract.winnerId,
-        finalPrice: contract.finalPriceValue.toString(),
-        signedDate: contract.rawSignedDate ? contract.rawSignedDate.slice(0, 16) : '',
-        contractManager: contract.managerId,
-        contractStatus: contract.paymentStatus,
-      });
-    } else {
-      setFormData({
-        contractSession: '',
-        contractWinner: '',
-        finalPrice: '',
-        signedDate: '',
-        contractManager: '',
-        contractStatus: 'ChoThanhToan',
-      });
-    }
+    setFormData({
+      contractStatus: contract.paymentStatus,
+      contractFile: null,
+    });
     setShowModal(true);
     document.body.classList.add('modal-open');
   };
@@ -194,6 +134,7 @@ const transformedContracts = contractResponse.data.contracts.map((contract, inde
   const closeModal = () => {
     setShowModal(false);
     setSelectedContract(null);
+    setFormData({ contractStatus: 'ChoThanhToan', contractFile: null });
     document.body.classList.remove('modal-open');
   };
 
@@ -201,32 +142,24 @@ const transformedContracts = contractResponse.data.contracts.map((contract, inde
     try {
       const contractId = contract.rawContractId;
       const response = await axios.get(`${process.env.REACT_APP_API_URL}contracts/${contractId}`);
-      const data = response.data;
+      const data = response.data.contract;
       const transformedContract = {
-        id: `#HD-${String(data.contract.contract_id).padStart(3, '0')}`,
-        sessionId: `#PH-${String(data.contract.session_id).padStart(3, '0')}`,
-        sessionIdShort: `PH${String(data.contract.session_id).padStart(3, '0')}`,
-        winner: data.contract.winner
-          ? `${data.contract.winner.full_name} (ID: ${data.contract.winner_id})`
-          : 'N/A',
-        winnerId: data.contract.winner_id ? String(data.contract.winner_id) : '',
-        finalPrice: formatCurrency(data.contract.final_price),
-        finalPriceValue: parseFloat(data.contract.final_price) || 0,
-        signedDate: formatDate(data.contract.signed_date),
-        rawSignedDate: data.contract.signed_date || '',
-        manager: data.contract.session.created_by
-          ? `${users[data.contract.session.created_by] || 'Unknown'} (ID: ${data.contract.session.created_by})`
-          : 'Unknown',
-        managerId: data.contract.session.created_by?.toString() || '1',
-        status: statusMap[data.contract.status] || data.contract.status,
+        id: `#HD-${String(data.contract_id).padStart(3, '0')}`,
+        sessionName: data.session?.item?.name || 'N/A',
+        winner: data.winner?.full_name || 'N/A',
+        finalPrice: formatCurrency(data.final_price),
+        finalPriceValue: parseFloat(data.final_price) || 0,
+        signedDate: formatDate(data.signed_date),
+        rawSignedDate: data.signed_date || '',
+        paymentStatus: data.status,
         statusClass:
-          data.contract.status === 'ChoThanhToan'
+          data.status === 'ChoThanhToan'
             ? 'statusChothanhtoan'
-            : data.contract.status === 'DaThanhToan'
+            : data.status === 'DaThanhToan'
             ? 'statusDathanhtoan'
             : 'statusHuy',
-        paymentStatus: data.contract.status,
-        rawContractId: data.contract.contract_id,
+        rawContractId: data.contract_id,
+        fileUrl: data.file_path ? `http://localhost:8000${data.file_path}` : '',
       };
       setSelectedContract(transformedContract);
       setShowViewModal(true);
@@ -244,100 +177,90 @@ const transformedContracts = contractResponse.data.contracts.map((contract, inde
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (name === 'contractStatus') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
+  const handleFileChange = (e) => {
+    setFormData((prev) => ({ ...prev, contractFile: e.target.files[0] }));
   };
 
   const handleSave = async () => {
+    if (!selectedContract) return;
+
     try {
-      if (
-        !formData.contractSession ||
-        !formData.contractWinner ||
-        !formData.finalPrice ||
-        !formData.signedDate ||
-        !formData.contractManager
-      ) {
-        alert('Vui lòng điền đầy đủ thông tin.');
-        return;
+      const formPayload = new FormData();
+      if (formData.contractFile) {
+        formPayload.append('file', formData.contractFile);
       }
+      formPayload.append('status', formData.contractStatus);
 
-      // Validate winner_id
-      const winnerExists = userList.some(
-        (user) => user.user_id.toString() === formData.contractWinner
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}contracts/${selectedContract.rawContractId}`,
+        formPayload,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
       );
-      if (!winnerExists) {
-        alert('ID người thắng không hợp lệ.');
-        return;
-      }
 
-      const payload = {
-        session_id: formData.contractSession.replace('PH', ''),
-        winner_id: formData.contractWinner,
-        final_price: parseFloat(formData.finalPrice),
-        signed_date: formData.signedDate,
-        status: formData.contractStatus,
-        created_by: formData.contractManager,
-      };
-
-      if (modalMode === 'edit' && selectedContract) {
-        await axios.put(
-          `${process.env.REACT_APP_API_URL}contracts/${selectedContract.rawContractId}`,
-          payload
-        );
-        alert('Cập nhật hợp đồng thành công!');
-      } else {
-        await axios.post(`${process.env.REACT_APP_API_URL}contracts`, payload);
-        alert('Thêm hợp đồng thành công!');
-      }
-
-      // Refresh contracts
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}contracts`);
-      const transformedContracts = response.data.contracts.map((contract) => ({
+      alert('Cập nhật hợp đồng thành công!');
+      // Refetch và transform
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}contracts`);
+      const transformedContracts = res.data.contracts.map((contract) => ({
         id: `#HD-${String(contract.contract_id).padStart(3, '0')}`,
-        sessionId: `#PH-${String(contract.session_id).padStart(3, '0')}`,
-        sessionIdShort: `PH${String(contract.session_id).padStart(3, '0')}`,
-        winner: contract.winner
-          ? `${contract.winner.full_name} (ID: ${contract.winner_id})`
-          : 'N/A',
-        winnerId: contract.winner_id ? String(contract.winner_id) : '',
+        sessionName: contract.session?.item?.name || 'N/A',
+        winner: contract.winner?.full_name || 'N/A',
         finalPrice: formatCurrency(contract.final_price),
         finalPriceValue: parseFloat(contract.final_price) || 0,
         signedDate: formatDate(contract.signed_date),
         rawSignedDate: contract.signed_date || '',
-        manager: contract.session.created_by
-          ? `${users[contract.session.created_by] || 'Unknown'} (ID: ${contract.session.created_by})`
-          : 'Unknown',
-        managerId: contract.session.created_by?.toString() || '1',
-        status: statusMap[contract.status] || contract.status,
+        paymentStatus: contract.status,
         statusClass:
           contract.status === 'ChoThanhToan'
             ? 'statusChothanhtoan'
             : contract.status === 'DaThanhToan'
             ? 'statusDathanhtoan'
             : 'statusHuy',
-        paymentStatus: contract.status,
         rawContractId: contract.contract_id,
+        fileUrl: contract.file_path ? `http://localhost:8000${contract.file_path}` : '',
       }));
       setContracts(transformedContracts);
       closeModal();
     } catch (err) {
-      alert(`Lỗi: ${err.message}`);
+      alert('Lỗi cập nhật: ' + err.message);
     }
   };
 
+  // const handleDelete = async (contract) => {
+  //   if (window.confirm('Bạn có chắc muốn xóa hợp đồng này?')) {
+  //     try {
+  //       await axios.delete(`${process.env.REACT_APP_API_URL}contracts/${contract.rawContractId}`);
+  //       alert('Xóa hợp đồng thành công!');
+  //       setContracts(contracts.filter((c) => c.id !== contract.id));
+  //     } catch (err) {
+  //       alert('Xóa thất bại: ' + err.message);
+  //     }
+  //   }
+  // };
+
   const handleDelete = async (contract) => {
-    if (window.confirm('Bạn có chắc muốn xóa hợp đồng này?')) {
-      try {
-        await axios.delete(`${process.env.REACT_APP_API_URL}contracts/${contract.rawContractId}`);
-        alert('Xóa hợp đồng thành công!');
-        setContracts(contracts.filter((c) => c.id !== contract.id));
-      } catch (err) {
-        alert('Xóa thất bại: ' + err.message);
-      }
-    }
-  };
+  if (!window.confirm('Bạn có chắc muốn xóa hợp đồng này?')) return;
+
+  try {
+    // 1. Xóa các econtracts liên quan
+    await axios.delete(`${process.env.REACT_APP_API_URL}econtracts/${contract.rawContractId}`);
+
+    // 2. Xóa hợp đồng chính
+    await axios.delete(`${process.env.REACT_APP_API_URL}contracts/${contract.rawContractId}`);
+
+    alert('Xóa hợp đồng thành công!');
+    setContracts(contracts.filter((c) => c.id !== contract.id));
+  } catch (err) {
+    alert('Xóa thất bại: ' + err.message);
+  }
+};
 
   const renderPagination = () => {
     const pages = [];
@@ -397,7 +320,7 @@ const transformedContracts = contractResponse.data.contracts.map((contract, inde
           >
             <option value="">Tất cả trạng thái</option>
             <option value="Chờ thanh toán">Chờ thanh toán</option>
-            <option value="Đã thanh toán">Đã thanh toán</option>
+            <option value="Thành công">Thành công</option>
             <option value="Hủy">Hủy</option>
           </select>
           <select
@@ -406,29 +329,25 @@ const transformedContracts = contractResponse.data.contracts.map((contract, inde
             onChange={handleSessionFilterChange}
           >
             <option value="">Tất cả phiên</option>
-            {[...new Set(contracts.map((c) => c.sessionId))].map((sessionId) => (
-              <option key={sessionId} value={sessionId}>
-                {sessionId}
+            {[...new Set(contracts.map((c) => c.sessionName))].map((sessionName) => (
+              <option key={sessionName} value={sessionName}>
+                {sessionName}
               </option>
             ))}
           </select>
         </div>
-        <button className={styles.addBtn} onClick={() => openModal('add')}>
-          <i className="fas fa-plus"></i>
-          Thêm hợp đồng mới
-        </button>
       </div>
 
       <table className={styles.dataTable}>
         <thead>
           <tr>
             <th>Mã HD</th>
-            <th>Phiên ID</th>
-            <th>Người thắng (ID)</th>
+            <th>Tên phiên</th>
+            <th>Người thắng</th>
             <th>Giá cuối</th>
             <th>Ngày ký</th>
-            <th>Người quản lý</th>
             <th>Trạng thái</th>
+            <th>File Hợp Đồng</th>
             <th>Hành động</th>
           </tr>
         </thead>
@@ -436,21 +355,34 @@ const transformedContracts = contractResponse.data.contracts.map((contract, inde
           {currentContracts.map((contract) => (
             <tr key={contract.id}>
               <td data-label="Mã HD">{contract.id}</td>
-              <td data-label="Phiên ID">{contract.sessionId}</td>
-              <td data-label="Người thắng (ID)">{contract.winner}</td>
+              <td data-label="Tên phiên">{contract.sessionName}</td>
+              <td data-label="Người thắng">{contract.winner}</td>
               <td data-label="Giá cuối">{contract.finalPrice}</td>
               <td data-label="Ngày ký">{contract.signedDate}</td>
-              <td data-label="Người quản lý">{contract.manager}</td>
               <td data-label="Trạng thái">
                 <span className={`${styles.statusBadge} ${styles[contract.statusClass]}`}>
-                  {contract.status}
+                  {contract.paymentStatus === 'ChoThanhToan'
+                    ? 'Chờ thanh toán'
+                    : contract.paymentStatus === 'DaThanhToan'
+                    ? 'Thành công'  // Updated: Hiển thị "Thành công"
+                    : 'Hủy'}
                 </span>
+              </td>
+              <td data-label="File Hợp Đồng">
+                {contract.fileUrl ? (
+                  <a href={contract.fileUrl} target="_blank" rel="noopener noreferrer" title="Tải file hợp đồng">
+                    📄 Download
+                  </a>
+                ) : (
+                  'N/A'
+                )}
               </td>
               <td data-label="Hành động">
                 <button
                   className={`${styles.btn} ${styles.btnPrimary}`}
-                  onClick={() => openModal('edit', contract)}
+                  onClick={() => openModal(contract)}
                   title="Chỉnh sửa hợp đồng"
+                  disabled={contract.paymentStatus === 'DaThanhToan'}
                 >
                   <i className="fa fa-pencil" aria-hidden="true"></i>
                 </button>
@@ -458,6 +390,7 @@ const transformedContracts = contractResponse.data.contracts.map((contract, inde
                   className={`${styles.btn} ${styles.btnDanger}`}
                   onClick={() => handleDelete(contract)}
                   title="Xóa hợp đồng"
+                  disabled={contract.paymentStatus === 'DaThanhToan'}  // Updated: Disable xóa nếu Thành công
                 >
                   <i className="fa fa-trash" aria-hidden="true"></i>
                 </button>
@@ -476,146 +409,84 @@ const transformedContracts = contractResponse.data.contracts.map((contract, inde
 
       <div className={styles.pagination}>{renderPagination()}</div>
 
-      {/* Add/Edit Modal */}
+      {/* Updated: Modal chỉnh sửa - chỉ show "Thành công" nếu DaThanhToan, ẩn input/select */}
       <div className={`${styles.modal} ${showModal ? styles.show : ''}`}>
         <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
           <div className={styles.modalHeader}>
-            <h2 className={styles.modalTitle}>
-              {modalMode === 'edit' ? 'Chỉnh sửa hợp đồng' : 'Thêm hợp đồng mới'}
-            </h2>
-            <span className={styles.modalClose} onClick={closeModal}>
-              ×
-            </span>
+            <h2 className={styles.modalTitle}>Chỉnh sửa hợp đồng</h2>
+            <span className={styles.modalClose} onClick={closeModal}>×</span>
           </div>
           <div className={styles.modalBody}>
-            <div>
-              <label htmlFor="contractSession">Phiên ID</label>
-              <select
-                id="contractSession"
-                name="contractSession"
-                value={formData.contractSession}
-                onChange={handleFormChange}
-              >
-                <option value="">Chọn phiên</option>
-                {[...new Set(contracts.map((c) => c.sessionIdShort))].map((sessionId) => (
-                  <option key={sessionId} value={sessionId}>{`#${sessionId}`}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="contractWinner">Người thắng (ID User)</label>
-              <select
-                id="contractWinner"
-                name="contractWinner"
-                value={formData.contractWinner}
-                onChange={handleFormChange}
-              >
-                <option value="">Chọn người thắng</option>
-                {userList.map((user) => (
-                  <option key={user.user_id} value={user.user_id}>
-                    {`${user.full_name} (ID: ${user.user_id})`}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="finalPrice">Giá cuối (VND)</label>
-              <input
-                type="number"
-                id="finalPrice"
-                name="finalPrice"
-                placeholder="Nhập giá cuối"
-                step="0.01"
-                value={formData.finalPrice}
-                onChange={handleFormChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="signedDate">Ngày ký</label>
-              <input
-                type="datetime-local"
-                id="signedDate"
-                name="signedDate"
-                value={formData.signedDate}
-                onChange={handleFormChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="contractManager">Người quản lý (ID User)</label>
-              <select
-                id="contractManager"
-                name="contractManager"
-                value={formData.contractManager}
-                onChange={handleFormChange}
-              >
-                <option value="">Chọn người quản lý</option>
-                {userList
-                  .filter((user) => ['Administrator', 'ChuyenVienTTC'].includes(user.role))
-                  .map((user) => (
-                    <option key={user.user_id} value={user.user_id}>
-                      {`${user.full_name} (ID: ${user.user_id})`}
-                    </option>
-                  ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="contractStatus">Trạng thái</label>
-              <select
-                id="contractStatus"
-                name="contractStatus"
-                value={formData.contractStatus}
-                onChange={handleFormChange}
-              >
-                <option value="ChoThanhToan">Chờ thanh toán</option>
-                <option value="DaThanhToan">Đã thanh toán</option>
-                <option value="Huy">Hủy</option>
-              </select>
-            </div>
+            {selectedContract && (
+              <>
+                {selectedContract.paymentStatus === 'DaThanhToan' ? (
+                  <p className={styles.successMessage}>Thành công</p>  // Updated: Chỉ hiển thị thông báo
+                ) : (
+                  <>
+                    <div>
+                      <label>File hợp đồng</label>
+                      <input
+                        type="file"
+                        onChange={handleFileChange}
+                        accept=".pdf,.jpg,.png"
+                      />
+                      {selectedContract.fileUrl && (
+                        <small>
+                          File hiện tại: <a href={selectedContract.fileUrl} target="_blank">Xem</a>
+                        </small>
+                      )}
+                    </div>
+                    <div>
+                      <label>Trạng thái</label>
+                      <select
+                        name="contractStatus"
+                        value={formData.contractStatus}
+                        onChange={handleFormChange}
+                      >
+                        <option value="ChoThanhToan">Chờ thanh toán</option>
+                        <option value="DaThanhToan">Thành công</option>  // Updated: Label "Thành công"
+                        <option value="Huy">Hủy</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
           </div>
           <div className={styles.modalFooter}>
-            <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSave}>
+            <button
+              className={`${styles.btn} ${styles.btnPrimary}`}
+              onClick={handleSave}
+              disabled={selectedContract?.paymentStatus === 'DaThanhToan'}  // Updated: Disable nút Lưu nếu Thành công
+            >
               Lưu
             </button>
             <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeModal}>
-              Hủy
+              Đóng
             </button>
           </div>
         </div>
       </div>
 
-      {/* View Modal */}
+      {/* Updated: View Modal - hiển thị "Thành công" cho DaThanhToan */}
       <div className={`${styles.modal} ${showViewModal ? styles.show : ''}`}>
         <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
           <div className={styles.modalHeader}>
             <h2 className={styles.modalTitle}>Chi Tiết Hợp Đồng</h2>
-            <span className={styles.modalClose} onClick={closeViewModal}>
-              ×
-            </span>
+            <span className={styles.modalClose} onClick={closeViewModal}>×</span>
           </div>
           <div className={styles.modalBody}>
             {selectedContract && (
               <>
-                <p>
-                  <strong>Mã hợp đồng:</strong> {selectedContract.id}
-                </p>
-                <p>
-                  <strong>Phiên ID:</strong> {selectedContract.sessionId}
-                </p>
-                <p>
-                  <strong>Người thắng:</strong> {selectedContract.winner}
-                </p>
-                <p>
-                  <strong>Giá cuối:</strong> {selectedContract.finalPrice}
-                </p>
-                <p>
-                  <strong>Ngày ký:</strong> {selectedContract.signedDate}
-                </p>
-                <p>
-                  <strong>Người quản lý:</strong> {selectedContract.manager}
-                </p>
-                <p>
-                  <strong>Trạng thái:</strong> {selectedContract.status}
-                </p>
+                <p><strong>Mã hợp đồng:</strong> {selectedContract.id}</p>
+                <p><strong>Tên phiên:</strong> {selectedContract.sessionName}</p>
+                <p><strong>Người thắng:</strong> {selectedContract.winner}</p>
+                <p><strong>Giá cuối:</strong> {selectedContract.finalPrice}</p>
+                <p><strong>Ngày ký:</strong> {selectedContract.signedDate}</p>
+                <p><strong>Trạng thái:</strong> {selectedContract.paymentStatus === 'ChoThanhToan' ? 'Chờ thanh toán' : selectedContract.paymentStatus === 'DaThanhToan' ? 'Thành công' : 'Hủy'}</p>  {/* Updated: "Thành công" */}
+                {selectedContract.fileUrl && (
+                  <p><strong>File hợp đồng:</strong> <a href={selectedContract.fileUrl} target="_blank">Tải xuống</a></p>
+                )}
                 <div className={styles.orderHistory}>
                   <h3>Lịch sử thanh toán</h3>
                   <table className={styles.orderTable}>
@@ -629,7 +500,6 @@ const transformedContracts = contractResponse.data.contracts.map((contract, inde
                       </tr>
                     </thead>
                     <tbody>
-                      {/* Placeholder for dynamic payment history */}
                       <tr>
                         <td colSpan="5">Chưa có dữ liệu lịch sử thanh toán</td>
                       </tr>
