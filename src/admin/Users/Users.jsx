@@ -82,10 +82,32 @@ function Users() {
     return isNaN(date) ? 'Chưa cập nhật' : date.toLocaleDateString('vi-VN');
   };
 
-  const formatDateForInput = (isoDate) => {
-    if (!isoDate || isoDate === 'Chưa cập nhật') return '';
-    const date = new Date(isoDate);
-    return isNaN(date) ? '' : date.toISOString().split('T')[0];
+  const formatDateForInput = (dateString) => {
+    if (!dateString || dateString === 'Chưa cập nhật') return '';
+    
+    try {
+      // Thử parse theo định dạng Việt Nam (dd/mm/yyyy)
+      if (dateString.includes('/')) {
+        const parts = dateString.split('/');
+        if (parts.length === 3) {
+          const day = parts[0].padStart(2, '0');
+          const month = parts[1].padStart(2, '0');
+          const year = parts[2];
+          return `${year}-${month}-${day}`;
+        }
+      }
+      
+      // Thử parse theo ISO string
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+      
+      return '';
+    } catch (err) {
+      console.error('Error formatting date:', err);
+      return '';
+    }
   };
 
   const createPreviewUrl = (file) => {
@@ -176,6 +198,8 @@ function Users() {
                 business_license_url,
                 auctioneer_card_front_url,
                 auctioneer_card_back_url,
+                is_locked: user.is_locked, 
+                locked_at: user.locked_at,
               };
             })
           : [];
@@ -299,15 +323,34 @@ function Users() {
     });
 
     if (user) {
+      // Xác định loại tài khoản
       const accountType = user.accountType || roleToAccountTypeMap[user.role_id] || 'personal';
+
+      // Debug: kiểm tra dữ liệu user
+      // console.log('User data for edit:', user);
+      // console.log('Birth date from user:', user.birth_date);
+      // console.log('Identity issue date from user:', user.identity_issue_date);
+      // console.log('Formatted birth date:', formatDateForInput(user.birth_date));
+      // console.log('Formatted identity issue date:', formatDateForInput(user.identity_issue_date));
+
       setUserForm({
+        // === CƠ BẢN ===
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || '',
         role_id: user.role_id || '',
         accountType: accountType,
         full_name: user.full_name || '',
-        birth_date: formatDateForInput(user.birth_date),
+
+        // === NGÀY THÁNG: SỬ DỤNG ĐÚNG HÀM formatDateForInput ===
+        birth_date: user.birth_date && user.birth_date !== 'Chưa cập nhật' 
+          ? formatDateForInput(user.birth_date) 
+          : '',
+        identity_issue_date: user.identity_issue_date && user.identity_issue_date !== 'Chưa cập nhật'
+          ? formatDateForInput(user.identity_issue_date)
+          : '',
+
+        // === CÁC TRƯỜNG KHÁC ===
         gender: user.gender || '',
         address: user.address || '',
         password: '',
@@ -316,22 +359,32 @@ function Users() {
         bank_account: user.bank_account || '',
         bank_branch: user.bank_branch || '',
         identity_number: user.identity_number || '',
-        identity_issue_date: formatDateForInput(user.identity_issue_date),
         identity_issued_by: user.identity_issued_by || '',
-        position: accountType === 'business' ? user.position || '' : undefined,
-        organization_name: accountType === 'business' ? user.organization_name || '' : undefined,
-        tax_code: accountType === 'business' ? user.tax_code || '' : undefined,
-        business_license_issue_date: accountType === 'business' ? formatDateForInput(user.business_license_issue_date) : undefined,
-        business_license_issued_by: accountType === 'business' ? user.business_license_issued_by || '' : undefined,
-        online_contact_method: accountType === 'auction' ? user.online_contact_method || '' : undefined,
-        certificate_number: accountType === 'auction' ? user.certificate_number || '' : undefined,
-        certificate_issue_date: accountType === 'auction' ? formatDateForInput(user.certificate_issue_date) : undefined,
-        certificate_issued_by: accountType === 'auction' ? user.certificate_issued_by || '' : undefined,
+
+        // === BUSINESS ===
+        position: accountType === 'business' ? (user.position || '') : undefined,
+        organization_name: accountType === 'business' ? (user.organization_name || '') : undefined,
+        tax_code: accountType === 'business' ? (user.tax_code || '') : undefined,
+        business_license_issue_date: accountType === 'business' && user.business_license_issue_date && user.business_license_issue_date !== 'Chưa cập nhật'
+          ? formatDateForInput(user.business_license_issue_date)
+          : '',
+        business_license_issued_by: accountType === 'business' ? (user.business_license_issued_by || '') : undefined,
+
+        // === AUCTION ===
+        online_contact_method: accountType === 'auction' ? (user.online_contact_method || '') : undefined,
+        certificate_number: accountType === 'auction' ? (user.certificate_number || '') : undefined,
+        certificate_issue_date: accountType === 'auction' && user.certificate_issue_date && user.certificate_issue_date !== 'Chưa cập nhật'
+          ? formatDateForInput(user.certificate_issue_date)
+          : '',
+        certificate_issued_by: accountType === 'auction' ? (user.certificate_issued_by || '') : undefined,
       });
+
       setSelectedUser(user);
     } else {
+      // === THÊM MỚI (ADD) ===
       const defaultRoleId = roles.length > 0 ? roles[0].role_id : '';
       const defaultAccountType = roleToAccountTypeMap[defaultRoleId] || 'personal';
+
       setUserForm({
         name: '',
         email: '',
@@ -350,17 +403,20 @@ function Users() {
         identity_number: '',
         identity_issue_date: '',
         identity_issued_by: '',
+        // Business
         position: defaultAccountType === 'business' ? '' : undefined,
         organization_name: defaultAccountType === 'business' ? '' : undefined,
         tax_code: defaultAccountType === 'business' ? '' : undefined,
         business_license_issue_date: defaultAccountType === 'business' ? '' : undefined,
         business_license_issued_by: defaultAccountType === 'business' ? '' : undefined,
+        // Auction
         online_contact_method: defaultAccountType === 'auction' ? '' : undefined,
         certificate_number: defaultAccountType === 'auction' ? '' : undefined,
         certificate_issue_date: defaultAccountType === 'auction' ? '' : undefined,
         certificate_issued_by: defaultAccountType === 'auction' ? '' : undefined,
       });
     }
+
     setShowUserModal(true);
   };
 
@@ -452,51 +508,81 @@ function Users() {
   };
 
   const validateForm = () => {
-    const newErrors = {};
-    const validExtensions = ['pdf', 'doc', 'docx'];
+  const newErrors = {};
+  const isAdd = modalMode === 'add';
 
-    if (!userForm.full_name.trim()) newErrors.full_name = 'Vui lòng nhập họ và tên.';
-    if (!userForm.email.trim()) newErrors.email = 'Vui lòng nhập email.';
-    else if (!/\S+@\S+\.\S+/.test(userForm.email)) newErrors.email = 'Email không hợp lệ.';
-    if (!userForm.identity_number.trim()) newErrors.identity_number = 'Vui lòng nhập số CMND/CCCD.';
-    if (!userForm.identity_issue_date.trim()) newErrors.identity_issue_date = 'Vui lòng nhập ngày cấp CMND/CCCD.';
-    if (!userForm.identity_issued_by.trim()) newErrors.identity_issued_by = 'Vui lòng nhập nơi cấp CMND/CCCD.';
-    if (modalMode === 'add' && !userForm.phone.trim()) newErrors.phone = 'Vui lòng nhập số điện thoại.';
-    if (modalMode === 'add' && !userForm.address.trim()) newErrors.address = 'Vui lòng nhập địa chỉ.';
-    if (modalMode === 'add' && !userForm.bank_name.trim()) newErrors.bank_name = 'Vui lòng nhập tên ngân hàng.';
-    if (modalMode === 'add' && !userForm.bank_account.trim()) newErrors.bank_account = 'Vui lòng nhập số tài khoản.';
-    if (modalMode === 'add' && !userForm.bank_branch.trim()) newErrors.bank_branch = 'Vui lòng nhập chi nhánh ngân hàng.';
-    if (modalMode === 'add' && !userForm.password.trim()) newErrors.password = 'Vui lòng nhập mật khẩu.';
-    else if (modalMode === 'add' && userForm.password.length < 6) newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự.';
-    if (modalMode === 'add' && !userForm.password_confirmation.trim()) newErrors.password_confirmation = 'Vui lòng nhập lại mật khẩu.';
-    else if (modalMode === 'add' && userForm.password !== userForm.password_confirmation) newErrors.password_confirmation = 'Mật khẩu nhập lại không khớp.';
-    if ((modalMode === 'add' || !selectedUser?.id_card_front_url) && !idCardFront) newErrors.id_card_front = 'Vui lòng tải lên ảnh căn cước mặt trước.';
-    if ((modalMode === 'add' || !selectedUser?.id_card_back_url) && !idCardBack) newErrors.id_card_back = 'Vui lòng tải lên ảnh căn cước mặt sau.';
+  // === CÁC TRƯỜNG BẮT BUỘC CHUNG ===
+  if (!userForm.full_name?.trim()) newErrors.full_name = 'Vui lòng nhập họ và tên.';
+  if (!userForm.email?.trim()) newErrors.email = 'Vui lòng nhập email.';
+  else if (!/\S+@\S+\.\S+/.test(userForm.email)) newErrors.email = 'Email không hợp lệ.';
+  if (!userForm.identity_number?.trim()) newErrors.identity_number = 'Vui lòng nhập số CMND/CCCD.';
+  if (!userForm.identity_issue_date?.trim()) newErrors.identity_issue_date = 'Vui lòng nhập ngày cấp CMND/CCCD.';
+  if (!userForm.identity_issued_by?.trim()) newErrors.identity_issued_by = 'Vui lòng nhập nơi cấp CMND/CCCD.';
 
-    if (userForm.accountType === 'business') {
+  // === CHỈ BẮT BUỘC KHI ADD ===
+  if (isAdd) {
+    if (!userForm.birth_date?.trim()) newErrors.birth_date = 'Vui lòng nhập ngày sinh.';
+    if (!userForm.phone?.trim()) newErrors.phone = 'Vui lòng nhập số điện thoại.';
+    if (!userForm.address?.trim()) newErrors.address = 'Vui lòng nhập địa chỉ.';
+    if (!userForm.bank_name?.trim()) newErrors.bank_name = 'Vui lòng nhập tên ngân hàng.';
+    if (!userForm.bank_account?.trim()) newErrors.bank_account = 'Vui lòng nhập số tài khoản.';
+    if (!userForm.bank_branch?.trim()) newErrors.bank_branch = 'Vui lòng nhập chi nhánh ngân hàng.';
+  }
+
+  // === MẬT KHẨU CHỈ KHI ADD ===
+  if (isAdd) {
+    if (!userForm.password?.trim()) newErrors.password = 'Vui lòng nhập mật khẩu.';
+    else if (userForm.password.length < 6) newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự.';
+    if (!userForm.password_confirmation?.trim()) newErrors.password_confirmation = 'Vui lòng nhập lại mật khẩu.';
+    else if (userForm.password !== userForm.password_confirmation) newErrors.password_confirmation = 'Mật khẩu nhập lại không khớp.';
+  }
+
+  // === ẢNH CHỈ KHI ADD HOẶC CHƯA CÓ TRONG selectedUser ===
+  if (isAdd || !selectedUser?.id_card_front_url) {
+    if (!idCardFront) newErrors.id_card_front = 'Vui lòng tải lên ảnh căn cước mặt trước.';
+  }
+  if (isAdd || !selectedUser?.id_card_back_url) {
+    if (!idCardBack) newErrors.id_card_back = 'Vui lòng tải lên ảnh căn cước mặt sau.';
+  }
+
+  // === BUSINESS ===
+  if (userForm.accountType === 'business') {
+    if (isAdd) {
       if (!userForm.position?.trim()) newErrors.position = 'Vui lòng nhập chức vụ.';
       if (!userForm.organization_name?.trim()) newErrors.organization_name = 'Vui lòng nhập tên tổ chức.';
       if (!userForm.tax_code?.trim()) newErrors.tax_code = 'Vui lòng nhập mã số thuế.';
       if (!userForm.business_license_issue_date?.trim()) newErrors.business_license_issue_date = 'Vui lòng nhập ngày cấp giấy chứng nhận.';
       if (!userForm.business_license_issued_by?.trim()) newErrors.business_license_issued_by = 'Vui lòng nhập nơi cấp giấy chứng nhận.';
-      if ((modalMode === 'add' || !selectedUser?.business_license_url) && !businessLicense) newErrors.business_license = 'Vui lòng tải lên giấy chứng nhận đăng ký kinh doanh.';
-      else if (businessLicense && !validExtensions.includes(businessLicense.name?.split('.').pop().toLowerCase())) {
-        newErrors.business_license = 'File giấy chứng nhận đăng ký kinh doanh phải là PDF hoặc Word (.pdf, .doc, .docx).';
-      }
     }
 
-    if (userForm.accountType === 'auction') {
-      if (!userForm.online_contact_method?.trim()) newErrors.online_contact_method = 'Vui lòng nhập phương thức liên hệ trực tuyến.';
+    if (isAdd || !selectedUser?.business_license_url) {
+      if (!businessLicense) newErrors.business_license = 'Vui lòng tải lên giấy chứng nhận đăng ký kinh doanh.';
+      else if (!['pdf', 'doc', 'docx'].includes(businessLicense.name.split('.').pop().toLowerCase())) {
+        newErrors.business_license = 'File phải là PDF hoặc Word (.pdf, .doc, .docx).';
+      }
+    }
+  }
+
+  // === AUCTION ===
+  if (userForm.accountType === 'auction') {
+    if (isAdd) {
+      if (!userForm.online_contact_method?.trim()) newErrors.online_contact_method = 'Vui lòng nhập phương thức liên hệ.';
       if (!userForm.certificate_number?.trim()) newErrors.certificate_number = 'Vui lòng nhập số chứng chỉ.';
       if (!userForm.certificate_issue_date?.trim()) newErrors.certificate_issue_date = 'Vui lòng nhập ngày cấp chứng chỉ.';
       if (!userForm.certificate_issued_by?.trim()) newErrors.certificate_issued_by = 'Vui lòng nhập nơi cấp chứng chỉ.';
-      if ((modalMode === 'add' || !selectedUser?.auctioneer_card_front_url) && !auctioneerCardFront) newErrors.auctioneer_card_front = 'Vui lòng tải lên ảnh thẻ đấu giá viên mặt trước.';
-      if ((modalMode === 'add' || !selectedUser?.auctioneer_card_back_url) && !auctioneerCardBack) newErrors.auctioneer_card_back = 'Vui lòng tải lên ảnh thẻ đấu giá viên mặt sau.';
     }
 
-    setClientErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    if (isAdd || !selectedUser?.auctioneer_card_front_url) {
+      if (!auctioneerCardFront) newErrors.auctioneer_card_front = 'Vui lòng tải lên ảnh thẻ mặt trước.';
+    }
+    if (isAdd || !selectedUser?.auctioneer_card_back_url) {
+      if (!auctioneerCardBack) newErrors.auctioneer_card_back = 'Vui lòng tải lên ảnh thẻ mặt sau.';
+    }
+  }
+
+  setClientErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
 
 const handleSaveUser = async () => {
   try {
@@ -505,7 +591,7 @@ const handleSaveUser = async () => {
 
     const data = new FormData();
     
-    // Thêm các trường cơ bản
+    // Thêm các trường cơ bản - chỉ gửi nếu có giá trị
     const baseFields = [
       'full_name', 'email', 'phone', 'birth_date', 'gender', 'address',
       'bank_name', 'bank_account', 'bank_branch',
@@ -513,7 +599,7 @@ const handleSaveUser = async () => {
     ];
 
     baseFields.forEach(field => {
-      if (userForm[field] !== undefined && userForm[field] !== '') {
+      if (userForm[field] !== undefined && userForm[field] !== '' && userForm[field] !== null) {
         data.append(field, userForm[field]);
       }
     });
@@ -522,7 +608,7 @@ const handleSaveUser = async () => {
     if (idCardFront) data.append('id_card_front', idCardFront);
     if (idCardBack) data.append('id_card_back', idCardBack);
     
-    // Thêm trường account_type và các trường liên quan
+    // Thêm trường account_type
     data.append('account_type', userForm.accountType);
 
     if (userForm.accountType === 'business') {
@@ -532,7 +618,7 @@ const handleSaveUser = async () => {
       ];
       
       businessFields.forEach(field => {
-        if (userForm[field] !== undefined && userForm[field] !== '') {
+        if (userForm[field] !== undefined && userForm[field] !== '' && userForm[field] !== null) {
           data.append(field, userForm[field]);
         }
       });
@@ -549,7 +635,7 @@ const handleSaveUser = async () => {
       ];
       
       auctionFields.forEach(field => {
-        if (userForm[field] !== undefined && userForm[field] !== '') {
+        if (userForm[field] !== undefined && userForm[field] !== '' && userForm[field] !== null) {
           data.append(field, userForm[field]);
         }
       });
@@ -585,23 +671,104 @@ const handleSaveUser = async () => {
       },
     });
 
-    // Xử lý response
-    const updatedUser = {
-      id: modalMode === 'add' ? response.data.user.user_id : selectedUser.id,
-      name: userForm.full_name,
-      email: userForm.email,
-      phone: userForm.phone,
-      role_id: userForm.role_id || selectedUser?.role_id,
-      role_name: roles.find(r => r.role_id === parseInt(userForm.role_id))?.name || selectedUser?.role_name,
-      accountType: userForm.accountType,
-      // ... thêm các trường khác
-    };
+    // Xử lý response thành công - CẬP NHẬT ĐẦY ĐỦ DỮ LIỆU
+    if (modalMode === 'add') {
+      // Thêm mới: fetch lại toàn bộ dữ liệu để có đầy đủ thông tin
+      const usersResponse = await axios.get(`${API_URL}api/showuser`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      const mappedUsers = Array.isArray(usersResponse.data.users)
+        ? usersResponse.data.users.map(user => ({
+            id: user.user_id,
+            name: user.full_name || 'Chưa cập nhật',
+            email: user.email || 'Chưa cập nhật',
+            phone: user.phone || 'Chưa cập nhật',
+            role_id: user.role_id || null,
+            role_name: user.role?.name || 'Chưa có vai trò',
+            email_verify: user.email_verified_at ? 'Đã xác minh' : 'Chưa xác minh',
+            admin_verify:
+              user.admin_verify_status === 'approved'
+                ? 'Đã xét duyệt'
+                : user.admin_verify_status === 'rejected'
+                ? 'Bị từ chối'
+                : 'Chờ xét duyệt',
+            createdDate: formatDate(user.created_at),
+            deletedAt: user.deleted_at || null,
+            accountType: user.account_type || roleToAccountTypeMap[user.role_id] || 'personal',
+            full_name: user.full_name || 'Chưa cập nhật',
+            birth_date: formatDate(user.birth_date),
+            gender: user.gender || 'Chưa cập nhật',
+            address: user.address || 'Chưa cập nhật',
+            bank_name: user.bank_name || 'Chưa cập nhật',
+            bank_account: user.bank_account || 'Chưa cập nhật',
+            bank_branch: user.bank_branch || 'Chưa cập nhật',
+            identity_number: user.identity_number || 'Chưa cập nhật',
+            identity_issue_date: formatDate(user.identity_issue_date),
+            identity_issued_by: user.identity_issued_by || 'Chưa cập nhật',
+            position: user.position || undefined,
+            organization_name: user.organization_name || undefined,
+            tax_code: user.tax_code || undefined,
+            business_license_issue_date: formatDate(user.business_license_issue_date),
+            business_license_issued_by: user.business_license_issued_by || undefined,
+            online_contact_method: user.online_contact_method || undefined,
+            certificate_number: user.certificate_number || undefined,
+            certificate_issue_date: formatDate(user.certificate_issue_date),
+            certificate_issued_by: user.certificate_issued_by || undefined,
+            id_card_front_url: user.id_card_front ? `${API_URL}storage/${user.id_card_front}` : '',
+            id_card_back_url: user.id_card_back ? `${API_URL}storage/${user.id_card_back}` : '',
+            business_license_url: user.business_license ? `${API_URL}storage/${user.business_license}` : undefined,
+            auctioneer_card_front_url: user.auctioneer_card_front ? `${API_URL}storage/${user.auctioneer_card_front}` : undefined,
+            auctioneer_card_back_url: user.auctioneer_card_back ? `${API_URL}storage/${user.auctioneer_card_back}` : undefined,
+          }))
+        : [];
 
-    setUsers(prevUsers =>
-      modalMode === 'add'
-        ? [...prevUsers, updatedUser]
-        : prevUsers.map(u => (u.id === updatedUser.id ? updatedUser : u))
-    );
+      setUsers(mappedUsers);
+    } else {
+      // Chỉnh sửa: cập nhật user cụ thể với dữ liệu đầy đủ
+      const updatedUser = {
+        id: selectedUser.id,
+        name: userForm.full_name,
+        email: userForm.email,
+        phone: userForm.phone,
+        role_id: userForm.role_id || selectedUser.role_id,
+        role_name: roles.find(r => r.role_id === parseInt(userForm.role_id))?.name || selectedUser.role_name,
+        email_verify: selectedUser.email_verify,
+        admin_verify: selectedUser.admin_verify,
+        admin_verify_status: selectedUser.admin_verify_status,
+        createdDate: selectedUser.createdDate,
+        deletedAt: selectedUser.deletedAt,
+        accountType: userForm.accountType,
+        full_name: userForm.full_name,
+        birth_date: userForm.birth_date ? formatDate(userForm.birth_date) : selectedUser.birth_date,
+        gender: userForm.gender,
+        address: userForm.address,
+        bank_name: userForm.bank_name,
+        bank_account: userForm.bank_account,
+        bank_branch: userForm.bank_branch,
+        identity_number: userForm.identity_number,
+        identity_issue_date: userForm.identity_issue_date ? formatDate(userForm.identity_issue_date) : selectedUser.identity_issue_date,
+        identity_issued_by: userForm.identity_issued_by,
+        position: userForm.position,
+        organization_name: userForm.organization_name,
+        tax_code: userForm.tax_code,
+        business_license_issue_date: userForm.business_license_issue_date ? formatDate(userForm.business_license_issue_date) : selectedUser.business_license_issue_date,
+        business_license_issued_by: userForm.business_license_issued_by,
+        online_contact_method: userForm.online_contact_method,
+        certificate_number: userForm.certificate_number,
+        certificate_issue_date: userForm.certificate_issue_date ? formatDate(userForm.certificate_issue_date) : selectedUser.certificate_issue_date,
+        certificate_issued_by: userForm.certificate_issued_by,
+        id_card_front_url: idCardFront ? previewUrls.id_card_front : selectedUser.id_card_front_url,
+        id_card_back_url: idCardBack ? previewUrls.id_card_back : selectedUser.id_card_back_url,
+        business_license_url: businessLicense ? previewUrls.business_license : selectedUser.business_license_url,
+        auctioneer_card_front_url: auctioneerCardFront ? previewUrls.auctioneer_card_front : selectedUser.auctioneer_card_front_url,
+        auctioneer_card_back_url: auctioneerCardBack ? previewUrls.auctioneer_card_back : selectedUser.auctioneer_card_back_url,
+      };
+
+      setUsers(prevUsers => prevUsers.map(u => 
+        u.id === updatedUser.id ? updatedUser : u
+      ));
+    }
 
     closeUserModal();
   } catch (err) {
@@ -731,6 +898,52 @@ const handleSaveUser = async () => {
       setFormError(err.response?.data?.message || 'Lỗi khi xuất file Excel');
     }
   };
+
+  const handleLockUser = async (user) => {
+    if (window.confirm(`Bạn có chắc muốn khóa tài khoản ${user.name}?`)) {
+      try {
+        const response = await axios.post(`${API_URL}api/user/lock/${user.id}`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.data.status) {
+          // Cập nhật UI ngay lập tức
+          setUsers(prevUsers =>
+            prevUsers.map(u =>
+              u.id === user.id
+                ? { ...u, is_locked: 1 }
+                : u
+            )
+          );
+          alert('Đã khóa tài khoản thành công');
+        }
+      } catch (err) {
+        setFormError(err.response?.data?.message || 'Lỗi khi khóa tài khoản');
+      }
+    }
+  };
+
+  const handleUnlockUser = async (user) => {
+    if (window.confirm(`Bạn có chắc muốn mở khóa tài khoản ${user.name}?`)) {
+      try {
+        const response = await axios.post(`${API_URL}api/user/unlock/${user.id}`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.data.status) {
+          // Cập nhật UI ngay lập tức
+          setUsers(prevUsers =>
+            prevUsers.map(u =>
+              u.id === user.id
+                ? { ...u, is_locked: null }
+                : u
+            )
+          );
+          alert('Đã mở khóa tài khoản thành công');
+        }
+      } catch (err) {
+        setFormError(err.response?.data?.message || 'Lỗi khi mở khóa tài khoản');
+      }
+    }
+  };
 const renderImage = (url, type, errorKey) => {
   if (!url || imageErrors[errorKey]) {
     return (
@@ -820,7 +1033,7 @@ const renderImage = (url, type, errorKey) => {
               <th className={styles.dataTableCell}>Email</th>
               <th className={styles.dataTableCell}>Số điện thoại</th>
               <th className={styles.dataTableCell}>Vai trò</th>
-              <th className={styles.dataTableCell}>Ngày tạo</th>
+              {/* <th className={styles.dataTableCell}>Ngày tạo</th> */}
               <th className={styles.dataTableCell}>Xác minh email</th>
               <th className={styles.dataTableCell}>Xét duyệt</th>
               <th className={styles.dataTableCell}>Thao tác</th>
@@ -842,7 +1055,7 @@ const renderImage = (url, type, errorKey) => {
                     {user.role_name}
                   </span>
                 </td>
-                <td className={styles.dataTableCell} data-label="Ngày tạo">{user.createdDate}</td>
+                {/* <td className={styles.dataTableCell} data-label="Ngày tạo">{user.createdDate}</td> */}
                 <td className={styles.dataTableCell} data-label="Xác minh email">{user.email_verify}</td>
                 <td className={styles.dataTableCell} data-label="Xét duyệt">{user.admin_verify}</td>
                 <td className={styles.dataTableCell} data-label="Thao tác">
@@ -887,13 +1100,26 @@ const renderImage = (url, type, errorKey) => {
                         >
                           <i className="fa fa-pencil"></i>
                         </button>
-                        <button
-                          className={styles.btnDanger}
-                          onClick={() => handleDeleteUser(user)}
-                          aria-label="Xóa người dùng"
-                        >
-                          <i className="fa fa-trash"></i>
-                        </button>
+                        
+                        {/* Thay thế nút xóa bằng nút khóa/mở khóa */}
+                        {user.is_locked ? (
+                          <button
+                            className={styles.btnSuccess}
+                            onClick={() => handleUnlockUser(user)}
+                            aria-label="Mở khóa tài khoản"
+                          >
+                            <i className="fa fa-unlock"></i>
+                          </button>
+                        ) : (
+                          <button
+                            className={styles.btnWarning}
+                            onClick={() => handleLockUser(user)}
+                            aria-label="Khóa tài khoản"
+                          >
+                            <i className="fa fa-lock"></i>
+                          </button>
+                        )}
+                        
                         <button
                           className={styles.btnSuccess}
                           onClick={() => openViewModal(user)}
