@@ -13,13 +13,14 @@ const Profile = () => {
   const [contracts, setContracts] = useState([]);
   const [auctionHistory, setAuctionHistory] = useState([]);
   const [myAuctions, setMyAuctions] = useState([]);
+  const [favorites, setFavorites] = useState([]);
   const [banks, setBanks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [bankError, setBankError] = useState(null);
   const [userData, setUserData] = useState({
     id: null,
-    fullName: '',
+    fullName: '', 
     username: '',
     accountType: '',
     role_id: null,
@@ -388,6 +389,79 @@ const Profile = () => {
     fetchMyAuctions();
   }, [userData.id, token, navigate]);
 
+  const fetchFavorites = async () => {
+    if (!userData.id || !token) {
+      setError('Không thể lấy danh sách yêu thích: Vui lòng đăng nhập');
+      setLoading(false);
+      return;
+    }
+
+    const BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`${BASE}favorites`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+        navigate('/login');
+        return;
+      }
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`Lỗi API /favorites: ${response.status} - ${err}`);
+      }
+
+      const data = await response.json();
+      const favoritesArray = Array.isArray(data) ? data : data.favorites || data.data || [];
+
+      if (!Array.isArray(favoritesArray)) {
+        throw new Error('Dữ liệu yêu thích không hợp lệ');
+      }
+
+      const formattedFavorites = favoritesArray.map((fav, index) => ({
+        stt: index + 1,
+        id: fav.product_id || fav.id,
+        tenTaiSan: fav.product?.name || fav.name || 'Chưa có tên',
+        giaKhoiDiem: fav.product?.starting_price
+          ? new Intl.NumberFormat('vi-VN', {
+              style: 'currency',
+              currency: 'VND',
+            }).format(parseFloat(fav.product.starting_price))
+          : 'Chưa có',
+        thoiGian: fav.created_at
+          ? new Date(fav.created_at).toLocaleString('vi-VN', {
+              hour: '2-digit',
+              minute: '2-digit',
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              timeZone: 'Asia/Ho_Chi_Minh',
+            })
+          : 'Chưa có',
+        xemChiTiet: `/auction/${fav.product_id || fav.id}`,
+      }));
+
+      setFavorites(formattedFavorites);
+    } catch (err) {
+      setError(err.message || 'Lỗi khi tải danh sách yêu thích');
+      console.error('Error fetching favorites:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchAuctionHistory = async () => {
     if (!userData.id || !token) {
       setError('Không thể lấy lịch sử đấu giá: Vui lòng đăng nhập');
@@ -499,6 +573,12 @@ const Profile = () => {
   useEffect(() => {
     if (activeTab === 'auction-history' && userData.id && token) {
       fetchAuctionHistory();
+    }
+  }, [activeTab, userData.id, token, navigate]);
+
+  useEffect(() => {
+    if (activeTab === 'favorites' && userData.id && token) {
+      fetchFavorites();
     }
   }, [activeTab, userData.id, token, navigate]);
 
@@ -709,6 +789,8 @@ const Profile = () => {
         payload.append('certificate_issued_by', formData.certificate_issued_by);
         payload.append('online_contact_method', formData.online_contact_method);
       }
+
+      console.log('Sending PUT request to update user profile');
 
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
         method: 'PUT',
@@ -1553,6 +1635,8 @@ const Profile = () => {
         return 'Lịch sử đấu giá';
       case 'my-auctions':
         return 'Đấu giá của tôi';
+      case 'favorites':
+        return 'Yêu thích';
       default:
         return 'Thông tin cá nhân';
     }
@@ -1651,6 +1735,18 @@ const Profile = () => {
               }}
             >
               Lịch sử đấu giá
+            </a>
+          </li>
+          <li>
+            <a
+              href="#"
+              className={activeTab === 'favorites' ? styles.active : ''}
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabChange('favorites');
+              }}
+            >
+              Yêu thích
             </a>
           </li>
           {isAdminOrDauGiaVien && (
