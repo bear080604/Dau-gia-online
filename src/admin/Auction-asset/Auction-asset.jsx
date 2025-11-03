@@ -120,6 +120,8 @@ const AuctionAsset = () => {
         owner: item.owner?.name || 'N/A',
         ownerId: item.owner?.id || null,
         ownerEmail: item.owner?.email || 'N/A',
+        ownerPhone: item.owner?.email || 'N/A',
+        ownerAddress: item.owner?.address || 'N/A',
         price: formatPrice(item.starting_price),
         rawPrice: item.starting_price,
         status: statusMap[item.status] || item.status,
@@ -361,6 +363,8 @@ const AuctionAsset = () => {
       const ownerId = assetData.owner?.id;
       const ownerName = assetData.owner?.name || 'N/A';
       const ownerEmail = assetData.owner?.email || 'N/A';
+      const ownerPhone = assetData.owner?.phone || 'N/A';
+      const ownerAddress = assetData.owner?.address || 'N/A';
       const bidHistory = assetData.sessions ? assetData.sessions.flatMap(s => s.bids || []).map(bid => ({
         id: bid.id,
         user: bid.user?.name || 'N/A',
@@ -391,7 +395,8 @@ const AuctionAsset = () => {
           <p><strong>Danh mục:</strong> {assetData.category?.name || assetData.category || 'N/A'}</p>
           <p><strong>Chủ sở hữu:</strong> {ownerName}</p>
           <p><strong>Email:</strong> {ownerEmail}</p>
-          <p><strong>Tổ chức đấu giá:</strong> {auctionOrgName}</p>
+          <p><strong>STD:</strong> {ownerPhone}</p>
+          <p><strong>Địa chỉ:</strong> {ownerAddress}</p>
           <p><strong>Giá khởi điểm:</strong> {formatPrice(assetData.starting_price)}</p>
           <p><strong>Trạng thái:</strong> {statusMap[assetData.status] || assetData.status}</p>
           <p><strong>Ngày tạo:</strong> {formatDate(assetData.created_at)}</p>

@@ -1,7 +1,7 @@
-/* Roles.module.css */
+/* Roles.module.css - Updated Button Styles */
+
 .mainContent {
-   
-    position: absolute;
+  position: absolute;
   top: 0;
   left: 280px;
   width: calc(100% - 280px);
@@ -80,22 +80,267 @@
   margin-bottom: 20px;
 }
 
+/* ===== IMPROVED BUTTON STYLES ===== */
+
 .addBtn {
-  background-color: #28a745;
+  background: #4f46e5;
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
+  padding: 12px 24px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.addBtn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.addBtn:hover::before {
+  left: 100%;
 }
 
 .addBtn:hover {
-  background-color: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
+
+.addBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+}
+
+/* Base Button Styles */
+.btnPrimary, .btnSecondary, .btnDanger, .btnSuccess, .btnInfo {
+  border: none;
+  padding: 10px 16px;
+  margin: 0px 5px 0px 5px ;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.btnPrimary {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+}
+
+.btnPrimary:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  transform: translateY(-1px);
+}
+
+.btnPrimary:active {
+  transform: translateY(0);
+}
+
+.btnSecondary {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  color: white;
+}
+
+.btnSecondary:hover {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  transform: translateY(-1px);
+}
+
+.btnSecondary:active {
+  transform: translateY(0);
+}
+
+.btnDanger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.btnDanger:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+}
+
+.btnDanger:active {
+  transform: translateY(0);
+}
+
+.btnSuccess {
+  background: rgb(96, 216, 130);
+  color: white;
+}
+
+.btnSuccess:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+}
+
+.btnSuccess:active {
+  transform: translateY(0);
+}
+
+.btnInfo {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  color: white;
+}
+
+.btnInfo:hover {
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+  transform: translateY(-1px);
+  box-shadow: #4f46e5;
+}
+
+.btnInfo:active {
+  transform: translateY(0);
+  box-shadow: #4f46e5;
+}
+
+/* Button icons */
+.btnPrimary i, .btnSecondary i, .btnDanger i, .btnSuccess i, .btnInfo i {
+  font-size: 12px;
+  transition: transform 0.2s ease;
+}
+
+.btnPrimary:hover i, .btnSecondary:hover i, .btnDanger:hover i, .btnSuccess:hover i, .btnInfo:hover i {
+  transform: scale(1.1);
+}
+
+/* Action buttons in table */
+.dataTableCell .flex.gap-2 {
+  display: flex;
+  gap: 8px;
+}
+
+.dataTableCell .flex.gap-2 button {
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+/* Pagination Buttons */
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 8px;
+}
+
+.paginationBtn {
+  padding: 10px 16px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #6b7280;
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  min-width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.paginationBtn:hover {
+  background: #f8fafc;
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: translateY(-1px);
+}
+
+.paginationBtnActive {
+  background: #4f46e5;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.paginationBtnActive:hover {
+  background: #4f46e5;
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* Modal Buttons */
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.modalFooter .btnPrimary,
+.modalFooter .btnSecondary {
+  padding: 12px 24px;
+  font-size: 14px;
+  min-width: 100px;
+}
+
+/* Select All Button in Permissions Modal */
+.permissionsList + .flex .btnPrimary {
+  padding: 8px 16px;
+  font-size: 12px;
+  background: #4f46e5;
+}
+
+.permissionsList + .flex .btnPrimary:hover {
+  background: #4f46e5;
+}
+
+/* Ripple Effect for Buttons */
+.btnPrimary, .btnSecondary, .btnDanger, .btnSuccess, .btnInfo, .addBtn {
+  position: relative;
+  overflow: hidden;
+}
+
+.btnPrimary::after, .btnSecondary::after, .btnDanger::after, .btnSuccess::after, .btnInfo::after, .addBtn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btnPrimary:active::after, .btnSecondary:active::after, .btnDanger:active::after, .btnSuccess:active::after, .btnInfo:active::after, .addBtn:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* Disabled State */
+.btnPrimary:disabled, .btnSecondary:disabled, .btnDanger:disabled, .btnSuccess:disabled, .btnInfo:disabled, .addBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ===== REST OF THE STYLES REMAIN THE SAME ===== */
 
 .dataTable {
   background-color: white;
@@ -118,55 +363,6 @@
 
 .dataTableRow:hover {
   background-color: #f8f9fa;
-}
-
-.statusBadge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
-  text-transform: uppercase;
-}
-
-.roleUser {
-  background-color: #e9ecef;
-  color: #495057;
-}
-
-.roleAdmin {
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.roleDauGiaVien {
-  background-color: #cce5ff;
-  color: #004085;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-  gap: 5px;
-}
-
-.paginationBtn {
-  padding: 8px 12px;
-  border: 1px solid #ced4da;
-  background-color: white;
-  color: #007bff;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.paginationBtn:hover {
-  background-color: #e9ecef;
-}
-
-.paginationBtnActive {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
 }
 
 .modal {
@@ -226,84 +422,6 @@
   margin-bottom: 15px;
 }
 
-.modalFooter {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 20px;
-  border-top: 1px solid #dee2e6;
-}
-
-.btnPrimary {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.btnPrimary:hover {
-  background-color: #0056b3;
-}
-
-.btnSecondary {
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.btnSecondary:hover {
-  background-color: #545b62;
-}
-
-.btnDanger {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.btnDanger:hover {
-  background-color: #c82333;
-}
-
-.btnSuccess {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.btnSuccess:hover {
-  background-color: #218838;
-}
-
-.btnInfo {
-  background-color: #17a2b8;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.btnInfo:hover {
-  background-color: #138496;
-}
-
 .permissionsList {
   max-height: 300px;
   overflow-y: auto;
@@ -350,5 +468,17 @@
 
   .modalContent {
     width: 95%;
+  }
+
+  .btnPrimary, .btnSecondary, .btnDanger, .btnSuccess, .btnInfo {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .addBtn {
+    padding: 10px 16px;
+    font-size: 13px;
   }
 }

@@ -223,7 +223,7 @@ function Permissions() {
       <h1 className={styles.pageTitle}>Quản Lý Quyền Hạn</h1>
       <p className={styles.pageSubtitle}>Quản lý quyền hạn hệ thống</p>
 
-      <div className={styles.actionsBar}>
+      {/* <div className={styles.actionsBar}>
         <button
           className={styles.addBtn}
           onClick={() => openPermissionModal('add')}
@@ -232,7 +232,7 @@ function Permissions() {
           <i className="fas fa-plus"></i>
           Thêm quyền hạn mới
         </button>
-      </div>
+      </div> */}
 
       <div className={styles.dataTable}>
         <table className="w-full">
@@ -241,7 +241,6 @@ function Permissions() {
               <th className={styles.dataTableCell}>ID</th>
               <th className={styles.dataTableCell}>Tên quyền hạn</th>
               <th className={styles.dataTableCell}>Mô tả</th>
-              <th className={styles.dataTableCell}>Hành động</th>
             </tr>
           </thead>
           <tbody>
@@ -250,7 +249,7 @@ function Permissions() {
                 <td className={styles.dataTableCell} data-label="ID">{permission.permission_id}</td>
                 <td className={styles.dataTableCell} data-label="Tên quyền hạn">{permission.name}</td>
                 <td className={styles.dataTableCell} data-label="Mô tả">{permission.description}</td>
-                <td className={styles.dataTableCell} data-label="Hành động">
+                {/* <td className={styles.dataTableCell} data-label="Hành động">
                   <div className="flex gap-2">
                     <button
                       className={styles.btnPrimary}
@@ -274,7 +273,7 @@ function Permissions() {
                       <i className="fa fa-eye"></i>
                     </button>
                   </div>
-                </td>
+                </td> */}
               </tr>
             ))}
           </tbody>

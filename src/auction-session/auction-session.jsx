@@ -12,7 +12,6 @@ function AuctionSession() {
   const [currentPage, setCurrentPage] = useState(1);
   const [auctionItems, setAuctionItems] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [favorites, setFavorites] = useState([]); // ✅ danh sách phiên đã quan tâm
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [startDate, setStartDate] = useState('');
@@ -95,12 +94,10 @@ function AuctionSession() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem('token');
-
         const categoryResponse = await axios.get(`${process.env.REACT_APP_API_URL}categories`, {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
         if (categoryResponse.data.status && categoryResponse.data.data) {
@@ -110,26 +107,11 @@ function AuctionSession() {
         const sessionsResponse = await axios.get(`${process.env.REACT_APP_API_URL}auction-sessions`, {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
         const sessionsData = sessionsResponse.data.sessions || sessionsResponse.data.data || [];
         setAuctionItems(Array.isArray(sessionsData) ? sessionsData : []);
-
-        // ✅ Lấy danh sách phiên đã quan tâm của user (sửa endpoint theo API của bạn)
-        if (token) {
-          try {
-            const favRes = await axios.get(`${process.env.REACT_APP_API_URL}my-favorites`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            if (favRes.data.status && favRes.data.favorites) {
-              setFavorites(favRes.data.favorites.map((f) => f.session_id));
-            }
-          } catch (favError) {
-            console.log('Chưa có danh sách quan tâm hoặc lỗi:', favError);
-          }
-        }
-
         setError(null);
       } catch (err) {
         console.error('❌ Lỗi API:', err);
@@ -140,54 +122,6 @@ function AuctionSession() {
     };
     fetchData();
   }, []);
-
-  // ✅ Hàm quan tâm / bỏ quan tâm (sửa endpoint theo API của bạn)
-  const toggleFavorite = async (sessionId) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('Vui lòng đăng nhập để quan tâm phiên đấu giá.');
-      return;
-    }
-
-    try {
-      // Sử dụng endpoint theo API của bạn: POST /api/sessions/{id}/favorite
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}sessions/${sessionId}/favorite`,
-        {}, // body trống
-        { 
-          headers: { 
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}` 
-          } 
-        }
-      );
-
-      if (response.data.status) {
-        // Cập nhật state favorites dựa trên phản hồi từ server
-        if (favorites.includes(sessionId)) {
-          // Nếu đã có trong favorites → bỏ quan tâm
-          setFavorites((prev) => prev.filter((id) => id !== sessionId));
-        } else {
-          // Nếu chưa có → thêm vào favorites
-          setFavorites((prev) => [...prev, sessionId]);
-        }
-      }
-    } catch (err) {
-      console.error('❌ Lỗi khi cập nhật quan tâm:', err);
-      
-      // Xử lý lỗi OPTIONS (CORS) - thử lại với method khác nếu cần
-      if (err.response && err.response.status === 204) {
-        // 204 No Content - có thể thành công, cập nhật state
-        if (favorites.includes(sessionId)) {
-          setFavorites((prev) => prev.filter((id) => id !== sessionId));
-        } else {
-          setFavorites((prev) => [...prev, sessionId]);
-        }
-      } else {
-        alert('Không thể cập nhật trạng thái quan tâm: ' + (err.response?.data?.message || err.message));
-      }
-    }
-  };
 
   // Lọc dữ liệu
   const filterAndSortItems = () => {
@@ -343,8 +277,6 @@ function AuctionSession() {
           ) : (
             currentItems.map((session) => {
               const status = getAuctionStatus(session.status);
-              const isFav = favorites.includes(session.session_id); // ✅ Kiểm tra trạng thái quan tâm
-
               return (
                 <div key={session.session_id} className={styles.auctionItem}>
                   <div className={styles.itemImage}>
@@ -394,13 +326,6 @@ function AuctionSession() {
                       </div>
                     </div>
                   </a>
-                  <button
-                    className={styles.favoriteBtn}
-                    onClick={() => toggleFavorite(session.session_id)}
-                    title={isFav ? 'Bỏ quan tâm' : 'Quan tâm'}
-                  >
-                    <i className={`fa${isFav ? 's' : 'r'} fa-heart`} style={{ color: isFav ? 'red' : '#999' }}></i>
-                  </button>
                 </div>
               );
             })

@@ -19,7 +19,7 @@ const preloadImages = (urls) => {
       const img = new Image();
       img.src = url;
       img.onerror = () => {
-        imageCache.set(url, { src: '/assets/img/xe.png' });
+        imageCache.set(url, { src: '' });
       };
       imageCache.set(url, img);
     }
@@ -40,10 +40,9 @@ const AuctionItem = React.memo(({ session }) => {
 
   const displayStatus = getAuctionStatus(session.status);
   const item = session.item;
-  const baseUrl = process.env.REACT_APP_BASE_URL || 'https://your-production-url.com';
   const imageUrl = item?.image_url
-    ? `${baseUrl}${item.image_url}`
-    : '/assets/img/xe.png';
+    ? `${process.env.REACT_APP_BASE_URL}${item.image_url}`
+    : '';
 
   // Preload image
   useEffect(() => {
@@ -90,20 +89,18 @@ const AuctionItem = React.memo(({ session }) => {
             Giá khởi điểm: {Number(item?.starting_price || 0).toLocaleString()} VNĐ
           </p>
           {session.highest_bid && (
-            <p
-              className="auction-current-price"
-              style={{ color: '#16a34a', fontWeight: 'bold', minHeight: '52px' }}
-            >
+            <p className="auction-current-price" style={{ color: '#16a34a', fontWeight: 'bold', minHeight: '52px' }}>
               Giá cao nhất: {Number(session.highest_bid).toLocaleString()} VNĐ
             </p>
           )}
-          {!session.highest_bid && <p className="auction-current-price" style={{ minHeight: '52px' }}></p>}
+          {!session.highest_bid && (
+            <p className="auction-current-price" style={{ minHeight: '52px' }}></p>
+          )}
         </div>
         <div className="action">
           <Link to={`/detail/${session.session_id}`} style={{ textDecoration: 'none' }}>
             <button className="bid-button">
-              <i className="fa fa-gavel" aria-hidden="true"></i>
-              Đấu giá
+              <i className="fa fa-gavel" aria-hidden="true"></i> Đấu giá
             </button>
           </Link>
         </div>
@@ -216,7 +213,7 @@ const Home = () => {
           return response;
         } catch (err) {
           if (i === retries - 1) throw err;
-          await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
     };
@@ -224,32 +221,35 @@ const Home = () => {
     const fetchInitialData = async () => {
       setLoading(true);
       try {
-        const baseUrl = process.env.REACT_APP_API_URL;
-        const authHeader = { Authorization: `Bearer ${localStorage.getItem('token')}` };
-
         // Fetch categories
-        const categoryResponse = await fetchWithRetry(`${baseUrl}categories`, {
-          headers: { 'Content-Type': 'application/json', ...authHeader },
+        const categoryResponse = await fetchWithRetry(`${process.env.REACT_APP_API_URL}categories`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
         });
         setCategories(categoryResponse.data.status && categoryResponse.data.data ? categoryResponse.data.data : []);
 
         // Fetch auction sessions
-        const sessionsResponse = await fetchWithRetry(`${baseUrl}auction-sessions`, {
-          headers: { 'Content-Type': 'application/json', ...authHeader },
+        const sessionsResponse = await fetchWithRetry(`${process.env.REACT_APP_API_URL}auction-sessions`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
         });
         const sessionsData = sessionsResponse.data.sessions || sessionsResponse.data.data || sessionsResponse.data || [];
+
         debouncedSetSessions(Array.isArray(sessionsData) ? sessionsData : []);
 
-        // Fetch news (dùng axios consistent)
-        const newsResponse = await axios.get(`${baseUrl}news`, {
-          headers: { 'Content-Type': 'application/json' },
-        });
-        const newsData = newsResponse.data;
+        // Fetch news
+        const newsResponse = await fetch(`${process.env.REACT_APP_API_URL}news`);
+        if (!newsResponse.ok) throw new Error('Lỗi khi lấy tin tức');
+        const newsData = await newsResponse.json();
+
         const formattedNews = newsData.map((item) => {
-          const imageUrl =
-            item.thumbnail && item.thumbnail.startsWith('/')
-              ? `${baseUrl.replace('/api', '')}${item.thumbnail}` // Giả sử baseUrl có /api, adjust nếu cần
-              : item.thumbnail || '/assets/img/placeholder.png';
+          const imageUrl = item.thumbnail && item.thumbnail.startsWith('/')
+            ? `${process.env.REACT_APP_BASE_URL}${item.thumbnail}`
+            : item.thumbnail;
           return {
             id: item.id,
             category: item.category?.name || 'Khác',
@@ -267,18 +267,18 @@ const Home = () => {
         setError(null);
       } catch (err) {
         console.error('❌ Lỗi API:', err);
-        setError(`Lỗi khi tải dữ liệu: ${err.response?.data?.message || err.message}`);
+        setError(`Lỗi khi tải dữ liệu: ${err.message}`);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchInitialData();
-  }, [debouncedSetSessions]);
 
-  // Lọc và sắp xếp sessions (với ưu tiên Mo và DangDienRa lên đầu)
+    fetchInitialData();
+  }, []);
+
+  // Lọc và sắp xếp sessions
   const filteredSessions = useMemo(() => {
-    // Lọc theo search + category
     let filtered = sessions.filter((session) => {
       const item = session.item;
       if (!item) return false;
@@ -287,43 +287,25 @@ const Home = () => {
       return matchesSearch && matchesCategory;
     });
 
-    // Ưu tiên các trạng thái Mo và DangDienRa lên đầu
-    filtered.sort((a, b) => {
-      const priorityStatus = ['Mo', 'DangDienRa'];
-      const aPriority = priorityStatus.includes(a.status) ? 0 : 1;
-      const bPriority = priorityStatus.includes(b.status) ? 0 : 1;
-      if (aPriority !== bPriority) return aPriority - bPriority;
-
-      // Nếu cùng nhóm, sắp xếp theo giá (tùy chọn)
-      if (sortBy === 'price-asc') return Number(a.item?.starting_price || 0) - Number(b.item?.starting_price || 0);
-      if (sortBy === 'price-desc') return Number(b.item?.starting_price || 0) - Number(a.item?.starting_price || 0);
-      return 0;
-    });
-
+    if (sortBy === 'price-asc') {
+      return [...filtered].sort((a, b) => Number(a.item?.starting_price || 0) - Number(b.item?.starting_price || 0));
+    } else if (sortBy === 'price-desc') {
+      return [...filtered].sort((a, b) => Number(b.item?.starting_price || 0) - Number(a.item?.starting_price || 0));
+    }
     return filtered;
   }, [sessions, searchTerm, categoryFilter, sortBy]);
 
-  // Lấy 10 phiên mới nhất (cũng áp dụng ưu tiên Mo và DangDienRa)
+  // Lấy 10 phiên mới nhất
   const latestSessions = useMemo(() => {
-    const baseUrl = process.env.REACT_APP_BASE_URL || 'https://your-production-url.com';
-    let sorted = [...sessions].sort((a, b) => b.session_id - a.session_id); // Sắp xếp theo ID mới nhất trước
 
-    // Ưu tiên Mo và DangDienRa trong latest
-    sorted.sort((a, b) => {
-      const priorityStatus = ['Mo', 'DangDienRa'];
-      const aPriority = priorityStatus.includes(a.status) ? 0 : 1;
-      const bPriority = priorityStatus.includes(b.status) ? 0 : 1;
-      if (aPriority !== bPriority) return aPriority - bPriority;
-      return 0; // Giữ nguyên thứ tự mới nhất nếu cùng nhóm
-    });
 
-    sorted = sorted.slice(0, 10); // Giới hạn 10
+    const sorted = [...sessions].sort((a, b) => b.session_id - a.session_id).slice(0, 10);
 
     // Preload images for latest sessions
     preloadImages(
       sorted
         .filter((s) => s.item?.image_url)
-        .map((s) => `${baseUrl}${s.item.image_url}`)
+        .map((s) => `${process.env.REACT_APP_BASE_URL}${s.item.image_url}`)
     );
     return sorted;
   }, [sessions]);
@@ -334,6 +316,7 @@ const Home = () => {
         <div className="section-title">
           <p>PHIÊN ĐẤU GIÁ MỚI NHẤT/NỔI BẬT</p>
         </div>
+
         {loading && <p>Đang tải dữ liệu...</p>}
         {error && <p className="error-message">{error}</p>}
         {!loading && latestSessions.length === 0 && !error && <p>Không có phiên đấu giá nào.</p>}
@@ -350,7 +333,7 @@ const Home = () => {
           key={latestSessions.map((s) => s.session_id).join('-')}
         >
           {latestSessions.map((session) => (
-            <SwiperSlide key={session.session_id}>
+            <SwiperSlide key= {session.session_id}>
               <AuctionItem session={session} />
             </SwiperSlide>
           ))}
@@ -371,7 +354,11 @@ const Home = () => {
               />
             </div>
             <div className="select-cate">
-              <select name="category" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+              <select
+                name="category"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+              >
                 <option value="all">Tất cả danh mục</option>
                 {categories.map((category) => (
                   <option key={category.category_id} value={category.category_id}>
@@ -388,13 +375,19 @@ const Home = () => {
             </div>
             <div className="sort">
               <p>Sắp xếp: </p>
-              <select className="select" name="sort" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <select
+                className="select"
+                name="sort"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
                 <option value="default">Mặc định</option>
                 <option value="price-asc">Giá tăng dần</option>
                 <option value="price-desc">Giá giảm dần</option>
               </select>
             </div>
           </div>
+
           {loading && <p>Đang tải dữ liệu...</p>}
           {error && <p className="error-message">{error}</p>}
           {!loading && filteredSessions.length === 0 && !error && <p>Không có tài sản nào.</p>}
@@ -422,6 +415,7 @@ const Home = () => {
           <div className="section-title">
             <p>TIN TỨC VÀ THÔNG BÁO</p>
           </div>
+
           {loading && <p>Đang tải dữ liệu...</p>}
           {error && <p className="error-message">{error}</p>}
           {!loading && news.length === 0 && !error && <p>Không có tin tức nào.</p>}
@@ -443,6 +437,7 @@ const Home = () => {
                     className="news-image"
                     src={imageCache.get(newsItem.imageUrl)?.src || newsItem.imageUrl}
                     alt={newsItem.title}
+
                     loading="lazy"
                   />
                   <div className="news-details">
@@ -457,8 +452,7 @@ const Home = () => {
                   <div className="action">
                     <Link to={`/news/${newsItem.id}`} style={{ textDecoration: 'none' }}>
                       <button className="read-more-button">
-                        <i className="fa fa-arrow-right" aria-hidden="true"></i>
-                        Đọc thêm
+                        <i className="fa fa-arrow-right" aria-hidden="true"></i> Đọc thêm
                       </button>
                     </Link>
                   </div>
