@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Notification.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import NotificationBell from "../NotificationBell";
 
 function Notification() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,7 +17,11 @@ function Notification() {
     message: '',
     status: 'ChuaDoc'
   });
-
+    const [open, setOpen] = useState(false);
+  const togglePopup = (e) => {
+    e.stopPropagation(); // tránh đóng liền sau khi mở
+    setOpen((prev) => !prev);
+  };
   const itemsPerPage = 5;
 
   const notifications = [
@@ -225,9 +230,13 @@ function Notification() {
           />
         </div>
         <div className={styles.userProfile}>
-          <div className={styles.notificationBell}>
-            <i className="fas fa-bell"></i>
-          </div>
+           <div>
+                       <div onClick={togglePopup} style={{ cursor: "pointer" }}>
+                         <i className="fa-solid fa-bell fa-lg"></i>
+                       </div>
+         
+                       <NotificationBell open={open} onClose={() => setOpen(false)} />
+                     </div>
           <div className={styles.profileAvatar}>QT</div>
         </div>
       </div>

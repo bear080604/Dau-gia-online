@@ -5,49 +5,31 @@ export default function NotificationPopup({ open, onClose }) {
   const popupRef = useRef(null);
 
   // 🧭 Gọi API thật
- useEffect(() => {
-  if (!open) return; // chỉ gọi khi mở popup
+  useEffect(() => {
+    if (!open) return; // chỉ gọi khi mở popup
+    fetch("http://localhost:8000/api/notification")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status && Array.isArray(data.notifications)) {
+          // Sắp xếp giảm dần theo thời gian, sau đó lấy 7 thông báo mới nhất
+          const sorted = data.notifications
+            .sort(
+              (a, b) => new Date(b.created_at) - new Date(a.created_at)
+            )
+            .slice(0, 7);
 
-  const storedUser = localStorage.getItem("user");
-  const storedToken = localStorage.getItem("token");
-
-  if (!storedUser || !storedToken) {
-    console.error("Chưa có thông tin đăng nhập hoặc token!");
-    return;
-  }
-
-  const user = JSON.parse(storedUser);
-  const userId = user.user_id;
-
-  fetch(`http://localhost:8000/api/notifications/${userId}`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${storedToken}`, // Gửi token trong header
-    },
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.status && Array.isArray(data.notifications)) {
-        // Sắp xếp giảm dần theo thời gian, sau đó lấy 7 thông báo mới nhất
-        const sorted = data.notifications
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-          .slice(0, 7);
-
-        setNotifications(
-          sorted.map((n) => ({
-            id: n.notification_id,
-            msg: n.message,
-            is_read: n.is_read,
-            time: n.created_at,
-          }))
-        );
-      } else {
-        console.warn("Không có dữ liệu thông báo hợp lệ:", data);
-      }
-    })
-    .catch((err) => console.error("Lỗi tải thông báo:", err));
-}, [open]);
-
+          setNotifications(
+            sorted.map((n) => ({
+              id: n.notification_id,
+              msg: n.message,
+              is_read: n.is_read,
+              time: n.created_at,
+            }))
+          );
+        }
+      })
+      .catch((err) => console.error("Lỗi tải thông báo:", err));
+  }, [open]);
 
   // 🚪 Click ngoài popup => đóng
   useEffect(() => {
@@ -68,8 +50,8 @@ export default function NotificationPopup({ open, onClose }) {
       className="notification-popup"
       style={{
         position: "absolute",
-        top: "46px",
-        right: "70px",
+        top: "100px",
+        right: "90px",
         width: "340px",
         background: "#fff",
         borderRadius: "10px",

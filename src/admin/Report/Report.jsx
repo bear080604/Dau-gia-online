@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Report.module.css';
+import NotificationBell from "../NotificationBell";
 
 const Report = () => {
   const [activeItem, setActiveItem] = useState('reports');
@@ -10,6 +11,11 @@ const Report = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
+      const [open, setOpen] = useState(false);
+    const togglePopup = (e) => {
+      e.stopPropagation(); // tránh đóng liền sau khi mở
+      setOpen((prev) => !prev);
+    };
   const [reports, setReports] = useState([
     {
       id: '#BC-001',
@@ -148,9 +154,13 @@ const Report = () => {
             />
           </div>
           <div className={styles.userProfile}>
-            <div className={styles.notificationBell}>
-              <i className="fas fa-bell"></i>
-            </div>
+            <div>
+                        <div onClick={togglePopup} style={{ cursor: "pointer" }}>
+                          <i className="fa-solid fa-bell fa-lg"></i>
+                        </div>
+          
+                        <NotificationBell open={open} onClose={() => setOpen(false)} />
+                      </div>
             <div className={styles.profileAvatar}>QT</div>
           </div>
         </div>

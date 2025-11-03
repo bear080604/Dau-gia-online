@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import styles from './Permissions.module.css';
+import NotificationBell from "../NotificationBell";
 
 function Permissions() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,7 +13,11 @@ function Permissions() {
   const [error, setError] = useState(null);
 
   const itemsPerPage = 5;
-
+    const [open, setOpen] = useState(false);
+  const togglePopup = (e) => {
+    e.stopPropagation(); // tránh đóng liền sau khi mở
+    setOpen((prev) => !prev);
+  };
   // Lấy URL từ .env
   const API_URL = process.env.REACT_APP_API_URL?.replace(/\/$/, '') || '';
 
@@ -107,9 +112,13 @@ function Permissions() {
           />
         </div>
         <div className={styles.userProfile}>
-          <div className={styles.notificationBell}>
-            <i className="fas fa-bell"></i>
-          </div>
+          <div>
+                      <div onClick={togglePopup} style={{ cursor: "pointer" }}>
+                        <i className="fa-solid fa-bell fa-lg"></i>
+                      </div>
+        
+                      <NotificationBell open={open} onClose={() => setOpen(false)} />
+                    </div>
           <div className={styles.profileAvatar}>QT</div>
         </div>
       </div>

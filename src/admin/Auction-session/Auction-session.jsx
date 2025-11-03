@@ -6,6 +6,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import { useUser } from '../../UserContext';
 import moment from 'moment-timezone';
 import { Link } from 'react-router-dom';
+import NotificationBell from "../NotificationBell";
 
 function AuctionSession() {
   const { token, user } = useUser();
@@ -44,6 +45,11 @@ function AuctionSession() {
     currentWinnerId: '',
     starting_price: ''
   });
+     const [open, setOpen] = useState(false);
+    const togglePopup = (e) => {
+      e.stopPropagation(); // tránh đóng liền sau khi mở
+      setOpen((prev) => !prev);
+    };
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -776,9 +782,13 @@ function AuctionSession() {
           />
         </div>
         <div className={styles.userProfile}>
-          <div className={styles.notificationBell}>
-            <i className="fas fa-bell"></i>
-          </div>
+            <div>
+                        <div onClick={togglePopup} style={{ cursor: "pointer" }}>
+                          <i className="fa-solid fa-bell fa-lg"></i>
+                        </div>
+          
+                        <NotificationBell open={open} onClose={() => setOpen(false)} />
+                      </div>
           <div className={styles.profileAvatar}>
             {user?.full_name ? user.full_name.slice(0, 2).toUpperCase() : 'QT'}
           </div>

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './Auction-asset.module.css';
 import axios from 'axios'; // Giả sử sử dụng axios cho API calls, hoặc fetch
+import NotificationBell from "../NotificationBell";
 
 // API Base URL
 const API_BASE = 'http://localhost:8000/api';
@@ -89,7 +90,11 @@ const AuctionAsset = () => {
   const [fileNamePreview, setFileNamePreview] = useState('Không có tệp đính kèm');
   const [viewBody, setViewBody] = useState('');
   const [noData, setNoData] = useState(false);
-
+    const [open, setOpen] = useState(false);
+  const togglePopup = (e) => {
+    e.stopPropagation(); // tránh đóng liền sau khi mở
+    setOpen((prev) => !prev);
+  };
   const fileInputRef = useRef(null);
   const extraFileInputRef = useRef(null);
   const urlFileInputRef = useRef(null);
@@ -682,9 +687,13 @@ const AuctionAsset = () => {
           />
         </div>
         <div className={styles.userProfile}>
-          <div className={styles.notificationBell}>
-            <i className="fas fa-bell"></i>
-          </div>
+         <div>
+              <div onClick={togglePopup} style={{ cursor: "pointer" }}>
+                <i className="fa-solid fa-bell fa-lg"></i>
+              </div>
+
+              <NotificationBell open={open} onClose={() => setOpen(false)} />
+            </div>
           <div className={styles.profileAvatar}>QT</div>
         </div>
       </div>

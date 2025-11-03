@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import styles from './EContract.module.css';
 import axios from 'axios';
+import NotificationBell from "../NotificationBell";
 
 // Base URL for API and PDFs from environment variables
 const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
@@ -28,7 +29,11 @@ function EContract() {
   const [econtracts, setEcontracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+   const [open, setOpen] = useState(false);
+  const togglePopup = (e) => {
+    e.stopPropagation(); // tránh đóng liền sau khi mở
+    setOpen((prev) => !prev);
+  };
   const itemsPerPage = 5;
 
   // Fetch econtracts from API
@@ -241,9 +246,13 @@ function EContract() {
           />
         </div>
         <div className={styles.userProfile}>
-          <div className={styles.notificationBell}>
-            <i className="fas fa-bell"></i>
-          </div>
+            <div>
+                       <div onClick={togglePopup} style={{ cursor: "pointer" }}>
+                         <i className="fa-solid fa-bell fa-lg"></i>
+                       </div>
+         
+                       <NotificationBell open={open} onClose={() => setOpen(false)} />
+                     </div>
           <div className={styles.profileAvatar}>QT</div>
         </div>
       </div>
