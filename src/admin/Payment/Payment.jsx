@@ -9,104 +9,168 @@ function Payment() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
+  const [modalMode, setModalMode] = useState('add');
   const [selectedPayment, setSelectedPayment] = useState(null);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [paymentForm, setPaymentForm] = useState({
     contract: '',
-    method: 'ChuyenKhoan',
+    method: 'VNPAY',
     amount: '',
     date: '',
     status: 'ChoXuLy'
   });
 
   const itemsPerPage = 5;
+  const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
 
-  const payments = [
-    {
-      id: '#PT-001',
-      contractId: '#HD-001',
-      contractIdValue: 'HD001',
-      method: 'Chuyển khoản',
-      methodValue: 'ChuyenKhoan',
-      amount: '2.700.000.000đ',
-      amountValue: 2700000000,
-      date: '2025-10-03 19:00',
-      status: 'Hoàn tất',
-      statusClass: 'statusHoantat'
-    },
-    {
-      id: '#PT-002',
-      contractId: '#HD-002',
-      contractIdValue: 'HD002',
-      method: 'VÍ điện tử',
-      methodValue: 'ViDienTu',
-      amount: '1.300.000.000đ',
-      amountValue: 1300000000,
-      date: '2025-10-04 20:00',
-      status: 'Chờ xử lý',
-      statusClass: 'statusChoxuly'
-    },
-    {
-      id: '#PT-003',
-      contractId: '#HD-003',
-      contractIdValue: 'HD003',
-      method: 'Thẻ',
-      methodValue: 'The',
-      amount: '200.000.000đ',
-      amountValue: 200000000,
-      date: '2025-10-01 17:30',
-      status: 'Thất bại',
-      statusClass: 'statusThatbai'
-    },
-    {
-      id: '#PT-004',
-      contractId: '#HD-004',
-      contractIdValue: 'HD004',
-      method: 'Tiền mặt',
-      methodValue: 'TienMat',
-      amount: '600.000.000đ',
-      amountValue: 600000000,
-      date: '2025-10-05 14:00',
-      status: 'Chờ xử lý',
-      statusClass: 'statusChoxuly'
-    },
-    {
-      id: '#PT-005',
-      contractId: '#HD-005',
-      contractIdValue: 'HD005',
-      method: 'Chuyển khoản',
-      methodValue: 'ChuyenKhoan',
-      amount: '100.000.000đ',
-      amountValue: 100000000,
-      date: '2025-10-06 17:00',
-      status: 'Hoàn tất',
-      statusClass: 'statusHoantat'
-    },
-    {
-      id: '#PT-006',
-      contractId: '#HD-006',
-      contractIdValue: 'HD006',
-      method: 'VÍ điện tử',
-      methodValue: 'ViDienTu',
-      amount: '50.000.000đ',
-      amountValue: 50000000,
-      date: '2025-10-07 19:00',
-      status: 'Thất bại',
-      statusClass: 'statusThatbai'
-    },
-    {
-      id: '#PT-007',
-      contractId: '#HD-007',
-      contractIdValue: 'HD007',
-      method: 'Thẻ',
-      methodValue: 'The',
-      amount: '900.000.000đ',
-      amountValue: 900000000,
-      date: '2025-09-30 15:00',
-      status: 'Hoàn tất',
-      statusClass: 'statusHoantat'
-    },
-  ];
+  // Get auth token from localStorage or your auth context
+  const getAuthToken = () => {
+    // Try different possible token storage keys
+    return localStorage.getItem('token') || 
+           localStorage.getItem('auth_token') || 
+           localStorage.getItem('access_token') ||
+           sessionStorage.getItem('token') ||
+           sessionStorage.getItem('auth_token');
+  };
+
+  // Fetch payments from API
+  useEffect(() => {
+    fetchPayments();
+  }, []);
+
+  const fetchPayments = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching from URL:', `${API_URL}payments`); // Debug log
+      
+      const token = getAuthToken();
+      console.log('Token found:', token ? 'Yes' : 'No'); // Debug log
+      
+      const headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
+      
+      // Add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(`${API_URL}payments`, {
+        method: 'GET',
+        headers: headers,
+      });
+      
+      console.log('Response status:', response.status); // Debug log
+      
+      if (response.status === 401) {
+        throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      }
+      
+      if (!response.ok) {
+        // Try to get error details from response
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`Không thể tải dữ liệu thanh toán (Status: ${response.status})`);
+      }
+      
+      const data = await response.json();
+      console.log('Raw API data:', data); // Debug log
+      
+      // Transform API data to match component format
+      const transformedPayments = data.map(payment => {
+        // Parse amount to number if it's a string
+        const amountValue = typeof payment.amount === 'string' 
+          ? parseFloat(payment.amount) 
+          : payment.amount;
+        
+        return {
+          id: `#PT-${String(payment.payment_id).padStart(3, '0')}`,
+          paymentId: payment.payment_id,
+          contractId: `#HD-${String(payment.contract_id).padStart(3, '0')}`,
+          contractIdValue: `HD${String(payment.contract_id).padStart(3, '0')}`,
+          method: getMethodLabel(payment.method),
+          methodValue: payment.method,
+          amount: formatCurrency(amountValue),
+          amountValue: amountValue,
+          date: formatDateTime(payment.payment_date),
+          status: getStatusLabel(payment.status),
+          statusClass: getStatusClass(payment.status),
+          senderId: payment.sender_id,
+          receiverId: payment.receiver_id,
+          profileId: payment.profile_id,
+          // Additional data from nested objects
+          contractData: payment.contract || null,
+          sessionData: payment.contract?.session || null
+        };
+      });
+      
+      console.log('Transformed payments:', transformedPayments); // Debug log
+      setPayments(transformedPayments);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching payments:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper functions
+  const getMethodLabel = (method) => {
+    const methodMap = {
+      'VNPAY': 'VNPAY',
+      'ChuyenKhoan': 'Chuyển khoản',
+      'ViDienTu': 'VÍ điện tử',
+      'The': 'Thẻ',
+      'TienMat': 'Tiền mặt',
+      'MoMo': 'MoMo',
+      'ZaloPay': 'ZaloPay'
+    };
+    return methodMap[method] || method;
+  };
+
+  const getStatusLabel = (status) => {
+    const statusMap = {
+      'ChoXuLy': 'Chờ xử lý',
+      'HoanTat': 'Hoàn tất',
+      'ThatBai': 'Thất bại',
+      'DaThanhToan': 'Hoàn tất'
+    };
+    return statusMap[status] || status;
+  };
+
+  const getStatusClass = (status) => {
+    const statusMap = {
+      'ChoXuLy': 'statusChoxuly',
+      'HoanTat': 'statusHoantat',
+      'ThatBai': 'statusThatbai',
+      'DaThanhToan': 'statusHoantat',
+      'Chờ xử lý': 'statusChoxuly',
+      'Hoàn tất': 'statusHoantat',
+      'Thất bại': 'statusThatbai'
+    };
+    return statusMap[status] || 'statusChoxuly';
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
+
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  };
 
   const applyFilters = () => {
     return payments.filter(payment => {
@@ -180,14 +244,16 @@ function Payment() {
         date: payment.date.slice(0, 16).replace(' ', 'T'),
         status: payment.status === 'Chờ xử lý' ? 'ChoXuLy' : payment.status === 'Hoàn tất' ? 'HoanTat' : 'ThatBai'
       });
+      setSelectedPayment(payment);
     } else {
       setPaymentForm({
         contract: '',
-        method: 'ChuyenKhoan',
+        method: 'VNPAY',
         amount: '',
         date: '',
         status: 'ChoXuLy'
       });
+      setSelectedPayment(null);
     }
     setShowPaymentModal(true);
   };
@@ -213,30 +279,137 @@ function Payment() {
     }));
   };
 
-  const handleSavePayment = () => {
-    alert('Chức năng lưu chỉ là demo, không lưu thực tế.');
-    closePaymentModal();
-  };
+  const handleSavePayment = async () => {
+    try {
+      const token = getAuthToken();
+      
+      if (!token) {
+        alert('Vui lòng đăng nhập để thực hiện thao tác này');
+        return;
+      }
+      
+      const paymentData = {
+        contract_id: parseInt(paymentForm.contract.replace('HD', '')),
+        method: paymentForm.method,
+        amount: parseFloat(paymentForm.amount),
+        payment_date: paymentForm.date.replace('T', ' ') + ':00',
+        status: paymentForm.status
+      };
 
-  const handleDeletePayment = (payment) => {
-    if (window.confirm('Bạn có chắc muốn xóa thanh toán này?')) {
-      alert('Chức năng xóa chỉ là demo, không xóa thực tế.');
+      const url = modalMode === 'edit' 
+        ? `${API_URL}payments/${selectedPayment.paymentId}`
+        : `${API_URL}payments`;
+      
+      const method = modalMode === 'edit' ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(paymentData)
+      });
+
+      if (response.status === 401) {
+        alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Không thể lưu thanh toán');
+      }
+
+      alert(modalMode === 'edit' ? 'Cập nhật thanh toán thành công!' : 'Thêm thanh toán mới thành công!');
+      closePaymentModal();
+      fetchPayments(); // Reload data
+    } catch (err) {
+      alert('Lỗi: ' + err.message);
+      console.error('Error saving payment:', err);
     }
   };
 
-  const getStatusClass = (status) => {
-    const statusMap = {
-      'Chờ xử lý': 'statusChoxuly',
-      'Hoàn tất': 'statusHoantat',
-      'Thất bại': 'statusThatbai'
-    };
-    return statusMap[status] || 'statusChoxuly';
+  const handleDeletePayment = async (payment) => {
+    if (window.confirm('Bạn có chắc muốn xóa thanh toán này?')) {
+      try {
+        const token = getAuthToken();
+        
+        if (!token) {
+          alert('Vui lòng đăng nhập để thực hiện thao tác này');
+          return;
+        }
+        
+        const response = await fetch(`${API_URL}payments/${payment.paymentId}`, {
+          method: 'DELETE',
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.status === 401) {
+          alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Không thể xóa thanh toán');
+        }
+
+        alert('Xóa thanh toán thành công!');
+        fetchPayments(); // Reload data
+      } catch (err) {
+        alert('Lỗi: ' + err.message);
+        console.error('Error deleting payment:', err);
+      }
+    }
   };
 
   const demoProcessingHistory = [
     { action: 'Xử lý', processor: 'Admin QT', time: '2025-10-03 19:30', note: 'Xác nhận chuyển khoản' },
     { action: 'Hoàn tất', processor: 'Manager A', time: '2025-10-03 20:00', note: 'Cập nhật hợp đồng' }
   ];
+
+  // Get unique contract IDs for filter dropdown
+  const uniqueContracts = [...new Set(payments.map(p => p.contractIdValue))];
+
+  if (loading) {
+    return (
+      <div className={styles.mainContent}>
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <i className="fas fa-spinner fa-spin" style={{ fontSize: '48px', color: '#4A90E2' }}></i>
+          <p style={{ marginTop: '20px', fontSize: '18px' }}>Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.mainContent}>
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <i className="fas fa-exclamation-triangle" style={{ fontSize: '48px', color: '#E74C3C' }}></i>
+          <p style={{ marginTop: '20px', fontSize: '18px', color: '#E74C3C' }}>Lỗi: {error}</p>
+          <button 
+            onClick={fetchPayments}
+            style={{ 
+              marginTop: '20px', 
+              padding: '10px 20px', 
+              fontSize: '16px',
+              backgroundColor: '#4A90E2',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.mainContent}>
@@ -271,13 +444,9 @@ function Payment() {
           </select>
           <select className={styles.filterSelect} value={contractFilter} onChange={handleContractFilterChange}>
             <option value="">Tất cả hợp đồng</option>
-            <option value="HD001">#HD-001</option>
-            <option value="HD002">#HD-002</option>
-            <option value="HD003">#HD-003</option>
-            <option value="HD004">#HD-004</option>
-            <option value="HD005">#HD-005</option>
-            <option value="HD006">#HD-006</option>
-            <option value="HD007">#HD-007</option>
+            {uniqueContracts.map(contract => (
+              <option key={contract} value={contract}>#{contract.replace('HD', 'HD-')}</option>
+            ))}
           </select>
         </div>
         <button className={styles.addBtn} onClick={() => openPaymentModal('add')}>
@@ -299,35 +468,45 @@ function Payment() {
           </tr>
         </thead>
         <tbody>
-          {currentPayments.map(payment => (
-            <tr key={payment.id}>
-              <td data-label="Mã PT">{payment.id}</td>
-              <td data-label="Hợp đồng ID">{payment.contractId}</td>
-              <td data-label="Phương thức">{payment.method}</td>
-              <td data-label="Số tiền">{payment.amount}</td>
-              <td data-label="Ngày thanh toán">{payment.date}</td>
-              <td data-label="Trạng thái">
-                <span className={`${styles.statusBadge} ${styles[getStatusClass(payment.status)]}`}>{payment.status}</span>
-              </td>
-              <td data-label="Hành động">
-                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openPaymentModal('edit', payment)}>
-                  <i className="fa fa-pencil" aria-hidden="true"></i>
-                </button>
-                <button className={`${styles.btn} ${styles.btnDanger}`} onClick={() => handleDeletePayment(payment)}>
-                  <i className="fa fa-trash" aria-hidden="true"></i>
-                </button>
-                <button className={`${styles.btn} ${styles.btnSuccess}`} onClick={() => openViewModal(payment)}>
-                  <i className="fa fa-eye" aria-hidden="true"></i>
-                </button>
+          {currentPayments.length > 0 ? (
+            currentPayments.map(payment => (
+              <tr key={payment.id}>
+                <td data-label="Mã PT">{payment.id}</td>
+                <td data-label="Hợp đồng ID">{payment.contractId}</td>
+                <td data-label="Phương thức">{payment.method}</td>
+                <td data-label="Số tiền">{payment.amount}</td>
+                <td data-label="Ngày thanh toán">{payment.date}</td>
+                <td data-label="Trạng thái">
+                  <span className={`${styles.statusBadge} ${styles[payment.statusClass]}`}>{payment.status}</span>
+                </td>
+                <td data-label="Hành động">
+                  <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openPaymentModal('edit', payment)}>
+                    <i className="fa fa-pencil" aria-hidden="true"></i>
+                  </button>
+                  <button className={`${styles.btn} ${styles.btnDanger}`} onClick={() => handleDeletePayment(payment)}>
+                    <i className="fa fa-trash" aria-hidden="true"></i>
+                  </button>
+                  <button className={`${styles.btn} ${styles.btnSuccess}`} onClick={() => openViewModal(payment)}>
+                    <i className="fa fa-eye" aria-hidden="true"></i>
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>
+                Không tìm thấy thanh toán nào
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
 
-      <div className={styles.pagination}>
-        {renderPagination()}
-      </div>
+      {totalPages > 0 && (
+        <div className={styles.pagination}>
+          {renderPagination()}
+        </div>
+      )}
 
       {/* Add/Edit Payment Modal */}
       {showPaymentModal && (
@@ -349,13 +528,9 @@ function Payment() {
                   onChange={handleFormChange}
                 >
                   <option value="">Chọn hợp đồng</option>
-                  <option value="HD001">#HD-001</option>
-                  <option value="HD002">#HD-002</option>
-                  <option value="HD003">#HD-003</option>
-                  <option value="HD004">#HD-004</option>
-                  <option value="HD005">#HD-005</option>
-                  <option value="HD006">#HD-006</option>
-                  <option value="HD007">#HD-007</option>
+                  {uniqueContracts.map(contract => (
+                    <option key={contract} value={contract}>#{contract.replace('HD', 'HD-')}</option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -366,6 +541,7 @@ function Payment() {
                   value={paymentForm.method}
                   onChange={handleFormChange}
                 >
+                  <option value="VNPAY">VNPAY</option>
                   <option value="ChuyenKhoan">Chuyển khoản</option>
                   <option value="ViDienTu">VÍ điện tử</option>
                   <option value="The">Thẻ</option>
@@ -431,6 +607,26 @@ function Payment() {
               <p><strong>Số tiền:</strong> {selectedPayment.amount}</p>
               <p><strong>Ngày thanh toán:</strong> {selectedPayment.date}</p>
               <p><strong>Trạng thái:</strong> {selectedPayment.status}</p>
+              <p><strong>Người gửi ID:</strong> {selectedPayment.senderId}</p>
+              <p><strong>Người nhận ID:</strong> {selectedPayment.receiverId}</p>
+              {selectedPayment.profileId && (
+                <p><strong>Profile ID:</strong> {selectedPayment.profileId}</p>
+              )}
+              {selectedPayment.contractData && (
+                <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '5px' }}>
+                  <h4>Thông tin hợp đồng</h4>
+                  <p><strong>Giá cuối cùng:</strong> {formatCurrency(parseFloat(selectedPayment.contractData.final_price))}</p>
+                  <p><strong>Ngày ký:</strong> {selectedPayment.contractData.signed_date}</p>
+                  <p><strong>Trạng thái HĐ:</strong> {getStatusLabel(selectedPayment.contractData.status)}</p>
+                  {selectedPayment.sessionData && (
+                    <>
+                      <p><strong>Session ID:</strong> #{selectedPayment.sessionData.session_id}</p>
+                      <p><strong>Item ID:</strong> #{selectedPayment.sessionData.item_id}</p>
+                      <p><strong>Phương thức đấu giá:</strong> {selectedPayment.sessionData.method}</p>
+                    </>
+                  )}
+                </div>
+              )}
               <div className={styles.orderHistory}>
                 <h3>Lịch sử xử lý thanh toán (demo)</h3>
                 <table className={styles.orderTable}>

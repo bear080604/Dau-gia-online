@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import './home.css';
 import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -26,8 +26,22 @@ const preloadImages = (urls) => {
   });
 };
 
-// Component AuctionItem - CHỈ DÙNG STATUS TỪ SOCKET
-const AuctionItem = React.memo(({ session }) => {
+// Debounce utility
+const debounce = (func, wait) => {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
+
+// Component AuctionItem
+const AuctionItem = React.memo(({ session, onToggleFavorite }) => {
+  const [isFavorited, setIsFavorited] = useState(session.is_favorited || false);
+  const [isLoading, setIsLoading] = useState(false);
+  const token = localStorage.getItem('token');
+  const isProcessingRef = useRef(false);
+
   const getAuctionStatus = (status) => {
     const statusMap = {
       DangDienRa: 'Đang diễn ra',
@@ -45,12 +59,89 @@ const AuctionItem = React.memo(({ session }) => {
     ? `${baseUrl}${item.image_url}`
     : '/assets/img/xe.png';
 
-  // Preload image
+  // Đồng bộ state khi session.is_favorited thay đổi từ parent
+  useEffect(() => {
+    if (!isProcessingRef.current && session.is_favorited !== undefined) {
+      setIsFavorited(session.is_favorited);
+    }
+  }, [session.is_favorited]);
+
   useEffect(() => {
     if (item?.image_url) {
       preloadImages([imageUrl]);
     }
   }, [imageUrl]);
+
+const handleToggleFavorite = useCallback(
+  async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!token) {
+      alert('Vui lòng đăng nhập để theo dõi phiên đấu giá!');
+      return;
+    }
+
+    // Ngăn chặn multiple clicks
+    if (isProcessingRef.current || isLoading) {
+      return;
+    }
+
+    isProcessingRef.current = true;
+    setIsLoading(true);
+
+    // Optimistic update - cập nhật UI ngay lập tức
+    const previousState = isFavorited;
+    setIsFavorited(!previousState);
+
+    try {
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      };
+
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}sessions/${session.session_id}/favorite`,
+        {},
+        config
+      );
+
+      console.log('Full API Response:', response.data); // Debug log
+      
+      // ✅ ĐƠN GIẢN HÓA: Vì backend đã trả về is_favorited rõ ràng
+      const finalFavoritedState = response.data.is_favorited ?? !previousState;
+      
+      console.log('Final favorited state:', finalFavoritedState); // Debug log
+      
+      // Cập nhật lại state từ server response
+      setIsFavorited(finalFavoritedState);
+
+      // Thông báo cho parent component
+      if (onToggleFavorite) {
+        onToggleFavorite(session.session_id, finalFavoritedState);
+      }
+    } catch (err) {
+      // Rollback nếu có lỗi
+      setIsFavorited(previousState);
+      
+      console.error('Lỗi toggle favorite:', err);
+      if (err.response?.status === 401) {
+        alert('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      } else {
+        alert(err.response?.data?.message || 'Không thể theo dõi. Vui lòng thử lại.');
+      }
+    } finally {
+      setIsLoading(false);
+      isProcessingRef.current = false;
+    }
+  },
+  [token, session.session_id, onToggleFavorite, isFavorited, isLoading]
+);
 
   return (
     <div className="list-auction">
@@ -100,6 +191,22 @@ const AuctionItem = React.memo(({ session }) => {
           {!session.highest_bid && <p className="auction-current-price" style={{ minHeight: '52px' }}></p>}
         </div>
         <div className="action">
+          {/* Nút Theo dõi */}
+          <button
+            className={`favorite-button ${isFavorited ? 'favorited' : ''} ${isLoading ? 'loading' : ''}`}
+            onClick={handleToggleFavorite}
+            disabled={isLoading}
+            title={isFavorited ? 'Bỏ theo dõi' : 'Theo dõi phiên'}
+          >
+            {isLoading ? 
+              'Đang xử lý...' : 
+              isFavorited ? 
+                'Bỏ theo dõi' : 
+                'Theo dõi'
+            }
+          </button>
+
+          {/* Nút Đấu giá */}
           <Link to={`/detail/${session.session_id}`} style={{ textDecoration: 'none' }}>
             <button className="bid-button">
               <i className="fa fa-gavel" aria-hidden="true"></i>
@@ -112,15 +219,6 @@ const AuctionItem = React.memo(({ session }) => {
   );
 });
 
-// Debounce utility
-const debounce = (func, wait) => {
-  let timeout;
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-};
-
 // Component chính
 const Home = () => {
   const [sessions, setSessions] = useState([]);
@@ -129,72 +227,71 @@ const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('default');
   const [news, setNews] = useState([]);
+  const [favorites, setFavorites] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const socketRef = useRef(null);
   const initialDataFetchedRef = useRef(false);
 
-  // Debounced state update for sessions
   const debouncedSetSessions = useRef(debounce(setSessions, 100)).current;
 
-  // Kết nối Socket.io
+  const handleToggleFavorite = useCallback((sessionId, isFavorited) => {
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.session_id === sessionId ? { ...s, is_favorited: isFavorited } : s
+      )
+    );
+  }, []);
+
+  // Socket.io - CHỈ CHO PHIÊN ĐẤU GIÁ
   useEffect(() => {
-    const socket = io(process.env.REACT_APP_SOCKET_URL);
+    const socket = io(process.env.REACT_APP_SOCKET_URL || 'http://127.0.0.1:8000');
     socketRef.current = socket;
 
     socket.on('connect', () => {
+      console.log('Socket connected');
       socket.emit('join.channel', 'auction-sessions');
     });
 
     socket.on('disconnect', () => {
-      console.log('⚠️ Socket disconnected');
+      console.log('Socket disconnected');
     });
 
     socket.on('auction-sessions', (data) => {
-      console.log('📩 Nhận dữ liệu phiên đấu giá từ socket:', data);
       if (Array.isArray(data)) {
         debouncedSetSessions(data);
       }
     });
 
     socket.on('auction.session.updated', (updatedData) => {
-      console.log('🔄 Cập nhật phiên đấu giá realtime:', updatedData);
       const updatedSession = updatedData.session || updatedData;
       debouncedSetSessions((prev) => {
         const index = prev.findIndex((s) => s.session_id === updatedSession.session_id);
         if (index !== -1) {
           const newSessions = [...prev];
           newSessions[index] = { ...newSessions[index], ...updatedSession };
-          console.log(`✨ Status updated: Session ${updatedSession.session_id} -> ${updatedSession.status}`);
           return newSessions;
         } else {
-          console.log(`⚠️ Session ${updatedSession.session_id} không tồn tại, thêm mới`);
           return [updatedSession, ...prev];
         }
       });
     });
 
     socket.on('auction.session.created', (newData) => {
-      console.log('✨ Phiên đấu giá mới:', newData);
       const newSession = newData.session || newData;
       debouncedSetSessions((prev) => {
-        if (prev.some((s) => s.session_id === newSession.session_id)) {
-          console.log(`⚠️ Phiên ${newSession.session_id} đã tồn tại, bỏ qua`);
-          return prev;
-        }
-        console.log(`✅ Thêm phiên mới ${newSession.session_id}`);
+        if (prev.some((s) => s.session_id === newSession.session_id)) return prev;
         return [newSession, ...prev];
       });
     });
 
     socket.on('auction.session.deleted', (deletedData) => {
-      console.log('🗑️ Phiên đấu giá bị xóa:', deletedData);
       const deletedSession = deletedData.session || deletedData;
       debouncedSetSessions((prev) => prev.filter((s) => s.session_id !== deletedSession.session_id));
     });
 
     socket.on('error', (err) => {
-      console.error('❌ Lỗi Socket.io:', err);
+      console.error('Lỗi Socket.io:', err);
       setError('Lỗi kết nối thời gian thực');
     });
 
@@ -202,18 +299,17 @@ const Home = () => {
       socket.emit('leave.channel', 'auction-sessions');
       socket.disconnect();
     };
-  }, []);
+  }, [debouncedSetSessions]);
 
-  // Fetch dữ liệu ban đầu với retry logic
+  // Fetch dữ liệu ban đầu
   useEffect(() => {
     if (initialDataFetchedRef.current) return;
     initialDataFetchedRef.current = true;
 
-    const fetchWithRetry = async (url, options, retries = 3) => {
+    const fetchWithRetry = async (url, options = {}, retries = 3) => {
       for (let i = 0; i < retries; i++) {
         try {
-          const response = await axios.get(url, options);
-          return response;
+          return await axios.get(url, options);
         } catch (err) {
           if (i === retries - 1) throw err;
           await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
@@ -260,8 +356,6 @@ const Home = () => {
           };
         });
         setNews(formattedNews);
-
-        // Preload news images
         preloadImages(formattedNews.map((item) => item.imageUrl));
 
         setError(null);
@@ -303,27 +397,12 @@ const Home = () => {
     return filtered;
   }, [sessions, searchTerm, categoryFilter, sortBy]);
 
-  // Lấy 10 phiên mới nhất (cũng áp dụng ưu tiên Mo và DangDienRa)
   const latestSessions = useMemo(() => {
-    const baseUrl = process.env.REACT_APP_BASE_URL || 'https://your-production-url.com';
-    let sorted = [...sessions].sort((a, b) => b.session_id - a.session_id); // Sắp xếp theo ID mới nhất trước
-
-    // Ưu tiên Mo và DangDienRa trong latest
-    sorted.sort((a, b) => {
-      const priorityStatus = ['Mo', 'DangDienRa'];
-      const aPriority = priorityStatus.includes(a.status) ? 0 : 1;
-      const bPriority = priorityStatus.includes(b.status) ? 0 : 1;
-      if (aPriority !== bPriority) return aPriority - bPriority;
-      return 0; // Giữ nguyên thứ tự mới nhất nếu cùng nhóm
-    });
-
-    sorted = sorted.slice(0, 10); // Giới hạn 10
-
-    // Preload images for latest sessions
+    const sorted = [...sessions].sort((a, b) => b.session_id - a.session_id).slice(0, 10);
     preloadImages(
       sorted
         .filter((s) => s.item?.image_url)
-        .map((s) => `${baseUrl}${s.item.image_url}`)
+        .map((s) => `${process.env.REACT_APP_BASE_URL || 'http://127.0.0.1:8000'}${s.item.image_url}`)
     );
     return sorted;
   }, [sessions]);
@@ -331,12 +410,14 @@ const Home = () => {
   return (
     <div className="home-container">
       <main style={{ padding: '20px 8%' }}>
+        {/* === 1. PHIÊN MỚI NHẤT === */}
         <div className="section-title">
           <p>PHIÊN ĐẤU GIÁ MỚI NHẤT/NỔI BẬT</p>
         </div>
         {loading && <p>Đang tải dữ liệu...</p>}
         {error && <p className="error-message">{error}</p>}
         {!loading && latestSessions.length === 0 && !error && <p>Không có phiên đấu giá nào.</p>}
+
         <Swiper
           modules={[Navigation, Pagination]}
           spaceBetween={20}
@@ -351,11 +432,46 @@ const Home = () => {
         >
           {latestSessions.map((session) => (
             <SwiperSlide key={session.session_id}>
-              <AuctionItem session={session} />
+              <AuctionItem session={session} onToggleFavorite={handleToggleFavorite} />
             </SwiperSlide>
           ))}
         </Swiper>
 
+        {/* === 1.5. PHIÊN ĐẤU GIÁ THEO DÕI === */}
+        {localStorage.getItem('token') && (
+          <section>
+            <div className="section-title">
+              <p>PHIÊN ĐẤU GIÁ THEO DÕI</p>
+            </div>
+
+            {loading && <p>Đang tải dữ liệu...</p>}
+            {error && <p className="error-message">{error}</p>}
+            {!loading && favorites.length === 0 && !error && <p>Bạn chưa theo dõi phiên đấu giá nào.</p>}
+
+            {!loading && favorites.length > 0 && (
+              <Swiper
+                modules={[Navigation, Pagination]}
+                spaceBetween={20}
+                navigation
+                pagination={{ clickable: true }}
+                breakpoints={{
+                  320: { slidesPerView: 1 },
+                  640: { slidesPerView: 2 },
+                  1024: { slidesPerView: 5 },
+                }}
+                key={favorites.map((s) => s.session_id).join('-')}
+              >
+                {favorites.map((session) => (
+                  <SwiperSlide key={session.session_id}>
+                    <AuctionItem session={{ ...session, is_favorited: true }} onToggleFavorite={handleToggleFavorite} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            )}
+          </section>
+        )}
+
+        {/* === 2. DANH SÁCH TÀI SẢN === */}
         <section>
           <div className="section-title">
             <p>DANH SÁCH TÀI SẢN ĐẤU GIÁ TRỰC TUYẾN</p>
@@ -398,6 +514,7 @@ const Home = () => {
           {loading && <p>Đang tải dữ liệu...</p>}
           {error && <p className="error-message">{error}</p>}
           {!loading && filteredSessions.length === 0 && !error && <p>Không có tài sản nào.</p>}
+
           <Swiper
             modules={[Navigation, Pagination]}
             spaceBetween={20}
@@ -412,12 +529,13 @@ const Home = () => {
           >
             {filteredSessions.slice(0, 10).map((session) => (
               <SwiperSlide key={session.session_id}>
-                <AuctionItem session={session} />
+                <AuctionItem session={session} onToggleFavorite={handleToggleFavorite} />
               </SwiperSlide>
             ))}
           </Swiper>
         </section>
 
+        {/* === 3. TIN TỨC VÀ THÔNG BÁO === */}
         <section>
           <div className="section-title">
             <p>TIN TỨC VÀ THÔNG BÁO</p>
@@ -425,6 +543,7 @@ const Home = () => {
           {loading && <p>Đang tải dữ liệu...</p>}
           {error && <p className="error-message">{error}</p>}
           {!loading && news.length === 0 && !error && <p>Không có tin tức nào.</p>}
+
           <Swiper
             modules={[Navigation, Pagination]}
             spaceBetween={20}

@@ -1,12 +1,18 @@
-# TODO: Create Role and Permission Management Pages
+# TODO: Add Follow Button to Home Page Auction Sessions
 
-## Completed Tasks
-- [x] Analyze existing Users component structure
-- [x] Plan the implementation based on provided APIs
-- [x] Create Roles component (src/admin/Roles/Roles.jsx and Roles.module.css)
-- [x] Create Permissions component (src/admin/Permissions/Permissions.jsx and Permissions.module.css)
-- [x] Create page wrappers (src/pages/AdminRoles.jsx and AdminPermissions.jsx)
-- [x] Add routes to App.js (/admin/roles and /admin/permissions)
+## Tasks
+- [x] Modify Home component to fetch and manage user favorites state
+- [x] Update AuctionItem component to include follow button with toggle functionality
+- [x] Add CSS styles for the follow button in home.css
+- [x] Test the follow/unfollow functionality with API integration
+- [x] Handle authentication checks and error handling for API calls
+- [x] Add "Phiên đấu giá theo dõi" section on home page
 
-## Pending Tasks
-- [x] Test the new pages for CRUD operations and permission assignment
+## Details
+- Fetch favorites on page load using GET /my-favorites
+- Add follow button next to bid button in AuctionItem
+- Use POST /sessions/{id}/favorite to toggle favorite status
+- Update local favorites state on successful toggle
+- Style button with green for follow, red for unfollow
+- Added favorites section between latest sessions and asset list
+- Only show favorites section if user is logged in and has favorites
