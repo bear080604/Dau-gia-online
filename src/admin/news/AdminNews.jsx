@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import styles from './adminNews.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import NotificationBell from "../NotificationBell";
 
 const AdminNews = () => {
   const [news, setNews] = useState([]);
@@ -17,7 +18,11 @@ const AdminNews = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedNews, setSelectedNews] = useState(null);
   const itemsPerPage = 5;
-
+   const [open, setOpen] = useState(false);
+  const togglePopup = (e) => {
+    e.stopPropagation(); // tránh đóng liền sau khi mở
+    setOpen((prev) => !prev);
+  };
   const [formData, setFormData] = useState({
     title: '',
     category_id: '',
@@ -182,6 +187,13 @@ const AdminNews = () => {
     <div className={styles.container}>
       <h1 className={styles.title}>Quản Lý Tin Tức</h1>
       <p className={styles.subtitle}>Quản lý và theo dõi các tin tức được đăng trên hệ thống</p>
+         <div>
+                    <div onClick={togglePopup} style={{ cursor: "pointer" }}>
+                      <i className="fa-solid fa-bell fa-lg"></i>
+                    </div>
+      
+                    <NotificationBell open={open} onClose={() => setOpen(false)} />
+                  </div>
       <div className={styles.headNews}>
         <div className={styles.filters}>
           <select 

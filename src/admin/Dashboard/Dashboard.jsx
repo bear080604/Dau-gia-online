@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Chart from 'chart.js/auto';
 import styles from './Dashboard.module.css';
-
+import NotificationBell from "../NotificationBell";
 const Dashboard = () => {
   const [activePeriod, setActivePeriod] = useState('week');
   const [sessions, setSessions] = useState([]);
@@ -13,7 +13,11 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
-
+    const [open, setOpen] = useState(false);
+  const togglePopup = (e) => {
+    e.stopPropagation(); // tránh đóng liền sau khi mở
+    setOpen((prev) => !prev);
+  };
   // Static labels (giữ nguyên)
   const staticLabels = {
     week: ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"],
@@ -301,9 +305,13 @@ const Dashboard = () => {
           </p>
         </div>
         <div className={styles.userProfile}>
-          <div className={styles.notificationBell}>
-            <i className="fas fa-bell"></i>
-          </div>
+            <div>
+              <div onClick={togglePopup} style={{ cursor: "pointer" }}>
+                <i className="fa-solid fa-bell fa-lg"></i>
+              </div>
+
+              <NotificationBell open={open} onClose={() => setOpen(false)} />
+            </div>
           <div className={styles.profileAvatar}>QT</div>
         </div>
       </div>

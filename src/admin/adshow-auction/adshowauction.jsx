@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import './adshowauction.css';
 import { useParams } from 'react-router-dom';
+import NotificationBell from "../NotificationBell";
+
 // Tách Countdown thành component riêng
 const CountdownDisplay = React.memo(({ 
   timer, 
@@ -74,7 +76,11 @@ const AdShowAuction = () => {
     const [error, setError] = useState(null);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [currentPrice, setCurrentPrice] = useState(0);
-    
+        const [open, setOpen] = useState(false);
+      const togglePopup = (e) => {
+        e.stopPropagation(); // tránh đóng liền sau khi mở
+        setOpen((prev) => !prev);
+      };
     // Modal state
     const [modalVisible, setModalVisible] = useState(false);
     const [modalTitle, setModalTitle] = useState('');

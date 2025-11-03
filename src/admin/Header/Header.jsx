@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '../../UserContext';
 import styles from './Header.module.css';  // Note: Nên đổi thành Sidebar.module.css nếu tách riêng
+import NotificationBell from "../NotificationBell";
 
 const Sidebar = () => {
   const { user } = useUser();
@@ -9,10 +10,15 @@ const Sidebar = () => {
   const [allowedItems, setAllowedItems] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
+  const [open, setOpen] = useState(false);
 
   // Lấy REACT_APP_API_URL từ biến môi trường
   const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
 
+    const togglePopup = (e) => {
+    e.stopPropagation(); // tránh đóng liền sau khi mở
+    setOpen((prev) => !prev);
+  };
   const addAdminPrefix = (href) => {
     if (href === '#') return href;
     return `/admin${href.startsWith('/') ? href : `/${href}`}`;
@@ -172,6 +178,7 @@ const Sidebar = () => {
           </div>
         )
       ))}
+        
     </div>
   );
 };

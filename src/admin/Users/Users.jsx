@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import styles from './Users.module.css';
+import NotificationBell from "../NotificationBell";
 
 const API_URL = 'http://127.0.0.1:8000/';
 
@@ -13,6 +14,11 @@ function Users() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [selectedUser, setSelectedUser] = useState(null);
+      const [open, setOpen] = useState(false);
+    const togglePopup = (e) => {
+      e.stopPropagation(); // tránh đóng liền sau khi mở
+      setOpen((prev) => !prev);
+    };
   const [userForm, setUserForm] = useState({
     name: '',
     email: '',
@@ -766,9 +772,13 @@ const renderImage = (url, type, errorKey) => {
           />
         </div>
         <div className={styles.userProfile}>
-          <div className={styles.notificationBell}>
-            <i className="fas fa-bell"></i>
-          </div>
+           <div>
+                       <div onClick={togglePopup} style={{ cursor: "pointer" }}>
+                         <i className="fa-solid fa-bell fa-lg"></i>
+                       </div>
+         
+                       <NotificationBell open={open} onClose={() => setOpen(false)} />
+                     </div>
           <div className={styles.profileAvatar}>QT</div>
         </div>
       </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styles from './AdminAssetCategories.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import NotificationBell from "../NotificationBell";
 
 const AdminAssetCategories = () => {
   const [categories, setCategories] = useState([]);
@@ -13,7 +14,11 @@ const AdminAssetCategories = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const itemsPerPage = 5;
-
+  const [open, setOpen] = useState(false);
+  const togglePopup = (e) => {
+    e.stopPropagation(); // tránh đóng liền sau khi mở
+    setOpen((prev) => !prev);
+  };
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -139,6 +144,13 @@ const AdminAssetCategories = () => {
           <h1 className={styles.title}>Quản Lý Danh Mục Tài Sản</h1>
           <p className={styles.subtitle}>Quản lý và theo dõi các danh mục tài sản trên hệ thống</p>
         </div>
+          <div>
+                      <div onClick={togglePopup} style={{ cursor: "pointer" }}>
+                        <i className="fa-solid fa-bell fa-lg"></i>
+                      </div>
+        
+                      <NotificationBell open={open} onClose={() => setOpen(false)} />
+                    </div>
       </div>
 
       <div className={styles.filters}>

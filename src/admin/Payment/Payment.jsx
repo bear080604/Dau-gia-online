@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Payment.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import NotificationBell from "../NotificationBell";
 
 function Payment() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,7 +22,11 @@ function Payment() {
     date: '',
     status: 'ChoXuLy'
   });
-
+    const [open, setOpen] = useState(false);
+  const togglePopup = (e) => {
+    e.stopPropagation(); // tránh đóng liền sau khi mở
+    setOpen((prev) => !prev);
+  };
   const itemsPerPage = 5;
   const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
 
@@ -424,9 +429,13 @@ function Payment() {
           />
         </div>
         <div className={styles.userProfile}>
-          <div className={styles.notificationBell}>
-            <i className="fas fa-bell"></i>
-          </div>
+          <div>
+                      <div onClick={togglePopup} style={{ cursor: "pointer" }}>
+                        <i className="fa-solid fa-bell fa-lg"></i>
+                      </div>
+        
+                      <NotificationBell open={open} onClose={() => setOpen(false)} />
+                    </div>
           <div className={styles.profileAvatar}>QT</div>
         </div>
       </div>

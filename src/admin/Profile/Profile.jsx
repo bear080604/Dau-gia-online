@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styles from './Profile.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import axios from 'axios';
+import NotificationBell from "../NotificationBell";
 
 function Profile() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,7 +24,11 @@ function Profile() {
     depositAmount: '',
     status: 'ChoDuyet',
   });
-
+    const [open, setOpen] = useState(false);
+  const togglePopup = (e) => {
+    e.stopPropagation(); // tránh đóng liền sau khi mở
+    setOpen((prev) => !prev);
+  };
   const itemsPerPage = 5;
 
   const statusMap = {
@@ -331,9 +336,13 @@ function Profile() {
           />
         </div>
         <div className={styles.userProfile}>
-          <div className={styles.notificationBell}>
-            <i className="fas fa-bell"></i>
-          </div>
+      <div>
+                    <div onClick={togglePopup} style={{ cursor: "pointer" }}>
+                      <i className="fa-solid fa-bell fa-lg"></i>
+                    </div>
+      
+                    <NotificationBell open={open} onClose={() => setOpen(false)} />
+                  </div>
           <div className={styles.profileAvatar}>QT</div>
         </div>
       </div>
