@@ -18,18 +18,20 @@ function AuctionSession() {
   const [endDate, setEndDate] = useState('');
   const itemsPerPage = 6;
   const socketRef = useRef(null);
-const [openCategoryDropdown, setOpenCategoryDropdown] = useState(false);
+  const [openCategoryDropdown, setOpenCategoryDropdown] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-useEffect(() => {
-  const handleClickOutside = (e) => {
-    if (!e.target.closest(`.${styles.customSelectWrapper}`)) {
-      setOpenCategoryDropdown(false);
-    }
-  };
-  document.addEventListener("click", handleClickOutside);
-  return () => document.removeEventListener("click", handleClickOutside);
-}, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(`.${styles.customSelectWrapper}`)) {
+        setOpenCategoryDropdown(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
   // Lấy từ khóa từ URL (?q=...)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -131,7 +133,7 @@ useEffect(() => {
     fetchData();
   }, []);
 
-  // Lọc dữ liệu
+  // Lọc dữ liệu (ĐÃ CHỈNH SỬA: Thêm ưu tiên trạng thái)
   const filterAndSortItems = () => {
     let filtered = auctionItems.filter((session) => {
       const item = session.item;
@@ -148,10 +150,31 @@ useEffect(() => {
       return matchesSearch && matchesCategory && matchesDate;
     });
 
+    // THAY ĐỔI: Ưu tiên trạng thái (DangDienRa > Mo > Pause > KetThuc)
+    const priority = {
+      DangDienRa: 1,
+      Mo: 2,
+      Pause: 3,
+      KetThuc: 4
+    };
+
     if (sortBy === 'newest') {
-      filtered.sort((a, b) => b.session_id - a.session_id);
+      filtered.sort((a, b) => {
+        const pa = priority[a.status] || 99;
+        const pb = priority[b.status] || 99;
+        if (pa !== pb) return pa - pb; // Ưu tiên theo trạng thái
+
+        // Sau đó sắp xếp theo session_id (mới nhất)
+        return b.session_id - a.session_id;
+      });
     } else if (sortBy === 'oldest') {
-      filtered.sort((a, b) => a.session_id - b.session_id);
+      filtered.sort((a, b) => {
+        const pa = priority[a.status] || 99;
+        const pb = priority[b.status] || 99;
+        if (pa !== pb) return pa - pb;
+
+        return a.session_id - b.session_id;
+      });
     }
 
     return filtered;
@@ -217,80 +240,61 @@ useEffect(() => {
           </form>
 
           <div className={styles.filterSection}>
-            {/* <div className={styles.filterGroup}>
+            <div className={styles.filterGroup}>
               <label htmlFor="categorySelect">Danh mục sản phẩm:</label>
-              <select
-                id="categorySelect"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                <option value="all">Tất cả danh mục</option>
-                {categories.map((category) => (
-                  <option key={category.category_id} value={category.category_id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div> */}
 
-        <div className={styles.filterGroup}>
-  <label htmlFor="categorySelect">Danh mục sản phẩm:</label>
+              <div className={styles.customSelectWrapper}>
+                <div
+                  className={styles.customSelect}
+                  onClick={() => setOpenCategoryDropdown((prev) => !prev)}
+                >
+                  <span>
+                    {categoryFilter === "all"
+                      ? "Tất cả danh mục"
+                      : categories.find(
+                          (c) => String(c.category_id) === categoryFilter
+                        )?.name || "Chọn danh mục"}
+                  </span>
+                  <span className={styles.arrow}>
+                    {openCategoryDropdown ? "▲" : "▼"}
+                  </span>
+                </div>
 
-  <div className={styles.customSelectWrapper}>
-    <div
-      className={styles.customSelect}
-      onClick={() => setOpenCategoryDropdown((prev) => !prev)}
-    >
-      <span>
-        {categoryFilter === "all"
-          ? "Tất cả danh mục"
-          : categories.find(
-              (c) => String(c.category_id) === categoryFilter
-            )?.name || "Chọn danh mục"}
-      </span>
-      <span className={styles.arrow}>
-        {openCategoryDropdown ? "▲" : "▼"}
-      </span>
-    </div>
+                {openCategoryDropdown && (
+                  <ul className={styles.dropdownList}>
+                    <li
+                      key="all"
+                      onClick={() => {
+                        setCategoryFilter("all");
+                        setOpenCategoryDropdown(false);
+                      }}
+                      className={
+                        categoryFilter === "all" ? styles.activeOption : ""
+                      }
+                    >
+                      Tất cả danh mục
+                    </li>
 
-    {openCategoryDropdown && (
-      <ul className={styles.dropdownList}>
-        <li
-          key="all"
-          onClick={() => {
-            setCategoryFilter("all");
-            setOpenCategoryDropdown(false);
-          }}
-          className={
-            categoryFilter === "all" ? styles.activeOption : ""
-          }
-        >
-          Tất cả danh mục
-        </li>
-
-        {categories.map((category) => (
-          <li
-            key={category.category_id}
-            onClick={() => {
-              setCategoryFilter(String(category.category_id)); // ép kiểu
-              setOpenCategoryDropdown(false);
-            }}
-            className={
-              categoryFilter === String(category.category_id)
-                ? styles.activeOption
-                : ""
-            }
-          >
-            {category.name}
-          </li>
-        ))}
-      </ul>
-    )}
-  </div>
-</div>
-
-            
-
+                    {categories.map((category) => (
+                      <li
+                        key={category.category_id}
+                        onClick={() => {
+                          setCategoryFilter(String(category.category_id)); // ép kiểu
+                          setOpenCategoryDropdown(false);
+                        }}
+                        className={
+                          categoryFilter === String(category.category_id)
+                            ? styles.activeOption
+                            : ""
+                        }
+                      >
+                        {category.name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
 
             <div className={styles.filterGroup}>
               <label >Lọc theo thời gian đăng ký:</label>
@@ -399,14 +403,22 @@ useEffect(() => {
           )}
         </div>
 
+        {/* THAY ĐỔI: Phân trang với nút đầu/cuối */}
         {totalPages > 1 && (
           <div className={styles.pagination}>
             <button
               disabled={currentPage === 1}
+              onClick={() => handlePageChange(1)}
+            >
+              « Đầu
+            </button>
+            <button
+              disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
             >
-              Trước
+              ‹ Trước
             </button>
+
             {Array.from({ length: totalPages }, (_, i) => (
               <button
                 key={i + 1}
@@ -416,11 +428,18 @@ useEffect(() => {
                 {i + 1}
               </button>
             ))}
+
             <button
               disabled={currentPage === totalPages}
               onClick={() => handlePageChange(currentPage + 1)}
             >
-              Tiếp
+              Tiếp ›
+            </button>
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => handlePageChange(totalPages)}
+            >
+              Cuối »
             </button>
           </div>
         )}

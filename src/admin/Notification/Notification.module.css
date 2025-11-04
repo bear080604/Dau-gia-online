@@ -153,7 +153,7 @@
 
 .dataTable th {
   text-align: left;
-  padding: 1rem;
+  padding: 20px 10px;
   font-weight: 600;
   color: #6b7280;
   font-size: 0.85rem;
@@ -164,7 +164,7 @@
 }
 
 .dataTable td {
-  padding: 1rem;
+  padding: 0.5rem;
   border-bottom: 1px solid #e5e7eb;
   font-size: 0.9rem;
   overflow-wrap: break-word;
@@ -477,5 +477,96 @@
     min-width: auto;
     padding: 0.4rem 0.6rem;
     font-size: 0.8rem;
+  }
+}
+
+
+
+
+
+/* Container phân trang - căn giữa, flex, responsive */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+  gap: 8px; /* Khoảng cách giữa các nút */
+  flex-wrap: wrap; /* Responsive cho mobile */
+}
+
+/* Nút chung cho trước/sau và số trang */
+.pageButton {
+  background-color: #f8f9fa; /* Màu nền xám nhạt */
+  color: #333; /* Màu chữ đen */
+  border: 1px solid #dee2e6; /* Viền xám */
+  border-radius: 6px; /* Bo tròn nhẹ */
+  padding: 8px 12px; /* Padding cho nút trước/sau */
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease; /* Hiệu ứng mượt khi hover */
+  min-width: 40px; /* Đảm bảo nút số trang vuông */
+  height: 40px; /* Chiều cao cố định */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pageButton:hover:not(:disabled) {
+  background-color: #e9ecef; /* Đậm hơn khi hover */
+  border-color: #adb5bd;
+  transform: translateY(-1px); /* Nâng nhẹ lên */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Bóng đổ */
+}
+
+.pageButton:disabled {
+  background-color: #e9ecef;
+  color: #6c757d; /* Màu xám cho disabled */
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none; /* Không hover khi disabled */
+  box-shadow: none;
+}
+
+/* Nút trang active (hiện tại) */
+.activePage {
+  background-color: #0056b3; /* Màu nền xám nhạt */
+  color: #ffffffff; /* Màu chữ đen */
+  border: 1px solid #dee2e6; /* Viền xám */
+  border-radius: 6px; /* Bo tròn nhẹ */
+  padding: 8px 12px; /* Padding cho nút trước/sau */
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease; /* Hiệu ứng mượt khi hover */
+  min-width: 40px; /* Đảm bảo nút số trang vuông */
+  height: 40px; /* Chiều cao cố định */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activePage:hover {
+  background-color: #0056b3; /* Đậm hơn khi hover */
+  border-color: #0056b3;
+  transform: none; /* Không nâng active */
+}
+
+/* Responsive: Giảm padding trên mobile */
+@media (max-width: 768px) {
+  .pagination {
+    gap: 4px;
+  }
+  
+  .pageButton {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 35px;
+    height: 35px;
+  }
+  
+  /* Ẩn một số nút số trang nếu quá nhiều trên mobile */
+  .pagination > button:not(:first-child):not(:last-child):not(.activePage) {
+    display: none; /* Chỉ giữ trước, active, sau */
   }
 }

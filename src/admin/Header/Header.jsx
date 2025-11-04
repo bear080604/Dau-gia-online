@@ -34,18 +34,18 @@ const Sidebar = () => {
       { id: 'register-auction', icon: 'fa fa-ticket', label: 'Đăng ký đấu giá', href: addAdminPrefix('/register-auction') },
       { id: 'news', icon: 'fas fa-file-contract', label: 'Tin tức', href: addAdminPrefix('/news') },
       { id: 'news-categories', icon: 'fas fa-file-contract', label: 'Danh mục tin tức', href: addAdminPrefix('/news-categories') },
-      { id: 'reports', icon: 'fas fa-chart-bar', label: 'Báo cáo', href: addAdminPrefix('/report') },
+      // { id: 'reports', icon: 'fas fa-chart-bar', label: 'Báo cáo', href: addAdminPrefix('/report') },
       { id: 'users', icon: 'fas fa-users', label: 'Quản lý người dùng', href: addAdminPrefix('/users') },
       { id: 'bids', icon: 'fas fa-file-alt', label: 'Hồ sơ đấu giá', href: addAdminPrefix('/profile') },
       { id: 'notifications', icon: 'fas fa-bell', label: 'Thông báo', href: addAdminPrefix('/notification') },
       { id: 'payments', icon: 'fas fa-money-bill-wave', label: 'Thanh toán', href: addAdminPrefix('/payment') },
-      { id: 'econtracts', icon: 'fas fa-file-signature', label: 'Hợp đồng điện tử', href: addAdminPrefix('/econtract') },
+      // { id: 'econtracts', icon: 'fas fa-file-signature', label: 'Hợp đồng điện tử', href: addAdminPrefix('/econtract') },
       { id: 'roles', icon: 'fas fa-user-tag', label: 'Vai trò', href: addAdminPrefix('/roles') },
       { id: 'permissions', icon: 'fas fa-key', label: 'Quyền hạn', href: addAdminPrefix('/permissions') },
-      { id: 'settings', icon: 'fas fa-cog', label: 'Cài đặt', href: addAdminPrefix('/settings') },
-      { id: 'support', icon: 'fas fa-headset', label: 'Hỗ trợ', href: '#' },
-      { id: 'security', icon: 'fas fa-shield-alt', label: 'Bảo mật', href: '#' },
-      { id: 'logs', icon: 'fas fa-history', label: 'Lịch sử log', href: addAdminPrefix('/history') },
+      // { id: 'settings', icon: 'fas fa-cog', label: 'Cài đặt', href: addAdminPrefix('/settings') },
+      // { id: 'support', icon: 'fas fa-headset', label: 'Hỗ trợ', href: '#' },
+      // { id: 'security', icon: 'fas fa-shield-alt', label: 'Bảo mật', href: '#' },
+      // { id: 'logs', icon: 'fas fa-history', label: 'Lịch sử log', href: addAdminPrefix('/history') },
     ];
   };
 
@@ -156,7 +156,7 @@ const Sidebar = () => {
           <img className={styles.logoImg} src="/assets/img/logo.jpg" alt="Logo" />
         </div>
       </div>
-
+    {console.log(sections)}
       {sections.map((section, index) => (
         section.items.length > 0 && (
           <div key={index} className={styles.sidebarSection}>

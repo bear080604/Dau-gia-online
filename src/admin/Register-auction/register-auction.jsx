@@ -33,6 +33,7 @@ const AdminPanel = () => {
     'Chờ Duyệt': 'Chờ Duyệt',
     'Đã Thanh Toán': 'Đã Thanh Toán',
   };
+  const fileurl = `${process.env.REACT_APP_BASE_URL}/storage/auction_files/`;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -267,8 +268,9 @@ const AdminPanel = () => {
                 <td>{getSessionName(reg.session_id)}</td>
                 <td data-label="Tài Liệu Liên Quan">
                   {reg.document_url ? (
-                    <a href={reg.document_url} download target="_blank" rel="noopener noreferrer">
+                    <a href={fileurl+reg.document_url} download target="_blank" rel="noopener noreferrer">
                       Tải tài liệu
+                      {console.log(fileurl+reg.document_url)}
                     </a>
                   ) : (
                     'Không có tài liệu'

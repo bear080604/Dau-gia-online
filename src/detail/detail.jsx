@@ -738,9 +738,8 @@ const Detail = () => {
 
   const renderDocuments = () => {
     const docs = auctionItem.documents?.length > 0 ? auctionItem.documents : auctionItem.profiles;
-
     if (!docs || docs.length === 0) {
-      return <li>Không có hồ sơ</li>;
+      return <li>Chưa có hồ sơ khách</li>;
     }
 
     return docs.map((doc, i) => (
@@ -1017,6 +1016,7 @@ const Detail = () => {
 
         <div className={`detailsp-tab-content ${activeTab === 1 ? 'detailsp-active' : ''}`}>
           <h3 className='detailsp-document-title'>Các tài liệu pháp lý liên quan đến cuộc đấu giá:</h3>
+          <h3 className='detailsp-document-title'>{process.env.REACT_APP_BASE_URL+auctionItem.item?.url_file || 'N/A'}</h3>
           <ul className='detailsp-document-list'>{renderDocuments()}</ul>
           <div className='detailsp-notice detailsp-document-notice'>
             <strong>

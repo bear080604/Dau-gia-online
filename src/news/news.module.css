@@ -311,3 +311,120 @@
     transform: rotate(360deg);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+/* Phần Pagination - Nâng cao cho News */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px; /* Khoảng cách giữa các nút */
+  margin-top: 20px;
+  padding: 10px 0;
+  flex-wrap: wrap; /* Tự động xuống dòng nếu quá nhiều nút trên mobile */
+}
+
+/* Styling chung cho các nút pagination */
+.pageBtn {
+  background-color: #f8f9fa; /* Nền xám nhạt */
+  border: 1px solid #dee2e6; /* Viền xám nhẹ */
+  color: #495057; /* Màu chữ xám đậm */
+  padding: 8px 12px; /* Padding cho nút số */
+  border-radius: 4px; /* Bo góc nhẹ */
+  cursor: pointer;
+  font-size: 14px; /* Kích thước chữ */
+  min-width: 40px; /* Độ rộng tối thiểu cho nút số */
+  transition: all 0.2s ease; /* Hiệu ứng mượt mà */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Hover effect cho nút (khi không disabled) */
+.pageBtn:hover:not(:disabled) {
+  background-color: #e9ecef; /* Nền sáng hơn */
+  border-color: #adb5bd;
+  color: #212529;
+  transform: translateY(-1px); /* Nâng nhẹ khi hover */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Bóng đổ nhẹ */
+}
+
+/* Nút disabled (không thể click) */
+.pageBtn:disabled {
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none; /* Không nâng khi disabled */
+  box-shadow: none;
+}
+
+/* Nút active (trang hiện tại) */
+.pageBtn.active {
+  background-color: #007bff; /* Màu xanh chủ đạo */
+  border-color: #007bff;
+  color: white;
+  font-weight: bold;
+}
+
+.pageBtn.active:hover {
+  background-color: #0056b3; /* Xanh đậm hơn khi hover */
+  border-color: #0056b3;
+}
+
+/* Styling đặc biệt cho nút đầu/cuối và trước/sau (có icon Unicode) */
+.pageBtn:first-child { /* « Đầu */
+  min-width: auto;
+  padding: 8px 10px;
+}
+
+.pageBtn:nth-child(2) { /* ‹ Trước */
+  min-width: auto;
+  padding: 8px 10px;
+}
+
+.pageBtn:nth-last-child(2) { /* Tiếp › */
+  min-width: auto;
+  padding: 8px 10px;
+}
+
+.pageBtn:last-child { /* Cuối » */
+  min-width: auto;
+  padding: 8px 10px;
+}
+
+/* Responsive: Tối ưu cho mobile (≤768px) */
+@media (max-width: 768px) {
+  .pagination {
+    gap: 2px;
+    margin-top: 15px;
+  }
+
+  .pageBtn {
+    padding: 6px 8px;
+    font-size: 12px;
+    min-width: 32px;
+  }
+
+  /* Ẩn các nút số thừa trên mobile để gọn gàng (chỉ giữ đầu/trước/hiện tại/sau/cuối) */
+  .pageBtn:not(:first-child):not(:nth-child(2)):not(:last-child):not(:nth-last-child(2)):not(.active) {
+    display: none;
+  }
+
+  /* Giữ nút active và lân cận nếu cần (tùy chỉnh theo số trang) */
+  .pageBtn.active + .pageBtn,
+  .pageBtn.active + .pageBtn + .pageBtn {
+    display: flex; /* Hiển thị 2-3 nút quanh active */
+  }
+}
