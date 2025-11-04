@@ -34,7 +34,7 @@ const ProtectedRoute = ({ children, restrictIfLoggedIn = false }) => {
   }
 
   // Kiểm tra role_id (giả sử 2 là Admin, 3 là NhanVien)
-  if (user.role_id !== 2 && user.role_id !== 3) {
+  if (user.role_id !== 2 && user.role_id !== 5) {
     return <Navigate to="/access-denied" replace />;
   }
 
