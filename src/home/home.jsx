@@ -187,18 +187,18 @@ const handleToggleFavorite = useCallback(
           >
             {displayStatus}
           </p>
-          <p className="auction-price" style={{ minHeight: '45px' }}>
+          <p className="auction-price">
             Giá khởi điểm: {Number(item?.starting_price || 0).toLocaleString()} VNĐ
           </p>
-          {session.highest_bid && (
+          {/* {session.highest_bid && (
             <p
               className="auction-current-price"
               style={{ color: '#16a34a', fontWeight: 'bold', minHeight: '52px' }}
             >
               Giá cao nhất: {Number(session.highest_bid).toLocaleString()} VNĐ
             </p>
-          )}
-          {!session.highest_bid && <p className="auction-current-price" style={{ minHeight: '52px' }}></p>}
+          )} */}
+          {/* {!session.highest_bid && <p className="auction-current-price" style={{ minHeight: '52px' }}></p>} */}
         </div>
         <div className="action">
           {/* Nút Theo dõi */}
