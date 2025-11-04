@@ -8,7 +8,7 @@ const News = () => {
   const [newsData, setNewsData] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const itemsPerPage = 6;
+  const itemsPerPage = 4;
 
   // Fetch categories và news
   useEffect(() => {
@@ -162,10 +162,7 @@ const News = () => {
                       src={news.imageUrl}
                       alt={news.title}
                       className={styles.newsImage}
-                      onError={(e) => {
-                        e.target.src =
-                          'https://via.placeholder.com/300x200?text=Image+Not+Found';
-                      }}
+                     
                     />
                     <h3 className={styles.newsTitle}>{news.title}</h3>
                     <p className={styles.newsDate}>{news.date}</p>
@@ -178,16 +175,28 @@ const News = () => {
               </div>
             )}
 
-            {/* PHÂN TRANG */}
+            {/* PHÂN TRANG NÂNG CẤP: Thêm nút đầu/cuối */}
             {totalPages > 1 && (
               <div className={styles.pagination}>
+                {/* Nút đầu trang */}
+                <button
+                  className={styles.pageBtn}
+                  disabled={currentPage === 1}
+                  onClick={() => handlePageChange(1)}
+                >
+                  « Đầu
+                </button>
+
+                {/* Nút lùi 1 trang */}
                 <button
                   className={styles.pageBtn}
                   disabled={currentPage === 1}
                   onClick={() => handlePageChange(currentPage - 1)}
                 >
-                  Trước
+                  ‹ Trước
                 </button>
+
+                {/* Các nút số trang */}
                 {Array.from({ length: totalPages }, (_, index) => (
                   <button
                     key={index + 1}
@@ -199,12 +208,23 @@ const News = () => {
                     {index + 1}
                   </button>
                 ))}
+
+                {/* Nút tiến 1 trang */}
                 <button
                   className={styles.pageBtn}
                   disabled={currentPage === totalPages}
                   onClick={() => handlePageChange(currentPage + 1)}
                 >
-                  Sau
+                  Tiếp ›
+                </button>
+
+                {/* Nút cuối trang */}
+                <button
+                  className={styles.pageBtn}
+                  disabled={currentPage === totalPages}
+                  onClick={() => handlePageChange(totalPages)}
+                >
+                  Cuối »
                 </button>
               </div>
             )}

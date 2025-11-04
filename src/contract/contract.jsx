@@ -177,22 +177,25 @@ const Contract = () => {
                     </span>
                   </td>
                   <td data-label="Hành Động">
-                    {contract.status === 'ChoThanhToan' && (
-                      <Link 
-                        to={`/payment?contract_id=${contract.contract_id}`}
-                        className="btn btn-pay"
-                      >
-                        <i className="fa-solid fa-credit-card"></i> Thanh Toán
-                      </Link>
+                    {contract.status === 'ChoThanhToan' ?  (
+                      // <Link 
+                      //   to={`/payment?contract_id=${contract.contract_id}`}
+                      //   className="btn btn-pay"
+                      // >
+                      //   <i className="fa-solid fa-credit-card"></i> Thanh Toán
+                      // </Link>
+                      <div>Nhận viên sẽ liên hệ trong vòng 24h</div>
+                    ): (
+                      <div>thành công</div>
                     )}
-                    <a 
+                    {/* <a 
                       href={getEcontractUrl(contract.session_id)}
                       className="btn btn-view"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
                       <i className="fa-solid fa-file-pdf"></i> Xem Hợp Đồng
-                    </a>
+                    </a> */}
                   </td>
                 </tr>
               );

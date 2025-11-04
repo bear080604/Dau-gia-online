@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';  // NEW: Thêm useCallback nếu dùng debounce lib, nhưng dùng native timeout
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import styles from './Auction-session.module.css';
@@ -11,7 +11,6 @@ import NotificationBell from "../NotificationBell";
 function AuctionSession() {
   const { token, user } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchTermDebounced, setSearchTermDebounced] = useState('');  // NEW: Debounced search
   const [statusFilter, setStatusFilter] = useState('');
   const [itemFilter, setItemFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,8 +18,7 @@ function AuctionSession() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [selectedSession, setSelectedSession] = useState(null);
-  const [originalSessions, setOriginalSessions] = useState([]);  // NEW: Sessions gốc từ API (đã transform)
-  const [sessions, setSessions] = useState([]);  // NEW: Sessions đã filter để hiển thị
+  const [sessions, setSessions] = useState([]);
   const [products, setProducts] = useState([]);
   const [auctionOrgs, setAuctionOrgs] = useState([]);
   const [isLoadingAuctionOrgs, setIsLoadingAuctionOrgs] = useState(true);
@@ -47,16 +45,17 @@ function AuctionSession() {
     currentWinnerId: '',
     starting_price: ''
   });
-  const [open, setOpen] = useState(false);
-  const togglePopup = (e) => {
-    e.stopPropagation();
-    setOpen((prev) => !prev);
-  };
+     const [open, setOpen] = useState(false);
+    const togglePopup = (e) => {
+      e.stopPropagation(); // tránh đóng liền sau khi mở
+      setOpen((prev) => !prev);
+    };
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [now, setNow] = useState(moment.tz('Asia/Ho_Chi_Minh'));
   const itemsPerPage = 5;
+
   const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
 
   // Update current time every second
@@ -67,15 +66,8 @@ function AuctionSession() {
     return () => clearInterval(interval);
   }, []);
 
-  // NEW: Debounce cho search (300ms)
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setSearchTermDebounced(searchTerm);
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [searchTerm]);
-
   // Log token and user for debugging
+
   useEffect(() => {
     const fetchAuctionOrgs = async () => {
       try {
@@ -179,6 +171,7 @@ function AuctionSession() {
           maximumFractionDigits: 0,
         })
       : 'Chưa có';
+
     const startTime = session.start_time
       ? moment.tz(session.start_time, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')
       : 'Chưa có';
@@ -200,17 +193,19 @@ function AuctionSession() {
     const bidEnd = session.bid_end
       ? moment.tz(session.bid_end, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')
       : 'Chưa có';
+
     const status = getAuctionStatus({ ...session, bid_start: session.bid_start, bid_end: session.bid_end });
     const statusClass =
       status === 'Chưa bắt đầu' ? 'statusMo' : status === 'Đang diễn ra' ? 'statusDangdienra' : 'statusKetthuc';
+
     const auctionOrgId = session.auction_org_id?.toString();
     const auctionOrgName =
       auctionOrgId && auctionOrgs.find((org) => org.id === auctionOrgId)?.name ||
       session.auction_org?.full_name ||
       'Chưa có';
-   
-    const auctioneerId = session.auctioneer_id?.toString();  // FIXED: Khai báo đúng
-    const auctioneerName = session.auctioneer?.full_name || 'Chưa chỉ định';
+    
+     const auctioneerId = session.auctioneer_id?.toString();
+     const auctioneerName = session.auctioneer?.full_name || 'Chưa chỉ định';
 
     return {
       id: session.session_id,
@@ -226,8 +221,8 @@ function AuctionSession() {
       method: session.method || 'Đấu giá tự do',
       auctionOrgId,
       auctionOrgName,
-      auctioneerId: auctioneerId,  // FIXED: Sử dụng biến đã khai báo, không phải ''
-      auctioneerName: auctioneerName,
+      auctioneerId: '',
+      auctioneerName: auctioneerName, // THÊM DÒNG NÀY
       registerStart,
       registerEnd,
       checkinTime,
@@ -240,49 +235,6 @@ function AuctionSession() {
       profiles: session.profiles || [],
       starting_price: session.item?.starting_price
     };
-  };
-
-  // NEW: Hàm applyFilters (client-side filter + search)
-  const applyFilters = (allSessions, { search = '', status = '', item = '' } = {}) => {
-    if (!Array.isArray(allSessions)) return [];
-
-    // mapping giá trị select -> status hiển thị (theo transformSession)
-    const statusMap = {
-      Mo: 'Chưa bắt đầu',
-      DangDienRa: 'Đang diễn ra',
-      KetThuc: 'Kết thúc',
-    };
-
-    let list = allSessions.slice(); // copy
-
-    // 1) filter theo status (UI trả về 'Mo'|'DangDienRa'|'KetThuc')
-    if (status) {
-      const expectedStatus = statusMap[status] || status;
-      list = list.filter(s => s.status === expectedStatus);
-    }
-
-    // 2) filter theo item (so sánh itemId string)
-    if (item) {
-      const itemStr = item.toString();
-      list = list.filter(s => (s.itemId || '').toString() === itemStr);
-    }
-
-    // 3) search (tìm trong nhiều trường: id, item name, auctionOrgName, creator, auctioneerName)
-    if (search && search.trim() !== '') {
-      const q = search.trim().toLowerCase();
-      list = list.filter(s => {
-        return (
-          (s.id && s.id.toString().toLowerCase().includes(q)) ||
-          (s.item && s.item.toString().toLowerCase().includes(q)) ||
-          (s.auctionOrgName && s.auctionOrgName.toLowerCase().includes(q)) ||
-          (s.creator && s.creator.toLowerCase().includes(q)) ||
-          (s.auctioneerName && s.auctioneerName.toLowerCase().includes(q)) ||
-          (s.status && s.status.toLowerCase().includes(q))
-        );
-      });
-    }
-
-    return list;
   };
 
   const fetchBids = async (sessionId) => {
@@ -331,7 +283,6 @@ function AuctionSession() {
     }
   };
 
-  // FIXED + NEW: fetchSessions (lấy 1 lần, lưu original, áp filter ngay)
   const fetchSessions = async () => {
     setLoading(true);
     setError(null);
@@ -340,34 +291,19 @@ function AuctionSession() {
         throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
       }
       const response = await axios.get(`${API_URL}auction-sessions`, {
+        params: { search: searchTerm, status: statusFilter, item: itemFilter },
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (response.data && Array.isArray(response.data.sessions)) {
-        // transform raw sessions -> ui-ready sessions
-        const transformed = response.data.sessions.map(transformSession);
-
-        // Lưu session gốc (đã transform) để lọc client-side
-        setOriginalSessions(transformed);
-
-        // Áp filter ngay lần đầu theo trạng thái / item / search hiện thời
-        const filtered = applyFilters(transformed, {
-          search: searchTermDebounced,
-          status: statusFilter,
-          item: itemFilter,
-        });
-
-        setSessions(filtered);
-        setTotalPages(Math.max(1, Math.ceil(filtered.length / itemsPerPage)));
-        setCurrentPage(1);
+        const transformedSessions = response.data.sessions.map(transformSession);
+        setSessions(transformedSessions);
+        setTotalPages(Math.ceil(transformedSessions.length / itemsPerPage));
       } else {
         console.error('Unexpected API response structure:', response.data);
-        setOriginalSessions([]);
         setSessions([]);
         setError('Dữ liệu từ API không đúng định dạng.');
       }
     } catch (error) {
-      console.error('fetchSessions error', error);
       if (error.response && error.response.status === 401) {
         alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
         window.location.href = '/login';
@@ -376,8 +312,6 @@ function AuctionSession() {
       } else {
         setError('Không thể tải danh sách phiên đấu giá: ' + (error.response?.data?.message || error.message));
       }
-      setOriginalSessions([]);
-      setSessions([]);
     } finally {
       setLoading(false);
     }
@@ -397,12 +331,14 @@ function AuctionSession() {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
+
       // Lấy danh sách item_id từ các phiên đấu giá đang hoạt động hoặc đã kết thúc thành công
       const sessionItemIds = sessionsResponse.data.sessions
         ? sessionsResponse.data.sessions
             .filter((session) => session.status !== 'KetThuc' || session.current_winner_id !== null)
             .map((session) => session.item_id)
         : [];
+
       if (productsResponse.data && Array.isArray(productsResponse.data.data)) {
         const filteredProducts = productsResponse.data.data
           .filter((product) => {
@@ -433,38 +369,22 @@ function AuctionSession() {
       setLoading(false);
     }
   };
-
-  // NEW: useEffect gọi fetch chỉ khi token thay đổi (không phụ thuộc filter)
   useEffect(() => {
     if (token) {
-      fetchProducts();
       fetchSessions();
+      fetchProducts();
     } else {
       setError('Vui lòng đăng nhập để xem danh sách phiên đấu giá.');
       window.location.href = '/login';
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [searchTerm, statusFilter, itemFilter, token]);
 
-  // NEW: useEffect áp filter khi searchDebounced, statusFilter, itemFilter hoặc originalSessions thay đổi
-  useEffect(() => {
-    const filtered = applyFilters(originalSessions, {
-      search: searchTermDebounced,
-      status: statusFilter,
-      item: itemFilter,
-    });
-    setSessions(filtered);
-    setTotalPages(Math.max(1, Math.ceil(filtered.length / itemsPerPage)));
-    setCurrentPage(1);
-  }, [searchTermDebounced, statusFilter, itemFilter, originalSessions]);
-
-  // Pagination
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentSessions = sessions.slice(startIndex, startIndex + itemsPerPage);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);  // Reset page khi search
+    setCurrentPage(1);
   };
 
   const handleStatusFilterChange = (e) => {
@@ -494,7 +414,6 @@ function AuctionSession() {
           key={i}
           className={`${styles.paginationBtn} ${currentPage === i ? styles.paginationBtnActive : ''}`}
           onClick={() => handlePageChange(i)}
-          aria-label={`Trang ${i}`}  // FIXED: Accessibility
         >
           {i}
         </button>
@@ -503,7 +422,6 @@ function AuctionSession() {
     return pages;
   };
 
-  // FIXED: openSessionModal (populate auctioneerId và starting_price đúng)
   const openSessionModal = (mode, session = null) => {
     if (mode === 'edit' && session && session.status !== 'Chưa bắt đầu') {
       alert('Chỉ có thể chỉnh sửa phiên đấu giá ở trạng thái Chưa bắt đầu.');
@@ -527,7 +445,7 @@ function AuctionSession() {
         status: 'Mo',
         method: session.method,
         auctionOrgId: session.auctionOrgId || '',
-        auctioneerId: session.auctioneerId || '',  // FIXED: Populate auctioneerId
+        auctioneerId: '',
         registerStart: session.registerStart || '',
         registerEnd: session.registerEnd || '',
         checkinTime: session.checkinTime || '',
@@ -536,7 +454,7 @@ function AuctionSession() {
         bidStep: session.bidStep.replace(/[^\d]/g, '') || '',
         highestBid: session.highestBid.replace(/[^\d]/g, '') || '',
         currentWinnerId: '',
-        starting_price: session.starting_price || ''  // FIXED: Từ session, không phải sessionForm cũ
+        starting_price: sessionForm.starting_price
       });
       setIsAuctionOrgDisabled(!!(selectedProduct && selectedProduct.auction_org_id));
       setSelectedSession(session);
@@ -560,7 +478,6 @@ function AuctionSession() {
         bidStep: '',
         highestBid: '',
         currentWinnerId: '',
-        starting_price: ''
       });
       setIsAuctionOrgDisabled(false);
       setSelectedSession(null);
@@ -684,7 +601,7 @@ function AuctionSession() {
         });
         alert('Tạo phiên đấu giá thành công! Hợp đồng điện tử đã được tạo tự động');
       }
-      fetchSessions();  // Refetch để cập nhật originalSessions
+      fetchSessions();
       fetchProducts();
       closeSessionModal();
     } catch (error) {
@@ -705,19 +622,20 @@ function AuctionSession() {
   const handleDeleteSession = async (sessionId, status) => {
     // Bảo vệ: Không cho xóa nếu đang diễn ra hoặc kết thúc
     if (status === 'Đang diễn ra' || status === 'Kết thúc') {
-      const warningResult = window.Swal ?
+      const warningResult = window.Swal ? 
         await Swal.fire({
           icon: 'warning',
           title: 'Không thể xóa',
           text: 'Phiên đấu giá đang diễn ra hoặc đã kết thúc, không thể xóa.',
           confirmButtonText: 'Đã hiểu',
           allowOutsideClick: true,
-        }) :
+        }) : 
         { isConfirmed: window.confirm('Không thể xóa phiên đang diễn ra hoặc đã kết thúc. OK?') };
       return; // Dừng luôn, không cần confirm thêm
     }
+
     // Fallback nếu không dùng Swal
-    const confirmResult = window.Swal ?
+    const confirmResult = window.Swal ? 
       await Swal.fire({
         title: 'Xác nhận xóa?',
         text: 'Phiên đấu giá và toàn bộ hợp đồng liên quan sẽ bị xóa vĩnh viễn!',
@@ -726,22 +644,30 @@ function AuctionSession() {
         confirmButtonText: 'Xóa ngay',
         cancelButtonText: 'Hủy bỏ',
         confirmButtonColor: '#d33',
-      }) :
+      }) : 
       { isConfirmed: window.confirm('Bạn có chắc muốn xóa phiên này? Phiên đấu giá và toàn bộ hợp đồng liên quan sẽ bị xóa!') };
+
     if (!confirmResult.isConfirmed) return;
+
     setLoading(true);
     setError(null); // Clear error trước khi thử
+
     try {
       if (!token) {
         throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
       }
+
       const headers = { Authorization: `Bearer ${token}` };
+
       // 1️⃣ Xóa e-contracts theo session_id
       await axios.delete(`${API_URL}econtracts/${sessionId}`, { headers });
+
       // 2️⃣ Xóa contracts theo session_id
       await axios.delete(`${API_URL}contracts/${sessionId}`, { headers });
+
       // 3️⃣ Xóa chính phiên đấu giá
       await axios.delete(`${API_URL}auction-sessions/${sessionId}`, { headers });
+
       // Success feedback
       if (window.Swal) {
         Swal.fire({
@@ -754,12 +680,14 @@ function AuctionSession() {
       } else {
         alert('Xóa phiên đấu giá thành công!');
       }
+
       // Refresh data
       await Promise.all([fetchSessions(), fetchProducts()]);
+
     } catch (error) {
       console.error('Error deleting session:', error);
       const errorMsg = error.response?.data?.message || error.message || 'Không thể xóa phiên đấu giá này.';
-     
+      
       if (error.response && error.response.status === 401) {
         alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
         window.location.href = '/login';
@@ -793,18 +721,19 @@ function AuctionSession() {
   const getActionButtons = (session) => {
     const buttons = [];
     const isDeletable = session.status === 'Chưa bắt đầu'; // Chỉ cho phép xóa nếu chưa bắt đầu
+
     if (session.status === 'Chưa bắt đầu') {
       buttons.push(
         <button
           key="edit"
           className={`${styles.btn} ${styles.btnPrimary}`}
           onClick={() => openSessionModal('edit', session)}
-          aria-label="Chỉnh sửa phiên"  // FIXED: Accessibility
         >
           <i className="fa fa-pencil" aria-hidden="true"></i>
         </button>
       );
     }
+
     buttons.push(
       <button
         key="delete"
@@ -821,21 +750,22 @@ function AuctionSession() {
           cursor: !isDeletable ? 'not-allowed' : 'pointer',
           pointerEvents: !isDeletable ? 'none' : 'auto', // Tăng cường disable
         }}
-        aria-label={!isDeletable ? 'Nút xóa bị vô hiệu hóa' : 'Xóa phiên đấu giá'}  // FIXED: Accessibility
+        aria-label={!isDeletable ? 'Nút xóa bị vô hiệu hóa' : 'Xóa phiên đấu giá'}
       >
         <i className="fa fa-trash" aria-hidden="true"></i>
       </button>
     );
+
     buttons.push(
       <button
         key="view"
         className={`${styles.btn} ${styles.btnSuccess}`}
         onClick={() => openViewModal(session.id)}
-        aria-label="Xem chi tiết phiên"  // FIXED: Accessibility
       >
         <i className="fa fa-eye" aria-hidden="true"></i>
       </button>
     );
+
     return buttons;
   };
 
@@ -852,20 +782,23 @@ function AuctionSession() {
           />
         </div>
         <div className={styles.userProfile}>
-          <div>
-            <div onClick={togglePopup} style={{ cursor: "pointer" }}>
-              <i className="fa-solid fa-bell fa-lg"></i>
-            </div>
-            <NotificationBell open={open} onClose={() => setOpen(false)} />
-          </div>
+            <div>
+                        <div onClick={togglePopup} style={{ cursor: "pointer" }}>
+                          <i className="fa-solid fa-bell fa-lg"></i>
+                        </div>
+          
+                        <NotificationBell open={open} onClose={() => setOpen(false)} />
+                      </div>
           <div className={styles.profileAvatar}>
             {user?.full_name ? user.full_name.slice(0, 2).toUpperCase() : 'QT'}
           </div>
         </div>
       </div>
+
       <h1 className={styles.pageTitle}>Quản Lý Phiên Đấu Giá</h1>
       <p className={styles.pageSubtitle}>Thời gian hiện tại: {now.format('YYYY-MM-DD HH:mm:ss')}</p>
       <p className={styles.pageSubtitle}>Quản lý và theo dõi các phiên đấu giá đang diễn ra</p>
+
       <div className={styles.actionsBar}>
         <div className={styles.filters}>
           <select className={styles.filterSelect} value={statusFilter} onChange={handleStatusFilterChange}>
@@ -888,6 +821,7 @@ function AuctionSession() {
           Thêm phiên mới
         </button>
       </div>
+
       {loading ? (
         <p>Đang tải dữ liệu...</p>
       ) : error ? (
@@ -904,6 +838,7 @@ function AuctionSession() {
               <th>Thời gian bắt đầu</th>
               <th>Thời gian kết thúc</th>
               <th>Trạng thái</th>
+              {/* <th>Phương thức</th> */}
               <th>Hành động</th>
             </tr>
           </thead>
@@ -915,6 +850,8 @@ function AuctionSession() {
                 <td data-label="Giá khởi điểm">
                   {Number(session.starting_price).toLocaleString('vi-VN')} ₫
                 </td>
+                {/* <td data-label="Tổ chức đấu giá">{session.auctionOrgName}</td> */}
+                {/* <td data-label="Thời gian hiện tại">{now.format('YYYY-MM-DD HH:mm:ss')}</td> */}
                 <td data-label="Thời gian bắt đầu">{session.startTime}</td>
                 <td data-label="Thời gian kết thúc">{session.endTime}</td>
                 <td data-label="Trạng thái">
@@ -922,12 +859,13 @@ function AuctionSession() {
                     {session.status}
                   </span>
                 </td>
+                {/* <td data-label="Phương thức">{session.method}</td> */}
                 <td data-label="Hành động">
                   <div className={styles.actionButtons}>
                     {getActionButtons(session)}
                     {session.status === 'Đang diễn ra' && (
                       <Link to={`../admin/showauction/${session.id}`} style={{ textDecoration: 'none' }}>
-                        <button aria-label="Xem đấu giá đang diễn ra">  {/* FIXED: Accessibility */}
+                        <button>
                           <i className="fa fa-gavel" aria-hidden="true"></i> Xem đấu giá
                         </button>
                       </Link>
@@ -939,7 +877,9 @@ function AuctionSession() {
           </tbody>
         </table>
       )}
+
       <div className={styles.pagination}>{renderPagination()}</div>
+
       {showSessionModal && (
         <div className={styles.modal} onClick={closeSessionModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -1153,9 +1093,9 @@ function AuctionSession() {
               )}
             </div>
             <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSaveSession} disabled={loading}>
-                {loading ? 'Đang lưu...' : 'Lưu'}
-              </button>  {/* NEW: Disable khi loading */}
+              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSaveSession}>
+                Lưu
+              </button>
               <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeSessionModal}>
                 Hủy
               </button>
@@ -1163,6 +1103,7 @@ function AuctionSession() {
           </div>
         </div>
       )}
+
       {showViewModal && selectedSession && (
         <div className={styles.modal} onClick={closeViewModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -1178,7 +1119,7 @@ function AuctionSession() {
               <p><strong>Tổ chức đấu giá:</strong> {selectedSession.auctionOrgName}</p>
               <div className={styles.viewGroup}>
                 <label>Đấu giá viên:</label>
-                <p>{selectedSession.auctioneerName}</p>
+                <p>{selectedSession.auctioneerName}</p> 
               </div>
               <p><strong>Thời gian bắt đầu:</strong> {selectedSession.startTime}</p>
               <p><strong>Thời gian kết thúc:</strong> {selectedSession.endTime}</p>
