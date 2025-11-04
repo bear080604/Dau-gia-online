@@ -19,6 +19,7 @@
 
 .sidebar {
   width: 250px;
+  height: fit-content;
   background: #f9f9f9;
   border-radius: 8px;
   border: 1px solid #e8dddd;

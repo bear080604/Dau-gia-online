@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import io from 'socket.io-client';
 import styles from './auction.module.css';
-import { UserProvider } from '../UserContext';
+import { UserContext } from '../UserContext';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const ConfirmModal = ({ isOpen, onClose, onConfirm, bidAmount }) => {
@@ -30,7 +30,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, bidAmount }) => {
 const AuctionPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, token } = useContext(UserProvider);
+  const { user, token } = useContext(UserContext);
   const [auctionItem, setAuctionItem] = useState(null);
   const [paused, setPaused] = useState(false);
   const [pausedTime, setPausedTime] = useState(null);
