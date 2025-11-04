@@ -287,7 +287,7 @@ const Header = () => {
     },
     { icon: 'fa-gavel', text: 'ĐẤU GIÁ TRỰC TUYẾN', href: '/auction-session' },
     { icon: 'fa-newspaper', text: 'TIN TỨC - THÔNG BÁO', href: '/news' },
-    { icon: 'fa-book', text: 'HƯỚNG DẪN SỬ DỤNG', href: '#' },
+    { icon: 'fa-book', text: 'HƯỚNG DẪN SỬ DỤNG', href: '/guide' },
     { icon: 'fa-phone', text: 'LIÊN HỆ BÁN TÀI SẢN', href: '/contact' },
   ];
 

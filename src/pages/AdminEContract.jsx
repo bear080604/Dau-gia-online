@@ -1,14 +1,13 @@
 import React from "react";
-import Sidebar from "../admin/Header/Header";
+import AdminLayout from "../admin/Header/AdminLayout";
 import EContract from "../admin/EContract/EContract";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function AdminEContract() {
   return (
-    <div>
-      <Sidebar />
+    <AdminLayout>
       <EContract />
-    </div>
+    </AdminLayout>
   );
 }
 

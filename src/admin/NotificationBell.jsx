@@ -11,7 +11,7 @@ export default function NotificationPopup({ open, onClose }) {
       .then((res) => res.json())
       .then((data) => {
         if (data.status && Array.isArray(data.notifications)) {
-          // Sắp xếp giảm dần theo thời gian, sau đó lấy 7 thông báo mới nhất
+          // Sắp xếp giảm dần theo thời gian, sau đó lấy    7 thông báo mới nhất
           const sorted = data.notifications
             .sort(
               (a, b) => new Date(b.created_at) - new Date(a.created_at)

@@ -1,14 +1,13 @@
 import React from "react";
-import Sidebar from "../admin/Header/Header";
+import AdminLayout from "../admin/Header/AdminLayout";
 import Profile from "../admin/Profile/Profile";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function AdminProfile() {
   return (
-    <div>
-      <Sidebar />
+    <AdminLayout>
       <Profile />
-    </div>
+    </AdminLayout>
   );
 }
 

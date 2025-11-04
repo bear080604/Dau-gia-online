@@ -1,7 +1,7 @@
 /* Auction-asset.module.css */
 .mainContent {
   position: absolute;
-  top: 0;
+  top:80px;
   left: 280px;
   width: calc(100% - 280px);
   height: 100vh;

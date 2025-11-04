@@ -924,4 +924,4 @@ const AuctionAsset = () => {
   );
 };
 
-export default AuctionAsset;
+export default AuctionAsset;  
