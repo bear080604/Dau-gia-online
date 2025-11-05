@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thông báo realtime đẹp</title>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background: #f1f5f9;
+      padding: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .notification-wrapper { position: relative; display: inline-block; }
+    .notification-bell {
+      font-size: 32px; cursor: pointer; color: #4b5563;
+      transition: 0.3s; background: white; padding: 10px 12px;
+      border-radius: 50%; box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+    .notification-bell:hover {
+      background: #007bff; color: white; transform: scale(1.05);
+    }
+    .notification-count {
+      position: absolute; top: 4px; right: 4px;
+      background: #ef4444; color: white; border-radius: 50%;
+      padding: 2px 7px; font-size: 12px; font-weight: 600;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .notification-box {
+      display: none; position: absolute; top: 55px; right: 0; width: 360px;
+      background: white; border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      max-height: 460px; overflow-y: auto; z-index: 20;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(-5px);} to{opacity:1;transform:translateY(0);} }
+    .notification-item {
+      padding: 12px 16px; border-bottom: 1px solid #f0f0f0;
+      transition: background 0.2s; cursor: pointer;
+    }
+    .notification-item:last-child { border-bottom: none; }
+    .notification-item:hover { background: #f9fafb; }
+    .notification-item.unread { background: #eef6ff; border-left: 4px solid #3b82f6; }
+    .notification-item .title { font-weight: 600; font-size: 14px; color: #1f2937; margin-bottom: 2px; }
+    .notification-item .message { font-size: 13px; color: #374151; }
+    .loading { text-align: center; padding: 20px; color: #777; font-size: 14px; }
+    .notification-box::-webkit-scrollbar { width: 6px; }
+    .notification-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .notification-box::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body>
+
+  <div class="notification-wrapper">
+    <span class="notification-bell">🔔</span>
+    <span class="notification-count" id="notif-count">0</span>
+    <div class="notification-box" id="notif-box">
+      <div class="loading" id="notif-loading">Đang tải...</div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:8000/api/notification";
+    const socket = io("http://127.0.0.1:6001", {
+      transports: ["websocket"],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+    });
+const notifCountEl = document.getElementById("notif-count");
+    const notifBoxEl = document.getElementById("notif-box");
+    const notifLoadingEl = document.getElementById("notif-loading");
+    const bell = document.querySelector(".notification-bell");
+
+    let notifications = [];
+
+    function getReadNotifications() {
+      return JSON.parse(localStorage.getItem("read_notifications") || "[]");
+    }
+    function saveReadNotifications(ids) {
+      localStorage.setItem("read_notifications", JSON.stringify(ids));
+    }
+
+    socket.on("connect", () => {
+      console.log("✅ HTML đã kết nối socket:", socket.id);
+      socket.emit("join.channel", "notifications");
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("❌ Lỗi kết nối socket:", err.message);
+    });
+
+    socket.on("newNotification", (data) => {
+      console.log("📩 Có thông báo mới:", data);
+
+      const newNotif = {
+        id: Date.now(),
+        message: data.message || "Thông báo mới từ hệ thống",
+        is_read: 0,
+        type: data.type || "Thông báo",
+        user: data.user || { full_name: "Hệ thống" },
+      };
+      notifications.unshift(newNotif);
+      updateUI();
+    });
+
+    async function loadNotifications() {
+      try {
+        const res = await fetch(API_URL);
+        const json = await res.json();
+        if (json.status) {
+          notifications = json.notifications.map((n, i) => ({
+            id: n.id || i + 1,
+            ...n,
+          }));
+        }
+      } catch (err) {
+        console.error("❌ Lỗi tải thông báo:", err);
+      }
+      notifLoadingEl.style.display = "none";
+      updateUI();
+    }
+    loadNotifications();
+
+    bell.addEventListener("click", () => {
+      const isOpen = notifBoxEl.style.display === "block";
+      notifBoxEl.style.display = isOpen ? "none" : "block";
+      if (!isOpen) {
+        const readIds = notifications.map(n => n.id);
+        saveReadNotifications(readIds);
+        updateUI();
+      }
+    });
+
+    function updateUI() {
+      const readIds = getReadNotifications();
+      notifications = notifications.map(n => ({
+        ...n,
+        is_read: readIds.includes(n.id) ? 1 : 0,
+      }));
+      const unreadCount = notifications.filter(n => n.is_read === 0).length;
+      notifCountEl.textContent = unreadCount;
+      notifCountEl.style.display = unreadCount > 0 ? "inline" : "none";
+
+      if (notifications.length === 0) {
+        notifBoxEl.innerHTML = `<div class="loading">Không có thông báo</div>`;
+        return;
+      }
+
+      notifBoxEl.innerHTML = notifications.map(n => `
+        <div class="notification-item ${n.is_read === 0 ? "unread" : ""}">
+          <div class="title">${n.user?.full_name || "Người dùng"} (${n.type})</div>
+          <div class="message">${n.message}</div>
+        </div>
+      `).join("");
+    }
+  </script>
+
+</body>
+</html>
