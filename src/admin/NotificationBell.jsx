@@ -91,7 +91,7 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
 
     try {
       const res = await fetch(
-        `http://localhost:8000/api/notifications/${userId}?page=${pageNum}&limit=${PER_PAGE}`,
+        `http://localhost:8000/api/notification`,
         {
           headers: {
             "Content-Type": "application/json",

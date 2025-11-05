@@ -44,7 +44,7 @@ const Header = () => {
       try {
         const token = localStorage.getItem('token');
         const res = await fetch(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}/api/notifications/${user.user_id}`,
+          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/${user.user_id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -73,7 +73,7 @@ const Header = () => {
     const fetchCategories = async () => {
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}/api/categories`
+          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}categories`
         );
         if (!response.ok) throw new Error('Failed to fetch categories');
         const result = await response.json();
@@ -108,7 +108,7 @@ const Header = () => {
     const fetchContracts = async () => {
       try {
         const res = await fetch(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}/api/contracts`
+          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}contracts`
         );
         if (!res.ok) throw new Error('Failed to fetch contract data');
         const data = await res.json();
@@ -127,7 +127,7 @@ const Header = () => {
       try {
         const token = localStorage.getItem('token');
         const res = await axios.get(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}/api/products`,
+          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}products`,
           {
             headers: {
               'Content-Type': 'application/json',
@@ -203,7 +203,7 @@ const Header = () => {
     try {
       const token = localStorage.getItem('token');
       await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}/api/logout`,
+        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}logout`,
         {
           method: 'POST',
           headers: {
