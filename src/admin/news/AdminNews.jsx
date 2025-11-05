@@ -187,13 +187,7 @@ const AdminNews = () => {
     <div className={styles.container}>
       <h1 className={styles.title}>Quản Lý Tin Tức</h1>
       <p className={styles.subtitle}>Quản lý và theo dõi các tin tức được đăng trên hệ thống</p>
-         <div>
-                    <div onClick={togglePopup} style={{ cursor: "pointer" }}>
-                      <i className="fa-solid fa-bell fa-lg"></i>
-                    </div>
-      
-                    <NotificationBell open={open} onClose={() => setOpen(false)} />
-                  </div>
+   
       <div className={styles.headNews}>
         <div className={styles.filters}>
           <select 

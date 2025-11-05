@@ -1,14 +1,13 @@
 import React from "react";
-import Sidebar from "../admin/Header/Header";
+import AdminLayout from "../admin/Header/AdminLayout";
 import Payment from "../admin/Payment/Payment";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function AdminPayment() {
   return (
-    <div>
-      <Sidebar />
+    <AdminLayout>
       <Payment />
-    </div>
+    </AdminLayout>
   );
 }
 

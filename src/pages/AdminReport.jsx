@@ -1,14 +1,13 @@
 import React from "react";
-import Sidebar from "../admin/Header/Header";
+import AdminLayout from "../admin/Header/AdminLayout";
 import Report from "../admin/Report/Report";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function Index() {
   return (
-    <div>
-      <Sidebar />
+    <AdminLayout>
       <Report />
-    </div>
+    </AdminLayout>
   );
 }
 

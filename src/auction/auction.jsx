@@ -46,7 +46,15 @@ const AuctionPage = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingBid, setPendingBid] = useState(null);
   const [sliderSteps, setSliderSteps] = useState(0); // State cho số bước giá trên slider
+  // Thêm state mới cho responsive mobile
+  const [showLeftBox, setShowLeftBox] = useState(false);
+
   const socketRef = useRef(null);
+
+  // Function toggle left box
+  const toggleLeftBox = () => {
+    setShowLeftBox(!showLeftBox);
+  };
 
   const API_URL = process.env.REACT_APP_API_URL;
 
@@ -578,7 +586,10 @@ const AuctionPage = () => {
         <div className={styles['lot-number']}>{countdown.seconds}</div>
       </div>
       <div className={styles.content}>
-        <div className={styles['left-section']}>
+        {/* Left Section - Với class động cho show/hide trên mobile */}
+        <div className={`${styles['left-section']} ${showLeftBox ? styles['show'] : ''}`}>
+          {/* Nút đóng trên mobile */}
+          <button className={styles['close-btn']} onClick={toggleLeftBox}>✕</button>
           <div className={styles['section-title']}>THÔNG TIN SẢN PHẨM</div>
           <div className={styles['info-row']}>
             <div className={styles['info-label']}>Tên sản phẩm:</div>
@@ -629,7 +640,16 @@ const AuctionPage = () => {
             <div className={styles['info-value']}>{formatPrice(currentPrice)}</div>
           </div>
         </div>
+
+        {/* Overlay cho mobile khi mở left box */}
+        {showLeftBox && <div className={styles['overlay']} onClick={toggleLeftBox}></div>}
+
         <div className={styles['right-section']}>
+          {/* Nút show info trên mobile */}
+          <button className={styles['show-info-btn']} onClick={toggleLeftBox}>
+            📋 Xem thông tin sản phẩm
+          </button>
+
           <div className={styles['participants-section']}>
             <div className={styles['section-title']}>THÀNH PHẦN THAM DỰ</div>
             {/* <div className={styles['info-row']}>

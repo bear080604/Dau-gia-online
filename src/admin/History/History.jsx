@@ -190,12 +190,7 @@ function History() {
             onChange={handleSearchChange}
           />
         </div>
-        <div className={styles.userProfile}>
-          <div className={styles.notificationBell}>
-            <i className="fas fa-bell"></i>
-          </div>
-          <div className={styles.profileAvatar}>QT</div>
-        </div>
+        
       </div>
 
       <h1 className={styles.pageTitle}>Lịch Sử Log Hệ Thống</h1>

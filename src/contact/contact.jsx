@@ -30,6 +30,8 @@ const Contact = () => {
   const [toasts, setToasts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [openCategoryDropdown, setOpenCategoryDropdown] = useState(false);
+  // Thêm state mới để theo dõi form hợp lệ
+  const [isFormValid, setIsFormValid] = useState(false);
   const fileInputRef = useRef(null);
   const extraImagesRef = useRef(null);
   const urlFileRef = useRef(null);
@@ -115,6 +117,26 @@ const Contact = () => {
     setCheckAuthMsg('');
   }, []);
 
+  // 🆕 useEffect tự động kiểm tra form validity - Updated với check đủ 3 file bắt buộc
+  useEffect(() => {
+    const { category_id, owner_id, name, description, starting_price, image, extra_images, url_file } = formData;
+    const price = parseFloat(String(starting_price || '').replace(/\./g, ''));
+
+    const isValid =
+      String(category_id || '').trim() !== '' &&
+      String(owner_id || '').trim() !== '' &&
+      String(name || '').trim() !== '' &&
+      String(description || '').trim() !== '' &&
+      String(starting_price || '').trim() !== '' &&
+      !isNaN(price) &&
+      price > 0 &&
+      image &&                                  // Bắt buộc có ảnh chính
+      Array.isArray(extra_images) && extra_images.length > 0 &&  // Có ít nhất 1 ảnh bổ sung
+      url_file;                                // Có file đính kèm
+
+    setIsFormValid(isValid);
+  }, [formData]);
+
   // Description count handler
   const handleDescriptionChange = (e) => {
     const value = e.target.value;
@@ -173,7 +195,7 @@ const Contact = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === 'starting_price') {
-      const cleanValue = value.replace(/\./g, '');
+      const cleanValue = value.replace(/[^\d]/g, ''); // 🆕 Clean chỉ giữ số để tránh ký tự lạ
       const formattedValue = cleanValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
       setFormData(prev => ({ ...prev, [name]: formattedValue }));
     } else {
@@ -192,46 +214,61 @@ const Contact = () => {
     setErrors(prev => ({ ...prev, [field]: message }));
   };
 
-  // Validate form
+  // 🆕 Validate form - Updated với check đủ 3 file bắt buộc
   const validateForm = () => {
-    clearErrors();
-    let isValid = true;
+    const newErrors = {};
+    const { category_id, owner_id, name, description, starting_price, auction_org_id, image, extra_images, url_file } = formData;
 
-    const { category_id, owner_id, name, description, starting_price, auction_org_id } = formData;
-
-    if (!category_id || parseInt(category_id) < 1) {
-      setFieldError('category_id', 'ID danh mục phải > 0');
-      isValid = false;
+    // Kiểm tra danh mục
+    if (!category_id || String(category_id).trim() === '') {
+      newErrors.category_id = 'Vui lòng chọn danh mục.';
     }
 
-    if (!owner_id || parseInt(owner_id) < 1) {
-      setFieldError('owner_id', 'ID chủ sở hữu phải > 0');
-      isValid = false;
+    // Kiểm tra chủ sở hữu
+    if (!owner_id || String(owner_id).trim() === '') {
+      newErrors.owner_id = 'Không tìm thấy chủ sở hữu. Vui lòng đăng nhập lại.';
     }
 
-    if (!name.trim() || name.length > 255) {
-      setFieldError('name', 'Tên bắt buộc, max 255 ký tự');
-      isValid = false;
+    // Kiểm tra tên sản phẩm
+    if (!name.trim()) {
+      newErrors.name = 'Tên sản phẩm là bắt buộc.';
+    } else if (name.trim().length > 255) {
+      newErrors.name = 'Tên sản phẩm không được vượt quá 255 ký tự.';
     }
 
-    if (description.length > 1000) {
-      setFieldError('description', 'Mô tả max 1000 ký tự');
-      isValid = false;
+    // Kiểm tra mô tả
+    if (!description.trim()) {
+      newErrors.description = 'Mô tả là bắt buộc.';
+    } else if (description.length > 1000) {
+      newErrors.description = 'Mô tả không được vượt quá 1000 ký tự.';
     }
 
+    // Kiểm tra giá
     const price = parseFloat(starting_price.replace(/\./g, ''));
-    if (!starting_price || price < 1) {
-      setFieldError('starting_price', 'Giá >= 1 VND');
-      isValid = false;
+    if (!starting_price.trim()) {
+      newErrors.starting_price = 'Giá khởi điểm là bắt buộc.';
+    } else if (isNaN(price) || price < 1) {
+      newErrors.starting_price = 'Giá khởi điểm phải là số hợp lệ và lớn hơn 0.';
     }
 
-    // Không kiểm tra auctionOrgs vì đã cố định
-    if (!auction_org_id || parseInt(auction_org_id) !== 1) {
-      setFieldError('auction_org_id', 'Tổ chức đấu giá không hợp lệ');
-      isValid = false;
+    // Kiểm tra tổ chức đấu giá
+    if (!auction_org_id || Number(auction_org_id) !== 1) {
+      newErrors.auction_org_id = 'Tổ chức đấu giá không hợp lệ.';
     }
 
-    return isValid;
+    // 🆕 Yêu cầu phải chọn đủ cả 3 loại file
+    if (!image) {
+      newErrors.image = 'Vui lòng chọn ảnh chính.';
+    }
+    if (!extra_images || extra_images.length === 0) {
+      newErrors.extra_images = 'Vui lòng chọn ít nhất một ảnh bổ sung.';
+    }
+    if (!url_file) {
+      newErrors.url_file = 'Vui lòng chọn tệp đính kèm (PDF, DOC hoặc DOCX).';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   // Show server errors
@@ -282,10 +319,16 @@ const Contact = () => {
     dismissToast(id);
   };
 
-  // Submit handler
+  // Submit handler - Updated with stricter validation
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    clearErrors();
+
+    const isValid = validateForm();
+    if (!isValid) {
+      showToast({ title: 'Cảnh báo', message: 'Vui lòng nhập đầy đủ và hợp lệ tất cả các trường bắt buộc.' });
+      return;
+    }
 
     const token = localStorage.getItem('token');
     const submitData = new FormData();
@@ -322,18 +365,17 @@ const Contact = () => {
 
       if (response.ok) {
         showToast({ title: 'Thành công!', message: 'Tạo thành công! ID: ' + (data.item?.item_id || 'N/A') });
-        setFormData({
+        // Reset form nhưng giữ owner info
+        const resetData = {
           category_id: '',
-          owner_id: '',
-          owner_name: '',
           name: '',
           description: '',
           starting_price: '',
-          auction_org_id: '1',
           image: null,
           extra_images: [],
           url_file: null
-        });
+        };
+        setFormData(prev => ({ ...prev, ...resetData }));
         setDescriptionCount(0);
         setImagePreview(null);
         setExtraImagePreviews([]);
@@ -341,6 +383,7 @@ const Contact = () => {
         if (fileInputRef.current) fileInputRef.current.value = '';
         if (extraImagesRef.current) extraImagesRef.current.value = '';
         if (urlFileRef.current) urlFileRef.current.value = '';
+        // Giữ owner từ localStorage nếu cần submit tiếp
       } else if (response.status === 422 && data.errors) {
         showServerErrors(data.errors);
       } else {
@@ -486,6 +529,7 @@ const Contact = () => {
                 maxLength="1000"
                 value={formData.description}
                 onChange={handleDescriptionChange}
+                required
               ></textarea>
               <div className={styles.charCount}>{descriptionCount}/1000</div>
               {errors.description && <div className={styles.validationError}>{errors.description}</div>}
@@ -533,14 +577,15 @@ const Contact = () => {
                   accept="image/*"
                   onChange={handleImageChange}
                 />
-                <label htmlFor="image_url" className={styles.fileUploadLabel}>Chọn file ảnh chính (tùy chọn)</label>
+                <label htmlFor="image_url" className={styles.fileUploadLabel}>Chọn file ảnh chính (bắt buộc)</label>
               </div>
               {imagePreview && (
                 <div className={styles.imagePreview}>
                   <img src={imagePreview} alt="Preview" className={styles.previewImg} />
                 </div>
               )}
-              {errors.image_url && <div className={styles.validationError}>{errors.image_url}</div>}
+              {/* 🆕 Hiển thị lỗi cho ảnh chính */}
+              {errors.image && <div className={styles.validationError}>{errors.image}</div>}
             </div>
 
             <div className={styles.formGroup}>
@@ -555,7 +600,7 @@ const Contact = () => {
                   multiple
                   onChange={handleExtraImagesChange}
                 />
-                <label htmlFor="extra_images" className={styles.fileUploadLabel}>Chọn nhiều file ảnh bổ sung (tùy chọn)</label>
+                <label htmlFor="extra_images" className={styles.fileUploadLabel}>Chọn ít nhất một file ảnh bổ sung (bắt buộc)</label>
               </div>
               {extraImagePreviews.length > 0 && (
                 <div className={styles.imagePreview}>
@@ -564,6 +609,8 @@ const Contact = () => {
                   ))}
                 </div>
               )}
+              {/* 🆕 Hiển thị lỗi cho extra_images */}
+              {errors.extra_images && <div className={styles.validationError}>{errors.extra_images}</div>}
             </div>
 
             <div className={styles.formGroup}>
@@ -577,16 +624,25 @@ const Contact = () => {
                   accept=".pdf,.doc,.docx"
                   onChange={handleUrlFileChange}
                 />
-                <label htmlFor="url_file" className={styles.fileUploadLabel}>Chọn tệp (PDF, DOC, DOCX) (tùy chọn)</label>
+                <label htmlFor="url_file" className={styles.fileUploadLabel}>Chọn tệp (PDF, DOC, DOCX) (bắt buộc)</label>
               </div>
               {fileNamePreview && (
                 <div className={styles.fileNamePreview}>
                   Tệp đã chọn: {fileNamePreview}
                 </div>
               )}
+              {/* 🆕 Hiển thị lỗi cho url_file */}
+              {errors.url_file && <div className={styles.validationError}>{errors.url_file}</div>}
             </div>
 
-            <button type="submit" className={`${styles.btnSubmit} ${loading ? styles.disabled : ''}`} disabled={loading}>
+            {/* 🆕 BỎ: Hiển thị lỗi upload chung (không cần nữa) */}
+
+            {/* Sửa nút submit: disable nếu !isFormValid hoặc loading */}
+            <button 
+              type="submit" 
+              className={`${styles.btnSubmit} ${(!isFormValid || loading) ? styles.disabled : ''}`} 
+              disabled={!isFormValid || loading}
+            >
               {loading ? 'Đang tạo...' : 'Gửi yêu cầu'}
             </button>
           </form>

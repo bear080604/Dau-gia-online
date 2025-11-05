@@ -1,14 +1,13 @@
 import React from "react";
-import Sidebar from "../admin/Header/Header";
+import AdminLayout from "../admin/Header/AdminLayout";
 import Contract from "../admin/Contract/Contract";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function AdminContract() {
   return (
-    <div>
-      <Sidebar />
+    <AdminLayout>
       <Contract />
-    </div>
+    </AdminLayout>
   );
 }
 

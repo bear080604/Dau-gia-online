@@ -851,17 +851,7 @@ function AuctionSession() {
             onChange={handleSearchChange}
           />
         </div>
-        <div className={styles.userProfile}>
-          <div>
-            <div onClick={togglePopup} style={{ cursor: "pointer" }}>
-              <i className="fa-solid fa-bell fa-lg"></i>
-            </div>
-            <NotificationBell open={open} onClose={() => setOpen(false)} />
-          </div>
-          <div className={styles.profileAvatar}>
-            {user?.full_name ? user.full_name.slice(0, 2).toUpperCase() : 'QT'}
-          </div>
-        </div>
+        
       </div>
       <h1 className={styles.pageTitle}>Quản Lý Phiên Đấu Giá</h1>
       <p className={styles.pageSubtitle}>Thời gian hiện tại: {now.format('YYYY-MM-DD HH:mm:ss')}</p>

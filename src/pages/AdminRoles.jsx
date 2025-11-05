@@ -1,14 +1,13 @@
 import React from "react";
-import Sidebar from "../admin/Header/Header";
+import AdminLayout from "../admin/Header/AdminLayout";
 import Roles from "../admin/Roles/Roles";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function AdminRoles() {
   return (
-    <div>
-      <Sidebar />
+    <AdminLayout>
       <Roles />
-    </div>
+    </AdminLayout>
   );
 }
 

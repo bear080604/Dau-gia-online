@@ -153,16 +153,7 @@ const Report = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className={styles.userProfile}>
-            <div>
-                        <div onClick={togglePopup} style={{ cursor: "pointer" }}>
-                          <i className="fa-solid fa-bell fa-lg"></i>
-                        </div>
-          
-                        <NotificationBell open={open} onClose={() => setOpen(false)} />
-                      </div>
-            <div className={styles.profileAvatar}>QT</div>
-          </div>
+        
         </div>
 
         <h1 className={styles.pageTitle}>Quản Lý Báo Cáo</h1>
