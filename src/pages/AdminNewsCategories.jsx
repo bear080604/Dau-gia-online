@@ -1,14 +1,13 @@
 import React from "react";
-import Sidebar from "../admin/Header/Header";
+import AdminLayout from "../admin/Header/AdminLayout";
 import Categories from "../admin/categories/AdminNewsCategories";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function AdminNewsCategories() {
   return (
-    <div>
-      <Sidebar />
+    <AdminLayout>
       <Categories />
-    </div>
+    </AdminLayout>
   );
 }
 

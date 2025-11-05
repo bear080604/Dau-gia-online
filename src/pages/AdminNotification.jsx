@@ -1,14 +1,13 @@
 import React from "react";
-import Sidebar from "../admin/Header/Header";
+import AdminLayout from "../admin/Header/AdminLayout";
 import Notification from "../admin/Notification/Notification";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function AdminNotification() {
   return (
-    <div>
-      <Sidebar />
+    <AdminLayout>
       <Notification />
-    </div>
+    </AdminLayout>
   );
 }
 

@@ -1,12 +1,13 @@
 import React from "react";
+import AdminLayout from "../admin/Header/AdminLayout";
 import Assetcategories from "../admin/Assets-categories/AdminAssetCategories";
-import Sidebar from "../admin/Header/Header";
+import '@fortawesome/fontawesome-free/css/all.min.css';
+
 function AssetCategoriesPage() {
   return (
-    <div>
-        <Sidebar />
+    <AdminLayout>
       <Assetcategories />
-    </div>
+    </AdminLayout>
   );
 }
 

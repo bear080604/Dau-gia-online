@@ -1,14 +1,13 @@
 import React from "react";
-import Sidebar from "../admin/Header/Header";
+import AdminLayout from "../admin/Header/AdminLayout";
 import Adshowauction from "../admin/adshow-auction/adshowauction";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 function AdminAdshowauction() {
   return (
-    <div>
-      {/* <Sidebar /> */}
+    <AdminLayout>
       <Adshowauction />
-    </div>
+    </AdminLayout>
   );
 }
 

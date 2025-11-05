@@ -89,33 +89,32 @@ const Profile = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+  if (userData.id) {
+    // Chỉ set formData khi userData thực sự thay đổi
     setFormData({
-      fullName: userData.fullName,
-      email: userData.email,
-      phone: userData.phone,
-      address: userData.address,
-      gender: userData.gender,
-      identity_number: userData.identity_number,
-      identity_issue_date: userData.identity_issue_date,
-      identity_issued_by: userData.identity_issued_by,
-      organization_name: userData.organization_name,
-      position: userData.position,
-      tax_code: userData.tax_code,
-      business_license: userData.business_license,
-      business_license_issue_date: userData.business_license_issue_date,
-      business_license_issued_by: userData.business_license_issued_by,
-      auctioneer_card_front: userData.auctioneer_card_front,
-      auctioneer_card_back: userData.auctioneer_card_back,
-      certificate_number: userData.certificate_number,
-      certificate_issue_date: userData.certificate_issue_date,
-      certificate_issued_by: userData.certificate_issued_by,
-      online_contact_method: userData.online_contact_method,
+      fullName: userData.fullName || '',
+      email: userData.email || '',
+      phone: userData.phone || '',
+      address: userData.address || '',
+      gender: userData.gender || 'male',
+      identity_number: userData.identity_number || '',
+      identity_issue_date: userData.identity_issue_date || '',
+      identity_issued_by: userData.identity_issued_by || '',
+      organization_name: userData.organization_name || '',
+      position: userData.position || '',
+      tax_code: userData.tax_code || '',
+      business_license: userData.business_license || null,
+      business_license_issue_date: userData.business_license_issue_date || '',
+      business_license_issued_by: userData.business_license_issued_by || '',
+      auctioneer_card_front: userData.auctioneer_card_front || null,
+      auctioneer_card_back: userData.auctioneer_card_back || null,
+      certificate_number: userData.certificate_number || '',
+      certificate_issue_date: userData.certificate_issue_date || '',
+      certificate_issued_by: userData.certificate_issued_by || '',
+      online_contact_method: userData.online_contact_method || '',
     });
-    setBankData((prev) => ({
-      ...prev,
-      accountHolder: userData.fullName,
-    }));
-  }, [userData]);
+  }
+}, [userData]);
 
   useEffect(() => {
     if (!token) {
@@ -402,7 +401,7 @@ const Profile = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${BASE}favorites`, {
+      const response = await fetch(`${BASE}my-favorites`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -432,13 +431,13 @@ const Profile = () => {
 
       const formattedFavorites = favoritesArray.map((fav, index) => ({
         stt: index + 1,
-        id: fav.product_id || fav.id,
-        tenTaiSan: fav.product?.name || fav.name || 'Chưa có tên',
-        giaKhoiDiem: fav.product?.starting_price
+        id: fav.session_id || fav.id,
+        tenTaiSan: fav.session?.item?.name || 'Chưa có tên',
+        giaKhoiDiem: fav.session?.item?.starting_price
           ? new Intl.NumberFormat('vi-VN', {
               style: 'currency',
               currency: 'VND',
-            }).format(parseFloat(fav.product.starting_price))
+            }).format(parseFloat(fav.session.item.starting_price))
           : 'Chưa có',
         thoiGian: fav.created_at
           ? new Date(fav.created_at).toLocaleString('vi-VN', {
@@ -450,9 +449,8 @@ const Profile = () => {
               timeZone: 'Asia/Ho_Chi_Minh',
             })
           : 'Chưa có',
-        xemChiTiet: `/auction/${fav.product_id || fav.id}`,
-      }));
-
+        xemChiTiet: `/auction-session/${fav.session_id}`,
+    }));
       setFavorites(formattedFavorites);
     } catch (err) {
       setError(err.message || 'Lỗi khi tải danh sách yêu thích');
@@ -640,7 +638,7 @@ const Profile = () => {
   const handleDeleteBank = async () => {
     if (window.confirm('Bạn có chắc chắn muốn xóa tài khoản ngân hàng này?')) {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -697,7 +695,7 @@ const Profile = () => {
         return;
       }
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -755,106 +753,179 @@ const Profile = () => {
   };
 
   const handleSaveProfile = async () => {
-    try {
-      const payload = new FormData();
-      payload.append('full_name', formData.fullName);
-      payload.append('email', formData.email);
-      payload.append('phone', formData.phone);
-      payload.append('address', formData.address);
-      payload.append('gender', formData.gender);
-      payload.append('identity_number', formData.identity_number);
-      payload.append('identity_issue_date', formData.identity_issue_date);
-      payload.append('identity_issued_by', formData.identity_issued_by);
+  try {
+    const payload = new FormData();
+    
+    // === KIỂM TRA VÀ CHỈ THÊM CÁC TRƯỜNG CÓ THAY ĐỔI ===
+    let hasChanges = false;
 
-      if (userData.role_id === 9) {
-        payload.append('organization_name', formData.organization_name);
-        payload.append('position', formData.position);
-        payload.append('tax_code', formData.tax_code);
-        if (formData.business_license) {
-          payload.append('business_license', formData.business_license);
-        }
-        payload.append('business_license_issue_date', formData.business_license_issue_date);
-        payload.append('business_license_issued_by', formData.business_license_issued_by);
+    // Danh sách các trường cơ bản
+    const baseFields = [
+      { field: 'full_name', formKey: 'fullName', userKey: 'fullName' },
+      { field: 'email', formKey: 'email', userKey: 'email' },
+      { field: 'phone', formKey: 'phone', userKey: 'phone' },
+      { field: 'address', formKey: 'address', userKey: 'address' },
+      { field: 'gender', formKey: 'gender', userKey: 'gender' },
+      { field: 'identity_number', formKey: 'identity_number', userKey: 'identity_number' },
+      { field: 'identity_issue_date', formKey: 'identity_issue_date', userKey: 'identity_issue_date' },
+      { field: 'identity_issued_by', formKey: 'identity_issued_by', userKey: 'identity_issued_by' }
+    ];
+
+    // Kiểm tra và thêm các trường có thay đổi
+    baseFields.forEach(({ field, formKey, userKey }) => {
+      const formValue = formData[formKey];
+      const userValue = userData[userKey];
+      
+      // Chỉ thêm nếu có giá trị và khác với giá trị hiện tại
+      if (formValue !== undefined && formValue !== null && formValue !== '' && 
+          formValue !== userValue && formValue !== 'Chưa cập nhật') {
+        payload.append(field, formValue);
+        hasChanges = true;
+        console.log(`Added ${field}:`, formValue);
       }
+    });
 
-      if (userData.role_id === 5) {
-        if (formData.auctioneer_card_front) {
-          payload.append('auctioneer_card_front', formData.auctioneer_card_front);
+    // === XỬ LÝ TRƯỜNG CHO DOANH NGHIỆP (role_id = 9) ===
+    if (userData.role_id === 9) {
+      const businessFields = [
+        { field: 'organization_name', formKey: 'organization_name', userKey: 'organization_name' },
+        { field: 'position', formKey: 'position', userKey: 'position' },
+        { field: 'tax_code', formKey: 'tax_code', userKey: 'tax_code' },
+        { field: 'business_license_issue_date', formKey: 'business_license_issue_date', userKey: 'business_license_issue_date' },
+        { field: 'business_license_issued_by', formKey: 'business_license_issued_by', userKey: 'business_license_issued_by' }
+      ];
+
+      businessFields.forEach(({ field, formKey, userKey }) => {
+        const formValue = formData[formKey];
+        const userValue = userData[userKey];
+        
+        if (formValue !== undefined && formValue !== null && formValue !== '' && 
+            formValue !== userValue && formValue !== 'Chưa cập nhật') {
+          payload.append(field, formValue);
+          hasChanges = true;
+          console.log(`Added business ${field}:`, formValue);
         }
-        if (formData.auctioneer_card_back) {
-          payload.append('auctioneer_card_back', formData.auctioneer_card_back);
-        }
-        payload.append('certificate_number', formData.certificate_number);
-        payload.append('certificate_issue_date', formData.certificate_issue_date);
-        payload.append('certificate_issued_by', formData.certificate_issued_by);
-        payload.append('online_contact_method', formData.online_contact_method);
-      }
-
-      console.log('Sending PUT request to update user profile');
-
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: payload,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('token');
-          setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-          navigate('/login');
-          return;
-        }
-        if (response.status === 422) {
-          const errors = data.errors || {};
-          const errorMessages = Object.values(errors).flat().join(', ');
-          throw new Error(errorMessages || 'Dữ liệu không hợp lệ');
-        }
-        throw new Error(data.message || 'Lỗi khi cập nhật thông tin');
+      // Xử lý file business_license
+      if (formData.business_license instanceof File) {
+        payload.append('business_license', formData.business_license);
+        hasChanges = true;
+        console.log('Added business_license file');
       }
-
-      if (data.status) {
-        setUserData((prev) => ({
-          ...prev,
-          fullName: data.user.full_name || prev.fullName,
-          email: data.user.email || prev.email,
-          phone: data.user.phone || prev.phone,
-          address: data.user.address || prev.address,
-          gender: data.user.gender || prev.gender,
-          identity_number: data.user.identity_number || prev.identity_number,
-          identity_issue_date: data.user.identity_issue_date || prev.identity_issue_date,
-          identity_issued_by: data.user.identity_issued_by || prev.identity_issued_by,
-          idCardFront: data.user.id_card_front || prev.idCardFront,
-          idCardFrontUrl: data.user.id_card_front_url || prev.idCardFrontUrl,
-          idCardBack: data.user.id_card_back || prev.idCardBack,
-          idCardBackUrl: data.user.id_card_back_url || prev.idCardBackUrl,
-          organization_name: data.user.organization_name || prev.organization_name,
-          position: data.user.position || prev.position,
-          tax_code: data.user.tax_code || prev.tax_code,
-          business_license: data.user.business_license || prev.business_license,
-          business_license_issue_date: data.user.business_license_issue_date || prev.business_license_issue_date,
-          business_license_issued_by: data.user.business_license_issued_by || prev.business_license_issued_by,
-          auctioneer_card_front: data.user.auctioneer_card_front || prev.auctioneer_card_front,
-          auctioneer_card_back: data.user.auctioneer_card_back || prev.auctioneer_card_back,
-          certificate_number: data.user.certificate_number || prev.certificate_number,
-          certificate_issue_date: data.user.certificate_issue_date || prev.certificate_issue_date,
-          certificate_issued_by: data.user.certificate_issued_by || prev.certificate_issued_by,
-          online_contact_method: data.user.online_contact_method || prev.online_contact_method,
-        }));
-        alert('Cập nhật thông tin cá nhân thành công!');
-        closeProfilePopup();
-      } else {
-        throw new Error(data.message || 'Lỗi từ server');
-      }
-    } catch (err) {
-      setError(err.message);
-      alert(`Lỗi: ${err.message}`);
     }
-  };
+
+    // === XỬ LÝ TRƯỜNG CHO ĐẤU GIÁ VIÊN (role_id = 5) ===
+    if (userData.role_id === 5) {
+      const auctionFields = [
+        { field: 'certificate_number', formKey: 'certificate_number', userKey: 'certificate_number' },
+        { field: 'certificate_issue_date', formKey: 'certificate_issue_date', userKey: 'certificate_issue_date' },
+        { field: 'certificate_issued_by', formKey: 'certificate_issued_by', userKey: 'certificate_issued_by' },
+        { field: 'online_contact_method', formKey: 'online_contact_method', userKey: 'online_contact_method' }
+      ];
+
+      auctionFields.forEach(({ field, formKey, userKey }) => {
+        const formValue = formData[formKey];
+        const userValue = userData[userKey];
+        
+        if (formValue !== undefined && formValue !== null && formValue !== '' && 
+            formValue !== userValue && formValue !== 'Chưa cập nhật') {
+          payload.append(field, formValue);
+          hasChanges = true;
+          console.log(`Added auction ${field}:`, formValue);
+        }
+      });
+
+      // Xử lý file auctioneer cards
+      if (formData.auctioneer_card_front instanceof File) {
+        payload.append('auctioneer_card_front', formData.auctioneer_card_front);
+        hasChanges = true;
+        console.log('Added auctioneer_card_front file');
+      }
+      
+      if (formData.auctioneer_card_back instanceof File) {
+        payload.append('auctioneer_card_back', formData.auctioneer_card_back);
+        hasChanges = true;
+        console.log('Added auctioneer_card_back file');
+      }
+    }
+
+    // === KIỂM TRA NẾU KHÔNG CÓ THAY ĐỔI ===
+    if (!hasChanges) {
+      alert('Không có thay đổi nào để cập nhật');
+      return;
+    }
+
+    console.log('Sending PUT request to update user profile with changes:', hasChanges);
+
+    // === GỬI REQUEST ===
+    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: payload,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+        navigate('/login');
+        return;
+      }
+      if (response.status === 422) {
+        const errors = data.errors || {};
+        const errorMessages = Object.values(errors).flat().join(', ');
+        throw new Error(errorMessages || 'Dữ liệu không hợp lệ');
+      }
+      if (response.status === 400) {
+        throw new Error(data.message || 'Bad Request: Không có dữ liệu để cập nhật');
+      }
+      throw new Error(data.message || `Lỗi khi cập nhật thông tin: ${response.status}`);
+    }
+
+    if (data.status) {
+      // Cập nhật state với dữ liệu mới từ server
+      setUserData((prev) => ({
+        ...prev,
+        fullName: data.user.full_name || prev.fullName,
+        email: data.user.email || prev.email,
+        phone: data.user.phone || prev.phone,
+        address: data.user.address || prev.address,
+        gender: data.user.gender || prev.gender,
+        identity_number: data.user.identity_number || prev.identity_number,
+        identity_issue_date: data.user.identity_issue_date || prev.identity_issue_date,
+        identity_issued_by: data.user.identity_issued_by || prev.identity_issued_by,
+        idCardFront: data.user.id_card_front || prev.idCardFront,
+        idCardFrontUrl: data.user.id_card_front ? `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}storage/${data.user.id_card_front}` : prev.idCardFrontUrl,
+        idCardBack: data.user.id_card_back || prev.idCardBack,
+        idCardBackUrl: data.user.id_card_back ? `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}storage/${data.user.id_card_back}` : prev.idCardBackUrl,
+        organization_name: data.user.organization_name || prev.organization_name,
+        position: data.user.position || prev.position,
+        tax_code: data.user.tax_code || prev.tax_code,
+        business_license: data.user.business_license || prev.business_license,
+        business_license_issue_date: data.user.business_license_issue_date || prev.business_license_issue_date,
+        business_license_issued_by: data.user.business_license_issued_by || prev.business_license_issued_by,
+        auctioneer_card_front: data.user.auctioneer_card_front || prev.auctioneer_card_front,
+        auctioneer_card_back: data.user.auctioneer_card_back || prev.auctioneer_card_back,
+        certificate_number: data.user.certificate_number || prev.certificate_number,
+        certificate_issue_date: data.user.certificate_issue_date || prev.certificate_issue_date,
+        certificate_issued_by: data.user.certificate_issued_by || prev.certificate_issued_by,
+        online_contact_method: data.user.online_contact_method || prev.online_contact_method,
+      }));
+      alert('Cập nhật thông tin cá nhân thành công!');
+      closeProfilePopup();
+    } else {
+      throw new Error(data.message || 'Lỗi từ server');
+    }
+  } catch (err) {
+    setError(err.message);
+    alert(`Lỗi: ${err.message}`);
+  }
+};
 
   const handleChangePassword = async () => {
     try {
@@ -871,7 +942,7 @@ const Profile = () => {
         return;
       }
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -927,7 +998,7 @@ const Profile = () => {
         formDataUpload.append(side === 'front' ? 'id_card_front' : 'id_card_back', file);
 
         try {
-          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update`, {
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
             method: 'PUT',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -1613,6 +1684,56 @@ const Profile = () => {
             </div>
           </div>
         );
+      case 'favorites':
+  return (
+    <div className={styles.tabPane} id="favorites">
+      <div className={styles.infoSection}>
+        {favorites.length === 0 ? (
+          <p>Không có sản phẩm yêu thích nào.</p>
+        ) : (
+          <table className={styles.contractTable}>
+            <thead>
+              <tr>
+                <th>STT</th>
+                <th>Tên tài sản</th>
+                <th>Giá khởi điểm</th>
+                <th>Thời gian thêm</th>
+                <th>Xem chi tiết</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {favorites.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.stt}</td>
+                  <td>{item.tenTaiSan}</td>
+                  <td className={styles.contractPrice}>{item.giaKhoiDiem}</td>
+                  <td>{item.thoiGian}</td>
+                  <td>
+                    <Link
+                      to={item.xemChiTiet}
+                      className={`${styles.actionBtn} ${styles.viewDetails}`}
+                    >
+                      <i className="fas fa-eye"></i> Xem chi tiết
+                    </Link>
+                  </td>
+                  <td>
+                    <button
+                      className={`${styles.actionBtn} ${styles.btnDanger}`}
+                      // onClick={() => handleRemoveFavorite(item.id)}
+                      title="Xóa khỏi danh sách yêu thích"
+                    >
+                      <i className="fas fa-trash"></i> Xóa
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
 
       default:
         return null;

@@ -448,39 +448,6 @@ const Home = () => {
           ))}
         </Swiper>
 
-        {/* === 1.5. PHIÊN ĐẤU GIÁ THEO DÕI === */}
-        {localStorage.getItem('token') && (
-          <section>
-            <div className="section-title">
-              <p>PHIÊN ĐẤU GIÁ THEO DÕI</p>
-            </div>
-
-            {loading && <p>Đang tải dữ liệu...</p>}
-            {error && <p className="error-message">{error}</p>}
-            {!loading && favorites.length === 0 && !error && <p>Bạn chưa theo dõi phiên đấu giá nào.</p>}
-
-            {!loading && favorites.length > 0 && (
-              <Swiper
-                modules={[Navigation, Pagination]}
-                spaceBetween={20}
-                navigation
-                pagination={{ clickable: true }}
-                breakpoints={{
-                  320: { slidesPerView: 1 },
-                  640: { slidesPerView: 2 },
-                  1024: { slidesPerView: 5 },
-                }}
-                key={favorites.map((s) => s.session_id).join('-')}
-              >
-                {favorites.map((session) => (
-                  <SwiperSlide key={session.session_id}>
-                    <AuctionItem session={{ ...session, is_favorited: true }} onToggleFavorite={handleToggleFavorite} />
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-            )}
-          </section>
-        )}
 
         {/* === 2. DANH SÁCH TÀI SẢN === */}
         <section>
@@ -630,7 +597,7 @@ const Home = () => {
                       {newsItem.title}
                     </h3>
                     <p className="news-date">{newsItem.date}</p>
-                    <p className="news-summary" style={{ minHeight: '72px' }}>
+                    <p className="news-summary">
                       {newsItem.summary}
                     </p>
                   </div>
