@@ -268,20 +268,7 @@ const AdminPanel = () => {
           <i className="fas fa-search"></i>
           <input type="text" placeholder="Tìm kiếm phiên đấu giá..." />
         </div>
-        <div className={styles.userProfile}>
-          <div onClick={togglePopup} style={{ cursor: 'pointer', position: 'relative' }}>
-            <i className="fa-solid fa-bell fa-lg"></i>
-            {notifications.length > 0 && (
-              <span className={styles.notificationBadge}>{notifications.length}</span>
-            )}
-          </div>
-          <NotificationBell
-            open={open}
-            onClose={() => setOpen(false)}
-            notifications={notifications}
-          />
-          <div className={styles.profileAvatar}>QT</div>
-        </div>
+      
       </div>
 
       <h1 className={styles.h1Title}>Quản Lý Hồ Sơ Đăng Ký Đấu Giá</h1>
@@ -396,8 +383,8 @@ const AdminPanel = () => {
               <div><label>Tiền đặt:</label> <span>{Number(paymentDetails.deposit).toLocaleString('vi-VN')} đ</span></div>
               <div><label>Trạng thái:</label> <span>{paymentDetails.status}</span></div>
               <div><label>Lý do từ chối:</label> <span>{paymentDetails.rejectReason}</span></div>
-              <div><label>Hoàn tiền:</label> <span>{paymentDetails.paymentStatus}</span></div>
-              <div className={styles.modalActions}>
+              {/* <div><label>Hoàn tiền:</label> <span>{paymentDetails.paymentStatus}</span></div> */}
+              {/* <div className={styles.modalActions}>
                 <button
                   className={styles.refund}
                   onClick={refundPayment}
@@ -406,7 +393,7 @@ const AdminPanel = () => {
                   <FontAwesomeIcon icon={faUndo} /> Hoàn Tiền
                 </button>
                 <span className={styles.close} onClick={closeDetailModal}>×</span>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
