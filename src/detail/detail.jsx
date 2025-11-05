@@ -1016,7 +1016,7 @@ const Detail = () => {
 
         <div className={`detailsp-tab-content ${activeTab === 1 ? 'detailsp-active' : ''}`}>
           <h3 className='detailsp-document-title'>Các tài liệu pháp lý liên quan đến cuộc đấu giá:</h3>
-          <h3 className='detailsp-document-title'>{process.env.REACT_APP_BASE_URL+auctionItem.item?.url_file || 'N/A'}</h3>
+          <a className='detailsp-document-title' href={process.env.REACT_APP_BASE_URL+auctionItem.item?.url_file}>xem hồ sơ</a>
           <ul className='detailsp-document-list'>{renderDocuments()}</ul>
           <div className='detailsp-notice detailsp-document-notice'>
             <strong>
