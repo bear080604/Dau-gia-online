@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Payment.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import NotificationBell from "../NotificationBell";
 
 function Payment() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,34 +23,38 @@ function Payment() {
     date: '',
     status: 'ChoXuLy'
   });
+    const [open, setOpen] = useState(false);
+  const togglePopup = (e) => {
+    e.stopPropagation(); // tránh đóng liền sau khi mở
+    setOpen((prev) => !prev);
+  };
   const itemsPerPage = 5;
   const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
+useEffect(() => {
+  const fetchContracts = async () => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${API_URL}contracts`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
-  useEffect(() => {
-    const fetchContracts = async () => {
-      try {
-        const token = getAuthToken();
-        const response = await fetch(`${API_URL}contracts`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
+      if (!response.ok) throw new Error('Không thể tải danh sách hợp đồng');
 
-        if (!response.ok) throw new Error('Không thể tải danh sách hợp đồng');
+      const data = await response.json();
+      setContracts(Array.isArray(data) ? data : data.data || []);
+    } catch (err) {
+      console.error('Lỗi khi tải hợp đồng:', err);
+      setContracts([]); // đảm bảo không null
+    }
+  };
 
-        const data = await response.json();
-        // ✅ Fix: Sử dụng data.contracts thay vì data.data
-        setContracts(Array.isArray(data) ? data : data.contracts || []);
-      } catch (err) {
-        console.error('Lỗi khi tải hợp đồng:', err);
-        setContracts([]); // đảm bảo không null
-      }
-    };
+  fetchContracts();
+}, []);
 
-    fetchContracts();
-  }, []);
 
   // Get auth token from localStorage or your auth context
   const getAuthToken = () => {
@@ -103,11 +108,11 @@ function Payment() {
       }
       
       const data = await response.json();
-      // Fix: Handle potential wrapped data structure (e.g., {data: [...]}) consistently
-      const paymentsData = Array.isArray(data) ? data : data.data || [];
+setContracts(Array.isArray(data) ? data : data.data || []);
+
       
       // Transform API data to match component format
-      const transformedPayments = paymentsData.map(payment => {
+      const transformedPayments = data.map(payment => {
         // Parse amount to number if it's a string
         const amountValue = typeof payment.amount === 'string' 
           ? parseFloat(payment.amount) 
@@ -124,7 +129,6 @@ function Payment() {
           amountValue: amountValue,
           date: formatDateTime(payment.payment_date),
           status: getStatusLabel(payment.status),
-          statusValue: payment.status, // Add for robust editing
           statusClass: getStatusClass(payment.status),
           senderId: payment.sender_id,
           receiverId: payment.receiver_id,
@@ -270,7 +274,7 @@ function Payment() {
         method: payment.methodValue,
         amount: payment.amountValue.toString(),
         date: payment.date.slice(0, 16).replace(' ', 'T'),
-        status: payment.statusValue // Use the API key directly for robustness
+        status: payment.status === 'Chờ xử lý' ? 'ChoXuLy' : payment.status === 'Hoàn tất' ? 'HoanTat' : 'ThatBai'
       });
       setSelectedPayment(payment);
     } else {
@@ -399,7 +403,7 @@ function Payment() {
     { action: 'Hoàn tất', processor: 'Manager A', time: '2025-10-03 20:00', note: 'Cập nhật hợp đồng' }
   ];
 
-  // Get unique contract IDs for filter dropdown (nếu cần, nhưng giờ dùng contracts state)
+  // Get unique contract IDs for filter dropdown
   const uniqueContracts = [...new Set(payments.map(p => p.contractIdValue))];
 
   if (loading) {
@@ -451,6 +455,7 @@ function Payment() {
             onChange={handleSearchChange}
           />
         </div>
+      
       </div>
 
       <h1 className={styles.pageTitle}>Quản Lý Thanh Toán</h1>
@@ -464,11 +469,10 @@ function Payment() {
             <option value="Hoàn tất">Hoàn tất</option>
             <option value="Thất bại">Thất bại</option>
           </select>
-          {/* ✅ Uncomment nếu cần filter hợp đồng, dùng contracts state */}
           {/* <select className={styles.filterSelect} value={contractFilter} onChange={handleContractFilterChange}>
             <option value="">Tất cả hợp đồng</option>
-            {contracts.map(c => (
-              <option key={c.contract_id} value={`HD${c.contract_id}`}>#{c.contract_id}</option>
+            {uniqueContracts.map(contract => (
+              <option key={contract} value={contract}>#{contract.replace('HD', 'HD-')}</option>
             ))}
           </select> */}
         </div>
@@ -544,20 +548,30 @@ function Payment() {
             <div className={styles.modalBody}>
               <div>
                 <label htmlFor="contract">Hợp đồng (ID)</label>
-                <select
+                {/* <select
                   id="contract"
                   name="contract"
                   value={paymentForm.contract}
                   onChange={handleFormChange}
                 >
                   <option value="">Chọn hợp đồng</option>
-                  {/* ✅ Giờ map contracts sẽ work vì đã fix fetch */}
-                  {contracts.map(c => (
-                    <option key={c.contract_id} value={`HD${c.contract_id}`}>
-                      #{c.contract_id} - {getStatusLabel(c.status)} - {Number(c.final_price).toLocaleString('vi-VN')}₫
-                    </option>
+                  {uniqueContracts.map(contract => (
+                    <option key={contract} value={contract}>#{contract.replace('HD', 'HD-')}</option>
                   ))}
-                </select>
+                </select> */}
+                <select
+  id="contract"
+  name="contract"
+  value={paymentForm.contract}
+  onChange={handleFormChange}
+>
+  <option value="">Chọn hợp đồng</option>
+  {contracts.map(c => (
+    <option key={c.contract_id} value={`HD${c.contract_id}`}>
+      #{c.contract_id} - {c.status} - {Number(c.final_price).toLocaleString('vi-VN')}₫
+    </option>
+  ))}
+</select>
               </div>
               <div>
                 <label htmlFor="method">Phương thức</label>

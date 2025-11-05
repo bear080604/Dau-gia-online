@@ -383,8 +383,8 @@ const AdminPanel = () => {
               <div><label>Tiền đặt:</label> <span>{Number(paymentDetails.deposit).toLocaleString('vi-VN')} đ</span></div>
               <div><label>Trạng thái:</label> <span>{paymentDetails.status}</span></div>
               <div><label>Lý do từ chối:</label> <span>{paymentDetails.rejectReason}</span></div>
-              <div><label>Hoàn tiền:</label> <span>{paymentDetails.paymentStatus}</span></div>
-              <div className={styles.modalActions}>
+              {/* <div><label>Hoàn tiền:</label> <span>{paymentDetails.paymentStatus}</span></div> */}
+              {/* <div className={styles.modalActions}>
                 <button
                   className={styles.refund}
                   onClick={refundPayment}
@@ -393,7 +393,7 @@ const AdminPanel = () => {
                   <FontAwesomeIcon icon={faUndo} /> Hoàn Tiền
                 </button>
                 <span className={styles.close} onClick={closeDetailModal}>×</span>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
