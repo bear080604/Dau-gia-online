@@ -268,20 +268,7 @@ const AdminPanel = () => {
           <i className="fas fa-search"></i>
           <input type="text" placeholder="Tìm kiếm phiên đấu giá..." />
         </div>
-        <div className={styles.userProfile}>
-          <div onClick={togglePopup} style={{ cursor: 'pointer', position: 'relative' }}>
-            <i className="fa-solid fa-bell fa-lg"></i>
-            {notifications.length > 0 && (
-              <span className={styles.notificationBadge}>{notifications.length}</span>
-            )}
-          </div>
-          <NotificationBell
-            open={open}
-            onClose={() => setOpen(false)}
-            notifications={notifications}
-          />
-          <div className={styles.profileAvatar}>QT</div>
-        </div>
+      
       </div>
 
       <h1 className={styles.h1Title}>Quản Lý Hồ Sơ Đăng Ký Đấu Giá</h1>
