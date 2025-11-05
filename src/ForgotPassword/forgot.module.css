@@ -1,0 +1,97 @@
+/* forgot.module.css */
+.container {
+  min-height: 50vh;
+  background-color: #f9fafb;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.container h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.container form {
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+}
+
+.container label {
+  display: block;
+  color: #374151;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.container input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  outline: none;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  margin-bottom: 1.5rem;
+  box-sizing: border-box;
+}
+
+.container input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+.container input::placeholder {
+  color: #9ca3af;
+}
+
+.container button {
+  width: 100%;
+  padding: 0.75rem;
+  color: #ffffff;
+  background-color: #2772ba;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease-in-out;
+}
+
+.container button:hover {
+  opacity: 0.9;
+}
+
+.success {
+  background-color: #e6ffe6;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+  padding: 10px;
+  border-radius: 6px;
+  text-align: center;
+  margin-top: 1rem;
+  font-weight: 500;
+  max-width: 400px;
+  width: 100%;
+}
+
+.error {
+  background-color: #ffe6e6;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+  padding: 10px;
+  border-radius: 6px;
+  text-align: center;
+  margin-top: 1rem;
+  font-weight: 500;
+  max-width: 400px;
+  width: 100%;
+}
