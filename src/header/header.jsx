@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // ✅ chỉ import 1 lần
+import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../UserContext';
 import axios from 'axios';
 import styles from './header.module.css';
@@ -14,72 +14,37 @@ const Header = () => {
   const [isMobileCategoryActive, setIsMobileCategoryActive] = useState(false);
   const [latestUnpaidContract, setLatestUnpaidContract] = useState(null);
   const [contractData, setContractData] = useState(null);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [notificationError, setNotificationError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
-  const [showAllNotifications, setShowAllNotifications] = useState(false);
-  const [showNotif, setShowNotif] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false); // Popup thông báo
+  const [unreadCount, setUnreadCount] = useState(0); // Số chưa đọc
   const searchRef = useRef(null);
   const navigate = useNavigate();
 
+  // === TOGGLE NOTIFICATION POPUP ===
   const togglePopup = (e) => {
-    e.stopPropagation(); // tránh đóng liền sau khi mở
-    setOpen((prev) => !prev);
-  };
-
-  // Fetch danh mục
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}categories`
-        );
-        if (!response.ok) throw new Error('Failed to fetch categories');
-        const result = await response.json();
-        if (result.status && result.data) {
-          const mappedCategories = result.data.map((category) => ({
-            icon: getIconForCategory(category.name),
-            text: category.name,
-            href: `/category/${category.category_id}`,
-          }));
-          setCategories(mappedCategories);
-        } else throw new Error('Invalid API response');
-      } catch {
-        setCategories([]);
-      }
-    };
-    fetchCategories();
-  }, []);
-
-  const getIconForCategory = (categoryName) => {
-    switch (categoryName) {
-      case 'Bất động sản':
-        return 'fa-home';
-      case 'Xe cộ':
-        return 'fa-car';
-      case 'Đồ cổ':
-        return 'fa-gem';
-      case 'Thiết bị điện tử':
-        return 'fa-laptop';
-      case 'Người yêu':
-        return 'fa-heart';
-      default:
-        return 'fa-folder';
+    e.stopPropagation();
+    const isOpening = !open;
+    setOpen(!open);
+    if (isOpening) {
+      setUnreadCount(0); // Reset badge khi mở popup
     }
   };
 
-  // Fetch thông báo
+  // === CẬP NHẬT UNREAD COUNT TỪ NotificationBell ===
+  const handleUnreadCountChange = (count) => {
+    setUnreadCount(count);
+  };
+
+  // === FETCH UNREAD COUNT (dự phòng nếu không có Socket) ===
   useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!user?.user_id) return setNotifications([]);
+    const fetchUnreadCount = async () => {
+      if (!user?.user_id) return;
       try {
         const token = localStorage.getItem('token');
         const res = await fetch(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}notifications/${user.user_id}`,
+          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}/api/notifications/${user.user_id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -90,30 +55,60 @@ const Header = () => {
         if (!res.ok) throw new Error('Failed to fetch notifications');
         const data = await res.json();
         if (data.status && data.notifications) {
-          setNotifications(
-            data.notifications.map((n) => ({
-              id: n.notification_id,
-              text: n.message,
-              isRead: n.is_read,
-              timestamp: new Date(n.created_at),
-            }))
-          );
+          const unread = data.notifications.filter(n => !n.is_read).length;
+          setUnreadCount(unread);
         }
       } catch (e) {
-        setNotificationError(e.message);
+        console.error('Error fetching unread count:', e);
       }
     };
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000); // Cập nhật mỗi 30s
     return () => clearInterval(interval);
   }, [user]);
 
-  // Fetch contracts
+  // === FETCH DANH MỤC ===
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}/api/categories`
+        );
+        if (!response.ok) throw new Error('Failed to fetch categories');
+        const result = await response.json();
+        if (result.status && result.data) {
+          const mappedCategories = result.data.map((category) => ({
+            icon: getIconForCategory(category.name),
+            text: category.name,
+            href: `/category/${category.category_id}`,
+          }));
+          setCategories(mappedCategories);
+        }
+      } catch {
+        setCategories([]);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  const getIconForCategory = (categoryName) => {
+    const map = {
+      'Bất động sản': 'fa-home',
+      'Xe cộ': 'fa-car',
+      'Đồ cổ': 'fa-gem',
+      'Thiết bị điện tử': 'fa-laptop',
+      'Người yêu': 'fa-heart',
+    };
+    return map[categoryName] || 'fa-folder';
+  };
+
+  // === FETCH CONTRACTS ===
   useEffect(() => {
     const fetchContracts = async () => {
       try {
         const res = await fetch(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}contracts`
+          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}/api/contracts`
         );
         if (!res.ok) throw new Error('Failed to fetch contract data');
         const data = await res.json();
@@ -125,14 +120,14 @@ const Header = () => {
     fetchContracts();
   }, []);
 
-  // Search gợi ý
+  // === SEARCH SUGGESTIONS ===
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (!searchQuery.trim()) return setSuggestions([]);
       try {
         const token = localStorage.getItem('token');
         const res = await axios.get(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}products`,
+          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}/api/products`,
           {
             headers: {
               'Content-Type': 'application/json',
@@ -162,7 +157,7 @@ const Header = () => {
     return () => clearTimeout(t);
   }, [searchQuery]);
 
-  // Clock
+  // === CLOCK ===
   useEffect(() => {
     const tick = () => setCurrentTime(new Date().toLocaleString('vi-VN'));
     tick();
@@ -170,7 +165,7 @@ const Header = () => {
     return () => clearInterval(i);
   }, []);
 
-  // Xử lý hợp đồng chưa thanh toán
+  // === HỢP ĐỒNG CHƯA THANH TOÁN ===
   useEffect(() => {
     if (!user || !contractData?.status) return;
     const userContracts = contractData.contracts
@@ -184,10 +179,9 @@ const Header = () => {
     setLatestUnpaidContract(userContracts[0] || null);
   }, [user, contractData]);
 
-  // Countdown
+  // === COUNTDOWN ===
   useEffect(() => {
-    if (!latestUnpaidContract)
-      return setCountdown('Không có hợp đồng');
+    if (!latestUnpaidContract) return setCountdown('Không có hợp đồng');
     const update = () => {
       const end = new Date(latestUnpaidContract.signed_date);
       end.setHours(end.getHours() + 24);
@@ -203,13 +197,13 @@ const Header = () => {
     return () => clearInterval(i);
   }, [latestUnpaidContract]);
 
-  // Logout
+  // === LOGOUT ===
   const handleLogout = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}logout`,
+      await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}/api/logout`,
         {
           method: 'POST',
           headers: {
@@ -218,28 +212,25 @@ const Header = () => {
           },
         }
       );
-
-      // Không cần chờ API trả về cũng logout client luôn
-      logout(); // xóa user context + localStorage
-      localStorage.removeItem('token');
-
-      navigate('/login');
-      alert('Đăng xuất thành công');
     } catch (err) {
       console.error(err);
+    } finally {
       logout();
       localStorage.removeItem('token');
       navigate('/login');
+      alert('Đăng xuất thành công');
     }
   };
 
-  // Search submit
+  // === SEARCH SUBMIT ===
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) navigate(`/auction-session?q=${encodeURIComponent(searchQuery)}`);
+    if (searchQuery.trim()) {
+      navigate(`/auction-session?q=${encodeURIComponent(searchQuery)}`);
+    }
   };
 
-  // === Mobile Search Toggle ===
+  // === MOBILE SEARCH TOGGLE ===
   const toggleMobileSearch = () => {
     setIsMobileSearchActive(!isMobileSearchActive);
   };
@@ -259,7 +250,7 @@ const Header = () => {
     return () => document.removeEventListener('click', handleClickOutsideSearch);
   }, [isMobileSearchActive]);
 
-  // === Mobile Navigation ===
+  // === MOBILE NAVIGATION ===
   const openMobileNav = () => {
     setIsMobileNavActive(true);
     setIsMobileSearchActive(false);
@@ -301,14 +292,59 @@ const Header = () => {
         <div className={styles.authLinks}>
           {user ? (
             <>
-            <div>
-              <div onClick={togglePopup} style={{ cursor: "pointer" }}>
-                <i className="fa-solid fa-bell fa-lg"></i>
-              </div>
+              {/* ICON CHUÔNG + BADGE */}
+              <div style={{ position: "relative", display: "inline-block" }}>
+                <div
+                  onClick={togglePopup}
+                  style={{
+                    cursor: "pointer",
+                    position: "relative",
+                    padding: "8px",
+                    borderRadius: "50%",
+                    background: open ? "#f1f5f9" : "transparent",
+                    transition: "0.2s",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <i className="fa-solid fa-bell fa-lg" style={{ color: "#475569" }}></i>
 
-              <NotificationBell open={open} onClose={() => setOpen(false)} />
-            </div>
-                
+                  {/* BADGE SỐ CHƯA ĐỌC */}
+                  {unreadCount > 0 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "-4px",
+                        right: "-4px",
+                        background: "#ef4444",
+                        color: "white",
+                        fontSize: "10px",
+                        fontWeight: "600",
+                        minWidth: "18px",
+                        height: "18px",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "0 4px",
+                        border: "2px solid white",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                        animation: unreadCount > 0 ? "pulse 1.5s infinite" : "none",
+                      }}
+                    >
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                </div>
+
+                {/* POPUP THÔNG BÁO */}
+                <NotificationBell
+                  open={open}
+                  onClose={() => setOpen(false)}
+                  onUnreadCountChange={handleUnreadCountChange} // Cập nhật badge
+                />
+              </div>
 
               <span className={styles.annn}>Xin chào, {user.full_name}</span>
               <div className={styles.userIconContainer}>
@@ -372,20 +408,21 @@ const Header = () => {
           <button className={styles.mobileSearchToggle} onClick={toggleMobileSearch}>
             <i className="fa fa-search" />
           </button>
-            <form onSubmit={handleSearchSubmit} className={`${styles.mobileSearchBox} ${isMobileSearchActive ? styles.active : ''}`}>
-              <input
-                placeholder="Nhập tên tài sản..."
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <button type="submit">
-                <i className="fa fa-search" />
-              </button>
-            </form>
+          <form
+            onSubmit={handleSearchSubmit}
+            className={`${styles.mobileSearchBox} ${isMobileSearchActive ? styles.active : ''}`}
+          >
+            <input
+              placeholder="Nhập tên tài sản..."
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button type="submit">
+              <i className="fa fa-search" />
+            </button>
+          </form>
         </div>
-
-
 
         <div className={styles.headerRight}>
           {user && latestUnpaidContract && (
@@ -487,6 +524,15 @@ const Header = () => {
           ))}
         </ul>
       </div>
+
+      {/* === HIỆU ỨNG NHẤP NHÁY KHI CÓ TB MỚI === */}
+      <style jsx>{`
+        @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.3); }
+          100% { transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 };
