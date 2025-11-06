@@ -18,7 +18,7 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [open, setOpen] = useState(false); // Popup thông báo
-  const [unreadCount, setUnreadCount] = useState(0); // Số chưa đọc
+  const [unreadCount, setUnreadCount] = useState(0); // Số chưa đọc (nhận từ NotificationBell)
   const searchRef = useRef(null);
   const navigate = useNavigate();
 
@@ -37,60 +37,61 @@ const Header = () => {
     setUnreadCount(count);
   };
 
-  // === FETCH UNREAD COUNT (dự phòng nếu không có Socket) ===
-  useEffect(() => {
-    const fetchUnreadCount = async () => {
-      if (!user?.user_id) return;
-      try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}notifications/${user.user_id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: 'application/json',
-            },
-          }
-        );
-        if (!res.ok) throw new Error('Failed to fetch notifications');
-        const data = await res.json();
-        if (data.status && data.notifications) {
-          const unread = data.notifications.filter(n => !n.is_read).length;
-          setUnreadCount(unread);
-        }
-      } catch (e) {
-        console.error('Error fetching unread count:', e);
-      }
-    };
+  // === FETCH DANH MỤC (chỉ 1 lần khi mount) ===
+  // useEffect(() => {
+  //   const fetchCategories = async () => {
+  //     try {
+  //       const response = await fetch(
+  //         `${process.env.REACT_APP_API_URL}categories`
+  //       );
+  //       if (!response.ok) throw new Error('Failed to fetch categories');
+  //       const result = await response.json();
+  //       if (result.status && result.data) {
+  //         const mappedCategories = result.data.map((category) => ({
+  //           icon: getIconForCategory(category.name),
+  //           text: category.name,
+  //           href: `/category/${category.category_id}`,
+  //         }));
+  //         setCategories(mappedCategories);
+  //       }
+  //     } catch {
+  //       setCategories([]);
+  //     }
+  //   };
+  //   fetchCategories();
+  // }, []); // Dependency rỗng: chỉ chạy 1 lần
+  const mountedRef = useRef(false);
 
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000); // Cập nhật mỗi 30s
-    return () => clearInterval(interval);
-  }, [user]);
+useEffect(() => {
+  // Nếu đã fetch, return ngay
+  if (mountedRef.current) return;
 
-  // === FETCH DANH MỤC ===
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}categories`
-        );
-        if (!response.ok) throw new Error('Failed to fetch categories');
-        const result = await response.json();
-        if (result.status && result.data) {
-          const mappedCategories = result.data.map((category) => ({
-            icon: getIconForCategory(category.name),
-            text: category.name,
-            href: `/category/${category.category_id}`,
-          }));
-          setCategories(mappedCategories);
-        }
-      } catch {
-        setCategories([]);
+  mountedRef.current = true; // Đánh dấu đã mount
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}categories`
+      );
+      if (!response.ok) throw new Error('Failed to fetch categories');
+      const result = await response.json();
+      if (result.status && result.data) {
+        const mappedCategories = result.data.map((category) => ({
+          icon: getIconForCategory(category.name),
+          text: category.name,
+          href: `/category/${category.category_id}`,
+        }));
+        setCategories(mappedCategories);
       }
-    };
-    fetchCategories();
-  }, []);
+    } catch (err) {
+      console.error("Fetch categories error:", err);
+      setCategories([]);
+    }
+  };
+
+  fetchCategories();
+}, []); // Dependency rỗng
+
 
   const getIconForCategory = (categoryName) => {
     const map = {
@@ -103,22 +104,45 @@ const Header = () => {
     return map[categoryName] || 'fa-folder';
   };
 
-  // === FETCH CONTRACTS ===
-  useEffect(() => {
-    const fetchContracts = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}contracts`
-        );
-        if (!res.ok) throw new Error('Failed to fetch contract data');
-        const data = await res.json();
-        setContractData(data);
-      } catch {
-        setContractData({ status: false, contracts: [] });
-      }
-    };
-    fetchContracts();
-  }, []);
+  // === FETCH CONTRACTS (chỉ 1 lần khi mount) ===
+  // useEffect(() => {
+  //   const fetchContracts = async () => {
+  //     try {
+  //       const res = await fetch(
+  //         `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}contracts`
+  //       );
+  //       if (!res.ok) throw new Error('Failed to fetch contract data');
+  //       const data = await res.json();
+  //       setContractData(data);
+  //     } catch {
+  //       setContractData({ status: false, contracts: [] });
+  //     }
+  //   };
+  //   fetchContracts();
+  // }, []); // Dependency rỗng: chỉ chạy 1 lần
+const contractsMountedRef = useRef(false);
+
+useEffect(() => {
+  if (contractsMountedRef.current) return; // đã fetch trước đó, bỏ qua
+
+  contractsMountedRef.current = true; // đánh dấu đã fetch
+
+  const fetchContracts = async () => {
+    try {
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL}contracts`
+      );
+      if (!res.ok) throw new Error('Failed to fetch contract data');
+      const data = await res.json();
+      setContractData(data);
+    } catch (err) {
+      console.error('Fetch contracts error:', err);
+      setContractData({ status: false, contracts: [] });
+    }
+  };
+
+  fetchContracts();
+}, []); // Dependency rỗng
 
   // === SEARCH SUGGESTIONS ===
   useEffect(() => {
@@ -342,7 +366,7 @@ const Header = () => {
                 <NotificationBell
                   open={open}
                   onClose={() => setOpen(false)}
-                  onUnreadCountChange={handleUnreadCountChange} // Cập nhật badge
+                  onUnreadCountChange={handleUnreadCountChange} // Cập nhật badge từ NotificationBell
                 />
               </div>
 
