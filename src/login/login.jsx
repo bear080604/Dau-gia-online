@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './login.module.css';
 import { Eye, EyeOff } from 'lucide-react';
 import { useUser } from '../UserContext';
-import { login as loginService } from '../services/authService';
+import { useLocation } from 'react-router-dom';
 
 function LoginForm() {
   const { login } = useUser();
@@ -13,6 +13,22 @@ function LoginForm() {
     password: ''
   });
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const location = useLocation();
+
+  // ✅ Đọc message từ URL (nếu có)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const msg = params.get('message');
+    if (msg) {
+      if (msg.toLowerCase().includes('thành công')) {
+        setSuccessMessage(msg);
+      } else {
+        setErrorMessage(msg);
+      }
+    }
+  }, [location]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -20,7 +36,8 @@ function LoginForm() {
       ...prev,
       [name]: value
     }));
-    setErrorMessage(''); // Xóa lỗi khi người dùng nhập
+    setErrorMessage('');
+    setSuccessMessage('');
   };
 
   const handleCheckboxChange = (e) => {
@@ -46,10 +63,17 @@ function LoginForm() {
         rememberMe: rememberMe ? true : false
       });
 
-      if (result && result.user) {
-        const token = result.token || null;
-        if (token) {
-          localStorage.setItem('authToken', token);
+      if (response.ok) {
+        const result = await response.json();
+        if (result && result.user) {
+          const token = result.token || null;
+          if (token) {
+            localStorage.setItem('authToken', token);
+          }
+          login(result.user, token);
+          window.location.href = result.user.role_id === 2 ? '/admin' : '/';
+        } else {
+          setErrorMessage('Đăng nhập thất bại: Dữ liệu người dùng không hợp lệ.');
         }
         login(result.user, token);
         // Giả sử role_id 2 là Admin, 3 là NhanVien (dựa trên bảng role bạn cung cấp)
@@ -67,15 +91,27 @@ function LoginForm() {
       <div className={styles.wrapper}>
         {/* Header */}
         <div className={styles.header}>
-          <h1 className={styles.title}>
-            ĐĂNG NHẬP
-          </h1>
+          <h1 className={styles.title}>ĐĂNG NHẬP</h1>
           <div className={styles.divider}>
             <div className={styles.line}></div>
             <div className={styles.symbol}>❈</div>
             <div className={styles.line}></div>
           </div>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className={styles.successMessage}>
+            {successMessage}
+          </div>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <div className={styles.errorMessage}>
+            {errorMessage}
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -119,14 +155,8 @@ function LoginForm() {
               </button>
             </div>
           </div>
-          {/* Error Message */}
-          {errorMessage && (
-            <div className={styles.errorMessage}>
-              {errorMessage}
-            </div>
-          )}
 
-          {/* Remember me and Forgot password */}
+          {/* Remember me & Forgot password */}
           <div className={styles.options}>
             <label className={styles.checkboxLabel}>
               <input
@@ -137,10 +167,10 @@ function LoginForm() {
               />
               <span className={styles.checkboxText}>Nhớ mật khẩu</span>
             </label>
-            <a href="#" className={styles.forgotLink}>Quên mật khẩu?</a>
+            <a href="/forgot-password" className={styles.forgotLink}>Quên mật khẩu?</a>
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <div className={styles.submitContainer}>
             <button type="submit" className={styles.submitButton}>
               Đăng nhập

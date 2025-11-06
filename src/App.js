@@ -23,6 +23,9 @@ import News from './pages/news';
 import NewsDetail from './pages/newsDetail';
 import GuidePage from './pages/guide';
 import CooperationPage from './pages/cooperation';
+import ForgotPassword from './pages/ForgotPassword';
+import ConfirmReset from './pages/ConfirmReset';
+import ResetPassword from './pages/ResetPassword';
 
 // Admin pages
 import Admindashboard from './pages/AdminDashboard';
@@ -100,6 +103,9 @@ function AppContent() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/guide" element={<GuidePage />} />
             <Route path="/cooperation" element={<CooperationPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/confirm-reset/:token" element={<ConfirmReset />} />\
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
 
             {/* 🔐 Auth Routes (ngăn nếu đã login) */}
             <Route

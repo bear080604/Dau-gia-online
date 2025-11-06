@@ -1,4 +1,4 @@
-/* login.module.css */
+/* reset.module.css */
 .container {
   min-height: 50vh;
   background-color: #f9fafb;
@@ -16,35 +16,12 @@
   padding-right: 1rem;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
 .title {
   font-size: 1.5rem;
   font-weight: bold;
   color: #1f2937;
-  margin-bottom: 0.5rem;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.line {
-  width: 4rem;
-  height: 0.125rem;
-  background-color: #d1d5db;
-}
-
-.symbol {
-  margin-left: 0.5rem;
-  margin-right: 0.5rem;
-  color: #9ca3af;
-  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  text-align: center;
 }
 
 .form {
@@ -73,12 +50,13 @@
   width: 100%;
   padding-left: 1rem;
   padding-right: 1rem;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
   outline: none;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  box-sizing: border-box;
 }
 
 .input:focus {
@@ -90,61 +68,9 @@
   color: #9ca3af;
 }
 
-.passwordContainer {
-  position: relative;
-}
-
-.eyeButton {
-  position: absolute;
-  right: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #6b7280;
-  cursor: pointer;
-  transition: color 0.15s ease-in-out;
-}
-
-.eyeButton:hover {
-  color: #374151;
-}
-
-.options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.checkboxLabel {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  color: #374151;
-}
-
-.checkbox {
-  margin-right: 0.5rem;
-  accent-color: #2772ba;
-}
-
-.checkboxText {
-  font-size: 0.875rem;
-}
-
-.forgotLink {
-  color: #2772ba;
-  text-decoration: none;
-  font-size: 0.875rem;
-}
-
-.forgotLink:hover {
-  text-decoration: underline;
-}
-
 .submitContainer {
   text-align: center;
+  margin-top: 1.5rem;
 }
 
 .submitButton {
@@ -163,9 +89,6 @@
 .submitButton:hover {
   opacity: 0.9;
 }
-.errorMessage{
-  color: #ef4444;
-}
 
 .successMessage {
   background-color: #e6ffe6;
@@ -174,7 +97,7 @@
   padding: 10px;
   border-radius: 6px;
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 1rem;
   font-weight: 500;
 }
 
@@ -185,6 +108,18 @@
   padding: 10px;
   border-radius: 6px;
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 1rem;
   font-weight: 500;
+}
+
+.infoMessage {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #90caf9;
+  padding: 10px;
+  border-radius: 6px;
+  text-align: center;
+  margin: 2rem auto;
+  font-weight: 500;
+  max-width: 590px;
 }
