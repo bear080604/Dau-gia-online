@@ -3,6 +3,7 @@ import styles from './login.module.css';
 import { Eye, EyeOff } from 'lucide-react';
 import { useUser } from '../UserContext';
 import { useLocation } from 'react-router-dom';
+import { login as loginService } from '../services/authService';
 
 function LoginForm() {
   const { login } = useUser();
@@ -17,15 +18,16 @@ function LoginForm() {
 
   const location = useLocation();
 
-  // ✅ Đọc message từ URL (nếu có)
+  // Đọc message từ URL
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const msg = params.get('message');
     if (msg) {
-      if (msg.toLowerCase().includes('thành công')) {
-        setSuccessMessage(msg);
+      const decoded = decodeURIComponent(msg);
+      if (decoded.toLowerCase().includes('thành công')) {
+        setSuccessMessage(decoded);
       } else {
-        setErrorMessage(msg);
+        setErrorMessage(decoded);
       }
     }
   }, [location]);
@@ -46,6 +48,8 @@ function LoginForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage('');
+    setSuccessMessage('');
 
     if (!formData.email.trim()) {
       setErrorMessage('Vui lòng nhập email.');
@@ -57,32 +61,39 @@ function LoginForm() {
     }
 
     try {
-      const result = await loginService({
+      // Gọi service → trả về { user, token }
+      const { user, token } = await loginService({
         email: formData.email,
         password: formData.password,
-        rememberMe: rememberMe ? true : false
+        rememberMe
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result && result.user) {
-          const token = result.token || null;
-          if (token) {
-            localStorage.setItem('authToken', token);
-          }
-          login(result.user, token);
-          window.location.href = result.user.role_id === 2 ? '/admin' : '/';
-        } else {
-          setErrorMessage('Đăng nhập thất bại: Dữ liệu người dùng không hợp lệ.');
-        }
-        login(result.user, token);
-        // Giả sử role_id 2 là Admin, 3 là NhanVien (dựa trên bảng role bạn cung cấp)
-        window.location.href = result.user.role_id === 2 ? '/admin' : '/';
-      } else {
-        setErrorMessage('Đăng nhập thất bại: Dữ liệu người dùng không hợp lệ.');
+      // Kiểm tra dữ liệu hợp lệ
+      if (!user) {
+        setErrorMessage('Đăng nhập thất bại: Không nhận được thông tin người dùng.');
+        return;
       }
+
+      // Lưu token nếu có
+      if (token) {
+        if (rememberMe) {
+          localStorage.setItem('authToken', token);
+        } else {
+          sessionStorage.setItem('authToken', token);
+        }
+      }
+
+      // Cập nhật context
+      login(user, token);
+
+      // Chuyển hướng theo role
+      const redirectTo = user.role_id === 2 ? '/admin' : '/';
+      window.location.href = redirectTo;
+
     } catch (err) {
-      setErrorMessage(err.response?.data?.message || 'Email hoặc mật khẩu không đúng');
+      // err có thể là Error hoặc AxiosError
+      const msg = err.response?.data?.message || err.message || 'Email hoặc mật khẩu không đúng';
+      setErrorMessage(msg);
     }
   };
 
@@ -126,7 +137,7 @@ function LoginForm() {
               value={formData.email}
               onChange={handleInputChange}
               className={styles.input}
-              placeholder="Thư điện tử"
+              placeholder="Nhập email của bạn"
               required
             />
           </div>
@@ -143,13 +154,14 @@ function LoginForm() {
                 value={formData.password}
                 onChange={handleInputChange}
                 className={styles.input}
-                placeholder="Mật khẩu"
+                placeholder="Nhập mật khẩu"
                 required
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() => setShowPassword(prev => !prev)}
                 className={styles.eyeButton}
+                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -167,7 +179,9 @@ function LoginForm() {
               />
               <span className={styles.checkboxText}>Nhớ mật khẩu</span>
             </label>
-            <a href="/forgot-password" className={styles.forgotLink}>Quên mật khẩu?</a>
+            <a href="/forgot-password" className={styles.forgotLink}>
+              Quên mật khẩu?
+            </a>
           </div>
 
           {/* Submit */}
@@ -182,4 +196,4 @@ function LoginForm() {
   );
 }
 
-export default LoginForm;
+export default LoginForm; 
