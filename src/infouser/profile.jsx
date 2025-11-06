@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { getCurrentUser } from '../services/userService';
+import { getContracts } from '../services/contractService';
+import api from '../services/api';
 import { useNavigate, Link } from 'react-router-dom';
 import { useUser } from '../UserContext';
 import Loading from '../components/Loading';
@@ -127,28 +130,8 @@ const Profile = () => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        const data = await response.json();
-        console.log('API /user response:', data);
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            localStorage.removeItem('token');
-            setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-            navigate('/login');
-            return;
-          }
-          throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
-        }
-
-        if (data.status && data.user) {
+        const data = await getCurrentUser();
+        if (data?.status && data?.user) {
           const newUserData = {
             id: data.user.user_id || null,
             fullName: data.user.full_name || 'Chưa cập nhật',
@@ -203,13 +186,11 @@ const Profile = () => {
             online_contact_method: data.user.online_contact_method || 'Chưa cập nhật',
           };
           setUserData(newUserData);
-          console.log('Set userData:', newUserData);
         } else {
           throw new Error('Định dạng dữ liệu không hợp lệ');
         }
       } catch (err) {
         setError(err.message);
-        console.error('Error fetching user data:', err);
       } finally {
         setLoading(false);
       }
@@ -255,27 +236,10 @@ const Profile = () => {
     const fetchContracts = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}contracts`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            localStorage.removeItem('token');
-            setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-            navigate('/login');
-            return;
-          }
-          throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        if (data.status && Array.isArray(data.contracts)) {
-          const filteredContracts = data.contracts.filter((contract) => contract.winner_id === userData.id);
+        const data = await getContracts(userData.id);
+        const list = data.contracts || data.data || [];
+        if (data.status && Array.isArray(list)) {
+          const filteredContracts = list.filter((contract) => contract.winner_id === userData.id);
           const formattedContracts = filteredContracts.map((contract) => ({
             id: contract.contract_id,
             sessionName: contract.session.item.name,
@@ -319,33 +283,20 @@ const Profile = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}products?owner_id=${userData.id}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-      console.log('API /products response:', data);
-
-      if (!response.ok) {
-        if (response.status === 401) {
+      const { data } = await api.get(`products?owner_id=${userData.id}`);
+      
+      if (!data) {
+        if (false) {
           localStorage.removeItem('token');
           setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
           navigate('/login');
           return;
         }
-        if (response.status === 404) {
+        if (false) {
           setMyAuctions([]);
           throw new Error('Không tìm thấy sản phẩm nào của bạn.');
         }
-        throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
+        throw new Error(`Lỗi API: Không có dữ liệu`);
       }
 
       const items = Array.isArray(data) ? data : data.data || [];
@@ -402,28 +353,7 @@ const Profile = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${BASE}my-favorites`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.status === 401) {
-        localStorage.removeItem('token');
-        setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-        navigate('/login');
-        return;
-      }
-
-      if (!response.ok) {
-        const err = await response.text();
-        throw new Error(`Lỗi API /favorites: ${response.status} - ${err}`);
-      }
-
-      const data = await response.json();
+      const { data } = await api.get('my-favorites');
       const favoritesArray = Array.isArray(data) ? data : data.favorites || data.data || [];
 
       if (!Array.isArray(favoritesArray)) {
@@ -696,17 +626,18 @@ const Profile = () => {
         return;
       }
 
+      const form = new FormData();
+      form.append('_method', 'PUT');
+      form.append('bank_name', bankData.bankName);
+      form.append('bank_account', bankData.bankAccount);
+      form.append('bank_branch', bankData.bankBranch);
+
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          bank_name: bankData.bankName,
-          bank_account: bankData.bankAccount,
-          bank_branch: bankData.bankBranch,
-        }),
+        body: form,
       });
 
       const data = await response.json();
@@ -859,9 +790,10 @@ const Profile = () => {
 
     console.log('Sending PUT request to update user profile with changes:', hasChanges);
 
-    // === GỬI REQUEST ===
+    // === GỬI REQUEST === (dùng POST + _method=PUT để tương thích Laravel)
+    payload.append('_method', 'PUT');
     const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
-      method: 'PUT',
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -943,16 +875,17 @@ const Profile = () => {
         return;
       }
 
+      const form = new FormData();
+      form.append('_method', 'PUT');
+      form.append('password', passwordData.newPassword);
+      form.append('password_confirmation', passwordData.confirmPassword);
+
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          password: passwordData.newPassword,
-          password_confirmation: passwordData.confirmPassword,
-        }),
+        body: form,
       });
 
       const data = await response.json();
@@ -999,13 +932,14 @@ const Profile = () => {
         formDataUpload.append(side === 'front' ? 'id_card_front' : 'id_card_back', file);
 
         try {
-          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-            body: formDataUpload,
-          });
+        formDataUpload.append('_method', 'PUT');
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formDataUpload,
+        });
 
           const data = await response.json();
 
@@ -2268,7 +2202,7 @@ const Profile = () => {
             </div>
             <div className={styles.popupBody}>
               {bankError && <p className={styles.error}>{bankError}</p>}
-              {loading && <p>Đang tải danh sách ngân hàng...</p>}
+              {loading && <Loading message="Đang tải danh sách ngân hàng..." />}
               <div className={styles.bankForm}>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Ngân hàng</label>

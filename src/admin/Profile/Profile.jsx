@@ -3,6 +3,7 @@ import styles from './Profile.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import axios from 'axios';
 import NotificationBell from "../NotificationBell";
+import Loading from '../../components/Loading';
 
 function Profile() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -320,7 +321,7 @@ function Profile() {
     return buttons;
   };
 
-  if (loading) return <div>Đang tải...</div>;
+  if (loading) return <Loading message="Đang tải..." />;
   if (error) return <div>{error}</div>;
 
   return (

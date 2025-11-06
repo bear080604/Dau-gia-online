@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import io from 'socket.io-client';
+import Loading from '../components/Loading';
 import styles from './auction.module.css';
 import { UserContext } from '../UserContext';
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -79,6 +80,7 @@ const AuctionPage = () => {
       transports: ['websocket'],
     });
     socketRef.current = socket;
+
 
     socket.on('connect', () => {
       socket.emit('join.channel', `auction-session.${id}`);
@@ -257,6 +259,14 @@ const AuctionPage = () => {
       setError('Vui lòng đăng nhập để xem thông tin đấu giá');
       setLoading(false);
     }
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.emit('leave.channel', `auction-session.${id}`);
+        socketRef.current.emit('leave.channel', 'auction-profiles');
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
   }, [id, token]);
 
   // Fetch categories
@@ -507,7 +517,7 @@ const AuctionPage = () => {
   };
 
   if (loading) {
-    return <div className={styles.container}>Đang tải...</div>;
+    return <div className={styles.container}><Loading message="Đang tải dữ liệu..." /></div>;
   }
 
   if (error) {
