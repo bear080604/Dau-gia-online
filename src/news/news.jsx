@@ -91,7 +91,7 @@ const News = () => {
       {isLoading ? (
         <div className={styles.loadingContainer}>
           <div className={styles.spinner}></div>
-          <p>Đang tải...</p>
+        <p><span className={styles.loadingIcon}></span></p>
         </div>
       ) : (
         <div className={styles.layout}>

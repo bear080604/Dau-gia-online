@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
+import Loading from '../components/Loading';
 import './detail.css';
 
 const Detail = () => {
@@ -809,7 +810,7 @@ const Detail = () => {
   if (loading) {
     return (
       <div className='detailsp-container'>
-        <div className='detailsp-loading'>Đang tải dữ liệu...</div>
+        <div className='detailsp-loading'><Loading message="Đang tải dữ liệu..." /></div>
       </div>
     );
   }

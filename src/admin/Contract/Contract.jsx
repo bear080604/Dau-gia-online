@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Loading from '../../components/Loading';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import styles from './Contract.module.css';
 import NotificationBell from "../NotificationBell";
@@ -252,7 +253,7 @@ function Contract() {
     return pages;
   };
 
-  if (loading) return <div>Đang tải...</div>;
+  if (loading) return <Loading message="Đang tải dữ liệu..." />;
   if (error) return <div>{error}</div>;
 
   return (
@@ -307,7 +308,7 @@ function Contract() {
             <th>Tên phiên</th>
             <th>Người thắng</th>
             <th>Giá cuối</th>
-            {/* <th>Ngày ký</th> */}
+            <th>Ngày ký</th>
             <th>Trạng thái</th>
             <th>File Hợp Đồng</th>
             <th>Hành động</th>
@@ -320,7 +321,7 @@ function Contract() {
               <td data-label="Tên phiên">{contract.sessionName}</td>
               <td data-label="Người thắng">{contract.winner}</td>
               <td data-label="Giá cuối">{contract.finalPrice}</td>
-              {/* <td data-label="Ngày ký">{contract.signedDate}</td> */}
+              <td data-label="Ngày ký">{contract.signedDate}</td>
               <td data-label="Trạng thái">
                 <span className={`${styles.statusBadge} ${styles[contract.statusClass]}`}>
                   {contract.paymentStatus === 'ChoThanhToan'

@@ -6,6 +6,7 @@ import { useUser } from '../../UserContext';
 import moment from 'moment-timezone';
 import { Link } from 'react-router-dom';
 import NotificationBell from "../NotificationBell";
+import Loading from '../../components/Loading';
 import {
   getAuctionSessions,
   getAuctionSessionById,
@@ -906,7 +907,7 @@ function AuctionSession() {
         </button>
       </div>
       {loading ? (
-        <p>Đang tải dữ liệu...</p>
+        <Loading />
       ) : error ? (
         <p className={styles.error}>{error}</p>
       ) : currentSessions.length === 0 ? (
