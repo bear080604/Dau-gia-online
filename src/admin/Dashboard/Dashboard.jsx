@@ -34,7 +34,7 @@ const Dashboard = () => {
           fetch(`${process.env.REACT_APP_API_URL}contracts`),
           fetch(`${process.env.REACT_APP_API_URL}showuser`),
           fetch(`${process.env.REACT_APP_API_URL}products`),
-          fetch(`${process.env.REACT_APP_API_URL}showbid`)
+          fetch(`${process.env.REACT_APP_API_URL}showbids`)
         ]);
 
         if (!sessionsRes.ok) throw new Error(`Sessions API error: ${sessionsRes.status}`);
