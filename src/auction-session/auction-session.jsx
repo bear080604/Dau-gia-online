@@ -49,9 +49,10 @@ function AuctionSession() {
     return statusMap[status] || 'Chưa cập nhật';
   };
 
-  // Kết nối Socket.io
+  // Kết nối Socket.io (tránh kết nối trùng)
   useEffect(() => {
-    const socket = io(process.env.REACT_APP_SOCKET_URL);
+    if (socketRef.current) return;
+    const socket = io(process.env.REACT_APP_SOCKET_URL, { transports: ['websocket'] });
     socketRef.current = socket;
 
     socket.on('connect', () => {
@@ -94,8 +95,11 @@ function AuctionSession() {
     socket.on('error', (err) => console.error('❌ Lỗi Socket.io:', err));
 
     return () => {
-      socket.emit('leave.channel', 'auction-sessions');
-      socket.disconnect();
+      if (socketRef.current) {
+        socketRef.current.emit('leave.channel', 'auction-sessions');
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
     };
   }, []);
 
@@ -207,7 +211,7 @@ function AuctionSession() {
     return (
       <div className={styles.container}>
         <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-          Đang tải dữ liệu phiên đấu giá...
+          <span>Đang tải dữ liệu phiên đấu giá...</span>
         </div>
       </div>
     );

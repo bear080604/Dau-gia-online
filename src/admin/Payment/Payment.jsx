@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Payment.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import Loading from '../../components/Loading';
 
 function Payment() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -403,14 +404,7 @@ function Payment() {
   const uniqueContracts = [...new Set(payments.map(p => p.contractIdValue))];
 
   if (loading) {
-    return (
-      <div className={styles.mainContent}>
-        <div style={{ textAlign: 'center', padding: '50px' }}>
-          <i className="fas fa-spinner fa-spin" style={{ fontSize: '48px', color: '#4A90E2' }}></i>
-          <p style={{ marginTop: '20px', fontSize: '18px' }}>Đang tải dữ liệu...</p>
-        </div>
-      </div>
-    );
+    return <Loading message="Đang tải dữ liệu..." />;
   }
 
   if (error) {

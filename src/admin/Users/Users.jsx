@@ -1,8 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+ 
+import api from '../../services/api';
+import {
+  getRoles,
+  listUsers,
+  registerUser,
+  updateUserAdmin,
+  deleteUser as deleteUserService,
+  approveUser as approveUserService,
+  rejectUser as rejectUserService,
+  lockUser as lockUserService,
+  unlockUser as unlockUserService,
+  exportUsersExcel as exportUsersExcelService,
+  exportUserPDF as exportUserPDFService,
+  exportUserExcel as exportUserExcelService,
+} from '../../services/userService';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import styles from './Users.module.css';
 import NotificationBell from "../NotificationBell";
+import Loading from '../../components/Loading';
 
 const API_URL = 'http://127.0.0.1:8000/';
 
@@ -15,7 +31,7 @@ function Users() {
   const [modalMode, setModalMode] = useState('add');
   const [selectedUser, setSelectedUser] = useState(null);
       const [open, setOpen] = useState(false);
-    const togglePopup = (e) => {
+    const togglePopup = (e) => { 
       e.stopPropagation(); // tránh đóng liền sau khi mở
       setOpen((prev) => !prev);
     };
@@ -145,18 +161,16 @@ function Users() {
       try {
         setLoading(true);
         const [rolesResponse, usersResponse] = await Promise.all([
-          axios.get(`${API_URL}api/roles`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(`${API_URL}api/showuser`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+          getRoles(),
+          listUsers(),
         ]);
 
-        setRoles(Array.isArray(rolesResponse.data.roles) ? rolesResponse.data.roles : []);
+        const rolesData = rolesResponse?.roles || rolesResponse?.data?.roles || [];
+        setRoles(Array.isArray(rolesData) ? rolesData : []);
 
-        const mappedUsers = Array.isArray(usersResponse.data.users)
-          ? usersResponse.data.users.map(user => {
+        const usersData = usersResponse?.users || usersResponse?.data?.users || [];
+        const mappedUsers = Array.isArray(usersData)
+          ? usersData.map(user => {
               const id_card_front_url = user.id_card_front ? `${API_URL}storage/${user.id_card_front}` : '';
               const id_card_back_url = user.id_card_back ? `${API_URL}storage/${user.id_card_back}` : '';
               const business_license_url = user.business_license ? `${API_URL}storage/${user.business_license}` : undefined;
@@ -210,28 +224,7 @@ function Users() {
             })
           : [];
 
-        for (const user of mappedUsers) {
-          if (user.id_card_front_url) {
-            const exists = await checkImageExists(user.id_card_front_url);
-            if (!exists) setImageErrors(prev => ({ ...prev, id_card_front: true }));
-          }
-          if (user.id_card_back_url) {
-            const exists = await checkImageExists(user.id_card_back_url);
-            if (!exists) setImageErrors(prev => ({ ...prev, id_card_back: true }));
-          }
-          if (user.business_license_url) {
-            const exists = await checkImageExists(user.business_license_url);
-            if (!exists) setImageErrors(prev => ({ ...prev, business_license: true }));
-          }
-          if (user.auctioneer_card_front_url) {
-            const exists = await checkImageExists(user.auctioneer_card_front_url);
-            if (!exists) setImageErrors(prev => ({ ...prev, auctioneer_card_front: true }));
-          }
-          if (user.auctioneer_card_back_url) {
-            const exists = await checkImageExists(user.auctioneer_card_back_url);
-            if (!exists) setImageErrors(prev => ({ ...prev, auctioneer_card_back: true }));
-          }
-        }
+        // Bỏ pre-check HEAD cho ảnh để tránh 403 hàng loạt và tăng tốc load.
         setUsers(mappedUsers);
       } catch (err) {
         setError(err.response?.data?.message || 'Không thể lấy dữ liệu');
@@ -662,27 +655,14 @@ const handleSaveUser = async () => {
       data.append('password_confirmation', userForm.password_confirmation);
     }
 
-    const url = modalMode === 'add' 
-      ? `${API_URL}api/register` 
-      : `${API_URL}api/user/update/${selectedUser.id}`;
-
-    const response = await axios({
-      method: 'POST',
-      url,
-      data,
-      headers: {
-        ...(modalMode === 'add' ? {} : { Authorization: `Bearer ${token}` }),
-        'Content-Type': 'multipart/form-data',
-        'Accept': 'application/json',
-      },
-    });
+    const response = modalMode === 'add'
+      ? await registerUser(data)
+      : await updateUserAdmin(selectedUser.id, data);
 
     // Xử lý response thành công - CẬP NHẬT ĐẦY ĐỦ DỮ LIỆU
     if (modalMode === 'add') {
       // Thêm mới: fetch lại toàn bộ dữ liệu để có đầy đủ thông tin
-      const usersResponse = await axios.get(`${API_URL}api/showuser`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const usersResponse = await listUsers();
       
       const mappedUsers = Array.isArray(usersResponse.data.users)
         ? usersResponse.data.users.map(user => ({
@@ -790,9 +770,7 @@ const handleSaveUser = async () => {
   const handleDeleteUser = async (user) => {
     if (window.confirm('Bạn có chắc muốn xóa người dùng này?')) {
       try {
-        const response = await axios.delete(`${API_URL}api/users/${user.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+      const response = await deleteUserService(user.id);
         if (!response.data?.status) {
           throw new Error(response.data?.message || 'Lỗi khi xóa người dùng');
         }
@@ -805,13 +783,7 @@ const handleSaveUser = async () => {
 
   const handleApproveUser = async (user) => {
     try {
-      const response = await axios.put(`${API_URL}api/user/approve/${user.id}`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-      });
+      const response = await approveUserService(user.id);
       if (!response.data.status) {
         throw new Error(response.data.message || 'Lỗi khi duyệt người dùng');
       }
@@ -829,13 +801,7 @@ const handleSaveUser = async () => {
 
   const handleRejectUser = async (user) => {
     try {
-      const response = await axios.put(`${API_URL}api/user/reject/${user.id}`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-      });
+      const response = await rejectUserService(user.id);
       if (!response.data.status) {
         throw new Error(response.data.message || 'Lỗi khi từ chối người dùng');
       }
@@ -853,11 +819,9 @@ const handleSaveUser = async () => {
 
   const handleExportAllUsersExcel = async () => {
     try {
-      const response = await axios.get(`${API_URL}api/users/export-excel`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const blob = await exportUsersExcelService();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', 'users.xlsx');
@@ -871,11 +835,8 @@ const handleSaveUser = async () => {
 
   const handleExportUserPDF = async (userId) => {
     try {
-      const response = await axios.get(`${API_URL}api/users/export-pdf/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const blob = await exportUserPDFService(userId);
+      const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `user_${userId}.pdf`);
@@ -889,11 +850,8 @@ const handleSaveUser = async () => {
 
   const handleExportUserExcel = async (userId) => {
     try {
-      const response = await axios.get(`${API_URL}api/users/export-excel/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const blob = await exportUserExcelService(userId);
+      const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `user_${userId}.xlsx`);
@@ -908,9 +866,7 @@ const handleSaveUser = async () => {
   const handleLockUser = async (user) => {
     if (window.confirm(`Bạn có chắc muốn khóa tài khoản ${user.name}?`)) {
       try {
-        const response = await axios.post(`${API_URL}api/user/lock/${user.id}`, {}, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+      const response = await lockUserService(user.id);
         if (response.data.status) {
           // Cập nhật UI ngay lập tức
           setUsers(prevUsers =>
@@ -931,9 +887,7 @@ const handleSaveUser = async () => {
   const handleUnlockUser = async (user) => {
     if (window.confirm(`Bạn có chắc muốn mở khóa tài khoản ${user.name}?`)) {
       try {
-        const response = await axios.post(`${API_URL}api/user/unlock/${user.id}`, {}, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+      const response = await unlockUserService(user.id);
         if (response.data.status) {
           // Cập nhật UI ngay lập tức
           setUsers(prevUsers =>
@@ -968,7 +922,7 @@ const renderImage = (url, type, errorKey) => {
   );
 };
 
-  if (loading) return <div className={styles.mainContent}>Đang tải...</div>;
+  if (loading) return <div className={styles.mainContent}><Loading message="Đang tải dữ liệu..." /></div>;
   if (error) return <div className={`${styles.mainContent} text-red-600`}>Lỗi: {error}</div>;
 
   return (

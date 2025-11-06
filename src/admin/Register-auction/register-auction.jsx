@@ -1,5 +1,6 @@
 import styles from './register-auction.module.css';
 import { useState, useEffect, useRef } from 'react';
+import Loading from '../../components/Loading';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faUndo } from '@fortawesome/free-solid-svg-icons';
@@ -257,7 +258,7 @@ const AdminPanel = () => {
     else updateStatus(id, newStatus);
   };
 
-  if (loading) return <div className={styles.loading}>Đang tải...</div>;
+  if (loading) return <div className={styles.loading}><Loading message="Đang tải dữ liệu..." /></div>;
   if (error) return <div className={styles.error}>{error}</div>;
 
   return (

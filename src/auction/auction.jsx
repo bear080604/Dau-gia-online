@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import io from 'socket.io-client';
+import Loading from '../components/Loading';
 import styles from './auction.module.css';
 import { UserContext } from '../UserContext';
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -74,13 +75,16 @@ const AuctionPage = () => {
   useEffect(() => {
     console.log('🆔 ID từ URL:', id);
     console.log('🔑 Token:', token ? 'Có token' : 'Không có token');
-    const socket = io(process.env.REACT_APP_SOCKET_URL, {
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      transports: ['websocket'],
-    });
-    socketRef.current = socket;
+    if (!socketRef.current) {
+      const socket = io(process.env.REACT_APP_SOCKET_URL, {
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        transports: ['websocket'],
+      });
+      socketRef.current = socket;
+    }
+    const socket = socketRef.current;
 
     socket.on('connect', () => {
       console.log('✅ Kết nối Socket.io thành công, Socket ID:', socket.id);
@@ -280,6 +284,14 @@ const AuctionPage = () => {
       setError('Vui lòng đăng nhập để xem thông tin đấu giá');
       setLoading(false);
     }
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.emit('leave.channel', `auction-session.${id}`);
+        socketRef.current.emit('leave.channel', 'auction-profiles');
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
   }, [id, token]);
 
   // Fetch categories
@@ -538,7 +550,7 @@ const AuctionPage = () => {
   };
 
   if (loading) {
-    return <div className={styles.container}>Đang tải...</div>;
+    return <div className={styles.container}><Loading message="Đang tải dữ liệu..." /></div>;
   }
 
   if (error) {
