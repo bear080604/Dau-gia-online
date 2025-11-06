@@ -13,7 +13,7 @@ const Sidebar = () => {
   const [open, setOpen] = useState(false);
 
   // Lấy REACT_APP_API_URL từ biến môi trường
-  const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
+  const API_URL = process.env.REACT_APP_API_URL;
 
     const togglePopup = (e) => {
     e.stopPropagation(); // tránh đóng liền sau khi mở

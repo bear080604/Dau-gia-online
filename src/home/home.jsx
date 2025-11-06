@@ -9,17 +9,18 @@ import 'swiper/css/pagination';
 import axios from 'axios';
 import io from 'socket.io-client';
 import { ChevronDown, ChevronUp } from "lucide-react";
+
 // Cache for deduplicating image requests
 const imageCache = new Map();
 
 // Preload images function
 const preloadImages = (urls) => {
   urls.forEach((url) => {
-    if (url && !imageCache.has(url) && url.startsWith('http')) {
+    if (url && !imageCache.has(url) && url.startsWith('http')) { // Skip rỗng/falsy
       const img = new Image();
       img.src = url;
       img.onerror = () => {
-        imageCache.set(url, { src: '/assets/img/xe.png' });
+        imageCache.set(url, { src: '' });
       };
       imageCache.set(url, img);
     }
@@ -41,16 +42,6 @@ const AuctionItem = React.memo(({ session, onToggleFavorite }) => {
   const [isLoading, setIsLoading] = useState(false);
   const token = localStorage.getItem('token');
   const isProcessingRef = useRef(false);
-const [openDropdown, setOpenDropdown] = useState(false);
-useEffect(() => {
-  const handleClickOutside = (e) => {
-    if (!e.target.closest(".custom-select")) {
-      setOpenDropdown(false);
-    }
-  };
-  document.addEventListener("click", handleClickOutside);
-  return () => document.removeEventListener("click", handleClickOutside);
-}, []);
 
   const getAuctionStatus = (status) => {
     const statusMap = {
@@ -64,10 +55,10 @@ useEffect(() => {
 
   const displayStatus = getAuctionStatus(session.status);
   const item = session.item;
-  const baseUrl = process.env.REACT_APP_BASE_URL || 'https://your-production-url.com';
+  const baseUrl = process.env.REACT_APP_BASE_URL || 'http://127.0.0.1:8000'; // Fallback
   const imageUrl = item?.image_url
     ? `${baseUrl}${item.image_url}`
-    : '/assets/img/xe.png';
+    : '';
 
   // Đồng bộ state khi session.is_favorited thay đổi từ parent
   useEffect(() => {
@@ -82,76 +73,64 @@ useEffect(() => {
     }
   }, [imageUrl]);
 
-const handleToggleFavorite = useCallback(
-  async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleToggleFavorite = useCallback(
+    async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    if (!token) {
-      alert('Vui lòng đăng nhập để theo dõi phiên đấu giá!');
-      return;
-    }
-
-    // Ngăn chặn multiple clicks
-    if (isProcessingRef.current || isLoading) {
-      return;
-    }
-
-    isProcessingRef.current = true;
-    setIsLoading(true);
-
-    // Optimistic update - cập nhật UI ngay lập tức
-    const previousState = isFavorited;
-    setIsFavorited(!previousState);
-
-    try {
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      };
-
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}sessions/${session.session_id}/favorite`,
-        {},
-        config
-      );
-
-      console.log('Full API Response:', response.data); // Debug log
-      
-      // ✅ ĐƠN GIẢN HÓA: Vì backend đã trả về is_favorited rõ ràng
-      const finalFavoritedState = response.data.is_favorited ?? !previousState;
-      
-      console.log('Final favorited state:', finalFavoritedState); // Debug log
-      
-      // Cập nhật lại state từ server response
-      setIsFavorited(finalFavoritedState);
-
-      // Thông báo cho parent component
-      if (onToggleFavorite) {
-        onToggleFavorite(session.session_id, finalFavoritedState);
+      if (!token) {
+        alert('Vui lòng đăng nhập để theo dõi phiên đấu giá!');
+        return;
       }
-    } catch (err) {
-      // Rollback nếu có lỗi
-      setIsFavorited(previousState);
-      
-      console.error('Lỗi toggle favorite:', err);
-      if (err.response?.status === 401) {
-        alert('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-      } else {
-        alert(err.response?.data?.message || 'Không thể theo dõi. Vui lòng thử lại.');
+
+      // Ngăn chặn multiple clicks
+      if (isProcessingRef.current || isLoading) {
+        return;
       }
-    } finally {
-      setIsLoading(false);
-      isProcessingRef.current = false;
-    }
-  },
-  [token, session.session_id, onToggleFavorite, isFavorited, isLoading]
-);
+
+      isProcessingRef.current = true;
+      setIsLoading(true);
+
+      // Optimistic update - cập nhật UI ngay lập tức
+      const previousState = isFavorited;
+      setIsFavorited(!previousState);
+
+      try {
+        const response = await toggleSessionFavorite(session.session_id);
+
+        console.log('Full API Response:', response); // Debug log
+        
+        // ✅ ĐƠN GIẢN HÓA: Vì backend đã trả về is_favorited rõ ràng
+        const finalFavoritedState = response.is_favorited ?? !previousState;
+        
+        console.log('Final favorited state:', finalFavoritedState); // Debug log
+        
+        // Cập nhật lại state từ server response
+        setIsFavorited(finalFavoritedState);
+
+        // Thông báo cho parent component
+        if (onToggleFavorite) {
+          onToggleFavorite(session.session_id, finalFavoritedState);
+        }
+      } catch (err) {
+        // Rollback nếu có lỗi
+        setIsFavorited(previousState);
+        
+        console.error('Lỗi toggle favorite:', err);
+        if (err.response?.status === 401) {
+          alert('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        } else {
+          alert(err.response?.data?.message || 'Không thể theo dõi. Vui lòng thử lại.');
+        }
+      } finally {
+        setIsLoading(false);
+        isProcessingRef.current = false;
+      }
+    },
+    [token, session.session_id, onToggleFavorite, isFavorited, isLoading]
+  );
 
   return (
     <div className="list-auction">
@@ -162,11 +141,6 @@ const handleToggleFavorite = useCallback(
             src={imageCache.get(imageUrl)?.src || imageUrl}
             alt={item?.name || 'Sản phẩm'}
             loading="lazy"
-            onError={(e) => {
-              if (e.target.src !== '/assets/img/xe.png') {
-                e.target.src = '/assets/img/xe.png';
-              }
-            }}
           />
         </div>
         <div className="auction-details">
@@ -190,15 +164,6 @@ const handleToggleFavorite = useCallback(
           <p className="auction-price">
             Giá khởi điểm: {Number(item?.starting_price || 0).toLocaleString()} VNĐ
           </p>
-          {/* {session.highest_bid && (
-            <p
-              className="auction-current-price"
-              style={{ color: '#16a34a', fontWeight: 'bold', minHeight: '52px' }}
-            >
-              Giá cao nhất: {Number(session.highest_bid).toLocaleString()} VNĐ
-            </p>
-          )} */}
-          {/* {!session.highest_bid && <p className="auction-current-price" style={{ minHeight: '52px' }}></p>} */}
         </div>
         <div className="action">
           {/* Nút Theo dõi */}
@@ -215,7 +180,6 @@ const handleToggleFavorite = useCallback(
                 'Theo dõi'
             }
           </button>
-
           {/* Nút Đấu giá */}
           <Link to={`/detail/${session.session_id}`} style={{ textDecoration: 'none' }}>
             <button className="bid-button">
@@ -237,11 +201,10 @@ const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('default');
   const [news, setNews] = useState([]);
-  const [favorites, setFavorites] = useState([]);
   const [error, setError] = useState(null);
-   const [openDropdown, setOpenDropdown] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(false);
   const [loading, setLoading] = useState(true);
-  const socketRef = useRef(null);
+  const socketRef = useRef(null); // Ref để lưu socket instance
   const initialDataFetchedRef = useRef(false);
 
   const debouncedSetSessions = useRef(debounce(setSessions, 100)).current;
@@ -254,61 +217,67 @@ const Home = () => {
     );
   }, []);
 
-  // Socket.io - CHỈ CHO PHIÊN ĐẤU GIÁ
+  // Socket.io - CHỈ TẠO 1 LẦN, KHÔNG LẶP
   useEffect(() => {
-    const socket = io(process.env.REACT_APP_SOCKET_URL || 'http://127.0.0.1:8000');
+    // Nếu đã tạo socket, return luôn
+    if (socketRef.current) return;
+
+    const socket = io(process.env.REACT_APP_SOCKET_URL || 'http://127.0.0.1:8000', {
+      transports: ['websocket'], // chỉ dùng websocket, không polling
+    });
+
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log('Socket connected');
+      console.log('✅ Socket connected');
       socket.emit('join.channel', 'auction-sessions');
     });
 
     socket.on('disconnect', () => {
-      console.log('Socket disconnected');
+      console.log('⚠️ Socket disconnected');
     });
 
     socket.on('auction-sessions', (data) => {
-      if (Array.isArray(data)) {
-        debouncedSetSessions(data);
-      }
+      if (Array.isArray(data)) debouncedSetSessions(data);
     });
 
     socket.on('auction.session.updated', (updatedData) => {
       const updatedSession = updatedData.session || updatedData;
       debouncedSetSessions((prev) => {
-        const index = prev.findIndex((s) => s.session_id === updatedSession.session_id);
+        const index = prev.findIndex(s => s.session_id === updatedSession.session_id);
         if (index !== -1) {
           const newSessions = [...prev];
           newSessions[index] = { ...newSessions[index], ...updatedSession };
           return newSessions;
-        } else {
-          return [updatedSession, ...prev];
         }
+        return [updatedSession, ...prev];
       });
     });
 
     socket.on('auction.session.created', (newData) => {
       const newSession = newData.session || newData;
       debouncedSetSessions((prev) => {
-        if (prev.some((s) => s.session_id === newSession.session_id)) return prev;
+        if (prev.some(s => s.session_id === newSession.session_id)) return prev;
         return [newSession, ...prev];
       });
     });
 
     socket.on('auction.session.deleted', (deletedData) => {
       const deletedSession = deletedData.session || deletedData;
-      debouncedSetSessions((prev) => prev.filter((s) => s.session_id !== deletedSession.session_id));
+      debouncedSetSessions((prev) =>
+        prev.filter(s => s.session_id !== deletedSession.session_id)
+      );
     });
 
     socket.on('error', (err) => {
-      console.error('Lỗi Socket.io:', err);
-      setError('Lỗi kết nối thời gian thực');
+      console.error('Socket error:', err);
     });
 
+    // Cleanup khi component unmount
     return () => {
       socket.emit('leave.channel', 'auction-sessions');
       socket.disconnect();
+      socketRef.current = null;
     };
   }, [debouncedSetSessions]);
 
@@ -331,8 +300,7 @@ const Home = () => {
     const fetchInitialData = async () => {
       setLoading(true);
       try {
-        const baseUrl = process.env.REACT_APP_API_URL;
-        const authHeader = { Authorization: `Bearer ${localStorage.getItem('token')}` };
+        const baseUrl = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'; // Fallback
 
         // Fetch categories
         const categoryResponse = await fetchWithRetry(`${baseUrl}categories`, {
@@ -355,8 +323,8 @@ const Home = () => {
         const formattedNews = newsData.map((item) => {
           const imageUrl =
             item.thumbnail && item.thumbnail.startsWith('/')
-              ? `${baseUrl.replace('/api', '')}${item.thumbnail}` // Giả sử baseUrl có /api, adjust nếu cần
-              : item.thumbnail || '/assets/img/placeholder.png';
+              ? `${baseUrl.replace('/api', '')}${item.thumbnail}` // Adjust base for images
+              : item.thumbnail || '';
           return {
             id: item.id,
             category: item.category?.name || 'Khác',
@@ -367,7 +335,7 @@ const Home = () => {
           };
         });
         setNews(formattedNews);
-        preloadImages(formattedNews.map((item) => item.imageUrl));
+        preloadImages(formattedNews.map((item) => item.imageUrl).filter(url => url)); // Skip rỗng
 
         setError(null);
       } catch (err) {
@@ -388,7 +356,7 @@ const Home = () => {
       const item = session.item;
       if (!item) return false;
       const matchesSearch = item.name?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = categoryFilter === 'all' || item.category_id === parseInt(categoryFilter);
+      const matchesCategory = categoryFilter === 'all' || item.category_id === Number(categoryFilter); // Convert to number
       return matchesSearch && matchesCategory;
     });
 
@@ -410,10 +378,12 @@ const Home = () => {
 
   const latestSessions = useMemo(() => {
     const sorted = [...sessions].sort((a, b) => b.session_id - a.session_id).slice(0, 10);
+    const baseUrl = process.env.REACT_APP_BASE_URL || 'http://127.0.0.1:8000'; // Fallback
     preloadImages(
       sorted
         .filter((s) => s.item?.image_url)
-        .map((s) => `${process.env.REACT_APP_BASE_URL || 'http://127.0.0.1:8000'}${s.item.image_url}`)
+        .map((s) => `${baseUrl}${s.item.image_url}`)
+        .filter(url => url) // Skip rỗng
     );
     return sorted;
   }, [sessions]);
@@ -464,66 +434,45 @@ const Home = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            {/* <div className="select-cate">
-              <select  name="category" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-                <option value="all">Tất cả danh mục</option>
-                {categories.map((category) => (
-                  <option  className="select-option" key={category.category_id} value={category.category_id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div> */}
-
-
             <div className="select-cate">
-  <div 
-    className="custom-select" 
-    onClick={() => setOpenDropdown(!openDropdown)} // toggle mở/đóng menu
-  >
-    <div className="selected">
-      {
-        categories.find(c => c.category_id === categoryFilter)?.name || "Tất cả danh mục"
-      }
-    </div>
+              <div 
+                className="custom-select" 
+                onClick={() => setOpenDropdown(!openDropdown)} // toggle mở/đóng menu
+              >
+                <div className="selected">
+                  {
+                    categories.find(c => Number(categoryFilter) === c.category_id)?.name || "Tất cả danh mục" // Convert to number
+                  }
+                </div>
 
-    {openDropdown && (
-      <ul className="options">
-        <li 
-          onClick={() => {
-            setCategoryFilter("all");
-            setOpenDropdown(false);
-          }}
-          className={categoryFilter === "all" ? "active" : ""}
-        >
-          Tất cả danh mục
-        </li>
+                {openDropdown && (
+                  <ul className="options">
+                    <li 
+                      onClick={() => {
+                        setCategoryFilter("all");
+                        setOpenDropdown(false);
+                      }}
+                      className={categoryFilter === "all" ? "active" : ""} // 'all' giữ string
+                    >
+                      Tất cả danh mục
+                    </li>
 
-        {categories.map((category) => (
-          <li
-            key={category.category_id}
-            onClick={() => {
-              setCategoryFilter(category.category_id);
-              setOpenDropdown(false);
-            }}
-            className={categoryFilter === category.category_id ? "active" : ""}
-          >
-            {category.name}
-          </li>
-        ))}
-      </ul>
-    )}
-  </div>
-</div>
-
-
-
-
-
-
-
-
-
+                    {categories.map((category) => (
+                      <li
+                        key={category.category_id}
+                        onClick={() => {
+                          setCategoryFilter(category.category_id); // Set as number
+                          setOpenDropdown(false);
+                        }}
+                        className={Number(categoryFilter) === category.category_id ? "active" : ""} // Convert to number
+                      >
+                        {category.name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
             <div className="method">
               <select name="method">
                 <option value="">Phương thức đấu giá</option>

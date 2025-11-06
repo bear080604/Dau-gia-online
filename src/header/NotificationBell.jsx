@@ -168,7 +168,7 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
     const userId = JSON.parse(storedUser).user_id;
 
     setLoading(true);
-    fetch(`http://localhost:20/api/notifications/user/${userId}/read-all`, {
+    fetch(`http://localhost:8000/api/notifications/user/${userId}/read-all`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

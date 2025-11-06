@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef  } from 'react';
 import styles from './footer.module.css';
 
 const Footer = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const categoriesFetchedRef = useRef(false);
   const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
@@ -12,6 +12,8 @@ const Footer = () => {
   }, []);
 
   const fetchCategories = async () => {
+     if (categoriesFetchedRef.current) return; // nếu đã fetch thì return
+    categoriesFetchedRef.current = true; // 
     try {
       setLoading(true);
       const response = await fetch(`${API_URL}categories`);
