@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import styles from './adminNews.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import NotificationBell from "../NotificationBell";
 
 const AdminNews = () => {
   const [news, setNews] = useState([]);
@@ -36,7 +35,7 @@ const AdminNews = () => {
     const fetchData = async () => {
       try {
         // Fetch danh mục
-        const categoriesResponse = await axios.get('http://127.0.0.1:8000/api/news-categories', {
+        const categoriesResponse = await axios.get(`${process.env.REACT_APP_API_URL}news-categories`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         if (categoriesResponse.data && Array.isArray(categoriesResponse.data)) {
@@ -46,7 +45,7 @@ const AdminNews = () => {
         }
 
         // Fetch tin tức
-        const newsResponse = await axios.get('http://127.0.0.1:8000/api/news', {
+        const newsResponse = await axios.get(`${process.env.REACT_APP_API_URL}news`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         if (newsResponse.data && Array.isArray(newsResponse.data)) {
@@ -66,7 +65,7 @@ const AdminNews = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc muốn xóa tin tức này?')) {
       try {
-        await axios.delete(`http://127.0.0.1:8000/api/news/${id}`, {
+        await axios.delete(`${process.env.REACT_APP_API_URL}news/${id}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         setNews(news.filter(item => item.id !== id));
@@ -91,7 +90,7 @@ const AdminNews = () => {
     if (formData.thumbnail) data.append('thumbnail', formData.thumbnail);
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/news', data, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}news`, data, {
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'multipart/form-data'
@@ -128,7 +127,7 @@ const AdminNews = () => {
     if (formData.thumbnail) data.append('thumbnail', formData.thumbnail);
 
     try {
-      const response = await axios.post(`http://127.0.0.1:8000/api/news/${selectedNews.id}`, data, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}news/${selectedNews.id}`, data, {
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'multipart/form-data'

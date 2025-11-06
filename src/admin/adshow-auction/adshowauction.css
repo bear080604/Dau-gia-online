@@ -13,12 +13,6 @@
     --adviewdg-even-row: #f9f9f9;
 }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
 .adviewdg-body {
     font-family: Arial, sans-serif;
     background-color: #f8f9fa;

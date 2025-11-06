@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./Notification.module.css";
-import NotificationBell from "../NotificationBell";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+const API_URL = process.env.REACT_APP_API_URL;
 
 const Notification = () => {
   const [notifications, setNotifications] = useState([]);
@@ -153,7 +152,6 @@ const getAuthConfig = () => {
 
   // 🟥 3. Xóa
   const handleDeleteNotification = async (id) => {
-    console.log(id);
     if (!window.confirm("Bạn có chắc muốn xóa thông báo này?")) return;
     setLoading(true);
     try {
@@ -256,13 +254,6 @@ const getAuthConfig = () => {
             <option value="Chưa đọc">Chưa đọc</option>
             <option value="Đã đọc">Đã đọc</option>
           </select>
-          {/* <input
-            type="text"
-            placeholder="Lọc theo User ID..."
-            value={userFilter}
-            onChange={(e) => setUserFilter(e.target.value)}
-            className={styles.filterInput}
-          /> */}
         </div>
         <button className={styles.addBtn} onClick={() => openNotificationModal("add")} disabled={loading}>
           <i className="fas fa-plus"></i>

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styles from './AdminNewsCategories.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import NotificationBell from "../NotificationBell";
 
 const AdminNewsCategories = () => {
   const [categories, setCategories] = useState([]);
@@ -30,7 +29,7 @@ const AdminNewsCategories = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://127.0.0.1:8000/api/news-categories', {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}news-categories`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       
@@ -49,7 +48,7 @@ const AdminNewsCategories = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc muốn xóa danh mục này?')) {
       try {
-        await axios.delete(`http://127.0.0.1:8000/api/news-categories/${id}`, {
+        await axios.delete(`${process.env.REACT_APP_API_URL}news-categories/${id}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         setCategories(categories.filter(item => item.id !== id));
@@ -65,7 +64,7 @@ const AdminNewsCategories = () => {
   const handleAdd = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/news-categories', formData, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}news-categories`, formData, {
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -84,7 +83,7 @@ const AdminNewsCategories = () => {
   const handleEdit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.put(`http://127.0.0.1:8000/api/news-categories/${selectedCategory.id}`, formData, {
+      const response = await axios.put(`${process.env.REACT_APP_API_URL}news-categories/${selectedCategory.id}`, formData, {
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'

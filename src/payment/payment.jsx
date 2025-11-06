@@ -53,7 +53,7 @@ const Payment = () => {
     }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}/api/contracts/${contractId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}contracts/${contractId}`, {
         headers: { 
           "Authorization": `Bearer ${token}`, 
           "Accept": "application/json" 
@@ -81,7 +81,7 @@ const Payment = () => {
     if (!token) return 'N/A';
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}/api/showuser`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}showuser`, {
         headers: { 
           "Authorization": `Bearer ${token}`, 
           "Accept": "application/json" 
@@ -119,7 +119,7 @@ const Payment = () => {
     try {
       const token = localStorage.getItem('token');
 
-      const response = await fetch(`${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}/api/contracts/${contractId}/pay-online`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}contracts/${contractId}/pay-online`, {
         method: 'POST',
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -216,7 +216,7 @@ const Payment = () => {
             
             <div className="qr-item-image">
               <img 
-                src={item?.image_url || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZThlOGU4Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=='} 
+                src={item?.image_url || ''} 
                 alt={item?.name || 'Sản phẩm'} 
               />
             </div>

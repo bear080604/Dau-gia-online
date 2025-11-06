@@ -6,9 +6,9 @@ import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import Loading from '../components/Loading';
 import io from 'socket.io-client';
 import { getCategories, getAuctionSessions, getNews, toggleSessionFavorite } from '../services';
-import { ChevronDown, ChevronUp } from "lucide-react";
 
 // Cache for deduplicating image requests
 const imageCache = new Map();
@@ -55,7 +55,7 @@ const AuctionItem = React.memo(({ session, onToggleFavorite }) => {
 
   const displayStatus = getAuctionStatus(session.status);
   const item = session.item;
-  const baseUrl = process.env.REACT_APP_BASE_URL || 'http://127.0.0.1:8000'; // Fallback
+  const baseUrl = process.env.REACT_APP_BASE_URL; // Fallback
   const imageUrl = item?.image_url
     ? `${baseUrl}${item.image_url}`
     : '';
@@ -98,12 +98,10 @@ const AuctionItem = React.memo(({ session, onToggleFavorite }) => {
       try {
         const response = await toggleSessionFavorite(session.session_id);
 
-        console.log('Full API Response:', response); // Debug log
         
         // ✅ ĐƠN GIẢN HÓA: Vì backend đã trả về is_favorited rõ ràng
         const finalFavoritedState = response.is_favorited ?? !previousState;
         
-        console.log('Final favorited state:', finalFavoritedState); // Debug log
         
         // Cập nhật lại state từ server response
         setIsFavorited(finalFavoritedState);
@@ -222,19 +220,14 @@ const Home = () => {
     // Nếu đã tạo socket, return luôn
     if (socketRef.current) return;
 
-    const socket = io(process.env.REACT_APP_SOCKET_URL || 'http://127.0.0.1:8000', {
+    const socket = io(process.env.REACT_APP_SOCKET_URL, {
       transports: ['websocket'], // chỉ dùng websocket, không polling
     });
 
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log('✅ Socket connected');
       socket.emit('join.channel', 'auction-sessions');
-    });
-
-    socket.on('disconnect', () => {
-      console.log('⚠️ Socket disconnected');
     });
 
     socket.on('auction-sessions', (data) => {
@@ -289,7 +282,7 @@ const Home = () => {
     const fetchInitialData = async () => {
       setLoading(true);
       try {
-        const baseUrl = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'; // Fallback
+        const baseUrl = process.env.REACT_APP_API_URL; // Fallback
 
         // Tối ưu: Gọi song song các API
         const [categoriesResponse, sessionsResponse, newsResponse] = await Promise.all([
@@ -366,7 +359,7 @@ const Home = () => {
 
   const latestSessions = useMemo(() => {
     const sorted = [...sessions].sort((a, b) => b.session_id - a.session_id).slice(0, 10);
-    const baseUrl = process.env.REACT_APP_BASE_URL || 'http://127.0.0.1:8000'; // Fallback
+    const baseUrl = process.env.REACT_APP_BASE_URL; // Fallback
     preloadImages(
       sorted
         .filter((s) => s.item?.image_url)
@@ -383,7 +376,7 @@ const Home = () => {
         <div className="section-title">
           <p>PHIÊN ĐẤU GIÁ MỚI NHẤT/NỔI BẬT</p>
         </div>
-        {loading && <p>Đang tải dữ liệu...</p>}
+         {loading && <Loading message="Đang tải dữ liệu..." />}
         {error && <p className="error-message">{error}</p>}
         {!loading && latestSessions.length === 0 && !error && <p>Không có phiên đấu giá nào.</p>}
 
@@ -476,7 +469,7 @@ const Home = () => {
               </select>
             </div>
           </div>
-          {loading && <p>Đang tải dữ liệu...</p>}
+           {loading && <Loading message="Đang tải dữ liệu..." />}
           {error && <p className="error-message">{error}</p>}
           {!loading && filteredSessions.length === 0 && !error && <p>Không có tài sản nào.</p>}
 
@@ -505,7 +498,7 @@ const Home = () => {
           <div className="section-title">
             <p>TIN TỨC VÀ THÔNG BÁO</p>
           </div>
-          {loading && <p>Đang tải dữ liệu...</p>}
+           {loading && <Loading message="Đang tải dữ liệu..." />}
           {error && <p className="error-message">{error}</p>}
           {!loading && news.length === 0 && !error && <p>Không có tin tức nào.</p>}
 

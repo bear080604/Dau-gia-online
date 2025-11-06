@@ -4,7 +4,6 @@ import Loading from '../../components/Loading';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faUndo } from '@fortawesome/free-solid-svg-icons';
-import NotificationBell from "../NotificationBell";
 import io from 'socket.io-client'; // <-- Thêm
 
 const AdminPanel = () => {
@@ -48,7 +47,7 @@ const AdminPanel = () => {
 
   // === SOCKET.IO REALTIME ===
   useEffect(() => {
-    const socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:6001', {
+    const socket = io(process.env.REACT_APP_SOCKET_URL, {
       transports: ['websocket'],
       reconnection: true,
       reconnectionAttempts: 5,
@@ -57,7 +56,6 @@ const AdminPanel = () => {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log('Socket.IO kết nối:', socket.id);
       socket.emit('join.channel', 'auction-profiles');
     });
 
@@ -65,7 +63,6 @@ const AdminPanel = () => {
       const profile = payload.profile;
       if (!profile?.profile_id) return;
 
-      console.log('Realtime cập nhật:', profile);
 
       // Cập nhật danh sách
       setRegistrations((prev) => {
@@ -92,9 +89,6 @@ const AdminPanel = () => {
       });
     });
 
-    socket.on('disconnect', () => {
-      console.log('Socket.IO ngắt kết nối');
-    });
 
     return () => {
       socket.disconnect();
@@ -384,17 +378,6 @@ const AdminPanel = () => {
               <div><label>Tiền đặt:</label> <span>{Number(paymentDetails.deposit).toLocaleString('vi-VN')} đ</span></div>
               <div><label>Trạng thái:</label> <span>{paymentDetails.status}</span></div>
               <div><label>Lý do từ chối:</label> <span>{paymentDetails.rejectReason}</span></div>
-              {/* <div><label>Hoàn tiền:</label> <span>{paymentDetails.paymentStatus}</span></div> */}
-              {/* <div className={styles.modalActions}>
-                <button
-                  className={styles.refund}
-                  onClick={refundPayment}
-                  disabled={paymentDetails.paymentStatus === 'Đã Hoàn Tiền'}
-                >
-                  <FontAwesomeIcon icon={faUndo} /> Hoàn Tiền
-                </button>
-                <span className={styles.close} onClick={closeDetailModal}>×</span>
-              </div> */}
             </div>
           </div>
         </div>

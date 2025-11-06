@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './contact.module.css';
 
-const API_URL = 'http://127.0.0.1:8000/api/auction-items';
-const CATEGORIES_API_URL = 'http://127.0.0.1:8000/api/categories';
+const API_URL = `${process.env.REACT_APP_API_URL}auction-items`;
+const CATEGORIES_API_URL = `${process.env.REACT_APP_API_URL}categories`;
 const AUTO_DISMISS_MS = 5000;
 
 const Contact = () => {
@@ -64,16 +64,13 @@ const Contact = () => {
         const catData = await catResponse.json();
         
         // DEBUG: Log để kiểm tra
-        console.log("Kết quả API categories:", catData);
         
         if (catData.status && Array.isArray(catData.data)) {
           setCategories(catData.data);
-          console.log("Đã set categories:", catData.data); // DEBUG
         } else {
           // Fallback nếu cấu trúc khác (e.g., data.categories hoặc trực tiếp data)
           const categoriesList = catData.data || catData.categories || catData || [];
           setCategories(Array.isArray(categoriesList) ? categoriesList : []);
-          console.log("Fallback categories:", categoriesList); // DEBUG
           if (!Array.isArray(categoriesList)) {
             setGlobalError('Dữ liệu danh mục không đúng định dạng. Kiểm tra console.');
           }
@@ -634,8 +631,6 @@ const Contact = () => {
               {/* 🆕 Hiển thị lỗi cho url_file */}
               {errors.url_file && <div className={styles.validationError}>{errors.url_file}</div>}
             </div>
-
-            {/* 🆕 BỎ: Hiển thị lỗi upload chung (không cần nữa) */}
 
             {/* Sửa nút submit: disable nếu !isFormValid hoặc loading */}
             <button 

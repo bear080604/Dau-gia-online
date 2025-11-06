@@ -17,14 +17,14 @@ const News = () => {
         setIsLoading(true);
 
         // Fetch categories
-        const catRes = await fetch('http://127.0.0.1:8000/api/news-categories');
+        const catRes = await fetch(`${process.env.REACT_APP_API_URL}news-categories`);
         const catData = await catRes.json();
         const categoryNames = catData.map((cat) => cat.name);
         setCategories(['Tất cả', ...categoryNames]); // ✅ Thêm "Tất cả"
         setActiveCategory('Tất cả');
 
         // Fetch news
-        const newsRes = await fetch('http://127.0.0.1:8000/api/news');
+        const newsRes = await fetch(`${process.env.REACT_APP_API_URL}news`);
         const allNews = await newsRes.json();
         const news = allNews.filter(item => item.is_published === 1);
 
@@ -41,11 +41,11 @@ const News = () => {
           imageUrl: item.thumbnail
             ? item.thumbnail.startsWith('http')
               ? item.thumbnail
-              : `http://127.0.0.1:8000/storage/news/${item.thumbnail.replace(
+              : `${process.env.REACT_APP_BASE_URL}/storage/news/${item.thumbnail.replace(
                   'storage/news/',
                   ''
                 )}`
-            : 'https://via.placeholder.com/300x200?text=Image+Not+Found',
+            : '',
         }));
 
         setNewsData(formattedNews);

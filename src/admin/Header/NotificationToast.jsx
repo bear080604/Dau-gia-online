@@ -2,8 +2,6 @@ import React, { useEffect } from 'react';
 
 const NotificationToast = ({ message, onClose }) => {
   useEffect(() => {
-    console.log('🍞 Toast đang hiển thị:', message);
-    
     const timer = setTimeout(() => {
       onClose();
     }, 8000); // 8 seconds

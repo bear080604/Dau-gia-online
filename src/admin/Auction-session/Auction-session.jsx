@@ -5,7 +5,6 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import { useUser } from '../../UserContext';
 import moment from 'moment-timezone';
 import { Link } from 'react-router-dom';
-import NotificationBell from "../NotificationBell";
 import Loading from '../../components/Loading';
 import {
   getAuctionSessions,

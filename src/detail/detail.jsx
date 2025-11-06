@@ -6,7 +6,7 @@ import './detail.css';
 
 const Detail = () => {
   // Constants
-  const API_BASE = `${process.env.REACT_APP_BASE_URL}/api`;
+  const API_BASE = `${process.env.REACT_APP_API_URL}`;
   const { id } = useParams();
   const navigate = useNavigate();
   const DEFAULT_SESSION_ID = parseInt(id, 10);
@@ -16,7 +16,7 @@ const Detail = () => {
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ];
-  const PLACEHOLDER_IMAGE = '/assets/placeholder.png';
+  const PLACEHOLDER_IMAGE = '';
   const AA_STORAGE_PATH = '';  // Cleaned up from 'var aa'
 
   // State variables
@@ -102,13 +102,11 @@ const Detail = () => {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log('✅ Kết nối Socket.io thành công');
       socket.emit('join.channel', `auction-session.${DEFAULT_SESSION_ID}`);
       socket.emit('join.channel', 'auction-profiles');
     });
 
     socket.on('disconnect', (reason) => {
-      console.log('⚠️ Socket disconnected:', reason);
       // Optional retry logic
       setTimeout(() => {
         if (socketRef.current) {
@@ -119,7 +117,6 @@ const Detail = () => {
     });
 
     socket.on('profile.updated', (profileData) => {
-      console.log('🔄 Cập nhật hồ sơ:', profileData);
       const updatedProfile = profileData.profile || profileData;
       const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
       if (currentUser && updatedProfile.user_id === (currentUser.id || currentUser.user_id)) {
@@ -138,7 +135,6 @@ const Detail = () => {
     });
 
     socket.on('auction.session.updated', (updatedData) => {
-      console.log('🔄 Cập nhật phiên đấu giá:', updatedData);
       const updatedSession = updatedData.session || updatedData;
       if (updatedSession.session_id === DEFAULT_SESSION_ID) {
         setAuctionItem((prev) => ({
@@ -173,7 +169,6 @@ const Detail = () => {
     });
 
     socket.on('error', (err) => {
-      console.error('❌ Lỗi Socket.io:', err);
       showToast('Lỗi kết nối Socket.io', 'error');
     });
 
@@ -409,7 +404,6 @@ const Detail = () => {
   };
 
   const submitProfile = async () => {
-    console.log('Submitting profile with token:', token);
     if (!token) {
       showToast('Vui lòng đăng nhập trước!', 'error');
       navigate('/login');
@@ -435,10 +429,6 @@ const Detail = () => {
       fd.append('deposit_amount', parseFloat(depositAmount));
 
       console.log('FormData contents:');
-      for (let pair of fd.entries()) {
-        console.log(`${pair[0]}: ${pair[1]}`);
-      }
-
       const res = await fetch(`${API_BASE}/auction-profiles`, {
         method: 'POST',
         headers: {
@@ -661,7 +651,7 @@ const Detail = () => {
   // Fixed images fetch useEffect
   useEffect(() => {
     if (auctionItem?.item?.item_id) {
-      fetch(`${process.env.REACT_APP_BASE_URL}/api/auction-items/${auctionItem.item.item_id}/images`)
+      fetch(`${process.env.REACT_APP_API_URL}auction-items/${auctionItem.item.item_id}/images`)
         .then((res) => res.json())
         .then((data) => {
           console.log('Images loaded:', data?.data?.length || 0);  // Debug log

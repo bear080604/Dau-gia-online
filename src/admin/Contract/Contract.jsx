@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Loading from '../../components/Loading';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import styles from './Contract.module.css';
-import NotificationBell from "../NotificationBell";
 import {
   getContracts,
   getContractById,
@@ -32,7 +31,7 @@ function Contract() {
   };
   const itemsPerPage = 5;
 
-  const BASE_URL = process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : 'http://localhost:8000';
+  const BASE_URL = process.env.REACT_APP_BASE_URL ;
 
   const formatCurrency = (amount) => {
     if (!amount || parseFloat(amount) === 0) return 'N/A';
@@ -204,18 +203,6 @@ function Contract() {
       alert('Lỗi cập nhật: ' + (err.response?.data?.message || err.message));
     }
   };
-
-  // const handleDelete = async (contract) => {
-  //   if (window.confirm('Bạn có chắc muốn xóa hợp đồng này?')) {
-  //     try {
-  //       await axios.delete(`${process.env.REACT_APP_API_URL}contracts/${contract.rawContractId}`);
-  //       alert('Xóa hợp đồng thành công!');
-  //       setContracts(contracts.filter((c) => c.id !== contract.id));
-  //     } catch (err) {
-  //       alert('Xóa thất bại: ' + err.message);
-  //     }
-  //   }
-  // };
 
   const handleDelete = async (contract) => {
     if (!window.confirm('Bạn có chắc muốn xóa hợp đồng này?')) return;

@@ -1,10 +1,3 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, sans-serif;
-}
 
 .mainContent {
   position: absolute;
@@ -183,11 +176,13 @@
 
 .statusDadoc {
   background-color: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
+  color: #60d882;
 }
 
 .btn {
-  padding: 0.5rem 1rem;
+  /* padding: 0.5rem 1rem; */
+  width: 36px;
+  height: 36px;
   border-radius: 0.375rem;
   font-size: 0.85rem;
   font-weight: 500;
@@ -218,7 +213,7 @@
 }
 
 .btnSuccess {
-  background-color: #22c55e;
+  background-color: #60d882;
   color: white;
 }
 
