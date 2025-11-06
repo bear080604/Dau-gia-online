@@ -1,26 +1,23 @@
-# TODO: Add AdminLayout to Admin Pages
+# TODO: Replace Simple Loading Text with Loading Component
 
-- [x] Update AdminAssetcategories.jsx to use AdminLayout
-- [x] Update AdminAuction-session.jsx to use AdminLayout
-- [x] Update AdminContract.jsx to use AdminLayout
-- [x] Update AdminAuctionAsset.jsx to use AdminLayout
-- [x] Update AdminEContract.jsx to use AdminLayout
-- [x] Update AdminHistory.jsx to use AdminLayout
-- [x] Update AdminNews.jsx to use AdminLayout
-- [x] Update AdminNewsCategories.jsx to use AdminLayout
-- [x] Update AdminNotification.jsx to use AdminLayout
-- [x] Update AdminPayment.jsx to use AdminLayout
-- [x] Update AdminProfile.jsx to use AdminLayout
-- [x] Update AdminPermissions.jsx to use AdminLayout
-- [x] Update AdminReport.jsx to use AdminLayout
-- [x] Update AdminRegisterAuction.jsx to use AdminLayout
-- [x] Update AdminSettings.jsx to use AdminLayout
-- [x] Update AdminRoles.jsx to use AdminLayout
-- [x] Update AdminShowAuction.jsx to use AdminLayout (uncomment and change)
-- [x] Update AdminUsers.jsx to use AdminLayout
+## Overview
+Replace all instances of `<p>Đang tải dữ liệu...</p>` with the `<Loading message="Đang tải dữ liệu..." />` component for consistent loading UI across the app.
 
-# TODO: Add Search Bar to Admin Top Header
+## Steps
+- [ ] Import Loading component in src/infouser/profile.jsx and replace loading text
+- [ ] Import Loading component in src/home/home.jsx and replace 3 instances of loading text
+- [ ] Import Loading component in src/detail/detail.jsx and replace loading text
+- [ ] Import Loading component in src/contract/contract.jsx and replace loading text
+- [ ] Import Loading component in src/auction-session/auction-session.jsx and replace loading text
+- [ ] Import Loading component in src/admin/Payment/Payment.jsx and replace loading text
+- [ ] Import Loading component in src/admin/Payment/a and replace loading text
+- [ ] Import Loading component in src/admin/Auction-session/Auction-session.jsx and replace loading text
+- [ ] Import Loading component in src/admin/Dashboard/Dashboard.jsx and replace loading text
+- [ ] Import Loading component in src/admin/EContract/EContract.jsx and replace loading text
+- [ ] Import Loading component in src/admin/Auction-session/a and replace loading text
+- [ ] Test loading effects across the app
 
-- [x] Add centerSection with search bar to TopHeader.jsx
-- [x] Update TopHeader.module.css with search bar styles
-- [x] Hide search bar on mobile devices
+## Notes
+- Ensure Loading component is imported at the top of each file.
+- Use `<Loading message="Đang tải dữ liệu..." />` to replace `<p>Đang tải dữ liệu...</p>`.
+- Adjust for any custom styling if needed.

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useUser } from '../UserContext';
+import Loading from '../components/Loading';
 import styles from './profile.module.css';
 
 const Profile = () => {
@@ -1082,7 +1083,7 @@ const Profile = () => {
   };
 
   const renderTabContent = () => {
-    if (loading) return <p>Đang tải dữ liệu...</p>;
+    if (loading) return <Loading />;
     if (error) return (
       <div className={styles.error}>
         <p>{error}</p>

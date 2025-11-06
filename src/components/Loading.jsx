@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './Loading.module.css';
 
-const Loading = ({ message = "Đang tải..." }) => {
+const Loading = ({ message = "Đang tải dữ liệu" }) => {
   return (
     <div className={styles.overlay}>
       <div className={styles.loadingContainer}>
