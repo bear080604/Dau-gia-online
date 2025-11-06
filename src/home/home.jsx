@@ -6,8 +6,9 @@ import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import axios from 'axios';
+import Loading from '../components/Loading';
 import io from 'socket.io-client';
+import { getCategories, getAuctionSessions, getNews, toggleSessionFavorite } from '../services';
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 // Cache for deduplicating image requests
@@ -286,41 +287,29 @@ const Home = () => {
     if (initialDataFetchedRef.current) return;
     initialDataFetchedRef.current = true;
 
-    const fetchWithRetry = async (url, options = {}, retries = 3) => {
-      for (let i = 0; i < retries; i++) {
-        try {
-          return await axios.get(url, options);
-        } catch (err) {
-          if (i === retries - 1) throw err;
-          await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
-        }
-      }
-    };
-
     const fetchInitialData = async () => {
       setLoading(true);
       try {
         const baseUrl = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'; // Fallback
 
-        // Fetch categories
-        const categoryResponse = await fetchWithRetry(`${baseUrl}categories`, {
-          headers: { 'Content-Type': 'application/json', ...authHeader },
-        });
-        setCategories(categoryResponse.data.status && categoryResponse.data.data ? categoryResponse.data.data : []);
+        // Tối ưu: Gọi song song các API
+        const [categoriesResponse, sessionsResponse, newsResponse] = await Promise.all([
+          getCategories(),
+          getAuctionSessions(),
+          getNews(),
+        ]);
 
-        // Fetch auction sessions
-        const sessionsResponse = await fetchWithRetry(`${baseUrl}auction-sessions`, {
-          headers: { 'Content-Type': 'application/json', ...authHeader },
-        });
-        const sessionsData = sessionsResponse.data.sessions || sessionsResponse.data.data || sessionsResponse.data || [];
+        // Xử lý categories
+        const categoriesData = categoriesResponse.data || categoriesResponse || [];
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+
+        // Xử lý auction sessions
+        const sessionsData = sessionsResponse.sessions || sessionsResponse.data || sessionsResponse || [];
         debouncedSetSessions(Array.isArray(sessionsData) ? sessionsData : []);
 
-        // Fetch news (dùng axios consistent)
-        const newsResponse = await axios.get(`${baseUrl}news`, {
-          headers: { 'Content-Type': 'application/json' },
-        });
-        const newsData = newsResponse.data;
-        const formattedNews = newsData.map((item) => {
+        // Xử lý news
+        const newsData = newsResponse.data || newsResponse || [];
+        const formattedNews = Array.isArray(newsData) ? newsData.map((item) => {
           const imageUrl =
             item.thumbnail && item.thumbnail.startsWith('/')
               ? `${baseUrl.replace('/api', '')}${item.thumbnail}` // Adjust base for images
@@ -330,10 +319,10 @@ const Home = () => {
             category: item.category?.name || 'Khác',
             title: item.title,
             date: new Date(item.created_at).toLocaleDateString('vi-VN'),
-            summary: item.content.substring(0, 100) + (item.content.length > 100 ? '...' : ''),
+            summary: item.content ? (item.content.substring(0, 100) + (item.content.length > 100 ? '...' : '')) : '',
             imageUrl,
           };
-        });
+        }) : [];
         setNews(formattedNews);
         preloadImages(formattedNews.map((item) => item.imageUrl).filter(url => url)); // Skip rỗng
 
@@ -395,7 +384,7 @@ const Home = () => {
         <div className="section-title">
           <p>PHIÊN ĐẤU GIÁ MỚI NHẤT/NỔI BẬT</p>
         </div>
-        {loading && <p>Đang tải dữ liệu...</p>}
+         {loading && <Loading message="Đang tải dữ liệu..." />}
         {error && <p className="error-message">{error}</p>}
         {!loading && latestSessions.length === 0 && !error && <p>Không có phiên đấu giá nào.</p>}
 
@@ -488,7 +477,7 @@ const Home = () => {
               </select>
             </div>
           </div>
-          {loading && <p>Đang tải dữ liệu...</p>}
+           {loading && <Loading message="Đang tải dữ liệu..." />}
           {error && <p className="error-message">{error}</p>}
           {!loading && filteredSessions.length === 0 && !error && <p>Không có tài sản nào.</p>}
 
@@ -517,7 +506,7 @@ const Home = () => {
           <div className="section-title">
             <p>TIN TỨC VÀ THÔNG BÁO</p>
           </div>
-          {loading && <p>Đang tải dữ liệu...</p>}
+           {loading && <Loading message="Đang tải dữ liệu..." />}
           {error && <p className="error-message">{error}</p>}
           {!loading && news.length === 0 && !error && <p>Không có tin tức nào.</p>}
 
