@@ -192,7 +192,6 @@
 }
 
 .btn {
-  padding: 0.5rem 1rem;
   border-radius: 0.375rem;
   font-size: 0.85rem;
   font-weight: 500;
@@ -202,6 +201,8 @@
   margin-right: 0.5rem;
   white-space: nowrap;
   flex-shrink: 0;
+  width: 36px;
+  height: 36px;
 }
 
 .btnPrimary {
@@ -223,7 +224,7 @@
 }
 
 .btnSuccess {
-  background-color: #22c55e;
+  background-color: #60d882;
   color: white;
 }
 

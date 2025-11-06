@@ -886,11 +886,11 @@ const AuctionAsset = () => {
               <span className={styles.modalClose} onClick={() => closeModal('view')}>&times;</span>
             </div>
             <div className={styles.modalBody}>{viewBody}</div>
-            <div className={styles.modalFooter}>
+            {/* <div className={styles.modalFooter}>
               <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => closeModal('view')}>
                 Đóng
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       )}

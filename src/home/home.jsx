@@ -6,8 +6,8 @@ import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import axios from 'axios';
 import io from 'socket.io-client';
-import { getCategories, getAuctionSessions, getNews, toggleSessionFavorite } from '../services';
 import { ChevronDown, ChevronUp } from "lucide-react";
 // Cache for deduplicating image requests
 const imageCache = new Map();
@@ -105,12 +105,24 @@ const handleToggleFavorite = useCallback(
     setIsFavorited(!previousState);
 
     try {
-      const response = await toggleSessionFavorite(session.session_id);
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      };
 
-      console.log('Full API Response:', response); // Debug log
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}sessions/${session.session_id}/favorite`,
+        {},
+        config
+      );
+
+      console.log('Full API Response:', response.data); // Debug log
       
       // ✅ ĐƠN GIẢN HÓA: Vì backend đã trả về is_favorited rõ ràng
-      const finalFavoritedState = response.is_favorited ?? !previousState;
+      const finalFavoritedState = response.data.is_favorited ?? !previousState;
       
       console.log('Final favorited state:', finalFavoritedState); // Debug log
       
@@ -305,42 +317,55 @@ const Home = () => {
     if (initialDataFetchedRef.current) return;
     initialDataFetchedRef.current = true;
 
+    const fetchWithRetry = async (url, options = {}, retries = 3) => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          return await axios.get(url, options);
+        } catch (err) {
+          if (i === retries - 1) throw err;
+          await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+        }
+      }
+    };
+
     const fetchInitialData = async () => {
       setLoading(true);
       try {
-        const baseUrl = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
+        const baseUrl = process.env.REACT_APP_API_URL;
+        const authHeader = { Authorization: `Bearer ${localStorage.getItem('token')}` };
 
-        // Tối ưu: Gọi song song các API
-        const [categoriesResponse, sessionsResponse, newsResponse] = await Promise.all([
-          getCategories(),
-          getAuctionSessions(),
-          getNews(),
-        ]);
+        // Fetch categories
+        const categoryResponse = await fetchWithRetry(`${baseUrl}categories`, {
+          headers: { 'Content-Type': 'application/json', ...authHeader },
+        });
+        setCategories(categoryResponse.data.status && categoryResponse.data.data ? categoryResponse.data.data : []);
 
-        // Xử lý categories
-        const categoriesData = categoriesResponse.data || categoriesResponse || [];
-        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-
-        // Xử lý auction sessions
-        const sessionsData = sessionsResponse.sessions || sessionsResponse.data || sessionsResponse || [];
+        // Fetch auction sessions
+        const sessionsResponse = await fetchWithRetry(`${baseUrl}auction-sessions`, {
+          headers: { 'Content-Type': 'application/json', ...authHeader },
+        });
+        const sessionsData = sessionsResponse.data.sessions || sessionsResponse.data.data || sessionsResponse.data || [];
         debouncedSetSessions(Array.isArray(sessionsData) ? sessionsData : []);
 
-        // Xử lý news
-        const newsData = newsResponse.data || newsResponse || [];
-        const formattedNews = Array.isArray(newsData) ? newsData.map((item) => {
+        // Fetch news (dùng axios consistent)
+        const newsResponse = await axios.get(`${baseUrl}news`, {
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const newsData = newsResponse.data;
+        const formattedNews = newsData.map((item) => {
           const imageUrl =
             item.thumbnail && item.thumbnail.startsWith('/')
-              ? `${baseUrl.replace('/api', '')}${item.thumbnail}`
+              ? `${baseUrl.replace('/api', '')}${item.thumbnail}` // Giả sử baseUrl có /api, adjust nếu cần
               : item.thumbnail || '/assets/img/placeholder.png';
           return {
             id: item.id,
             category: item.category?.name || 'Khác',
             title: item.title,
             date: new Date(item.created_at).toLocaleDateString('vi-VN'),
-            summary: item.content ? (item.content.substring(0, 100) + (item.content.length > 100 ? '...' : '')) : '',
+            summary: item.content.substring(0, 100) + (item.content.length > 100 ? '...' : ''),
             imageUrl,
           };
-        }) : [];
+        });
         setNews(formattedNews);
         preloadImages(formattedNews.map((item) => item.imageUrl));
 
