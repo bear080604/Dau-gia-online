@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import styles from './Contract.module.css';
-import axios from 'axios';
 import NotificationBell from "../NotificationBell";
+import {
+  getContracts,
+  getContractById,
+  updateContract,
+  deleteContract,
+} from '../../services/contractService';
 
 function Contract() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,6 +31,8 @@ function Contract() {
   };
   const itemsPerPage = 5;
 
+  const BASE_URL = process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : 'http://localhost:8000';
+
   const formatCurrency = (amount) => {
     if (!amount || parseFloat(amount) === 0) return 'N/A';
     return new Intl.NumberFormat('vi-VN', {
@@ -46,43 +53,42 @@ function Contract() {
     });
   };
 
-  // Fetch chỉ contracts
+  // Transform contract data - tách ra để tái sử dụng
+  const transformContract = (contract) => ({
+    id: `#HD-${String(contract.contract_id).padStart(3, '0')}`,
+    sessionName: contract.session?.item?.name || 'N/A',
+    winner: contract.winner?.full_name || 'N/A',
+    finalPrice: formatCurrency(contract.final_price),
+    finalPriceValue: parseFloat(contract.final_price) || 0,
+    signedDate: formatDate(contract.signed_date),
+    rawSignedDate: contract.signed_date || '',
+    paymentStatus: contract.status,
+    statusClass:
+      contract.status === 'ChoThanhToan'
+        ? 'statusChothanhtoan'
+        : contract.status === 'DaThanhToan'
+        ? 'statusDathanhtoan'
+        : 'statusHuy',
+    rawContractId: contract.contract_id,
+    fileUrl: contract.file_path ? `${BASE_URL}${contract.file_path}` : '',
+  });
+
+  // Fetch contracts
+  const fetchContracts = async () => {
+    try {
+      setLoading(true);
+      const contractRes = await getContracts();
+      const transformedContracts = (contractRes.contracts || []).map(transformContract);
+      setContracts(transformedContracts);
+      setLoading(false);
+    } catch (err) {
+      setError('Không thể tải dữ liệu: ' + (err.response?.data?.message || err.message));
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-
-        const contractRes = await axios.get(`${process.env.REACT_APP_API_URL}contracts`);
-
-        // Transform hợp đồng
-        const transformedContracts = contractRes.data.contracts.map((contract) => ({
-          id: `#HD-${String(contract.contract_id).padStart(3, '0')}`,
-          sessionName: contract.session?.item?.name || 'N/A',
-          winner: contract.winner?.full_name || 'N/A',
-          finalPrice: formatCurrency(contract.final_price),
-          finalPriceValue: parseFloat(contract.final_price) || 0,
-          signedDate: formatDate(contract.signed_date),
-          rawSignedDate: contract.signed_date || '',
-          paymentStatus: contract.status,
-          statusClass:
-            contract.status === 'ChoThanhToan'
-              ? 'statusChothanhtoan'
-              : contract.status === 'DaThanhToan'
-              ? 'statusDathanhtoan'
-              : 'statusHuy',
-          rawContractId: contract.contract_id,
-          fileUrl: contract.file_path ? `http://localhost:8000${contract.file_path}` : '',
-        }));
-
-        setContracts(transformedContracts);
-        setLoading(false);
-      } catch (err) {
-        setError('Không thể tải dữ liệu.');
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    fetchContracts();
   }, []);
 
   const applyFilters = () => {
@@ -146,31 +152,14 @@ function Contract() {
   const openViewModal = async (contract) => {
     try {
       const contractId = contract.rawContractId;
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}contracts/${contractId}`);
-      const data = response.data.contract;
-      const transformedContract = {
-        id: `#HD-${String(data.contract_id).padStart(3, '0')}`,
-        sessionName: data.session?.item?.name || 'N/A',
-        winner: data.winner?.full_name || 'N/A',
-        finalPrice: formatCurrency(data.final_price),
-        finalPriceValue: parseFloat(data.final_price) || 0,
-        signedDate: formatDate(data.signed_date),
-        rawSignedDate: data.signed_date || '',
-        paymentStatus: data.status,
-        statusClass:
-          data.status === 'ChoThanhToan'
-            ? 'statusChothanhtoan'
-            : data.status === 'DaThanhToan'
-            ? 'statusDathanhtoan'
-            : 'statusHuy',
-        rawContractId: data.contract_id,
-        fileUrl: data.file_path ? `http://localhost:8000${data.file_path}` : '',
-      };
+      const response = await getContractById(contractId);
+      const data = response.contract;
+      const transformedContract = transformContract(data);
       setSelectedContract(transformedContract);
       setShowViewModal(true);
       document.body.classList.add('modal-open');
     } catch (err) {
-      alert('Lỗi khi tải chi tiết hợp đồng: ' + err.message);
+      alert('Lỗi khi tải chi tiết hợp đồng: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -204,37 +193,14 @@ function Contract() {
       }
       formPayload.append('status', formData.contractStatus);
 
-      await axios.post(
-        `${process.env.REACT_APP_API_URL}contracts/${selectedContract.rawContractId}`,
-        formPayload,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
+      await updateContract(selectedContract.rawContractId, formPayload);
 
       alert('Cập nhật hợp đồng thành công!');
-      // Refetch và transform
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}contracts`);
-      const transformedContracts = res.data.contracts.map((contract) => ({
-        id: `#HD-${String(contract.contract_id).padStart(3, '0')}`,
-        sessionName: contract.session?.item?.name || 'N/A',
-        winner: contract.winner?.full_name || 'N/A',
-        finalPrice: formatCurrency(contract.final_price),
-        finalPriceValue: parseFloat(contract.final_price) || 0,
-        signedDate: formatDate(contract.signed_date),
-        rawSignedDate: contract.signed_date || '',
-        paymentStatus: contract.status,
-        statusClass:
-          contract.status === 'ChoThanhToan'
-            ? 'statusChothanhtoan'
-            : contract.status === 'DaThanhToan'
-            ? 'statusDathanhtoan'
-            : 'statusHuy',
-        rawContractId: contract.contract_id,
-        fileUrl: contract.file_path ? `http://localhost:8000${contract.file_path}` : '',
-      }));
-      setContracts(transformedContracts);
+      // Refetch contracts
+      await fetchContracts();
       closeModal();
     } catch (err) {
-      alert('Lỗi cập nhật: ' + err.message);
+      alert('Lỗi cập nhật: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -251,21 +217,17 @@ function Contract() {
   // };
 
   const handleDelete = async (contract) => {
-  if (!window.confirm('Bạn có chắc muốn xóa hợp đồng này?')) return;
+    if (!window.confirm('Bạn có chắc muốn xóa hợp đồng này?')) return;
 
-  try {
-    // 1. Xóa các econtracts liên quan
-    await axios.delete(`${process.env.REACT_APP_API_URL}econtracts/${contract.rawContractId}`);
-
-    // 2. Xóa hợp đồng chính
-    await axios.delete(`${process.env.REACT_APP_API_URL}contracts/${contract.rawContractId}`);
-
-    alert('Xóa hợp đồng thành công!');
-    setContracts(contracts.filter((c) => c.id !== contract.id));
-  } catch (err) {
-    alert('Xóa thất bại: ' + err.message);
-  }
-};
+    try {
+      await deleteContract(contract.rawContractId);
+      alert('Xóa hợp đồng thành công!');
+      // Refetch contracts để đảm bảo data mới nhất
+      await fetchContracts();
+    } catch (err) {
+      alert('Xóa thất bại: ' + (err.response?.data?.message || err.message));
+    }
+  };
 
   const renderPagination = () => {
     const pages = [];

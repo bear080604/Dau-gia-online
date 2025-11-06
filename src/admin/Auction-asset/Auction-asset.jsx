@@ -1,13 +1,21 @@
 // Auction-asset.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './Auction-asset.module.css';
-import axios from 'axios'; // Giả sử sử dụng axios cho API calls, hoặc fetch
 import NotificationBell from "../NotificationBell";
+import {
+  getAssets,
+  getAssetById,
+  createAsset,
+  updateAsset,
+  approveAsset,
+  rejectAsset,
+  deleteAsset,
+  deleteExtraImage,
+} from '../../services/auctionAssetService';
+import { getCategories } from '../../services/categoryService';
 
-// API Base URL
-const API_BASE = 'http://localhost:8000/api';
-const BASE_IMAGE_URL = 'http://localhost:8000';
-const BASE_FILE_URL = 'http://localhost:8000';
+const BASE_IMAGE_URL = process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : 'http://localhost:8000';
+const BASE_FILE_URL = BASE_IMAGE_URL;
 
 // Status mapping: API -> UI
 const statusMap = {
@@ -29,34 +37,6 @@ const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleDateString('vi-VN');
 };
 
-// Auth helper
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token'); // Assume token from login
-  return {
-    'Accept': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
-  };
-};
-
-// API call helper with auth
-const apiCall = async (url, options = {}) => {
-  const defaultOptions = {
-    headers: getAuthHeaders(),
-    ...options
-  };
-  if (options.body instanceof FormData) {
-    // Không set Content-Type cho FormData
-    delete defaultOptions.headers['Content-Type'];
-  } else if (options.body) {
-    defaultOptions.headers['Content-Type'] = 'application/json';
-  }
-  const response = await fetch(url, defaultOptions);
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
-  }
-  return response.json();
-};
 
 const AuctionAsset = () => {
   const [assets, setAssets] = useState([]);
@@ -99,25 +79,51 @@ const AuctionAsset = () => {
   const extraFileInputRef = useRef(null);
   const urlFileInputRef = useRef(null);
 
-  // Fetch categories
-  const fetchCategories = async () => {
+  // Tối ưu: Gộp fetch categories và assets cùng lúc
+  const fetchInitialData = async () => {
     try {
-      const response = await fetch(`${API_BASE}/categories`);
-      const data = await response.json();
-      setCategories(data.data || []);
+      const [categoriesResponse, assetsResponse] = await Promise.all([
+        getCategories(),
+        getAssets(),
+      ]);
+      
+      // Xử lý categories
+      setCategories(categoriesResponse.data || []);
+      
+      // Xử lý assets
+      const mappedAssets = (assetsResponse.data || []).map(item => ({
+        id: item.id,
+        name: item.name,
+        category: typeof item.category === 'string' ? item.category : item.category?.name || item.category || 'N/A',
+        owner: item.owner?.name || 'N/A',
+        ownerId: item.owner?.id || null,
+        ownerEmail: item.owner?.email || 'N/A',
+        ownerPhone: item.owner?.email || 'N/A',
+        ownerAddress: item.owner?.address || 'N/A',
+        price: formatPrice(item.starting_price),
+        rawPrice: item.starting_price,
+        status: statusMap[item.status] || item.status,
+        rawStatus: item.status,
+        description: item.description || '',
+        createdDate: formatDate(item.created_at),
+        imageUrl: item.image_url ? BASE_IMAGE_URL + item.image_url : null,
+        urlFile: item.url_file ? BASE_FILE_URL + item.url_file : null,
+        auctionOrgId: item.auction_org_id
+      }));
+      setAssets(mappedAssets);
+      setNoData(mappedAssets.length === 0);
     } catch (error) {
-      console.error('Error fetching categories:', error);
-      alert('Lỗi khi tải danh mục!');
+      console.error('Error fetching initial data:', error);
+      alert('Lỗi khi tải dữ liệu: ' + (error.response?.data?.message || error.message));
+      setNoData(true);
     }
   };
 
-  // Fetch assets
+  // Fetch assets riêng để refresh sau khi save/delete
   const fetchAssets = async () => {
     try {
-      console.log('Fetching assets...');
-      const response = await fetch(`${API_BASE}/products`);
-      const data = await response.json();
-      const mappedAssets = (data.data || []).map(item => ({
+      const assetsResponse = await getAssets();
+      const mappedAssets = (assetsResponse.data || []).map(item => ({
         id: item.id,
         name: item.name,
         category: typeof item.category === 'string' ? item.category : item.category?.name || item.category || 'N/A',
@@ -140,7 +146,7 @@ const AuctionAsset = () => {
       setNoData(mappedAssets.length === 0);
     } catch (error) {
       console.error('Error fetching assets:', error);
-      alert('Lỗi khi tải tài sản: ' + error.message);
+      alert('Lỗi khi tải tài sản: ' + (error.response?.data?.message || error.message));
       setNoData(true);
     }
   };
@@ -199,7 +205,7 @@ const AuctionAsset = () => {
     let buttons = [];
     if (status === 'Chờ duyệt') {
       buttons.push(
-        <button key="approve" className={styles.btn + ' ' + styles.btnSuccess} onClick={() => approveAsset(id)}>
+        <button key="approve" className={styles.btn + ' ' + styles.btnSuccess} onClick={() => handleApproveAsset(id)}>
           <i className="fa fa-check"></i>
         </button>,
         <button key="reject" className={styles.btn + ' ' + styles.btnDanger} onClick={() => openRejectModal(id)}>
@@ -211,7 +217,7 @@ const AuctionAsset = () => {
         <button key="edit" className={styles.btn + ' ' + styles.btnEdit} onClick={() => openEditModal(id)}>
           <i className="fa fa-pencil"></i>
         </button>,
-        <button key="delete" className={styles.btn + ' ' + styles.btnDanger} onClick={() => deleteAsset(id)}>
+        <button key="delete" className={styles.btn + ' ' + styles.btnDanger} onClick={() => handleDeleteAsset(id)}>
           <i className="fa fa-trash"></i>
         </button>
       );
@@ -290,7 +296,7 @@ const AuctionAsset = () => {
   const openEditModal = async (id) => {
     setCurrentAssetId(id);
     try {
-      const data = await apiCall(`${API_BASE}/auction-items/${id}`);
+      const data = await getAssetById(id);
       const assetData = data.data || data;
       setCurrentAssetData(assetData);
       setFormData({
@@ -350,7 +356,7 @@ const AuctionAsset = () => {
 
   const openViewModal = async (id) => {
     try {
-      const data = await apiCall(`${API_BASE}/auction-items/${id}`);
+      const data = await getAssetById(id);
       const assetData = data.data || data;
       const ownerName = assetData.owner?.name || 'N/A';
       const userName = assetData.created_user?.name || 'Chưa có ';
@@ -521,11 +527,11 @@ const AuctionAsset = () => {
   const removeExtraImage = async (imageId) => {
     if (imageId && currentAssetId) {
       try {
-        await apiCall(`${API_BASE}/auction-items/images/${imageId}`, { method: 'DELETE' });
+        await deleteExtraImage(imageId);
         alert('Xóa ảnh thành công!');
         openEditModal(currentAssetId);
       } catch (error) {
-        alert('Lỗi xóa ảnh: ' + error.message);
+        alert('Lỗi xóa ảnh: ' + (error.response?.data?.message || error.message));
       }
     }
   };
@@ -555,10 +561,14 @@ const AuctionAsset = () => {
       formDataToSend.append('_method', 'PUT');
     }
 
-    const url = isEditMode ? `${API_BASE}/auction-items/${currentAssetId}` : `${API_BASE}/auction-items`;
-
     try {
-      const result = await apiCall(url, { method: 'POST', body: formDataToSend });
+      let result;
+      if (isEditMode) {
+        result = await updateAsset(currentAssetId, formDataToSend);
+      } else {
+        result = await createAsset(formDataToSend);
+      }
+      
       if (result.status) {
         alert('Lưu thành công!');
         closeModal('add');
@@ -568,7 +578,7 @@ const AuctionAsset = () => {
       }
     } catch (error) {
       console.error('Error saving asset:', error);
-      alert('Lỗi khi lưu: ' + error.message);
+      alert('Lỗi khi lưu: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -589,31 +599,28 @@ const AuctionAsset = () => {
   //     alert('Lỗi khi duyệt: ' + error.message);
   //   }
   // };
-  const approveAsset = async (id) => {
-  try {
-    const loggedUser = JSON.parse(localStorage.getItem('user'));
-    const result = await apiCall(`${API_BASE}/auction-items/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({
+  const handleApproveAsset = async (id) => {
+    try {
+      const loggedUser = JSON.parse(localStorage.getItem('user'));
+      const result = await approveAsset(id, {
         status: 'ChoDauGia',
         created_user: loggedUser?.user_id || null
-      })
-    });
-    if (result.status) {
-      alert('Duyệt thành công!');
-      fetchAssets();
-    } else {
-      alert('Lỗi: ' + (result.message || 'Không thể duyệt!'));
+      });
+      if (result.status) {
+        alert('Duyệt thành công!');
+        fetchAssets();
+      } else {
+        alert('Lỗi: ' + (result.message || 'Không thể duyệt!'));
+      }
+    } catch (error) {
+      alert('Lỗi khi duyệt: ' + (error.response?.data?.message || error.message));
     }
-  } catch (error) {
-    alert('Lỗi khi duyệt: ' + error.message);
-  }
-};
+  };
 
-  const deleteAsset = async (id) => {
+  const handleDeleteAsset = async (id) => {
     if (window.confirm(`Xóa tài sản ${id}?`)) {
       try {
-        const result = await apiCall(`${API_BASE}/auction-items/${id}`, { method: 'DELETE' });
+        const result = await deleteAsset(id);
         if (result.status) {
           alert('Xóa thành công!');
           fetchAssets();
@@ -621,20 +628,20 @@ const AuctionAsset = () => {
           alert('Lỗi: ' + (result.message || 'Không thể xóa!'));
         }
       } catch (error) {
-        alert('Lỗi khi xóa: ' + error.message);
+        alert('Lỗi khi xóa: ' + (error.response?.data?.message || error.message));
       }
     }
   };
 
-  const rejectAsset = async () => {
+  const handleRejectAsset = async () => {
     if (!rejectReason.trim()) {
       alert('Vui lòng nhập lý do từ chối!');
       return;
     }
     try {
-      const result = await apiCall(`${API_BASE}/auction-items/${currentAssetId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status: 'Huy', description: rejectReason })
+      const result = await rejectAsset(currentAssetId, {
+        status: 'Huy',
+        description: rejectReason
       });
       if (result.status) {
         alert(`Từ chối thành công với lý do: ${rejectReason}`);
@@ -644,7 +651,7 @@ const AuctionAsset = () => {
         alert('Lỗi: ' + (result.message || 'Không thể từ chối!'));
       }
     } catch (error) {
-      alert('Lỗi khi từ chối: ' + error.message);
+      alert('Lỗi khi từ chối: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -677,10 +684,9 @@ const AuctionAsset = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Init
+  // Init - Tối ưu: gọi song song
   useEffect(() => {
-    fetchCategories();
-    fetchAssets();
+    fetchInitialData();
   }, []);
 
   return (
@@ -910,7 +916,7 @@ const AuctionAsset = () => {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnDanger}`} onClick={rejectAsset}>
+              <button className={`${styles.btn} ${styles.btnDanger}`} onClick={handleRejectAsset}>
                 Xác nhận từ chối
               </button>
               <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => closeModal('reject')}>

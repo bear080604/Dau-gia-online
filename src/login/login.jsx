@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styles from './login.module.css';
 import { Eye, EyeOff } from 'lucide-react';
 import { useUser } from '../UserContext';
+import { login as loginService } from '../services/authService';
 
 function LoginForm() {
   const { login } = useUser();
@@ -39,36 +40,25 @@ function LoginForm() {
     }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          rememberMe: rememberMe ? true : false
-        }),
-        credentials: 'include',
+      const result = await loginService({
+        email: formData.email,
+        password: formData.password,
+        rememberMe: rememberMe ? true : false
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result && result.user) {
-          const token = result.token || null;
-          if (token) {
-            localStorage.setItem('authToken', token);
-          }
-          login(result.user, token);
-          // Giả sử role_id 2 là Admin, 3 là NhanVien (dựa trên bảng role bạn cung cấp)
-          window.location.href = result.user.role_id === 2 ? '/admin' : '/';
-        } else {
-          setErrorMessage('Đăng nhập thất bại: Dữ liệu người dùng không hợp lệ.');
+      if (result && result.user) {
+        const token = result.token || null;
+        if (token) {
+          localStorage.setItem('authToken', token);
         }
+        login(result.user, token);
+        // Giả sử role_id 2 là Admin, 3 là NhanVien (dựa trên bảng role bạn cung cấp)
+        window.location.href = result.user.role_id === 2 ? '/admin' : '/';
       } else {
-        const error = await response.json();
-        setErrorMessage(error.message || 'Email hoặc mật khẩu không đúng');
+        setErrorMessage('Đăng nhập thất bại: Dữ liệu người dùng không hợp lệ.');
       }
     } catch (err) {
-      setErrorMessage('Không thể kết nối đến server. Vui lòng thử lại sau.');
+      setErrorMessage(err.response?.data?.message || 'Email hoặc mật khẩu không đúng');
     }
   };
 

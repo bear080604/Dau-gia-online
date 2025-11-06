@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';  // NEW: Thêm useCallback nếu dùng debounce lib, nhưng dùng native timeout
-import axios from 'axios';
 import Swal from 'sweetalert2';
 import styles from './Auction-session.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -7,6 +6,17 @@ import { useUser } from '../../UserContext';
 import moment from 'moment-timezone';
 import { Link } from 'react-router-dom';
 import NotificationBell from "../NotificationBell";
+import {
+  getAuctionSessions,
+  getAuctionSessionById,
+  createAuctionSession,
+  updateAuctionSession,
+  deleteAuctionSession,
+  getBidsBySessionId,
+  getProducts,
+  getAuctionOrganizationsAndAuctioneers,
+  clearUsersCache,
+} from '../../services/auctionSessionService';
 
 function AuctionSession() {
   const { token, user } = useUser();
@@ -17,7 +27,7 @@ function AuctionSession() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [modalMode, setModalMode] = useState('add');
+  const [modalMode, setModalMode] = useState('add');  
   const [selectedSession, setSelectedSession] = useState(null);
   const [originalSessions, setOriginalSessions] = useState([]);  // NEW: Sessions gốc từ API (đã transform)
   const [sessions, setSessions] = useState([]);  // NEW: Sessions đã filter để hiển thị
@@ -57,7 +67,6 @@ function AuctionSession() {
   const [error, setError] = useState(null);
   const [now, setNow] = useState(moment.tz('Asia/Ho_Chi_Minh'));
   const itemsPerPage = 5;
-  const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
 
   // Update current time every second
   useEffect(() => {
@@ -75,22 +84,14 @@ function AuctionSession() {
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  // Log token and user for debugging
+  // Tối ưu: Gộp fetch auctionOrgs và auctioneers cùng lúc
   useEffect(() => {
-    const fetchAuctionOrgs = async () => {
+    const fetchAuctionData = async () => {
       try {
         setIsLoadingAuctionOrgs(true);
-        const response = await axios.get(`${API_URL}showuser`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const users = response.data.users || [];
-        const toChucDauGiaUsers = users
-          .filter((user) => user.role_id === 8 || (user.role && user.role.name === 'AuctionOrganization'))
-          .map((user) => ({
-            id: user.user_id.toString(),
-            name: user.full_name,
-          }));
-        setAuctionOrgs(toChucDauGiaUsers);
+        const { auctionOrgs, auctioneers } = await getAuctionOrganizationsAndAuctioneers();
+        setAuctionOrgs(auctionOrgs);
+        setAuctioneers(auctioneers);
       } catch (error) {
         setError(
           `Không thể tải danh sách tổ chức đấu giá: ${
@@ -102,7 +103,7 @@ function AuctionSession() {
       }
     };
     if (token) {
-      fetchAuctionOrgs();
+      fetchAuctionData();
     }
   }, [token]);
 
@@ -133,18 +134,6 @@ function AuctionSession() {
       setIsAuctionOrgDisabled(false);
     }
   }, [sessionForm.item, products]);
-
-  useEffect(() => {
-    const fetchAuctioneers = async () => {
-      const res = await axios.get(`${API_URL}showuser`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const users = res.data.users || [];
-      const dauGiaVienList = users.filter(u => u.role_id === 5); // hoặc tên role “Auctioneer”
-      setAuctioneers(dauGiaVienList.map(u => ({ id: u.user_id, name: u.full_name })));
-    };
-    if (token) fetchAuctioneers();
-  }, [token]);
 
   const getAuctionStatus = (session) => {
     if (!session || !session.bid_start || !session.bid_end) {
@@ -285,45 +274,44 @@ function AuctionSession() {
     return list;
   };
 
-  const fetchBids = async (sessionId) => {
+  // Tối ưu: fetchBids nhận profiles từ session để tránh duplicate call
+  const fetchBids = async (sessionId, profiles = null) => {
     try {
       if (!token) {
         throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
       }
-      const response = await axios.get(`${API_URL}bids/${sessionId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.data && response.data.status && Array.isArray(response.data.bids)) {
-        const sessionResponse = await axios.get(`${API_URL}auction-sessions/${sessionId}`, {
-          headers: { Authorization: `Bearer ${token}` },
+      const bidsResponse = await getBidsBySessionId(sessionId);
+      if (bidsResponse && bidsResponse.status && Array.isArray(bidsResponse.bids)) {
+        // Nếu không có profiles, lấy từ API
+        let profilesList = profiles;
+        if (!profilesList) {
+          const sessionResponse = await getAuctionSessionById(sessionId);
+          profilesList = sessionResponse.session?.profiles || [];
+        }
+        
+        const bidsWithNames = bidsResponse.bids.map((bid) => {
+          const profile = profilesList.find((p) => p.user_id === bid.user_id);
+          const userName = profile ? profile.user.full_name : 'Không xác định';
+          return {
+            id: bid.id,
+            userId: bid.user_id,
+            amount: Number(bid.amount).toLocaleString('vi-VN', {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            }),
+            createdAt: bid.bid_time
+              ? moment.tz(bid.bid_time, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')
+              : 'Không có thời gian',
+            userName,
+            originalAmount: Number(bid.amount),
+          };
         });
-        const profiles = sessionResponse.data.session.profiles || [];
-        const bidsWithNames = await Promise.all(
-          response.data.bids.map(async (bid) => {
-            const profile = profiles.find((p) => p.user_id === bid.user_id);
-            const userName = profile ? profile.user.full_name : 'Không xác định';
-            return {
-              id: bid.id,
-              userId: bid.user_id,
-              amount: Number(bid.amount).toLocaleString('vi-VN', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              }),
-              createdAt: bid.bid_time
-                ? moment.tz(bid.bid_time, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')
-                : 'Không có thời gian',
-              userName,
-              originalAmount: Number(bid.amount),
-            };
-          })
-        );
         return bidsWithNames.sort((a, b) => b.originalAmount - a.originalAmount);
       }
       return [];
     } catch (error) {
       if (error.response && error.response.status === 401) {
-        alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
-        window.location.href = '/login';
+        // Đã được xử lý bởi interceptor
       } else if (error.response && error.response.status === 403) {
         alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator).');
       }
@@ -331,21 +319,25 @@ function AuctionSession() {
     }
   };
 
-  // FIXED + NEW: fetchSessions (lấy 1 lần, lưu original, áp filter ngay)
-  const fetchSessions = async () => {
+  // Tối ưu: Gộp fetchSessions và fetchProducts để gọi song song và share data
+  const fetchInitialData = async () => {
     setLoading(true);
     setError(null);
     try {
       if (!token) {
         throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
       }
-      const response = await axios.get(`${API_URL}auction-sessions`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      
+      // Gọi song song để tối ưu performance
+      const [productsResponse, sessionsResponse] = await Promise.all([
+        getProducts(),
+        getAuctionSessions(),
+      ]);
 
-      if (response.data && Array.isArray(response.data.sessions)) {
+      // Xử lý sessions
+      if (sessionsResponse && Array.isArray(sessionsResponse.sessions)) {
         // transform raw sessions -> ui-ready sessions
-        const transformed = response.data.sessions.map(transformSession);
+        const transformed = sessionsResponse.sessions.map(transformSession);
 
         // Lưu session gốc (đã transform) để lọc client-side
         setOriginalSessions(transformed);
@@ -360,85 +352,107 @@ function AuctionSession() {
         setSessions(filtered);
         setTotalPages(Math.max(1, Math.ceil(filtered.length / itemsPerPage)));
         setCurrentPage(1);
+
+        // Xử lý products với session data
+        const sessionItemIds = sessionsResponse.sessions
+          .filter((session) => session.status !== 'KetThuc' || session.current_winner_id !== null)
+          .map((session) => session.item_id);
+        
+        if (productsResponse && Array.isArray(productsResponse.data)) {
+          const filteredProducts = productsResponse.data
+            .filter((product) => {
+              const isValidStatus = product.status === 'ChoDauGia';
+              const hasNoActiveOrWonSessions = !sessionItemIds.includes(product.id);
+              return isValidStatus && hasNoActiveOrWonSessions;
+            })
+            .map((product) => ({
+              ...product,
+              auction_org_id: product.auction_org_id ? product.auction_org_id.toString() : '',
+            }));
+          setProducts(filteredProducts);
+        } else {
+          setProducts([]);
+        }
       } else {
-        console.error('Unexpected API response structure:', response.data);
+        console.error('Unexpected API response structure:', sessionsResponse);
         setOriginalSessions([]);
         setSessions([]);
+        setProducts([]);
         setError('Dữ liệu từ API không đúng định dạng.');
       }
     } catch (error) {
-      console.error('fetchSessions error', error);
+      console.error('fetchInitialData error', error);
       if (error.response && error.response.status === 401) {
-        alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
-        window.location.href = '/login';
+        // Đã được xử lý bởi interceptor
       } else if (error.response && error.response.status === 403) {
         alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator).');
       } else {
-        setError('Không thể tải danh sách phiên đấu giá: ' + (error.response?.data?.message || error.message));
+        setError('Không thể tải dữ liệu: ' + (error.response?.data?.message || error.message));
       }
       setOriginalSessions([]);
       setSessions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      if (!token) {
-        throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
-      }
-      const [productsResponse, sessionsResponse] = await Promise.all([
-        axios.get(`${API_URL}products`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get(`${API_URL}auction-sessions`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-      ]);
-      // Lấy danh sách item_id từ các phiên đấu giá đang hoạt động hoặc đã kết thúc thành công
-      const sessionItemIds = sessionsResponse.data.sessions
-        ? sessionsResponse.data.sessions
-            .filter((session) => session.status !== 'KetThuc' || session.current_winner_id !== null)
-            .map((session) => session.item_id)
-        : [];
-      if (productsResponse.data && Array.isArray(productsResponse.data.data)) {
-        const filteredProducts = productsResponse.data.data
-          .filter((product) => {
-            const isValidStatus = product.status === 'ChoDauGia';
-            const hasNoActiveOrWonSessions = !sessionItemIds.includes(product.id);
-            return isValidStatus && hasNoActiveOrWonSessions;
-          })
-          .map((product) => ({
-            ...product,
-            auction_org_id: product.auction_org_id ? product.auction_org_id.toString() : '',
-          }));
-        setProducts(filteredProducts);
-      } else {
-        setError('Dữ liệu sản phẩm không đúng định dạng.');
-        setProducts([]);
-      }
-    } catch (error) {
-      if (error.response && error.response.status === 401) {
-        alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
-        window.location.href = '/login';
-      } else if (error.response && error.response.status === 403) {
-        alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator).');
-      } else {
-        setError('Không thể tải danh sách sản phẩm: ' + (error.response?.data?.message || error.message));
-      }
       setProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // Tối ưu: Hàm refresh chung để tránh duplicate calls
+  const refreshData = async () => {
+    try {
+      if (!token) {
+        throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
+      }
+      
+      // Gọi song song một lần duy nhất
+      const [productsResponse, sessionsResponse] = await Promise.all([
+        getProducts(),
+        getAuctionSessions(),
+      ]);
+
+      // Xử lý sessions
+      if (sessionsResponse && Array.isArray(sessionsResponse.sessions)) {
+        const transformed = sessionsResponse.sessions.map(transformSession);
+        setOriginalSessions(transformed);
+        const filtered = applyFilters(transformed, {
+          search: searchTermDebounced,
+          status: statusFilter,
+          item: itemFilter,
+        });
+        setSessions(filtered);
+        setTotalPages(Math.max(1, Math.ceil(filtered.length / itemsPerPage)));
+        setCurrentPage(1);
+
+        // Xử lý products với session data đã có
+        const sessionItemIds = sessionsResponse.sessions
+          .filter((session) => session.status !== 'KetThuc' || session.current_winner_id !== null)
+          .map((session) => session.item_id);
+        
+        if (productsResponse && Array.isArray(productsResponse.data)) {
+          const filteredProducts = productsResponse.data
+            .filter((product) => {
+              const isValidStatus = product.status === 'ChoDauGia';
+              const hasNoActiveOrWonSessions = !sessionItemIds.includes(product.id);
+              return isValidStatus && hasNoActiveOrWonSessions;
+            })
+            .map((product) => ({
+              ...product,
+              auction_org_id: product.auction_org_id ? product.auction_org_id.toString() : '',
+            }));
+          setProducts(filteredProducts);
+        } else {
+          setProducts([]);
+        }
+      }
+    } catch (error) {
+      console.error('refreshData error', error);
+    }
+  };
+
   // NEW: useEffect gọi fetch chỉ khi token thay đổi (không phụ thuộc filter)
   useEffect(() => {
     if (token) {
-      fetchProducts();
-      fetchSessions();
+      fetchInitialData();
     } else {
       setError('Vui lòng đăng nhập để xem danh sách phiên đấu giá.');
       window.location.href = '/login';
@@ -578,16 +592,40 @@ function AuctionSession() {
       if (!token) {
         throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
       }
+      // Tối ưu: Gọi song song và pass profiles vào fetchBids để tránh duplicate call
       const [sessionResponse, bidsResponse] = await Promise.all([
-        axios.get(`${API_URL}auction-sessions/${sessionId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetchBids(sessionId),
+        getAuctionSessionById(sessionId),
+        getBidsBySessionId(sessionId),
       ]);
-      if (sessionResponse.data && sessionResponse.data.status && sessionResponse.data.session) {
-        const session = sessionResponse.data.session;
+      
+      if (sessionResponse && sessionResponse.status && sessionResponse.session) {
+        const session = sessionResponse.session;
+        const profiles = session.profiles || [];
+        
+        // Xử lý bids với profiles đã có
+        let processedBids = [];
+        if (bidsResponse && bidsResponse.status && Array.isArray(bidsResponse.bids)) {
+          processedBids = bidsResponse.bids.map((bid) => {
+            const profile = profiles.find((p) => p.user_id === bid.user_id);
+            const userName = profile ? profile.user.full_name : 'Không xác định';
+            return {
+              id: bid.id,
+              userId: bid.user_id,
+              amount: Number(bid.amount).toLocaleString('vi-VN', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              }),
+              createdAt: bid.bid_time
+                ? moment.tz(bid.bid_time, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')
+                : 'Không có thời gian',
+              userName,
+              originalAmount: Number(bid.amount),
+            };
+          }).sort((a, b) => b.originalAmount - a.originalAmount);
+        }
+        
         const transformedSession = transformSession(session);
-        transformedSession.bids = bidsResponse;
+        transformedSession.bids = processedBids;
         setSelectedSession(transformedSession);
         setShowViewModal(true);
       } else {
@@ -596,8 +634,7 @@ function AuctionSession() {
     } catch (error) {
       console.error('Error fetching session details or bids:', error);
       if (error.response && error.response.status === 401) {
-        alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
-        window.location.href = '/login';
+        // Đã được xử lý bởi interceptor
       } else if (error.response && error.response.status === 403) {
         alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator).');
       } else {
@@ -672,26 +709,21 @@ function AuctionSession() {
       if (moment.tz(formData.bid_end, 'Asia/Ho_Chi_Minh').isBefore(moment.tz(formData.bid_start, 'Asia/Ho_Chi_Minh'))) {
         throw new Error('Thời gian đấu giá kết thúc phải sau thời gian đấu giá bắt đầu.');
       }
-      let response;
       if (modalMode === 'edit' && selectedSession) {
-        response = await axios.put(`${API_URL}auction-sessions/${selectedSession.id}`, formData, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await updateAuctionSession(selectedSession.id, formData);
         alert('Cập nhật phiên đấu giá thành công!');
       } else {
-        response = await axios.post(`${API_URL}auction-sessions`, formData, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await createAuctionSession(formData);
         alert('Tạo phiên đấu giá thành công! Hợp đồng điện tử đã được tạo tự động');
       }
-      fetchSessions();  // Refetch để cập nhật originalSessions
-      fetchProducts();
+      // Clear cache và refresh data
+      clearUsersCache();
+      await refreshData();
       closeSessionModal();
     } catch (error) {
       console.error('Error saving session:', error);
       if (error.response && error.response.status === 401) {
-        alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
-        window.location.href = '/login';
+        // Đã được xử lý bởi interceptor
       } else if (error.response && error.response.status === 403) {
         alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator).');
       } else {
@@ -735,13 +767,8 @@ function AuctionSession() {
       if (!token) {
         throw new Error('Không tìm thấy token. Vui lòng đăng nhập.');
       }
-      const headers = { Authorization: `Bearer ${token}` };
-      // 1️⃣ Xóa e-contracts theo session_id
-      await axios.delete(`${API_URL}econtracts/${sessionId}`, { headers });
-      // 2️⃣ Xóa contracts theo session_id
-      await axios.delete(`${API_URL}contracts/${sessionId}`, { headers });
-      // 3️⃣ Xóa chính phiên đấu giá
-      await axios.delete(`${API_URL}auction-sessions/${sessionId}`, { headers });
+      // Xóa phiên đấu giá và các hợp đồng liên quan
+      await deleteAuctionSession(sessionId);
       // Success feedback
       if (window.Swal) {
         Swal.fire({
@@ -754,15 +781,15 @@ function AuctionSession() {
       } else {
         alert('Xóa phiên đấu giá thành công!');
       }
-      // Refresh data
-      await Promise.all([fetchSessions(), fetchProducts()]);
+      // Clear cache và refresh data
+      clearUsersCache();
+      await refreshData();
     } catch (error) {
       console.error('Error deleting session:', error);
       const errorMsg = error.response?.data?.message || error.message || 'Không thể xóa phiên đấu giá này.';
      
       if (error.response && error.response.status === 401) {
-        alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
-        window.location.href = '/login';
+        // Đã được xử lý bởi interceptor
       } else if (error.response && error.response.status === 403) {
         alert('Bạn không có quyền truy cập. Vui lòng liên hệ admin để kiểm tra vai trò (DauGiaVien hoặc Administrator).');
       } else {

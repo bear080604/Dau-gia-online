@@ -1,4 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { getCurrentUser } from './services/userService';
+import { logout as logoutService } from './services/authService';
 
 export const UserContext = createContext();
 
@@ -35,6 +37,13 @@ export const UserProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    // Gọi API đăng xuất trước
+    try {
+      await logoutService();
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+
     // Xóa dữ liệu trong state React
     setUser(null);
     setToken(null);
@@ -43,24 +52,6 @@ export const UserProvider = ({ children }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('authToken');
-
-    // Gọi API đăng xuất (nếu cần)
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/'}logout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        console.warn('Logout API returned non-OK response');
-      }
-    } catch (err) {
-      console.error('Logout error:', err);
-    }
   };
 
   useEffect(() => {
@@ -73,37 +64,30 @@ export const UserProvider = ({ children }) => {
           const parsedUser = JSON.parse(savedUser);
           setUser(parsedUser);
 
-          const response = await fetch(`${process.env.REACT_APP_API_URL}user`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${savedToken}`,
-            },
-            credentials: 'include',
-          });
-
-          if (response.ok) {
-            const userData = await response.json();
-            if (userData.status && userData.user) {
-              setUser(userData.user);
-              localStorage.setItem('user', JSON.stringify(userData.user));
-              localStorage.removeItem('authToken');
-            } else {
-              throw new Error('Invalid user data from API');
-            }
-          } else if (response.status === 401) {
+          const userData = await getCurrentUser();
+          if (userData.status && userData.user) {
+            setUser(userData.user);
+            localStorage.setItem('user', JSON.stringify(userData.user));
+            localStorage.removeItem('authToken');
+          } else {
+            throw new Error('Invalid user data from API');
+          }
+        } catch (err) {
+          // Xử lý lỗi 401 hoặc lỗi khác
+          if (err.response && err.response.status === 401) {
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            localStorage.removeItem('authToken');
+          } else {
+            // Xóa dữ liệu nếu có lỗi khác
             setUser(null);
             setToken(null);
             localStorage.removeItem('user');
             localStorage.removeItem('token');
             localStorage.removeItem('authToken');
           }
-        } catch (err) {
-          setUser(null);
-          setToken(null);
-          localStorage.removeItem('user');
-          localStorage.removeItem('token');
-          localStorage.removeItem('authToken');
         }
       }
     };

@@ -1706,7 +1706,7 @@ const renderImage = (url, type, errorKey) => {
             </div>
           </div>
         </div>
-      )}
+      )}  
     </div>
   );
 }

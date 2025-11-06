@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
 import styles from "./register.module.css";
+import { register as registerService } from "../services/authService";
 
 function Register() {
   const [accountType, setAccountType] = useState("user");
@@ -57,13 +57,14 @@ useEffect(() => {
 }, []);
 
   useEffect(() => {
-    axios
-      .get("https://api.vietqr.io/v2/banks")
-      .then((res) => {
-        if (res.data.code === "00" && res.data.data) {
-          setBanks(res.data.data);
+    // Fetch banks từ VietQR API (external API, không cần service)
+    fetch("https://api.vietqr.io/v2/banks")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.code === "00" && data.data) {
+          setBanks(data.data);
         } else {
-          console.warn("API ngân hàng trả về dữ liệu không hợp lệ:", res.data);
+          console.warn("API ngân hàng trả về dữ liệu không hợp lệ:", data);
         }
       })
       .catch((err) => {
@@ -209,19 +210,16 @@ useEffect(() => {
     console.log("Dữ liệu gửi đi:", Object.fromEntries(data));
 
     try {
-      const res = await axios.post(`${process.env.REACT_APP_API_URL}register`, data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
+      const res = await registerService(data);
       setSuccessMsg(`Đăng ký thành công! Kiểm tra email để xác thực tài khoản. Chuyển trang đăng nhập sau ${countdown} giây...`);
       window.scrollTo({ top: 0, behavior: "smooth" });
-      console.log(res.data);
+      console.log(res);
     } catch (err) {
       console.error("Lỗi API:", err.response ? err.response.data : err.message);
       if (err.response && err.response.data.errors) {
         setErrors(err.response.data.errors);
       } else {
-        setErrors({ general: "Lỗi kết nối API. Vui lòng thử lại sau." });
+        setErrors({ general: err.response?.data?.message || "Lỗi kết nối API. Vui lòng thử lại sau." });
       }
     } finally {
       setIsLoading(false);
