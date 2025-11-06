@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import './adshowauction.css';
 import { useParams } from 'react-router-dom';
-import NotificationBell from "../NotificationBell";
 
 // Tách Countdown thành component riêng
 const CountdownDisplay = React.memo(({ 
@@ -61,7 +60,7 @@ const ControlSection = React.memo(({
 
 const AdShowAuction = () => {
     // Constants
-    const API_URL = 'http://localhost:8000/api/';
+    const API_URL = `${process.env.REACT_APP_API_URL}`;
   const { id } = useParams(); // Lấy id từ URL
   
     // State management

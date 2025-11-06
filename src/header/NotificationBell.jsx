@@ -24,7 +24,7 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
     const user = JSON.parse(storedUser);
     const userId = user.user_id;
 
-    socketRef.current = io("http://localhost:6001", {
+    socketRef.current = io(process.env.REACT_APP_SOCKET_URL, {
       transports: ["websocket"],
       reconnection: true,
       reconnectionAttempts: 5,
@@ -34,12 +34,10 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
     const socket = socketRef.current;
 
     socket.on("connect", () => {
-      console.log("Socket connected:", socket.id);
       socket.emit("join.channel", `user.${userId}`);
     });
 
     socket.on("notification.created", (data) => {
-      console.log("Thông báo mới:", data);
 
       const newNotif = {
         id: data.notification.notification_id,
@@ -80,7 +78,7 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
     const userId = user.user_id;
 
     setLoading(true);
-    fetch(`http://localhost:8000/api/notifications/${userId}`, {
+    fetch(`${process.env.REACT_APP_API_URL}notifications/${userId}`, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${storedToken}`,
@@ -137,7 +135,7 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
     const storedToken = localStorage.getItem("token");
     if (!storedToken) return;
 
-    fetch(`http://localhost:8000/api/notifications/${notifId}/read`, {
+    fetch(`${process.env.REACT_APP_API_URL}notifications/${notifId}/read`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -168,7 +166,7 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
     const userId = JSON.parse(storedUser).user_id;
 
     setLoading(true);
-    fetch(`http://localhost:8000/api/notifications/user/${userId}/read-all`, {
+    fetch(`${process.env.REACT_APP_API_URL}notifications/user/${userId}/read-all`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

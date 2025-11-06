@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import styles from './EContract.module.css';
 import axios from 'axios';
-import NotificationBell from "../NotificationBell";
 
 // Base URL for API and PDFs from environment variables
-const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
-const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://127.0.0.1:8000';
+const API_URL = process.env.REACT_APP_API_URL;
+const BASE_URL = process.env.REACT_APP_BASE_URL;
 
 function EContract() {
   const [searchTerm, setSearchTerm] = useState('');

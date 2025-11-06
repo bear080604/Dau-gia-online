@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styles from './AdminAssetCategories.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import NotificationBell from "../NotificationBell";
 
 const AdminAssetCategories = () => {
   const [categories, setCategories] = useState([]);
@@ -31,7 +30,7 @@ const AdminAssetCategories = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:8000/api/categories', {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}categories`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       
@@ -50,7 +49,7 @@ const AdminAssetCategories = () => {
   const handleDelete = async (category_id) => {
     if (window.confirm('Bạn có chắc muốn xóa danh mục này?')) {
       try {
-        await axios.delete(`http://localhost:8000/api/categories/${category_id}`, {
+        await axios.delete(`${process.env.REACT_APP_API_URL}categories/${category_id}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         setCategories(categories.filter(item => item.category_id !== category_id));
@@ -66,7 +65,7 @@ const AdminAssetCategories = () => {
   const handleAdd = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:8000/api/categories', formData, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}categories`, formData, {
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -92,7 +91,7 @@ const AdminAssetCategories = () => {
   const handleEdit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.put(`http://localhost:8000/api/categories/${selectedCategory.category_id}`, formData, {
+      const response = await axios.put(`${process.env.REACT_APP_API_URL}categories/${selectedCategory.category_id}`, formData, {
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'

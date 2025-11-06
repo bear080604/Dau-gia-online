@@ -11,9 +11,9 @@ const Contract = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
 
-  const CONTRACTS_API_URL = `${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}/api/contracts`;
-  const ECONTRACTS_API_URL = `${process.env.REACT_APP_BASE_URL || 'http://localhost:8000'}/api/econtracts`;
-  const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:8000';
+  const CONTRACTS_API_URL = `${process.env.REACT_APP_API_URL}contracts`;
+  const ECONTRACTS_API_URL = `${process.env.REACT_APP_API_URL}econtracts`;
+  const BASE_URL = process.env.REACT_APP_BASE_URL;
 
   const vnFormatter = new Intl.DateTimeFormat('vi-VN', {
     timeZone: 'Asia/Ho_Chi_Minh',
@@ -178,24 +178,10 @@ const Contract = () => {
                   </td>
                   <td data-label="Hành Động">
                     {contract.status === 'ChoThanhToan' ?  (
-                      // <Link 
-                      //   to={`/payment?contract_id=${contract.contract_id}`}
-                      //   className="btn btn-pay"
-                      // >
-                      //   <i className="fa-solid fa-credit-card"></i> Thanh Toán
-                      // </Link>
                       <div>Nhận viên sẽ liên hệ trong vòng 24h</div>
                     ): (
                       <div>thành công</div>
                     )}
-                    {/* <a 
-                      href={getEcontractUrl(contract.session_id)}
-                      className="btn btn-view"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <i className="fa-solid fa-file-pdf"></i> Xem Hợp Đồng
-                    </a> */}
                   </td>
                 </tr>
               );

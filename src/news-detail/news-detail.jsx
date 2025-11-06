@@ -9,7 +9,7 @@ const NewsDetail = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch(`http://127.0.0.1:8000/api/news/${id}`)
+    fetch(`${process.env.REACT_APP_API_URL}news/${id}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error('Không tìm thấy tin tức');
@@ -30,13 +30,13 @@ const NewsDetail = () => {
           if (data.thumbnail.startsWith('http')) {
             imageUrl = data.thumbnail; // backend trả URL đầy đủ
           } else {
-            imageUrl = `http://127.0.0.1:8000/storage/news/${data.thumbnail.replace(
+            imageUrl = `${process.env.REACT_APP_BASE_URL}/storage/news/${data.thumbnail.replace(
               'storage/news/',
               ''
             )}`;
           }
         } else {
-          imageUrl = 'https://via.placeholder.com/600x400?text=Image+Not+Found';
+          imageUrl = '';
         }
 
         setNews({
@@ -87,9 +87,6 @@ const NewsDetail = () => {
         src={news.imageUrl}
         alt={news.title}
         className={styles.thumbnail}
-        onError={(e) => {
-          e.target.src = 'https://via.placeholder.com/600x400?text=Image+Not+Found';
-        }}
       />
 
       <div className={styles.content}>{news.content}</div>

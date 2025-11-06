@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Chart from 'chart.js/auto';
 import styles from './Dashboard.module.css';
-import NotificationBell from "../NotificationBell";
 const Dashboard = () => {
   const [activePeriod, setActivePeriod] = useState('week');
   const [sessions, setSessions] = useState([]);
@@ -31,11 +30,11 @@ const Dashboard = () => {
       try {
         setLoading(true);
         const [sessionsRes, contractsRes, usersRes, productsRes, bidsRes] = await Promise.all([
-          fetch('http://localhost:8000/api/auction-sessions'),
-          fetch('http://localhost:8000/api/contracts'),
-          fetch('http://localhost:8000/api/showuser'),
-          fetch('http://localhost:8000/api/products'),
-          fetch('http://localhost:8000/api/showbids')
+          fetch(`${process.env.REACT_APP_API_URL}auction-sessions`),
+          fetch(`${process.env.REACT_APP_API_URL}contracts`),
+          fetch(`${process.env.REACT_APP_API_URL}showuser`),
+          fetch(`${process.env.REACT_APP_API_URL}products`),
+          fetch(`${process.env.REACT_APP_API_URL}showbid`)
         ]);
 
         if (!sessionsRes.ok) throw new Error(`Sessions API error: ${sessionsRes.status}`);
@@ -308,17 +307,6 @@ const Dashboard = () => {
       </div>
 
       <div className={styles.metricsGrid}>
-        {/* <div className={styles.metricCard}>
-          <div className={styles.metricTitle}>
-            <span>Phiên đấu giá hôm nay</span>
-            <i className="fas fa-gavel"></i>
-          </div>
-          <div className={styles.metricValue}>{todaySessionsCount}</div>
-          <div className={`${styles.metricChange} ${styles.metricChangeUp}`}>
-            <i className="fas fa-arrow-up"></i>
-            <span>+15% so với hôm qua</span>
-          </div>
-        </div> */}
 
         <div className={styles.metricCard}>
           <div className={styles.metricTitle}>

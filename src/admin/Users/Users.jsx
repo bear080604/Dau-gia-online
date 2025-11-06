@@ -17,10 +17,9 @@ import {
 } from '../../services/userService';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import styles from './Users.module.css';
-import NotificationBell from "../NotificationBell";
 import Loading from '../../components/Loading';
 
-const API_URL = 'http://127.0.0.1:8000/';
+const API_URL = `${process.env.REACT_APP_BASE_URL}`;
 
 function Users() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -171,11 +170,11 @@ function Users() {
         const usersData = usersResponse?.users || usersResponse?.data?.users || [];
         const mappedUsers = Array.isArray(usersData)
           ? usersData.map(user => {
-              const id_card_front_url = user.id_card_front ? `${API_URL}storage/${user.id_card_front}` : '';
-              const id_card_back_url = user.id_card_back ? `${API_URL}storage/${user.id_card_back}` : '';
-              const business_license_url = user.business_license ? `${API_URL}storage/${user.business_license}` : undefined;
-              const auctioneer_card_front_url = user.auctioneer_card_front ? `${API_URL}storage/${user.auctioneer_card_front}` : undefined;
-              const auctioneer_card_back_url = user.auctioneer_card_back ? `${API_URL}storage/${user.auctioneer_card_back}` : undefined;
+              const id_card_front_url = user.id_card_front ? `${API_URL}/storage/${user.id_card_front}` : '';
+              const id_card_back_url = user.id_card_back ? `${API_URL}/storage/${user.id_card_back}` : '';
+              const business_license_url = user.business_license ? `${API_URL}/storage/${user.business_license}` : undefined;
+              const auctioneer_card_front_url = user.auctioneer_card_front ? `${API_URL}/storage/${user.auctioneer_card_front}` : undefined;
+              const auctioneer_card_back_url = user.auctioneer_card_back ? `${API_URL}/storage/${user.auctioneer_card_back}` : undefined;
 
               return {
                 id: user.user_id,
@@ -325,12 +324,6 @@ function Users() {
       // Xác định loại tài khoản
       const accountType = user.accountType || roleToAccountTypeMap[user.role_id] || 'personal';
 
-      // Debug: kiểm tra dữ liệu user
-      // console.log('User data for edit:', user);
-      // console.log('Birth date from user:', user.birth_date);
-      // console.log('Identity issue date from user:', user.identity_issue_date);
-      // console.log('Formatted birth date:', formatDateForInput(user.birth_date));
-      // console.log('Formatted identity issue date:', formatDateForInput(user.identity_issue_date));
 
       setUserForm({
         // === CƠ BẢN ===

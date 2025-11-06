@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import styles from './Roles.module.css';
-import NotificationBell from "../NotificationBell";
 
 function Roles() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,7 +31,7 @@ function Roles() {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/roles', {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}roles`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -54,7 +53,7 @@ function Roles() {
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/permissions', {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}permissions`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -157,7 +156,7 @@ function Roles() {
     setSelectedRole(role);
     setFormError(null);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/roles/${role.role_id}/permissions`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}roles/${role.role_id}/permissions`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -214,7 +213,7 @@ function Roles() {
         return;
       }
 
-      const url = modalMode === 'add' ? 'http://127.0.0.1:8000/api/roles' : `http://127.0.0.1:8000/api/roles/${selectedRole.role_id}`;
+      const url = modalMode === 'add' ? `${process.env.REACT_APP_API_URL}roles` : `${process.env.REACT_APP_API_URL}roles/${selectedRole.role_id}`;
       const method = modalMode === 'add' ? 'POST' : 'PUT';
       
       const response = await fetch(url, {
@@ -256,7 +255,7 @@ function Roles() {
   const handleAssignPermissions = async () => {
     try {
       setFormError(null);
-      const response = await fetch(`http://127.0.0.1:8000/api/roles/${selectedRole.role_id}/permissions`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}roles/${selectedRole.role_id}/permissions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -271,7 +270,7 @@ function Roles() {
       }
 
       // Cập nhật danh sách roles với permissions mới
-      const updatedRoleResponse = await fetch(`http://127.0.0.1:8000/api/roles/${selectedRole.role_id}/permissions`, {
+      const updatedRoleResponse = await fetch(`${process.env.REACT_APP_API_URL}roles/${selectedRole.role_id}/permissions`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -297,7 +296,7 @@ function Roles() {
   const handleDeleteRole = async (role) => {
     if (window.confirm('Bạn có chắc muốn xóa vai trò này?')) {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/roles/${role.role_id}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}roles/${role.role_id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import styles from './Profile.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import axios from 'axios';
-import NotificationBell from "../NotificationBell";
 import Loading from '../../components/Loading';
 
 function Profile() {

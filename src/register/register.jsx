@@ -207,7 +207,6 @@ useEffect(() => {
     if (auctioneerCardBack) data.append("auctioneer_card_back", auctioneerCardBack);
     data.append("account_type", accountType);
 
-    console.log("Dữ liệu gửi đi:", Object.fromEntries(data));
 
     try {
       const res = await registerService(data);
@@ -305,25 +304,6 @@ useEffect(() => {
             <p className={styles.errorMsg}>{clientErrors.birth_date || errors.birth_date[0]}</p>
           )}
         </div>
-        {/* <div className={styles.formGroup}>
-          <label>Giới tính <span className={styles.required}>*</span></label>
-          <select
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-            className={clientErrors.gender || errors.gender ? styles.inputError : ""}
-            disabled={isLoading}
-          >
-            <option value="">Chọn giới tính</option>
-            <option value="male">Nam</option>
-            <option value="female">Nữ</option>
-            <option value="other">Khác</option>
-          </select>
-          {(clientErrors.gender || errors.gender) && (
-            <p className={styles.errorMsg}>{clientErrors.gender || errors.gender[0]}</p>
-          )}
-        </div> */}
-
 
         <div className={styles.formGroup}>
   <label>

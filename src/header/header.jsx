@@ -37,29 +37,6 @@ const Header = () => {
     setUnreadCount(count);
   };
 
-  // === FETCH DANH MỤC (chỉ 1 lần khi mount) ===
-  // useEffect(() => {
-  //   const fetchCategories = async () => {
-  //     try {
-  //       const response = await fetch(
-  //         `${process.env.REACT_APP_API_URL}categories`
-  //       );
-  //       if (!response.ok) throw new Error('Failed to fetch categories');
-  //       const result = await response.json();
-  //       if (result.status && result.data) {
-  //         const mappedCategories = result.data.map((category) => ({
-  //           icon: getIconForCategory(category.name),
-  //           text: category.name,
-  //           href: `/category/${category.category_id}`,
-  //         }));
-  //         setCategories(mappedCategories);
-  //       }
-  //     } catch {
-  //       setCategories([]);
-  //     }
-  //   };
-  //   fetchCategories();
-  // }, []); // Dependency rỗng: chỉ chạy 1 lần
   const mountedRef = useRef(false);
 
 useEffect(() => {
@@ -104,22 +81,6 @@ useEffect(() => {
     return map[categoryName] || 'fa-folder';
   };
 
-  // === FETCH CONTRACTS (chỉ 1 lần khi mount) ===
-  // useEffect(() => {
-  //   const fetchContracts = async () => {
-  //     try {
-  //       const res = await fetch(
-  //         `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}contracts`
-  //       );
-  //       if (!res.ok) throw new Error('Failed to fetch contract data');
-  //       const data = await res.json();
-  //       setContractData(data);
-  //     } catch {
-  //       setContractData({ status: false, contracts: [] });
-  //     }
-  //   };
-  //   fetchContracts();
-  // }, []); // Dependency rỗng: chỉ chạy 1 lần
 const contractsMountedRef = useRef(false);
 
 useEffect(() => {
@@ -151,7 +112,7 @@ useEffect(() => {
       try {
         const token = localStorage.getItem('token');
         const res = await axios.get(
-          `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}products`,
+          `${process.env.REACT_APP_API_URL}products`,
           {
             headers: {
               'Content-Type': 'application/json',
@@ -169,7 +130,7 @@ useEffect(() => {
             id: p.sessions?.[0]?.id,
             name: p.name,
             href: `/auction-session/${p.sessions?.[0]?.id}`,
-            image: p.image || '/assets/img/default-product.jpg',
+            image: p.image || '',
             price: p.price || 0,
           }));
         setSuggestions(filtered);
@@ -227,7 +188,7 @@ useEffect(() => {
     try {
       const token = localStorage.getItem('token');
       await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/'}logout`,
+        `${process.env.REACT_APP_API_URL}logout`,
         {
           method: 'POST',
           headers: {

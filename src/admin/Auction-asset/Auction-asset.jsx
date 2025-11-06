@@ -1,7 +1,6 @@
 // Auction-asset.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './Auction-asset.module.css';
-import NotificationBell from "../NotificationBell";
 import {
   getAssets,
   getAssetById,
@@ -14,7 +13,7 @@ import {
 } from '../../services/auctionAssetService';
 import { getCategories } from '../../services/categoryService';
 
-const BASE_IMAGE_URL = process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : 'http://localhost:8000';
+const BASE_IMAGE_URL = process.env.REACT_APP_BASE_URL;
 const BASE_FILE_URL = BASE_IMAGE_URL;
 
 // Status mapping: API -> UI
@@ -581,24 +580,6 @@ const AuctionAsset = () => {
       alert('Lỗi khi lưu: ' + (error.response?.data?.message || error.message));
     }
   };
-
-  // Approve, delete, etc.
-  // const approveAsset = async (id) => {
-  //   try {
-  //     const result = await apiCall(`${API_BASE}/auction-items/${id}`, {
-  //       method: 'PUT',
-  //       body: JSON.stringify({ status: 'ChoDauGia' })
-  //     });
-  //     if (result.status) {
-  //       alert('Duyệt thành công!');
-  //       fetchAssets();
-  //     } else {
-  //       alert('Lỗi: ' + (result.message || 'Không thể duyệt!'));
-  //     }
-  //   } catch (error) {
-  //     alert('Lỗi khi duyệt: ' + error.message);
-  //   }
-  // };
   const handleApproveAsset = async (id) => {
     try {
       const loggedUser = JSON.parse(localStorage.getItem('user'));
@@ -886,11 +867,6 @@ const AuctionAsset = () => {
               <span className={styles.modalClose} onClick={() => closeModal('view')}>&times;</span>
             </div>
             <div className={styles.modalBody}>{viewBody}</div>
-            {/* <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => closeModal('view')}>
-                Đóng
-              </button>
-            </div> */}
           </div>
         </div>
       )}

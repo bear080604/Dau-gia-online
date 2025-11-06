@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '../../UserContext';
 import styles from './Header.module.css';  // Note: Nên đổi thành Sidebar.module.css nếu tách riêng
-import NotificationBell from "../NotificationBell";
 
 const Sidebar = () => {
   const { user } = useUser();
@@ -156,7 +155,6 @@ const Sidebar = () => {
           <img className={styles.logoImg} src="/assets/img/logo.jpg" alt="Logo" />
         </div>
       </div>
-    {console.log(sections)}
       {sections.map((section, index) => (
         section.items.length > 0 && (
           <div key={index} className={styles.sidebarSection}>

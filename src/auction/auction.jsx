@@ -73,35 +73,25 @@ const AuctionPage = () => {
 
   // Kết nối Socket.io
   useEffect(() => {
-    console.log('🆔 ID từ URL:', id);
-    console.log('🔑 Token:', token ? 'Có token' : 'Không có token');
-    if (!socketRef.current) {
-      const socket = io(process.env.REACT_APP_SOCKET_URL, {
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        transports: ['websocket'],
-      });
-      socketRef.current = socket;
-    }
-    const socket = socketRef.current;
+    const socket = io(process.env.REACT_APP_SOCKET_URL, {
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      transports: ['websocket'],
+    });
+    socketRef.current = socket;
+
 
     socket.on('connect', () => {
-      console.log('✅ Kết nối Socket.io thành công, Socket ID:', socket.id);
       socket.emit('join.channel', `auction-session.${id}`);
       socket.emit('join.channel', 'auction-profiles');
-      console.log(`👥 Đã join channel: auction-session.${id}`);
     });
 
     socket.on('reconnect', (attempt) => {
-      console.log(`🔄 Reconnect thành công sau ${attempt} lần`);
       socket.emit('join.channel', `auction-session.${id}`);
       socket.emit('join.channel', 'auction-profiles');
     });
 
-    socket.on('disconnect', () => {
-      console.log('⚠️ Socket disconnected');
-    });
 
     socket.on('connect_error', (err) => {
       console.error('❌ Lỗi kết nối Socket.io:', err.message);
@@ -113,16 +103,8 @@ const AuctionPage = () => {
     });
 
     socket.on('auction.session.updated', (updatedData) => {
-      console.log('🔄 Cập nhật phiên đấu giá realtime:', updatedData);
       const updatedSession = updatedData.session || updatedData;
       if (updatedSession.session_id === parseInt(id)) {
-        console.log('⏰ Thời gian mới:', {
-          register_start: updatedSession.register_start,
-          register_end: updatedSession.register_end,
-          checkin_time: updatedSession.checkin_time,
-          bid_start: updatedSession.bid_start,
-          bid_end: updatedSession.bid_end,
-        });
         setAuctionItem((prev) => ({
           ...prev,
           ...updatedSession,
@@ -144,20 +126,16 @@ const AuctionPage = () => {
     });
 
     socket.on('bid.placed', async (bidData) => {
-      console.log('💸 Giá thầu mới (bid.placed):', bidData);
       const newBid = bidData.bid || bidData;
-      console.log('🔍 Kiểm tra session_id:', newBid.session_id, 'vs', parseInt(id));
       if (newBid.session_id === parseInt(id)) {
         newBid.id = newBid.bid_id;
 
         let userFullName = 'N/A';
         if (newBid.user_id) {
           try {
-            console.log(`📞 Gọi API lấy tất cả users: ${API_URL}showuser`);
             const response = await axios.get(`${API_URL}showuser`, {
               headers: { Authorization: `Bearer ${token}` },
             });
-            console.log('📋 Response users:', response.data);
 
             if (response.data.users && Array.isArray(response.data.users)) {
               const foundUser = response.data.users.find(u => u.user_id === newBid.user_id);
@@ -190,7 +168,6 @@ const AuctionPage = () => {
               user_id: newBid.user_id
             }
           };
-          console.log('📝 Bid mới với user:', bidWithUser);
           const updatedBids = [bidWithUser, ...prev];
           const maxAmount = Math.max(...updatedBids.map((b) => parseFloat(b.amount)));
           setCurrentPrice(maxAmount);
@@ -257,11 +234,9 @@ const AuctionPage = () => {
           throw new Error('REACT_APP_API_URL không được định nghĩa!');
         }
         const fullUrl = `${API_URL}auction-sessions/${id}`;
-        console.log('📞 Gọi API auction item:', fullUrl);
         const response = await axios.get(fullUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log('📋 Response auction item:', response.data);
         const data = response.data;
         const session = data.session;
         if (!session) {
@@ -299,11 +274,9 @@ const AuctionPage = () => {
     const fetchCategories = async () => {
       try {
         const fullUrl = `${API_URL}categories`;
-        console.log('📞 Gọi API categories:', fullUrl);
         const response = await axios.get(fullUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log('📋 Response categories:', response.data);
         const data = response.data;
         if (data.status && data.data) {
           setCategories(data.data);
@@ -330,11 +303,9 @@ const AuctionPage = () => {
     }
     try {
       const fullUrl = `${API_URL}auction-profiles?session_id=${id}`;
-      console.log('📞 Gọi API bidders:', fullUrl);
       const response = await axios.get(fullUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('📋 Response bidders:', response.data);
       const data = response.data;
       const profiles = data.profiles || [];
       const filteredBidders = profiles.filter(
@@ -351,16 +322,14 @@ const AuctionPage = () => {
   // Fetch bids
   const fetchBids = async () => {
     if (!id || !token) {
-      console.log('⚠️ Không fetch bids: id hoặc token thiếu', { id, token });
+      console.log('⚠️ Không fetch bids: id hoặc token thiếu');
       return;
     }
     try {
       const fullUrl = `${API_URL}bids/${id}`;
-      console.log('📞 Gọi API bids:', fullUrl);
       const response = await axios.get(fullUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('📋 Response bids:', response.data);
       const data = response.data;
       if (!data.bids) {
         console.warn('⚠️ Response bids không có data.bids:', data);
@@ -506,7 +475,6 @@ const AuctionPage = () => {
   const handleConfirmBid = async () => {
     try {
       const fullUrl = `${API_URL}bids`;
-      console.log('📞 Gọi API đặt giá:', fullUrl, { session_id: id, amount: pendingBid });
       const response = await axios.post(
         fullUrl,
         {
@@ -520,7 +488,6 @@ const AuctionPage = () => {
           },
         }
       );
-      console.log('📋 Response đặt giá:', response.data);
       const result = response.data;
       if (result.status) {
         showToast('Đặt giá thành công!', 'success');
@@ -664,10 +631,7 @@ const AuctionPage = () => {
 
           <div className={styles['participants-section']}>
             <div className={styles['section-title']}>THÀNH PHẦN THAM DỰ</div>
-            {/* <div className={styles['info-row']}>
-              <div className={styles['info-label']}>Thư ký phiên đấu giá:</div>
-              <div className={styles['info-value']}>{auctionItem.secretary?.full_name || 'N/A'}</div>
-            </div> */}
+        
             <div className={styles['info-row']}>
               <div className={styles['info-label']}>Đại diện bên có tài sản:</div>
               <div className={styles['info-value']}>{auctionItem.item?.owner?.full_name || 'N/A'}</div>
@@ -676,10 +640,7 @@ const AuctionPage = () => {
               <div className={styles['info-label']}>Đấu giá viên:</div>
               <div className={styles['info-value']}>{auctionItem.auction_org?.full_name || 'N/A'}</div>
             </div>
-            {/* <div className={styles['info-row']}>
-              <div className={styles['info-label']}>Đại diện người tham gia đấu giá:</div>
-              <div className={styles['info-value']}>{auctionItem.bidder_representative?.full_name || 'N/A'}</div>
-            </div> */}
+        
           </div>
           <div className={styles['bid-section']}>
             <div className={styles['section-title']}>

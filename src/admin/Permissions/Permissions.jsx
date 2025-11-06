@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import styles from './Permissions.module.css';
-import NotificationBell from "../NotificationBell";
 
 function Permissions() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,14 +18,14 @@ function Permissions() {
     setOpen((prev) => !prev);
   };
   // Lấy URL từ .env
-  const API_URL = process.env.REACT_APP_API_URL?.replace(/\/$/, '') || '';
+  const API_URL = process.env.REACT_APP_API_URL;
 
   // Fetch danh sách quyền hạn
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/permissions`, {
+        const response = await fetch(`${API_URL}permissions`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -117,16 +116,6 @@ function Permissions() {
       <h1 className={styles.pageTitle}>Quản Lý Quyền Hạn</h1>
       <p className={styles.pageSubtitle}>Quản lý quyền hạn hệ thống</p>
 
-      {/* <div className={styles.actionsBar}>
-        <button
-          className={styles.addBtn}
-          onClick={() => openPermissionModal('add')}
-          aria-label="Thêm quyền hạn mới"
-        >
-          <i className="fas fa-plus"></i>
-          Thêm quyền hạn mới
-        </button>
-      </div> */}
 
       {/* Bảng */}
       <div className={styles.dataTable}>
@@ -144,31 +133,6 @@ function Permissions() {
                 <td className={styles.dataTableCell} data-label="ID">{permission.permission_id}</td>
                 <td className={styles.dataTableCell} data-label="Tên quyền hạn">{permission.name}</td>
                 <td className={styles.dataTableCell} data-label="Mô tả">{permission.description}</td>
-                {/* <td className={styles.dataTableCell} data-label="Hành động">
-                  <div className="flex gap-2">
-                    <button
-                      className={styles.btnPrimary}
-                      onClick={() => openPermissionModal('edit', permission)}
-                      aria-label="Chỉnh sửa quyền hạn"
-                    >
-                      <i className="fa fa-pencil"></i>
-                    </button>
-                    <button
-                      className={styles.btnDanger}
-                      onClick={() => handleDeletePermission(permission)}
-                      aria-label="Xóa quyền hạn"
-                    >
-                      <i className="fa fa-trash"></i>
-                    </button>
-                    <button
-                      className={styles.btnSuccess}
-                      onClick={() => openViewModal(permission)}
-                      aria-label="Xem chi tiết quyền hạn"
-                    >
-                      <i className="fa fa-eye"></i>
-                    </button>
-                  </div>
-                </td> */}
               </tr>
             ))}
           </tbody>

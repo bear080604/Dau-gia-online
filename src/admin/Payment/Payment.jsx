@@ -24,7 +24,7 @@ function Payment() {
     status: 'ChoXuLy'
   });
   const itemsPerPage = 5;
-  const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const fetchContracts = async () => {
@@ -70,10 +70,8 @@ function Payment() {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      console.log('Fetching from URL:', `${API_URL}payments`); // Debug log
       
       const token = getAuthToken();
-      console.log('Token found:', token ? 'Yes' : 'No'); // Debug log
       
       const headers = {
         'Accept': 'application/json',
@@ -90,7 +88,6 @@ function Payment() {
         headers: headers,
       });
       
-      console.log('Response status:', response.status); // Debug log
       
       if (response.status === 401) {
         throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
@@ -136,7 +133,6 @@ function Payment() {
         };
       });
       
-      console.log('Transformed payments:', transformedPayments); // Debug log
       setPayments(transformedPayments);
       setError(null);
     } catch (err) {
@@ -458,13 +454,7 @@ function Payment() {
             <option value="Hoàn tất">Hoàn tất</option>
             <option value="Thất bại">Thất bại</option>
           </select>
-          {/* ✅ Uncomment nếu cần filter hợp đồng, dùng contracts state */}
-          {/* <select className={styles.filterSelect} value={contractFilter} onChange={handleContractFilterChange}>
-            <option value="">Tất cả hợp đồng</option>
-            {contracts.map(c => (
-              <option key={c.contract_id} value={`HD${c.contract_id}`}>#{c.contract_id}</option>
-            ))}
-          </select> */}
+     
         </div>
         <button className={styles.addBtn} onClick={() => openPaymentModal('add')}>
           <i className="fas fa-plus"></i>

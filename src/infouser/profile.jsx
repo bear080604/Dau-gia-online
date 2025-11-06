@@ -211,7 +211,6 @@ const Profile = () => {
       });
 
       const data = await response.json();
-      console.log('API VietQR /banks response:', data);
 
       if (!response.ok) {
         throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
@@ -273,7 +272,6 @@ const Profile = () => {
   }, [userData.id, navigate, token]);
 
   const fetchMyAuctions = async () => {
-    console.log('Gọi API cho user_id:', userData.id);
     if (!userData.id) {
       console.error('userData.id is null or undefined');
       setError('Không thể lấy ID người dùng');
@@ -347,8 +345,6 @@ const Profile = () => {
       return;
     }
 
-    const BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
-
     try {
       setLoading(true);
       setError(null);
@@ -398,7 +394,7 @@ const Profile = () => {
       return;
     }
 
-    const BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+    const BASE = process.env.REACT_APP_API_URL;
 
     try {
       setLoading(true);
@@ -569,7 +565,7 @@ const Profile = () => {
   const handleDeleteBank = async () => {
     if (window.confirm('Bạn có chắc chắn muốn xóa tài khoản ngân hàng này?')) {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}user/update/${userData.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -632,7 +628,7 @@ const Profile = () => {
       form.append('bank_account', bankData.bankAccount);
       form.append('bank_branch', bankData.bankBranch);
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}user/update/${userData.id}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -764,7 +760,6 @@ const Profile = () => {
             formValue !== userValue && formValue !== 'Chưa cập nhật') {
           payload.append(field, formValue);
           hasChanges = true;
-          console.log(`Added auction ${field}:`, formValue);
         }
       });
 
@@ -772,13 +767,11 @@ const Profile = () => {
       if (formData.auctioneer_card_front instanceof File) {
         payload.append('auctioneer_card_front', formData.auctioneer_card_front);
         hasChanges = true;
-        console.log('Added auctioneer_card_front file');
       }
       
       if (formData.auctioneer_card_back instanceof File) {
         payload.append('auctioneer_card_back', formData.auctioneer_card_back);
         hasChanges = true;
-        console.log('Added auctioneer_card_back file');
       }
     }
 
@@ -788,11 +781,10 @@ const Profile = () => {
       return;
     }
 
-    console.log('Sending PUT request to update user profile with changes:', hasChanges);
 
     // === GỬI REQUEST === (dùng POST + _method=PUT để tương thích Laravel)
     payload.append('_method', 'PUT');
-    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}user/update/${userData.id}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -833,9 +825,9 @@ const Profile = () => {
         identity_issue_date: data.user.identity_issue_date || prev.identity_issue_date,
         identity_issued_by: data.user.identity_issued_by || prev.identity_issued_by,
         idCardFront: data.user.id_card_front || prev.idCardFront,
-        idCardFrontUrl: data.user.id_card_front ? `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}storage/${data.user.id_card_front}` : prev.idCardFrontUrl,
+        idCardFrontUrl: data.user.id_card_front ? `${process.env.REACT_APP_API_URL}storage/${data.user.id_card_front}` : prev.idCardFrontUrl,
         idCardBack: data.user.id_card_back || prev.idCardBack,
-        idCardBackUrl: data.user.id_card_back ? `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}storage/${data.user.id_card_back}` : prev.idCardBackUrl,
+        idCardBackUrl: data.user.id_card_back ? `${process.env.REACT_APP_API_URL}storage/${data.user.id_card_back}` : prev.idCardBackUrl,
         organization_name: data.user.organization_name || prev.organization_name,
         position: data.user.position || prev.position,
         tax_code: data.user.tax_code || prev.tax_code,
@@ -880,7 +872,7 @@ const Profile = () => {
       form.append('password', passwordData.newPassword);
       form.append('password_confirmation', passwordData.confirmPassword);
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}user/update/${userData.id}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -933,7 +925,7 @@ const Profile = () => {
 
         try {
         formDataUpload.append('_method', 'PUT');
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}user/update/${userData.id}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}user/update/${userData.id}`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -982,7 +974,7 @@ const Profile = () => {
   const handleLogout = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}logout`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1655,7 +1647,6 @@ const Profile = () => {
                   <td>
                     <button
                       className={`${styles.actionBtn} ${styles.btnDanger}`}
-                      // onClick={() => handleRemoveFavorite(item.id)}
                       title="Xóa khỏi danh sách yêu thích"
                     >
                       <i className="fas fa-trash"></i> Xóa
