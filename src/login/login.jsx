@@ -129,7 +129,7 @@ function LoginForm() {
           {/* Email */}
           <div className={styles.field}>
             <label className={styles.label}>
-              Thư điện tử <span className={styles.required}>*</span>
+              Email <span className={styles.required}>*</span>
             </label>
             <input
               type="email"
