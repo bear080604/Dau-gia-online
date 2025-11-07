@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Header from "../header/header";
 import Cooperation from "../cooperation/cooperation";
 import Footer from "../footer/footer";
 
 function CooperationPage() {
+  useEffect(() => {
+    document.title = "Hợp tác - Đấu giá khải bảo";
+  }, []);
+
   return (
     <div>
       <Header />
