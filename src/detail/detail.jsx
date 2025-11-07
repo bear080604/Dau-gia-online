@@ -184,7 +184,7 @@ const Detail = () => {
   // Auction Data Functions
   const fetchAuctionData = useCallback(async (sessionId) => {
     try {
-      const data = await apiFetch(`${API_BASE}/auction-sessions/${sessionId}`, { method: 'GET' });
+      const data = await apiFetch(`${API_BASE}auction-sessions/${sessionId}`, { method: 'GET' });
       return data.session ? data : { status: true, session: data };
     } catch (e) {
       console.error('❌ Lỗi fetch auction data:', e);
@@ -429,7 +429,7 @@ const Detail = () => {
       fd.append('deposit_amount', parseFloat(depositAmount));
 
       console.log('FormData contents:');
-      const res = await fetch(`${API_BASE}/auction-profiles`, {
+      const res = await fetch(`${API_BASE}auction-profiles`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -478,7 +478,7 @@ const Detail = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/deposit/pay`, {
+      const response = await fetch(`${API_BASE}deposit/pay`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -521,7 +521,7 @@ const Detail = () => {
     }
 
     try {
-      const res = await apiFetch(`${API_BASE}/auction-profiles/${profile.id}/complete`, {
+      const res = await apiFetch(`${API_BASE}auction-profiles/${profile.id}/complete`, {
         method: 'POST',
       });
       if (res.success || res.status) {
@@ -631,7 +631,7 @@ const Detail = () => {
   const refreshProfileStatus = useCallback(
     async (profileId) => {
       try {
-        const res = await apiFetch(`${API_BASE}/auction-profiles/${profileId}`);
+        const res = await apiFetch(`${API_BASE}auction-profiles/${profileId}`);
         if (res && res.status) {
           setProfile((prev) => ({ ...prev, status: res.status }));
           if (res.status === 'DaThanhToan' || res.status === 'DaHoanTat') {
