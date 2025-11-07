@@ -179,6 +179,15 @@ function AuctionSession() {
     return filtered;
   };
 
+  // Kiểm tra URL parameter category và set filter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const categoryParam = urlParams.get('category');
+    if (categoryParam && categoryParam !== categoryFilter) {
+      setCategoryFilter(categoryParam);
+    }
+  }, [location.search, categoryFilter]);
+
   const filteredItems = filterAndSortItems();
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;

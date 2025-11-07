@@ -54,9 +54,9 @@ useEffect(() => {
       const result = await response.json();
       if (result.status && result.data) {
         const mappedCategories = result.data.map((category) => ({
-          icon: getIconForCategory(category.name),
+
           text: category.name,
-          href: `/category/${category.category_id}`,
+          href: `/auction-session?category=${category.category_id}`,
         }));
         setCategories(mappedCategories);
       }
@@ -70,16 +70,7 @@ useEffect(() => {
 }, []); // Dependency rỗng
 
 
-  const getIconForCategory = (categoryName) => {
-    const map = {
-      'Bất động sản': 'fa-home',
-      'Xe cộ': 'fa-car',
-      'Đồ cổ': 'fa-gem',
-      'Thiết bị điện tử': 'fa-laptop',
-      'Người yêu': 'fa-heart',
-    };
-    return map[categoryName] || 'fa-folder';
-  };
+
 
 const contractsMountedRef = useRef(false);
 

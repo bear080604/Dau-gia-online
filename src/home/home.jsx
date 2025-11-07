@@ -374,8 +374,14 @@ const Home = () => {
       <main style={{ padding: '20px 8%' }}>
         {/* === 1. PHIÊN MỚI NHẤT === */}
         <div className="section-title">
-          <p>PHIÊN ĐẤU GIÁ MỚI NHẤT/NỔI BẬT</p>
+          <p>PHIÊN ĐẤU GIÁ MỚI NHẤT</p>
+          <Link to="/auction-session" style={{ textDecoration: 'none' }}>
+            <button className="view-more-button">
+              Xem thêm
+            </button>
+          </Link>
         </div>
+        
          {loading && <Loading message="Đang tải dữ liệu..." />}
         {error && <p className="error-message">{error}</p>}
         {!loading && latestSessions.length === 0 && !error && <p>Không có phiên đấu giá nào.</p>}
@@ -398,6 +404,9 @@ const Home = () => {
             </SwiperSlide>
           ))}
         </Swiper>
+
+        {/* Nút Xem thêm */}
+     
 
 
         {/* === 2. DANH SÁCH TÀI SẢN === */}

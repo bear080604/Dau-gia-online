@@ -1,4 +1,5 @@
 import React, { useState, useEffect,useRef  } from 'react';
+import { Link } from 'react-router-dom';
 import styles from './footer.module.css';
 
 const Footer = () => {
@@ -104,7 +105,9 @@ const Footer = () => {
                   {categories.length > 0 ? (
                     categories.map((category) => (
                       <li key={category.category_id}>
-                        {category.name}
+                        <Link to={`/auction-session?category=${category.category_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                          {category.name}
+                        </Link>
                       </li>
                     ))
                   ) : (
