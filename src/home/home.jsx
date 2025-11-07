@@ -388,7 +388,8 @@ const Home = () => {
           breakpoints={{
             320: { slidesPerView: 1 },
             640: { slidesPerView: 2 },
-            1024: { slidesPerView: 5 },
+            1024: { slidesPerView: 3 },
+            1200: { slidesPerView: 5 },
           }}
           key={latestSessions.map((s) => s.session_id).join('-')}
         >
@@ -454,12 +455,7 @@ const Home = () => {
                 )}
               </div>
             </div>
-            <div className="method">
-              <select name="method">
-                <option value="">Phương thức đấu giá</option>
-                <option value="Đấu giá tự do">Đấu giá tự do</option>
-              </select>
-            </div>
+            
             <div className="sort">
               <p>Sắp xếp: </p>
               <select className="select" name="sort" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
@@ -481,7 +477,8 @@ const Home = () => {
             breakpoints={{
               320: { slidesPerView: 1 },
               640: { slidesPerView: 2 },
-              1024: { slidesPerView: 5 },
+              1024: { slidesPerView: 3 },
+              1200: { slidesPerView: 5 },
             }}
             key={filteredSessions.map((s) => s.session_id).join('-')}
           >
