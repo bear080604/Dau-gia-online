@@ -91,7 +91,7 @@ const TopHeader = () => {
         </div>
 
         {/* CENTER: SEARCH */}
-        <div className={styles.centerSection}>
+        {/* <div className={styles.centerSection}>
           <div className={styles.searchBar}>
             <i className="fas fa-search"></i>
             <input
@@ -100,7 +100,7 @@ const TopHeader = () => {
               className={styles.searchInput}
             />
           </div>
-        </div>
+        </div> */}
 
         {/* RIGHT: NOTIFICATION + USER MENU */}
         <div className={styles.rightSection}>
