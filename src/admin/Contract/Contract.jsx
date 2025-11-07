@@ -295,7 +295,6 @@ function Contract() {
             <th>Tên phiên</th>
             <th>Người thắng</th>
             <th>Giá cuối</th>
-            <th>Ngày ký</th>
             <th>Trạng thái</th>
             <th>File Hợp Đồng</th>
             <th>Hành động</th>
@@ -308,7 +307,6 @@ function Contract() {
               <td data-label="Tên phiên">{contract.sessionName}</td>
               <td data-label="Người thắng">{contract.winner}</td>
               <td data-label="Giá cuối">{contract.finalPrice}</td>
-              <td data-label="Ngày ký">{contract.signedDate}</td>
               <td data-label="Trạng thái">
                 <span className={`${styles.statusBadge} ${styles[contract.statusClass]}`}>
                   {contract.paymentStatus === 'ChoThanhToan'
@@ -405,7 +403,7 @@ function Contract() {
           </div>
           <div className={styles.modalFooter}>
             <button
-              className={`${styles.btn} ${styles.btnPrimary}`}
+              className={`${styles.btn} ${styles.btnPrimarySave}`}
               onClick={handleSave}
               disabled={selectedContract?.paymentStatus === 'DaThanhToan'}  // Updated: Disable nút Lưu nếu Thành công
             >

@@ -167,7 +167,7 @@ const AdminNewsCategories = () => {
                         <button 
                           className={styles.actionButton} 
                           onClick={() => openEditModal(category)}
-                          style={{ backgroundColor: '#3192ec' }}
+                          style={{ backgroundColor: '#4f46e5' }}
                           title="Sửa"
                         >
                           <i className="fas fa-pencil-alt"></i>

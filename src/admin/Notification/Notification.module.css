@@ -199,6 +199,13 @@
   color: white;
 }
 
+.btnPrimarySave {
+  background-color: #60d882;
+  color: white;
+  padding: 0.5rem 1rem;
+  width: auto;
+}
+
 .btnPrimary:hover {
   background-color: #4338ca;
 }
@@ -224,10 +231,16 @@
 .btnSecondary {
   background-color: #6b7280;
   color: white;
+  width: auto;
+  padding: 0.5rem 1rem;
 }
 
 .btnSecondary:hover {
   background-color: #4b5563;
+}
+.btnMarkRead{
+  background-color: rgb(96, 216, 130);
+    color: white;
 }
 
 .pagination {

@@ -390,7 +390,7 @@
 }
 
 .modalActions button[type="submit"] {
-  background-color: #4f46e5;
+  background-color: rgb(96, 216, 130);
   color: white;
   border: none;
 }
