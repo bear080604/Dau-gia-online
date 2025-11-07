@@ -374,8 +374,12 @@ const Home = () => {
       <main style={{ padding: '20px 8%' }}>
         {/* === 1. PHIÊN MỚI NHẤT === */}
         <div className="section-title">
-          <p>PHIÊN ĐẤU GIÁ MỚI NHẤT/NỔI BẬT</p>
+          <p>PHIÊN ĐẤU GIÁ MỚI NHẤT</p>
+          <Link className="xem-them" to="/auction-session" style={{ textDecoration: 'none', color: '', fontSize: '16px' }}>
+           Xem tất cả
+          </Link>
         </div>
+        
          {loading && <Loading message="Đang tải dữ liệu..." />}
         {error && <p className="error-message">{error}</p>}
         {!loading && latestSessions.length === 0 && !error && <p>Không có phiên đấu giá nào.</p>}
@@ -400,11 +404,17 @@ const Home = () => {
           ))}
         </Swiper>
 
+        {/* Nút Xem thêm */}
+     
+
 
         {/* === 2. DANH SÁCH TÀI SẢN === */}
         <section>
           <div className="section-title">
             <p>DANH SÁCH TÀI SẢN ĐẤU GIÁ TRỰC TUYẾN</p>
+            <Link className="xem-them" to="/auction-session" style={{ textDecoration: 'none', color: '', fontSize: '16px' }}>
+           Xem tất cả
+          </Link>
           </div>
           <div className="head">
             <div className="input-search">
@@ -494,6 +504,9 @@ const Home = () => {
         <section>
           <div className="section-title">
             <p>TIN TỨC VÀ THÔNG BÁO</p>
+            <Link className="xem-them" to="/news" style={{ textDecoration: 'none'}}>
+           Xem tất cả
+          </Link>
           </div>
            {loading && <Loading message="Đang tải dữ liệu..." />}
           {error && <p className="error-message">{error}</p>}
@@ -503,11 +516,12 @@ const Home = () => {
             modules={[Navigation, Pagination]}
             spaceBetween={20}
             navigation
-            pagination={{ clickable: true }}
+            // pagination={{ clickable: false }}
             breakpoints={{
               320: { slidesPerView: 1 },
               640: { slidesPerView: 2 },
-              1024: { slidesPerView: 4 },
+              1024: { slidesPerView: 3 },
+              1200: { slidesPerView: 3 },
             }}
           >
             {news.slice(0, 8).map((newsItem) => (
@@ -520,7 +534,7 @@ const Home = () => {
                     loading="lazy"
                   />
                   <div className="news-details">
-                    <h3 className="news-title" style={{ minHeight: '56px' }}>
+                    <h3 className="news-title">
                       {newsItem.title}
                     </h3>
                     <p className="news-date">{newsItem.date}</p>
