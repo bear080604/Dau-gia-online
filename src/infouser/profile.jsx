@@ -6,6 +6,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useUser } from '../UserContext';
 import Loading from '../components/Loading';
 import styles from './profile.module.css';
+import axios from 'axios';  
 
 const Profile = () => {
   const { user, token, logout } = useUser();
@@ -338,54 +339,73 @@ const Profile = () => {
     fetchMyAuctions();
   }, [userData.id, token, navigate]);
 
-  const fetchFavorites = async () => {
-    if (!userData.id || !token) {
-      setError('Không thể lấy danh sách yêu thích: Vui lòng đăng nhập');
-      setLoading(false);
-      return;
+ const fetchFavorites = async () => {
+  if (!userData.id || !token) {
+    setError('Không thể lấy danh sách yêu thích: Vui lòng đăng nhập');
+    setLoading(false);
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setError(null);
+
+    const { data } = await api.get('my-favorites');
+    const favoritesArray = Array.isArray(data) ? data : data.favorites || data.data || [];
+
+    if (!Array.isArray(favoritesArray)) {
+      throw new Error('Dữ liệu yêu thích không hợp lệ');
     }
 
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { data } = await api.get('my-favorites');
-      const favoritesArray = Array.isArray(data) ? data : data.favorites || data.data || [];
-
-      if (!Array.isArray(favoritesArray)) {
-        throw new Error('Dữ liệu yêu thích không hợp lệ');
-      }
-
-      const formattedFavorites = favoritesArray.map((fav, index) => ({
-        stt: index + 1,
-        id: fav.session_id || fav.id,
-        tenTaiSan: fav.session?.item?.name || 'Chưa có tên',
-        giaKhoiDiem: fav.session?.item?.starting_price
-          ? new Intl.NumberFormat('vi-VN', {
-              style: 'currency',
-              currency: 'VND',
-            }).format(parseFloat(fav.session.item.starting_price))
-          : 'Chưa có',
-        thoiGian: fav.created_at
-          ? new Date(fav.created_at).toLocaleString('vi-VN', {
-              hour: '2-digit',
-              minute: '2-digit',
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              timeZone: 'Asia/Ho_Chi_Minh',
-            })
-          : 'Chưa có',
-        xemChiTiet: `/auction-session/${fav.session_id}`,
+    const formattedFavorites = favoritesArray.map((fav, index) => ({
+      stt: index + 1,
+      id: fav.session_id || fav.id,
+      tenTaiSan: fav.session?.item?.name || 'Chưa có tên',
+      giaKhoiDiem: fav.session?.item?.starting_price
+        ? new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+          }).format(parseFloat(fav.session.item.starting_price))
+        : 'Chưa có',
+      session: fav.session, // Add this to access session status
+      xemChiTiet: `/detail/${fav.session_id}`,
     }));
-      setFavorites(formattedFavorites);
-    } catch (err) {
-      setError(err.message || 'Lỗi khi tải danh sách yêu thích');
-      console.error('Error fetching favorites:', err);
-    } finally {
-      setLoading(false);
+    
+    setFavorites(formattedFavorites);
+  } catch (err) {
+    setError(err.message || 'Lỗi khi tải danh sách yêu thích');
+    console.error('Error fetching favorites:', err);
+  } finally {
+    setLoading(false);
+  }
+};
+// Add this function in the Profile component
+const handleRemoveFavorite = async (sessionId) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_API_URL}sessions/${sessionId}/favorite`,
+      {},
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    if (response.data.status) {
+      // Remove from local state
+      setFavorites(prevFavorites => 
+        prevFavorites.filter(fav => fav.id !== sessionId)
+      );
+      alert('Đã xóa khỏi danh sách yêu thích');
     }
-  };
+  } catch (err) {
+    console.error('Error removing favorite:', err);
+    alert('Có lỗi xảy ra khi xóa khỏi danh sách yêu thích');
+  }
+};
 
   const fetchAuctionHistory = async () => {
     if (!userData.id || !token) {
@@ -1611,7 +1631,8 @@ const Profile = () => {
             </div>
           </div>
         );
-      case 'favorites':
+
+case 'favorites':
   return (
     <div className={styles.tabPane} id="favorites">
       <div className={styles.infoSection}>
@@ -1624,7 +1645,7 @@ const Profile = () => {
                 <th>STT</th>
                 <th>Tên tài sản</th>
                 <th>Giá khởi điểm</th>
-                <th>Thời gian thêm</th>
+                <th>Trạng thái</th>
                 <th>Xem chi tiết</th>
                 <th>Hành động</th>
               </tr>
@@ -1635,7 +1656,17 @@ const Profile = () => {
                   <td>{item.stt}</td>
                   <td>{item.tenTaiSan}</td>
                   <td className={styles.contractPrice}>{item.giaKhoiDiem}</td>
-                  <td>{item.thoiGian}</td>
+                  <td>
+                    <span className={`${styles.statusBadge} ${
+                      item.session?.status === 'Mo' ? styles.statusMo :
+                      item.session?.status === 'DangDienRa' ? styles.statusDangdienra :
+                      styles.statusKetthuc
+                    }`}>
+                      {item.session?.status === 'Mo' ? 'Chưa bắt đầu' :
+                       item.session?.status === 'DangDienRa' ? 'Đang diễn ra' :
+                       'Kết thúc'}
+                    </span>
+                  </td>
                   <td>
                     <Link
                       to={item.xemChiTiet}
@@ -1647,9 +1678,10 @@ const Profile = () => {
                   <td>
                     <button
                       className={`${styles.actionBtn} ${styles.btnDanger}`}
+                      onClick={() => handleRemoveFavorite(item.id)}
                       title="Xóa khỏi danh sách yêu thích"
                     >
-                      <i className="fas fa-trash"></i> Xóa
+                      <i className="fas fa-heart-broken"></i> Bỏ thích
                     </button>
                   </td>
                 </tr>

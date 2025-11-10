@@ -22,6 +22,7 @@ export const UserProvider = ({ children }) => {
       return null;
     }
   });
+
   const [token, setToken] = useState(() => {
     return localStorage.getItem('token') || null;
   });
@@ -36,19 +37,34 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  // Add updateUser function for real-time updates
+  const updateUser = (updates) => {
+    setUser(prevUser => {
+      if (!prevUser) return null;
+      
+      const updatedUser = {
+        ...prevUser,
+        ...updates
+      };
+      
+      // Update localStorage with new user data
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      return updatedUser;
+    });
+  };
+
   const logout = async () => {
-    // Gọi API đăng xuất trước
     try {
       await logoutService();
     } catch (err) {
       console.error('Logout error:', err);
     }
 
-    // Xóa dữ liệu trong state React
+    // Clear React state
     setUser(null);
     setToken(null);
 
-    // Xóa trong localStorage
+    // Clear localStorage
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('authToken');
@@ -61,11 +77,14 @@ export const UserProvider = ({ children }) => {
 
       if (savedUser && savedToken) {
         try {
+          // First set the saved user data
           const parsedUser = JSON.parse(savedUser);
           setUser(parsedUser);
 
+          // Then validate with the server
           const userData = await getCurrentUser();
           if (userData.status && userData.user) {
+            // Update with fresh data from server
             setUser(userData.user);
             localStorage.setItem('user', JSON.stringify(userData.user));
             localStorage.removeItem('authToken');
@@ -73,7 +92,9 @@ export const UserProvider = ({ children }) => {
             throw new Error('Invalid user data from API');
           }
         } catch (err) {
-          // Xử lý lỗi 401 hoặc lỗi khác
+          console.error('User validation error:', err);
+          
+          // Handle 401 unauthorized error
           if (err.response && err.response.status === 401) {
             setUser(null);
             setToken(null);
@@ -81,7 +102,7 @@ export const UserProvider = ({ children }) => {
             localStorage.removeItem('token');
             localStorage.removeItem('authToken');
           } else {
-            // Xóa dữ liệu nếu có lỗi khác
+            // Clear data on other errors
             setUser(null);
             setToken(null);
             localStorage.removeItem('user');
@@ -95,8 +116,35 @@ export const UserProvider = ({ children }) => {
     validateUser();
   }, []);
 
+  // Provide refreshUser function to manually refresh user data
+  const refreshUser = async () => {
+    try {
+      const userData = await getCurrentUser();
+      if (userData.status && userData.user) {
+        setUser(userData.user);
+        localStorage.setItem('user', JSON.stringify(userData.user));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Refresh user error:', err);
+      if (err.response?.status === 401) {
+        logout();
+      }
+      return false;
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ user, token, login, logout }}>
+    <UserContext.Provider value={{ 
+      user, 
+      token, 
+      login, 
+      logout,
+      updateUser,
+      refreshUser,
+      setUser
+    }}>
       {children}
     </UserContext.Provider>
   );
