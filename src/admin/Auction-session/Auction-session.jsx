@@ -1255,7 +1255,7 @@ const handleRejectWinner = async (sessionId) => {
               )}
             </div>
             <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSaveSession} disabled={loading}>
+              <button className={`${styles.btn} ${styles.btnPrimarySave}`} onClick={handleSaveSession} disabled={loading}>
                 {loading ? 'Đang lưu...' : 'Lưu'}
               </button>  {/* NEW: Disable khi loading */}
               <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeSessionModal}>

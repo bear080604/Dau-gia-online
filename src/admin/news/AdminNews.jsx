@@ -260,7 +260,7 @@ const AdminNews = () => {
                     <button 
                       className={styles.actionButton} 
                       onClick={() => openEditModal(item)}
-                      style={{ backgroundColor: '#3192ecff' }}
+                      style={{ backgroundColor: '#4f46e5'}}
                     >
                       <i className="fa fa-pencil" aria-hidden="true"></i>
                     </button>

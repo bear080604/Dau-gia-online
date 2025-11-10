@@ -436,7 +436,7 @@ function Roles() {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button className={styles.btnPrimary} onClick={handleSaveRole}>
+              <button className={styles.btnPrimarySave} onClick={handleSaveRole}>
                 Lưu
               </button>
               <button className={styles.btnSecondary} onClick={closeRoleModal}>

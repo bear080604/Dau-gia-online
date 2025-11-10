@@ -417,7 +417,7 @@ const getAuthConfig = () => {
               )}
             </div>
             <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSaveNotification} disabled={loading}>
+              <button className={`${styles.btn} ${styles.btnPrimarySave}`} onClick={handleSaveNotification} disabled={loading}>
                 {loading ? "Đang lưu..." : "Lưu"}
               </button>
               <button

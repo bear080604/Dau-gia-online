@@ -263,9 +263,18 @@ ease;
 .btnDanger:hover {
   background-color: #dc2626;
 }
+.btnPrimarySave{
+  background-color: #60d882;
+  color: white;
+  padding: 0.5rem 1rem;
+  width: auto;
+   border: none;
+  border-radius: 0.375rem;
+
+}
 
 .btnSuccess {
-  background-color: #22c55e;
+  background-color: #60d882;
   color: white;
   width: 36px;
   height: 36px;

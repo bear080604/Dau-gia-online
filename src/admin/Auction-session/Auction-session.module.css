@@ -204,6 +204,13 @@
   background-color: #4f46e5;
   color: white;
 }
+.btnPrimarySave {
+  background-color: rgb(96, 216, 130);
+  color: white;
+  width: auto;
+  padding: 0.5rem 1rem;
+}
+
 
 .btnPrimary:hover {
   background-color: #4338ca;
@@ -229,8 +236,9 @@
 
 .btnSecondary {
   background-color: #6b7280;
-  
   color: white;
+  padding: 0.5rem 1rem;
+  width: auto;
 }
 
 .btnSecondary:hover {

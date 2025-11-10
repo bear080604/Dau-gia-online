@@ -1554,7 +1554,7 @@ const renderImage = (url, type, errorKey) => {
               )}
             </div>
             <div className={styles.modalFooter}>
-              <button className={styles.btnPrimary} onClick={handleSaveUser}>
+              <button className={styles.btnPrimarySave} onClick={handleSaveUser}>
                 Lưu
               </button>
               <button className={styles.btnSecondary} onClick={closeUserModal}>
