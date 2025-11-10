@@ -385,7 +385,7 @@
     left: 0;
     width: 100%;
     max-width: 100%;
-    height: 100vh;
+  
     background-color: #FFF4E6;
     transform: translateX(-100%);
     overflow-y: auto;

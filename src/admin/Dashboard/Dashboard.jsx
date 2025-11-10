@@ -2,13 +2,17 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Chart from 'chart.js/auto';
 import styles from './Dashboard.module.css';
 import Loading from '../../components/Loading';
+import { getAuctionSessions, getProducts } from '../../services/auctionSessionService';
+import { getContracts } from '../../services/contractService';
+import { listUsers } from '../../services/userService';
+import { getAssets } from '../../services/auctionAssetService';
 const Dashboard = () => {
   const [activePeriod, setActivePeriod] = useState('week');
   const [sessions, setSessions] = useState([]);
   const [contracts, setContracts] = useState([]);
   const [users, setUsers] = useState([]);
   const [products, setProducts] = useState([]);
-  const [bids, setBids] = useState([]); // State cho dữ liệu bids từ API
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const chartRef = useRef(null);
@@ -25,36 +29,22 @@ const Dashboard = () => {
     quarter: ["Tháng 1", "Tháng 2", "Tháng 3"]
   };
 
-  // Fetch data from all APIs
+  // Fetch data from all APIs using services
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [sessionsRes, contractsRes, usersRes, productsRes, bidsRes] = await Promise.all([
-          fetch(`${process.env.REACT_APP_API_URL}auction-sessions`),
-          fetch(`${process.env.REACT_APP_API_URL}contracts`),
-          fetch(`${process.env.REACT_APP_API_URL}showuser`),
-          fetch(`${process.env.REACT_APP_API_URL}products`),
-          fetch(`${process.env.REACT_APP_API_URL}showbids`)
+        const [sessionsData, contractsData, usersData, productsData] = await Promise.all([
+          getAuctionSessions(),
+          getContracts(),
+          listUsers(),
+          getAssets()
         ]);
 
-        if (!sessionsRes.ok) throw new Error(`Sessions API error: ${sessionsRes.status}`);
-        if (!contractsRes.ok) throw new Error(`Contracts API error: ${contractsRes.status}`);
-        if (!usersRes.ok) throw new Error(`Users API error: ${usersRes.status}`);
-        if (!productsRes.ok) throw new Error(`Products API error: ${productsRes.status}`);
-        if (!bidsRes.ok) throw new Error(`Bids API error: ${bidsRes.status}`);
-
-        const sessionsData = await sessionsRes.json();
-        const contractsData = await contractsRes.json();
-        const usersData = await usersRes.json();
-        const productsData = await productsRes.json();
-        const bidsData = await bidsRes.json();
-
-        if (sessionsData.status) setSessions(sessionsData.sessions || []);
-        if (contractsData.status) setContracts(contractsData.contracts || []);
-        if (usersData.status) setUsers(usersData.users || []);
+        setSessions(sessionsData.sessions || []);
+        setContracts(contractsData.contracts || []);
+        setUsers(usersData.users || []);
         setProducts(productsData.data || []);
-        if (bidsData.status) setBids(bidsData.bids || []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -64,45 +54,57 @@ const Dashboard = () => {
 
     fetchData();
   }, []);
-
-  // Generate dynamic chart data based on bids and period
+// Generate dynamic chart data based on sessions and period
   const dynamicChartData = useMemo(() => {
-    const now = new Date('2025-10-27T00:00:00'); // Current date: Oct 27, 2025
+    const now = new Date(); // Dùng ngày thực
     const values = new Array(staticLabels[activePeriod].length).fill(0);
 
-    bids.forEach(bid => {
-      const bidDate = new Date(bid.bid_time);
-      bidDate.setHours(0, 0, 0, 0); // Normalize to day
-
+    sessions.forEach(session => {
+      const sessionDate = new Date(session.start_time);
+      
       let index = -1;
       if (activePeriod === 'week') {
-        // Calculate day of week for current week (Mon=0, Sun=6)
-        const currentWeekStart = new Date(now);
-        currentWeekStart.setDate(now.getDate() - now.getDay()); // Start of week (Monday)
-        const daysFromWeekStart = (bidDate - currentWeekStart) / (1000 * 60 * 60 * 24);
-        if (daysFromWeekStart >= 0 && daysFromWeekStart < 7) {
-          index = Math.floor(daysFromWeekStart);
+        // Tính từ đầu tuần này (Thứ 2)
+        const currentDay = now.getDay();
+        const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay; // Tính offset đến Thứ 2
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() + mondayOffset);
+        weekStart.setHours(0, 0, 0, 0);
+        
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 7);
+        
+        // Kiểm tra session có trong tuần này không
+        if (sessionDate >= weekStart && sessionDate < weekEnd) {
+          const dayOfWeek = sessionDate.getDay();
+          index = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // CN=6, T2=0
         }
       } else if (activePeriod === 'month') {
-        // Simple: group by week of month
-        const weekNum = Math.floor((bidDate.getDate() - 1) / 7);
-        index = Math.min(weekNum, 3); // Cap at 4 weeks
+        // 30 ngày gần nhất, chia thành 4 tuần
+        const daysDiff = Math.floor((now - sessionDate) / (1000 * 60 * 60 * 24));
+        if (daysDiff >= 0 && daysDiff < 30) {
+          // Chia ngược: gần nhất = Tuần 4, xa nhất = Tuần 1
+          index = 3 - Math.floor(daysDiff / 7.5);
+          index = Math.max(0, Math.min(index, 3));
+        }
       } else if (activePeriod === 'quarter') {
-        // Group by month in quarter (Oct-Dec for Q4 2025)
-        const month = bidDate.getMonth(); // 0=Jan, 9=Oct
-        if (month === 9) index = 0; // Oct = Tháng 10 (but labels are Jan-Mar, adjust if needed)
-        else if (month === 10) index = 1; // Nov
-        else if (month === 11) index = 2; // Dec
+        // 90 ngày gần nhất, chia thành 3 tháng
+        const daysDiff = Math.floor((now - sessionDate) / (1000 * 60 * 60 * 24));
+        if (daysDiff >= 0 && daysDiff < 90) {
+          // Chia ngược: gần nhất = Tháng 3, xa nhất = Tháng 1
+          index = 2 - Math.floor(daysDiff / 30);
+          index = Math.max(0, Math.min(index, 2));
+        }
       }
 
-      if (index >= 0) {
+      if (index >= 0 && index < values.length) {
         values[index]++;
       }
     });
 
-    // Fallback to some default if no data
-    return { labels: staticLabels[activePeriod], values: values.length > 0 ? values : [0, 10, 20, 30] }; // Example fallback
-  }, [bids, activePeriod]);
+    console.log('Chart data:', { period: activePeriod, values, total: values.reduce((a,b) => a+b, 0) });
+    return { labels: staticLabels[activePeriod], values };
+  }, [sessions, activePeriod]);
 
   // Status mapping for sessions
   const getStatusBadge = (status, bidEnd) => {
@@ -185,7 +187,7 @@ const Dashboard = () => {
           labels: data.labels,
           datasets: [
             {
-              label: "Lượt bid",
+              label: "Phiên đấu giá",
               data: data.values,
               backgroundColor: "rgba(79, 70, 229, 0.7)",
               borderColor: "#4f46e5",
@@ -394,29 +396,32 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {sessions.map((session) => {
-                const linkedContract = contracts.find(c => c.session_id === session.session_id);
-                const statusInfo = getStatusBadge(session.status, session.bid_end);
-                const finalPrice = linkedContract ? linkedContract.final_price : session.highest_bid;
-                return (
-                  <tr key={session.session_id}>
-                    <td>#PG-{session.session_id}</td>
-                    <td>{session.item?.name || 'N/A'}</td>
-                    <td>{formatVND(finalPrice)}</td>
-                    <td>
-                      <span className={`${styles.statusBadge} ${statusInfo.class}`}>
-                        {statusInfo.text}
-                        {linkedContract && (
-                          <>
-                            <br />
-                            <small>{getContractStatus(linkedContract.status)}</small>
-                          </>
-                        )}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+              {sessions
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                .slice(0, 10) // Show only the 10 most recent sessions
+                .map((session) => {
+                  const linkedContract = contracts.find(c => c.session_id === session.session_id);
+                  const statusInfo = getStatusBadge(session.status, session.bid_end);
+                  const finalPrice = linkedContract ? linkedContract.final_price : session.highest_bid;
+                  return (
+                    <tr key={session.session_id}>
+                      <td>#PG-{session.session_id}</td>
+                      <td>{session.item?.name || 'N/A'}</td>
+                      <td>{formatVND(finalPrice)}</td>
+                      <td>
+                        <span className={`${styles.statusBadge} ${statusInfo.class}`}>
+                          {statusInfo.text}
+                          {linkedContract && (
+                            <>
+                              <br />
+                              <small>{getContractStatus(linkedContract.status)}</small>
+                            </>
+                          )}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               {sessions.length === 0 && (
                 <tr>
                   <td colSpan="4">Không có dữ liệu</td>

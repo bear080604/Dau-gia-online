@@ -1,7 +1,7 @@
 /* Dashboard.module.css */
 .container {
   display: flex;
-  min-height: 100vh;
+
 }
 
 .mainContent {
@@ -9,7 +9,7 @@
   top:80px;
   left: 280px;
   width: calc(100% - 280px);
-  height: 100vh;
+
   padding: 2rem;
   background-color: #f9fafb;
   overflow-y: auto;
