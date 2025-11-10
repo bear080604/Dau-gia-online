@@ -1262,11 +1262,6 @@ function AuctionSession() {
                 </div>
               )}
             </div>
-            {/* <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeViewModal}>
-                Đóng
-              </button>
-            </div> */}
           </div>
         </div>
       )}

@@ -36,6 +36,19 @@ export const updateAuctionSession = async (sessionId, formData) => {
   return response.data;
 };
 
+// xac nhan nguoi thang dau gia
+export const confirmAuctionWinner = async (sessionId, data) => {
+  const response = await apiInstance.patch(`auction-sessions/${sessionId}/confirm-winner`, data);
+  return response.data;
+};
+
+// tu choi nguoi thang dau gia
+export const rejectAuctionWinner = async (sessionId, data) => {
+  const response = await apiInstance.patch(`auction-sessions/${sessionId}/reject-winner`, data);
+  return response.data;
+}
+
+
 // Xóa phiên đấu giá và các hợp đồng liên quan
 export const deleteAuctionSession = async (sessionId) => {
   // Xóa e-contracts trước
