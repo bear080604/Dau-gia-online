@@ -397,7 +397,7 @@ const Home = () => {
           }}
           key={latestSessions.map((s) => s.session_id).join('-')}
         >
-          {latestSessions.map((session) => (
+          {latestSessions.slice(0, 6).map((session) => (
             <SwiperSlide key={session.session_id}>
               <AuctionItem session={session} onToggleFavorite={handleToggleFavorite} />
             </SwiperSlide>
@@ -492,7 +492,7 @@ const Home = () => {
             }}
             key={filteredSessions.map((s) => s.session_id).join('-')}
           >
-            {filteredSessions.slice(0, 10).map((session) => (
+            {filteredSessions.slice(0, 6).map((session) => (
               <SwiperSlide key={session.session_id}>
                 <AuctionItem session={session} onToggleFavorite={handleToggleFavorite} />
               </SwiperSlide>
@@ -524,7 +524,7 @@ const Home = () => {
               1200: { slidesPerView: 3 },
             }}
           >
-            {news.slice(0, 8).map((newsItem) => (
+            {news.slice(0, 6).map((newsItem) => (
               <SwiperSlide key={newsItem.id}>
                 <div className="news-item">
                   <img

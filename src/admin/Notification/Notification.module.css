@@ -190,6 +190,7 @@
   border: none;
   transition: all 0.2s ease;
   margin-right: 0.5rem;
+  margin-top: 0.5rem;
   white-space: nowrap;
   flex-shrink: 0;
 }

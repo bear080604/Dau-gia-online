@@ -39,7 +39,7 @@ function Users() {
     email: '',
     phone: '',
     role_id: '',
-    accountType: 'personal',
+    accountType: 'user',
     full_name: '',
     birth_date: '',
     gender: '',
@@ -92,7 +92,7 @@ function Users() {
   const token = localStorage.getItem('token');
 
   const roleToAccountTypeMap = {
-    1: 'personal',
+    1: 'user',
     5: 'auction',
     9: 'business',
   };

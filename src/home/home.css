@@ -108,10 +108,11 @@
     display: flex;
     align-items: center;
     width: 30%;
-    /* gap: 10px; */
+   justify-content: flex-end;
+    gap: 10px;
 }
 .sort p{
-  width: 30%;
+  /* width: 30%; */
     font-size: 16px;
     font-weight: 500;
 }
@@ -486,6 +487,12 @@
   .head{
    
     gap: 15px;
+}
+.sort {
+    /* display: flex;
+    align-items: center; */
+    width: 100%;
+    gap: 10px;
 }
 }
 
