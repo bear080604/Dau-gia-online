@@ -1,4 +1,3 @@
-
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -10,7 +9,11 @@
 .leftPanel {
   width: 35%;
   position: sticky;
+  top: 20px;
+  align-self: flex-start;
   z-index: 10;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
 }
 
 .rightPanel {
@@ -99,7 +102,8 @@ select {
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  text-align: left;
+  text-align: center;
+  flex: 1;
 }
 
 .sortBtnActive {
@@ -113,6 +117,13 @@ select {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.pageTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
 }
 
 .auctionItems {
@@ -130,25 +141,34 @@ select {
   transition: transform 0.3s ease;
   display: flex;
 }
-.inputTime{
+
+.inputTime {
   border: 1px solid rgb(225, 224, 224);
-  padding: 10px 10px;
+  padding: 10px;
   border-radius: 5px;
+  font-size: 14px;
+  width: 100%;
 }
-.itemFooter{
+
+.itemFooter {
   display: flex;
   flex-direction: column;
+  gap: 5px;
 }
-.Timeline{
+
+.Timeline {
   color: #2772ba;
+  font-size: 14px;
+  line-height: 1.5;
 }
+
 .auctionItem:hover {
   transform: translateY(-3px);
 }
 
 .itemImage {
   width: 200px;
-  height:200px;
+  height: 200px;
   background-color: #eee;
   display: flex;
   align-items: center;
@@ -179,6 +199,7 @@ select {
   color: #2c3e50;
   flex: 1;
   margin-right: 15px;
+  line-height: 1.4;
 }
 
 .itemPrice {
@@ -186,18 +207,6 @@ select {
   font-weight: 700;
   color: #e74c3c;
   white-space: nowrap;
-}
-
-.itemTime {
-  font-size: 13px;
-  color: #7f8c8d;
-  margin-bottom: 5px;
-}
-
-.itemFooter {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
 }
 
 .itemStatus {
@@ -226,72 +235,7 @@ select {
   border-radius: 4px;
 }
 
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.paginationBtn {
-  background-color: #fff;
-  border: 1px solid #ddd;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.paginationBtnActive {
-  background-color: #3498db;
-  color: white;
-  border-color: #3498db;
-}
-
-.paginationBtn:hover:not(.paginationBtnActive) {
-  background-color: #f0f0f0;
-}
-
-.paginationBtn:disabled {
-  background-color: #f5f5f5;
-  color: #999;
-  cursor: not-allowed;
-}
-
-@media (max-width: 768px) {
-  .container {
-    flex-direction: column;
-  }
-
-  .leftPanel, .rightPanel {
-    width: 100%;
-  }
-
-  .auctionItem {
-    flex-direction: column;
-  }
-
-  .itemImage {
-    width: 100%;
-    height: 160px;
-  }
-
-  .itemHeader {
-    flex-direction: column;
-  }
-
-  .itemPrice {
-    margin-top: 10px;
-  }
-}
-
-
-
-
-
-
-
+/* Custom Select Dropdown */
 .customSelectWrapper {
   position: relative;
   width: 100%;
@@ -306,6 +250,7 @@ select {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 14px;
 }
 
 .customSelect:hover {
@@ -320,8 +265,8 @@ select {
   background: white;
   border: 1px solid #ddd;
   border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
   list-style: none;
   padding: 0;
   margin: 4px 0 0 0;
@@ -332,8 +277,9 @@ select {
 .dropdownList li {
   padding: 10px;
   cursor: pointer;
-  white-space: normal; /* chữ dài sẽ xuống dòng */
+  white-space: normal;
   word-wrap: break-word;
+  font-size: 14px;
 }
 
 .dropdownList li:hover {
@@ -350,103 +296,278 @@ select {
   margin-left: 8px;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-/* Phần Pagination - Cải thiện chuyển trang */
+/* Pagination */
 .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 4px; /* Khoảng cách giữa các nút */
+  gap: 6px;
   margin-top: 20px;
   padding: 10px 0;
-  flex-wrap: wrap; /* Responsive: Xuống dòng nếu quá nhiều nút */
+  flex-wrap: wrap;
 }
 
-/* Styling chung cho các nút pagination */
 .pagination button {
-  background-color: #f8f9fa; /* Nền xám nhạt */
-  border: 1px solid #dee2e6; /* Viền xám */
-  color: #495057; /* Màu chữ xám đậm */
-  padding: 8px 12px; /* Padding cho nút */
-  border-radius: 4px; /* Bo góc nhẹ */
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  padding: 8px 12px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 14px; /* Kích thước chữ */
-  min-width: 40px; /* Độ rộng tối thiểu cho nút số */
-  transition: all 0.2s ease; /* Hiệu ứng mượt */
+  font-size: 14px;
+  min-width: 40px;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Hover effect cho nút */
 .pagination button:hover:not(:disabled) {
-  background-color: #e9ecef; /* Nền sáng hơn khi hover */
+  background-color: #e9ecef;
   border-color: #adb5bd;
   color: #212529;
-  transform: translateY(-1px); /* Nâng nhẹ */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Bóng đổ */
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Nút disabled */
 .pagination button:disabled {
   background-color: #e9ecef;
   border-color: #dee2e6;
   color: #6c757d;
   cursor: not-allowed;
   opacity: 0.6;
-  transform: none; /* Không nâng khi disabled */
-  box-shadow: none;
 }
 
-/* Nút active (trang hiện tại) */
-.pagination button.paginationBtnActive {
-  background-color: #007bff; /* Màu xanh chủ đạo */
-  border-color: #007bff;
-  color: white;
+.paginationBtnActive {
+  background-color: #007bff !important;
+  border-color: #007bff !important;
+  color: white !important;
   font-weight: bold;
 }
 
-.pagination button.paginationBtnActive:hover {
-  background-color: #0056b3; /* Xanh đậm hơn khi hover */
-  border-color: #0056b3;
+.paginationBtnActive:hover {
+  background-color: #0056b3 !important;
+  border-color: #0056b3 !important;
 }
 
-/* Styling đặc biệt cho nút đầu/cuối và trước/sau (icon Unicode) */
-.pagination button:first-child { /* « Đầu */
-  min-width: auto;
-  padding: 8px 10px;
+/* ============================================
+   RESPONSIVE - TABLET (768px - 1024px)
+   ============================================ */
+@media (max-width: 1024px) {
+  .container {
+    padding: 15px;
+    gap: 15px;
+  }
+
+  .leftPanel {
+    width: 40%;
+    top: 15px;
+  }
+
+  .rightPanel {
+    width: 60%;
+  }
+
+  .itemTitle {
+    font-size: 17px;
+  }
+
+  .itemPrice {
+    font-size: 16px;
+  }
+
+  .Timeline {
+    font-size: 13px;
+  }
+
+  .searchBox input,
+  .searchBox button {
+    font-size: 14px;
+  }
+
+  .sortBtn {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
 }
 
-.pagination button:nth-child(2) { /* ‹ Trước */
-  min-width: auto;
-  padding: 8px 10px;
-}
-
-.pagination button:nth-last-child(2) { /* Tiếp › */
-  min-width: auto;
-  padding: 8px 10px;
-}
-
-.pagination button:last-child { /* Cuối » */
-  min-width: auto;
-  padding: 8px 10px;
-}
-
-/* Responsive: Giảm kích thước trên mobile */
+/* ============================================
+   RESPONSIVE - MOBILE (max-width: 768px)
+   ============================================ */
 @media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    padding: 10px;
+    gap: 15px;
+  }
+
+  .leftPanel,
+  .rightPanel {
+    width: 100%;
+  }
+
+  /* Bỏ sticky trên mobile */
+  .leftPanel {
+    position: relative;
+    top: 0;
+    max-height: none;
+  }
+
+  .searchSection {
+    padding: 15px;
+  }
+
+  .searchBox {
+    flex-direction: row;
+  }
+
+  .searchBox input {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  .searchBox button {
+    padding: 10px 15px;
+    font-size: 14px;
+  }
+
+  .sortSection {
+    gap: 8px;
+  }
+
+  .sortBtn {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  .filterGroup label {
+    font-size: 14px;
+  }
+
+  .inputTime {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  /* Auction Items */
+  .auctionItem {
+    flex-direction: column;
+  }
+
+  .itemImage {
+    width: 100%;
+    height: 180px;
+  }
+
+  .itemDetails {
+    padding: 12px;
+  }
+
+  .itemHeader {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .itemTitle {
+    font-size: 16px;
+    margin-right: 0;
+  }
+
+  .itemPrice {
+    font-size: 16px;
+    margin-top: 0;
+  }
+
+  .Timeline {
+    font-size: 13px;
+  }
+
+  .pageTitle {
+    font-size: 20px;
+  }
+
+  /* Pagination - Hiển thị smart trên mobile */
   .pagination {
-    gap: 2px;
+    gap: 4px;
     margin-top: 15px;
+  }
+
+  .pagination button {
+    padding: 8px 10px;
+    font-size: 13px;
+    min-width: 36px;
+  }
+}
+
+/* ============================================
+   RESPONSIVE - SMALL MOBILE (max-width: 480px)
+   ============================================ */
+@media (max-width: 480px) {
+  .container {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .searchSection {
+    padding: 12px;
+  }
+
+  .searchBox input {
+    font-size: 13px;
+    padding: 9px 10px;
+  }
+
+  .searchBox button {
+    padding: 9px 12px;
+    font-size: 13px;
+  }
+
+  .sortBtn {
+    font-size: 12px;
+    padding: 7px 8px;
+  }
+
+  .filterGroup label {
+    font-size: 13px;
+  }
+
+  .inputTime {
+    padding: 9px;
+    font-size: 13px;
+  }
+
+  .customSelect {
+    padding: 9px;
+    font-size: 13px;
+  }
+
+  .dropdownList li {
+    padding: 9px;
+    font-size: 13px;
+  }
+
+  .itemImage {
+    height: 160px;
+  }
+
+  .itemDetails {
+    padding: 10px;
+  }
+
+  .itemTitle {
+    font-size: 15px;
+  }
+
+  .itemPrice {
+    font-size: 15px;
+  }
+
+  .Timeline {
+    font-size: 12px;
+  }
+
+  .pageTitle {
+    font-size: 18px;
   }
 
   .pagination button {
@@ -454,14 +575,43 @@ select {
     font-size: 12px;
     min-width: 32px;
   }
+}
 
-  /* Ẩn một số nút số nếu quá nhiều trang trên mobile */
-  .pagination button:not(:first-child):not(:last-child):not(.paginationBtnActive) {
-    display: none; /* Chỉ giữ nút đầu, trước, hiện tại, sau, cuối */
+/* ============================================
+   EXTRA SMALL DEVICES (max-width: 360px)
+   ============================================ */
+@media (max-width: 360px) {
+  .container {
+    padding: 5px;
   }
 
-  /* Hiển thị nút hiện tại và lân cận */
-  .pagination button:nth-child(n+3):nth-child(-n+5) {
-    display: flex; /* Giữ 3 nút số ở giữa nếu cần */
+  .searchSection {
+    padding: 10px;
+  }
+
+  .itemImage {
+    height: 140px;
+  }
+
+  .itemTitle {
+    font-size: 14px;
+  }
+
+  .itemPrice {
+    font-size: 14px;
+  }
+
+  .Timeline {
+    font-size: 11px;
+  }
+
+  .pageTitle {
+    font-size: 16px;
+  }
+
+  .pagination button {
+    padding: 5px 6px;
+    font-size: 11px;
+    min-width: 28px;
   }
 }

@@ -344,7 +344,7 @@ function AuctionSession() {
       <div className={styles.rightPanel}>
         <div className={styles.resultsInfo}>
           <h1 className={styles.pageTitle}>
-            Tổng {filteredItems.length} phiên đấu giá
+            Phiên đấu giá
           </h1>
         </div>
 

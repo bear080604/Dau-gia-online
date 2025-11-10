@@ -16,6 +16,8 @@ import {
   getProducts,
   getAuctionOrganizationsAndAuctioneers,
   clearUsersCache,
+  confirmWinner,
+  rejectWinner,
 } from '../../services/auctionSessionService';
 
 function AuctionSession() {
@@ -227,7 +229,11 @@ function AuctionSession() {
       currentWinnerId: session.current_winner_id || 'Chưa có',
       winnerName,
       profiles: session.profiles || [],
-      starting_price: session.item?.starting_price
+      starting_price: session.item?.starting_price,
+       confirm_winner_at: session.confirm_winner_at || null,
+    reject_winner_at: session.reject_winner_at || null,
+    rejected_reason: session.rejected_reason || null,  // Bonus: hiển thị lý do
+      
     };
   };
 
@@ -648,6 +654,83 @@ function AuctionSession() {
   const closeViewModal = () => {
     setShowViewModal(false);
   };
+const handleConfirmWinner = async (sessionId) => {
+  if (!token) {
+    alert('Vui lòng đăng nhập để thực hiện hành động này.');
+    return;
+  }
+
+  const result = await Swal.fire({
+    title: 'Xác nhận người thắng cuộc?',
+    text: 'Hành động này không thể hoàn tác.',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Xác nhận',
+    cancelButtonText: 'Hủy',
+    confirmButtonColor: '#28a745',
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    setLoading(true);
+    await confirmWinner(sessionId);
+    Swal.fire('Thành công!', 'Người thắng cuộc đã được xác nhận.', 'success');
+    await refreshData();
+    closeViewModal();
+  } catch (error) {
+    console.error('Error confirming winner:', error);
+    const msg = error.response?.data?.message || error.message || 'Không thể xác nhận.';
+    Swal.fire('Lỗi!', msg, 'error');
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleRejectWinner = async (sessionId) => {
+  if (!token) {
+    alert('Vui lòng đăng nhập để thực hiện hành động này.');
+    return;
+  }
+
+  const { value: reason } = await Swal.fire({
+    title: 'Từ chối người thắng cuộc',
+    input: 'textarea',
+    inputLabel: 'Lý do từ chối (bắt buộc)',
+    inputPlaceholder: 'Nhập lý do chi tiết...',
+    inputAttributes: {
+      required: true,
+    },
+    showCancelButton: true,
+    confirmButtonText: 'Gửi từ chối',
+    cancelButtonText: 'Hủy',
+    confirmButtonColor: '#dc3545',
+    preConfirm: (value) => {
+      const trimmed = value?.trim();
+      if (!trimmed || trimmed.length < 10) {
+        Swal.showValidationMessage('Lý do phải có ít nhất 10 ký tự');
+        return false;
+      }
+      return trimmed;
+    },
+  });
+
+  if (!reason) return;
+
+  try {
+    setLoading(true);
+    await rejectWinner(sessionId, reason); // Gửi lý do
+    Swal.fire('Thành công!', 'Đã từ chối người thắng cuộc.', 'success');
+    await refreshData();
+    closeViewModal();
+  } catch (error) {
+    console.error('Error rejecting winner:', error);
+    const msg = error.response?.data?.message || error.message || 'Không thể từ chối.';
+    Swal.fire('Lỗi!', msg, 'error');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -917,6 +1000,7 @@ function AuctionSession() {
             <tr>
               <th>Mã Phiên</th>
               <th>Tài sản</th>
+              <th>Người tạo</th>
               <th>Giá khởi điểm</th>
               <th>Thời gian bắt đầu</th>
               <th>Thời gian kết thúc</th>
@@ -929,6 +1013,7 @@ function AuctionSession() {
               <tr key={session.id}>
                 <td data-label="Mã Phiên">{session.id}</td>
                 <td data-label="Tài sản">{session.item}</td>
+                <td data-label="Người tạo">{session.creator}</td>
                 <td data-label="Giá khởi điểm">
                   {Number(session.starting_price).toLocaleString('vi-VN')} ₫
                 </td>
@@ -1212,6 +1297,38 @@ function AuctionSession() {
               {selectedSession.status === 'Kết thúc' && (
                 <p><strong>Người thắng:</strong> {selectedSession.currentWinnerId === 'Chưa có' ? 'Chưa có' : selectedSession.winnerName}</p>
               )}
+              {selectedSession.status === 'Kết thúc' && selectedSession.confirm_winner_at && (
+                <p><strong>Thời gian xác nhận thắng:</strong> {moment.tz(selectedSession.confirm_winner_at, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')}</p>
+              )}
+              {selectedSession.status === 'Kết thúc' && selectedSession.reject_winner_at && (
+                <p><strong>Thời gian từ chối:</strong> {moment.tz(selectedSession.reject_winner_at, 'Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')}</p>
+              )}
+              {selectedSession.status === 'Kết thúc' && selectedSession.rejected_reason && (
+                <p><strong>Lý do từ chối:</strong> {selectedSession.rejected_reason}</p>
+              )}
+              {selectedSession.status === 'Kết thúc' &&
+                selectedSession.currentWinnerId &&
+                selectedSession.currentWinnerId !== 'Chưa có' &&
+                !selectedSession.confirm_winner_at &&
+                !selectedSession.reject_winner_at &&
+                (
+                  <div style={{ marginTop: '10px', marginBottom: '10px', display: 'flex', gap: '10px' }}>
+                    <button
+                      className={`${styles.btn} ${styles.btnSuccess}`}
+                      onClick={() => handleConfirmWinner(selectedSession.id)}
+                      disabled={loading}
+                    >
+                      {loading ? 'Đang xử lý...' : 'Xác nhận người thắng'}
+                    </button>
+                    <button
+                      className={`${styles.btn} ${styles.btnDanger}`}
+                      onClick={() => handleRejectWinner(selectedSession.id)}
+                      disabled={loading}
+                    >
+                      {loading ? 'Đang xử lý...' : 'Từ chối người thắng'}
+                    </button>
+                  </div>
+                )}
               <p><strong>Quy định:</strong> {selectedSession.regulation}</p>
               <div className={styles.orderHistory}>
                 <h3>Hồ sơ đấu giá</h3>
@@ -1261,6 +1378,11 @@ function AuctionSession() {
                   </table>
                 </div>
               )}
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeViewModal}>
+                Đóng
+              </button>
             </div>
           </div>
         </div>

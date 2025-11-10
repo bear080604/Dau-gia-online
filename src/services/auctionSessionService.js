@@ -141,3 +141,30 @@ export const toggleSessionFavorite = async (sessionId) => {
   return response.data;
 };
 
+export const confirmWinner = async (sessionId) => {
+  try {
+    const response = await apiInstance.patch(
+      `auction-sessions/${sessionId}/confirm-winner`,
+      {} // Empty body cho PATCH
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const rejectWinner = async (sessionId, reason) => {
+  if (!reason?.trim()) {
+    throw new Error('Lý do từ chối là bắt buộc');
+  }
+
+  try {
+    const response = await apiInstance.patch(
+      `auction-sessions/${sessionId}/reject-winner`,
+      { reason: reason.trim() }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

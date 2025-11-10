@@ -35,7 +35,7 @@ const Sidebar = () => {
       { id: 'news-categories', icon: 'fas fa-file-contract', label: 'Danh mục tin tức', href: addAdminPrefix('/news-categories') },
       // { id: 'reports', icon: 'fas fa-chart-bar', label: 'Báo cáo', href: addAdminPrefix('/report') },
       { id: 'users', icon: 'fas fa-users', label: 'Quản lý người dùng', href: addAdminPrefix('/users') },
-      { id: 'bids', icon: 'fas fa-file-alt', label: 'Hồ sơ đấu giá', href: addAdminPrefix('/profile') },
+        // { id: 'bids', icon: 'fas fa-file-alt', label: 'Hồ sơ đấu giá', href: addAdminPrefix('/profile') },
       { id: 'notifications', icon: 'fas fa-bell', label: 'Thông báo', href: addAdminPrefix('/notification') },
       { id: 'payments', icon: 'fas fa-money-bill-wave', label: 'Thanh toán', href: addAdminPrefix('/payment') },
       // { id: 'econtracts', icon: 'fas fa-file-signature', label: 'Hợp đồng điện tử', href: addAdminPrefix('/econtract') },
@@ -58,7 +58,7 @@ const Sidebar = () => {
     25: ['/news'],
     26: ['/news-categories'],
     27: ['/profile'],
-    28: ['/profile'],
+    28: ['/profile'], 
     29: ['/payment'],
     30: ['/payment'],
     31: ['/auction-session'],
@@ -71,7 +71,7 @@ const Sidebar = () => {
     38: ['/roles', '/permissions'],
     42: ['/dashboard'], // manage_dashboard
     43: ['/users'],     // manage_users
-    44: ['/settings'],  // manage_settings
+    // 44: ['/settings'],  // manage_settings
     45: ['/history'],   // view_history
     46: ['/asset-categories']
   };

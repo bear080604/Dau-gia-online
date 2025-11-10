@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import styles from './newsDetail.module.css';
+import Loading from '../components/Loading';
 
 const NewsDetail = () => {
   const { id } = useParams();
@@ -61,8 +62,8 @@ const NewsDetail = () => {
       });
   }, [id]);
 
-  if (loading) {
-    return <div className={styles.loading}>Đang tải...</div>;
+  if (loading) {  
+    return <Loading message="Đang tải tin tức..." />;
   }
 
   if (error) {
