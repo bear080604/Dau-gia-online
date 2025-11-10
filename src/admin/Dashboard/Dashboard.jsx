@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Chart from 'chart.js/auto';
 import styles from './Dashboard.module.css';
+import Loading from '../../components/Loading';
 const Dashboard = () => {
   const [activePeriod, setActivePeriod] = useState('week');
   const [sessions, setSessions] = useState([]);
@@ -291,7 +292,7 @@ const Dashboard = () => {
     setActivePeriod(period);
   };
 
-  if (loading) return <div className={styles.mainContent}><p>Đang tải dữ liệu...</p></div>;
+  if (loading) return <Loading message="Đang tải dữ liệu..." />;
   if (error) return <div className={styles.mainContent}><p>Lỗi: {error}</p></div>;
 
   return (

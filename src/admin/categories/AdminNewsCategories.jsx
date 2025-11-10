@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styles from './AdminNewsCategories.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import Loading from '../../components/Loading';
 
 const AdminNewsCategories = () => {
   const [categories, setCategories] = useState([]);
@@ -143,7 +144,7 @@ const AdminNewsCategories = () => {
       {error && <p className={styles.error}>{error}</p>}
       
       {loading ? (
-        <p className={styles.loading}>Đang tải...</p>
+        <Loading message="Đang tải danh mục tin tức..." />
       ) : (
         <>
           <div className={styles.tableContainer}>

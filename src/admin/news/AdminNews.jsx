@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import styles from './adminNews.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import Loading from '../../components/Loading';
 
 const AdminNews = () => {
   const [news, setNews] = useState([]);
@@ -228,7 +229,7 @@ const AdminNews = () => {
       </div>
       {error && <p className={styles.error}>{error}</p>}
       {loading ? (
-        <p className={styles.loading}>Đang tải...</p>
+        <Loading message="Đang tải tin tức..." />
       ) : (
         <>
           <table className={styles.table}>
