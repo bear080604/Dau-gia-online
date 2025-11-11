@@ -1,4 +1,3 @@
-// NotificationBell.jsx
 import React, { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 
@@ -38,7 +37,6 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
     });
 
     socket.on("notification.created", (data) => {
-
       const newNotif = {
         id: data.notification.notification_id,
         msg: data.notification.message,
@@ -131,7 +129,11 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
   };
 
   // === ĐÁNH DẤU ĐÃ ĐỌC ===
-  const markAsRead = (notifId) => {
+  const markAsRead = (notifId, event) => {
+    if (event) {
+      event.stopPropagation();
+    }
+
     const storedToken = localStorage.getItem("token");
     if (!storedToken) return;
 
@@ -209,7 +211,7 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
     if (Notification.permission === "granted") {
       new Notification("Thông báo mới", {
         body: message,
-        icon: "/favicon.ico",
+        icon: "/favicon.ico", 
         badge: "/favicon.ico",
         tag: "notification",
       });
@@ -268,7 +270,10 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
                 {unreadCount}
               </span>
               <button
-                onClick={markAllAsRead}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  markAllAsRead();
+                }}
                 disabled={loading}
                 style={{
                   background: "rgba(255,255,255,0.2)",
@@ -307,12 +312,11 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
           {notifications.map((n) => (
             <div
               key={n.id}
-              onClick={() => !n.is_read && markAsRead(n.id)}
               style={{
                 padding: "15px 20px",
                 borderBottom: "1px solid #f1f5f9",
                 background: n.is_read ? "#fff" : "#eff6ff",
-                cursor: n.is_read ? "default" : "pointer",
+                cursor: "default",
                 transition: "all 0.2s ease",
                 position: "relative",
               }}

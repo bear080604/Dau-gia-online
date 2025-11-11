@@ -1,182 +1,196 @@
 import React, { useState, useEffect } from 'react';
 import styles from './History.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import { getLogs, deleteLog, exportLogs, clearOldLogs } from '../../services/logService';
+import { format, parseISO } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { saveAs } from 'file-saver';
+import { toast } from 'react-toastify';
 
 function History() {
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState('');
   const [tableFilter, setTableFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [totalLogs, setTotalLogs] = useState(0);
+  const [stats, setStats] = useState({
+    total: 0,
+    today: 0,
+    insert: 0,
+    update: 0,
+    delete: 0,
+  });
 
   const itemsPerPage = 5;
 
-  const logs = [
-    {
-      id: 1,
-      user: 'Admin QT',
-      table: 'Users',
-      action: 'UPDATE',
-      actionClass: 'statusUpdate',
-      time: '2025-10-02 09:15',
-      oldValue: '{"role": "User"}',
-      newValue: '{"role": "Administrator"}',
-    },
-    {
-      id: 2,
-      user: 'Nguyễn Văn A',
-      table: 'AuctionItems',
-      action: 'INSERT',
-      actionClass: 'statusInsert',
-      time: '2025-10-02 10:20',
-      oldValue: 'null',
-      newValue: '{"name": "Bất động sản Q1", "starting_price": 2000000000}',
-    },
-    {
-      id: 3,
-      user: 'Trần Thị B',
-      table: 'Bids',
-      action: 'UPDATE',
-      actionClass: 'statusUpdate',
-      time: '2025-10-02 11:05',
-      oldValue: '{"amount": 1500000}',
-      newValue: '{"amount": 1600000}',
-    },
-    {
-      id: 4,
-      user: 'Lê Văn C',
-      table: 'Contracts',
-      action: 'DELETE',
-      actionClass: 'statusDelete',
-      time: '2025-10-02 12:30',
-      oldValue: '{"status": "ChoThanhToan"}',
-      newValue: 'null',
-    },
-    {
-      id: 5,
-      user: 'Phạm Thị D',
-      table: 'Payments',
-      action: 'INSERT',
-      actionClass: 'statusInsert',
-      time: '2025-10-02 13:45',
-      oldValue: 'null',
-      newValue: '{"method": "ChuyenKhoan", "amount": 2500000000}',
-    },
-    {
-      id: 6,
-      user: 'Hoàng Văn E',
-      table: 'AuctionSessions',
-      action: 'UPDATE',
-      actionClass: 'statusUpdate',
-      time: '2025-10-02 14:20',
-      oldValue: '{"status": "Mo"}',
-      newValue: '{"status": "DangDienRa"}',
-    },
-    {
-      id: 7,
-      user: 'Vũ Thị F',
-      table: 'Notifications',
-      action: 'INSERT',
-      actionClass: 'statusInsert',
-      time: '2025-10-02 15:10',
-      oldValue: 'null',
-      newValue: '{"message": "Bạn có bid mới", "status": "ChuaDoc"}',
-    },
-    {
-      id: 8,
-      user: 'Admin QT',
-      table: 'UserVerifications',
-      action: 'DELETE',
-      actionClass: 'statusDelete',
-      time: '2025-10-02 16:00',
-      oldValue: '{"code": "123456", "expires_at": "2025-10-02 16:30"}',
-      newValue: 'null',
-    },
-  ];
-
-  const applyFilters = () => {
-    return logs.filter(log => {
-      const searchMatch =
-        log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.table.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.oldValue.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.newValue.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const actionMatch = !actionFilter || log.action.toLowerCase() === actionFilter.toLowerCase();
-      const tableMatch = !tableFilter || log.table.toLowerCase() === tableFilter.toLowerCase();
-
-      return searchMatch && actionMatch && tableMatch;
-    });
+  const detectActionFromDescription = (desc = '') => {
+    const d = desc.toLowerCase();
+    if (d.includes('tạo') || d.includes('create') || d.includes('tao')) return 'INSERT';
+    if (d.includes('cập nhật') || d.includes('cap nhat') || d.includes('update')) return 'UPDATE';
+    if (d.includes('xóa') || d.includes('xoa') || d.includes('delete')) return 'DELETE';
+    if (d.includes('đăng nhập') || d.includes('dang nhap') || d.includes('login')) return 'LOGIN';
+    return 'OTHER';
   };
 
-  const filteredLogs = applyFilters();
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentLogs = filteredLogs.slice(startIndex, endIndex);
+  const actionClassFor = (actionTypeOrLabel) => {
+    const a = (actionTypeOrLabel || '').toString().toLowerCase();
+    if (a.includes('insert')) return 'actionInsert';
+    if (a.includes('update')) return 'actionUpdate';
+    if (a.includes('delete')) return 'actionDelete';
+    if (a.includes('system')) return 'actionSystem';
+    return 'actionOther';
+  };
+
+  const stringifyValue = (val) => {
+    if (val === null || val === undefined) return 'Không có';
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        return typeof parsed === 'object' ? JSON.stringify(parsed, null, 2) : String(parsed);
+      } catch {
+        return val;
+      }
+    }
+    if (typeof val === 'object') return JSON.stringify(val, null, 2);
+    return String(val);
+  };
+
+  const mapApiItem = (item) => {
+    const actionLabel = item.action_type ? (item.action_type === 'system' ? 'Hệ thống' : item.action_type) : detectActionFromDescription(item.description);
+    const simpleAction = detectActionFromDescription(item.description);
+    return {
+      id: item.id,
+      user: item.user_name || item.user?.name || item.user_id || `#${item.user_id}`,
+      table: item.table_name ?? item.table ?? '',
+      actionType: item.action_type ?? simpleAction,
+      action: actionLabel === 'Hệ thống' ? 'Hệ thống' : simpleAction,
+      actionClass: actionClassFor(item.action_type ?? simpleAction),
+      time: item.created_at ?? item.time ?? new Date().toISOString(),
+      oldValue: stringifyValue(item.old_value),
+      newValue: stringifyValue(item.new_value),
+      description: item.description ?? '',
+    };
+  };
+
+  const fetchLogs = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: itemsPerPage,
+        q: searchTerm || undefined,
+        action: actionFilter || undefined,
+        table: tableFilter || undefined,
+      };
+
+      const res = await getLogs(params);
+      // res expected normalized: { data: [...], meta: { total }, stats: {...} }
+      const items = Array.isArray(res) ? res : (res.data ?? []);
+      const total = res.meta?.total ?? (Array.isArray(items) ? items.length : 0);
+      const s = res.stats ?? {};
+
+      const mapped = (items || []).map(mapApiItem);
+      setLogs(mapped);
+      setTotalLogs(total);
+      setStats({
+        total: s.total ?? total,
+        today: s.today ?? 0,
+        insert: s.insert ?? 0,
+        update: s.update ?? 0,
+        delete: s.delete ?? 0,
+      });
+    } catch (err) {
+      console.error('fetchLogs error', err);
+      setError('Không thể tải dữ liệu log');
+      toast.error('Lỗi tải log từ server');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, actionFilter, tableFilter]);
+    fetchLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, searchTerm, actionFilter, tableFilter]);
 
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
+  const handleDeleteLog = async (id) => {
+    if (!window.confirm('Xóa log này?')) return;
+    try {
+      await deleteLog(id);
+      toast.success('Xóa log thành công');
+      fetchLogs();
+    } catch (err) {
+      console.error('deleteLog error', err);
+      toast.error('Xóa thất bại');
+    }
   };
 
-  const handleActionFilterChange = (e) => {
-    setActionFilter(e.target.value);
+  const handleExportLogs = async () => {
+    try {
+      const blob = await exportLogs({ search: searchTerm, action: actionFilter, table: tableFilter });
+      const filename = `logs_${format(new Date(), 'yyyy-MM-dd_HHmm')}.csv`;
+      saveAs(blob, filename);
+      toast.success('Xuất file thành công!');
+    } catch (err) {
+      console.error('exportLogs error', err);
+      toast.error('Xuất file thất bại');
+    }
   };
 
-  const handleTableFilterChange = (e) => {
-    setTableFilter(e.target.value);
+  const handleClearOldLogs = async () => {
+    if (!window.confirm('Dọn dẹp tất cả log cũ hơn 30 ngày?')) return;
+    try {
+      const result = await clearOldLogs();
+      toast.success(`Đã xóa ${result.deleted ?? 0} log cũ`);
+      fetchLogs();
+    } catch (err) {
+      console.error('clearOldLogs error', err);
+      toast.error('Dọn dẹp thất bại');
+    }
   };
 
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
+  const totalPages = Math.max(1, Math.ceil(totalLogs / itemsPerPage));
 
   const renderPagination = () => {
     const pages = [];
-    let startPage = Math.max(1, currentPage - 1);
-    let endPage = Math.min(totalPages, startPage + 2);
-
-    if (endPage - startPage + 1 < 3 && startPage > 1) {
-      startPage = Math.max(1, endPage - 2);
-    }
+    const startPage = Math.max(1, currentPage - 1);
+    const endPage = Math.min(totalPages, startPage + 2);
 
     for (let i = startPage; i <= endPage; i++) {
       pages.push(
         <button
           key={i}
           className={`${styles.paginationBtn} ${currentPage === i ? styles.paginationBtnActive : ''}`}
-          onClick={() => handlePageChange(i)}
+          onClick={() => setCurrentPage(i)}
         >
           {i}
         </button>
       );
     }
-
     return pages;
   };
 
   const handleViewDetails = (log) => {
-    alert(`Chi tiết log:\n${log.oldValue} → ${log.newValue}\n(Demo)`);
+    const oldVal = log.oldValue || 'Không có';
+    const newVal = log.newValue || 'Không có';
+    const timeStr = log.time ? format(parseISO(log.time), 'PPPp', { locale: vi }) : 'Không rõ';
+    alert(
+      `Chi tiết log ID: ${log.id}\n\n` +
+      `Người dùng: ${log.user}\n` +
+      `Bảng: ${log.table || 'Không rõ'}\n` +
+      `Hành động: ${log.action}\n` +
+      `Thời gian: ${timeStr}\n\n` +
+      `Mô tả:\n${log.description}\n\n` +
+      `Giá trị cũ:\n${oldVal}\n\n` +
+      `Giá trị mới:\n${newVal}`
+    );
   };
 
-  const handleDeleteLog = (log) => {
-    if (window.confirm('Xóa log này?')) {
-      alert('Log đã được xóa (Demo)');
-    }
-  };
-
-  const handleExportLogs = () => {
-    alert('Log đã được xuất ra file CSV (Demo)');
-  };
-
-  const handleClearOldLogs = () => {
-    if (window.confirm('Dọn dẹp tất cả log cũ hơn 30 ngày?')) {
-      alert('Đã dọn dẹp 150 log cũ (Demo)');
-    }
-  };
+  if (error) return <div className={styles.error}>Lỗi: {error}</div>;
 
   return (
     <div className={styles.mainContent}>
@@ -185,38 +199,37 @@ function History() {
           <i className="fas fa-search"></i>
           <input
             type="text"
-            placeholder="Tìm kiếm log theo user, bảng hoặc hành động..."
+            placeholder="Tìm kiếm log..."
             value={searchTerm}
-            onChange={handleSearchChange}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           />
         </div>
-        
       </div>
 
       <h1 className={styles.pageTitle}>Lịch Sử Log Hệ Thống</h1>
       <p className={styles.pageSubtitle}>Theo dõi và quản lý các hoạt động kiểm toán trong hệ thống</p>
 
       <div className={styles.logSection}>
-        <h3><i className="fas fa-chart-bar"></i> Tổng Quan Log</h3>
+        <h3>Tổng Quan Log</h3>
         <div className={styles.metricsGrid}>
           <div className={styles.metricCard}>
-            <div className={styles.metricValue}>247</div>
+            <div className={styles.metricValue}>{stats.total}</div>
             <div className={styles.metricLabel}>Tổng log</div>
           </div>
           <div className={styles.metricCard}>
-            <div className={styles.metricValue}>45</div>
+            <div className={styles.metricValue}>{stats.today}</div>
             <div className={styles.metricLabel}>Log hôm nay</div>
           </div>
           <div className={styles.metricCard}>
-            <div className={styles.metricValue}>120</div>
+            <div className={styles.metricValue}>{stats.update}</div>
             <div className={styles.metricLabel}>UPDATE</div>
           </div>
           <div className={styles.metricCard}>
-            <div className={styles.metricValue}>89</div>
+            <div className={styles.metricValue}>{stats.insert}</div>
             <div className={styles.metricLabel}>INSERT</div>
           </div>
           <div className={styles.metricCard}>
-            <div className={styles.metricValue}>38</div>
+            <div className={styles.metricValue}>{stats.delete}</div>
             <div className={styles.metricLabel}>DELETE</div>
           </div>
         </div>
@@ -224,13 +237,13 @@ function History() {
 
       <div className={styles.actionsBar}>
         <div className={styles.filters}>
-          <select className={styles.filterSelect} value={actionFilter} onChange={handleActionFilterChange}>
+          <select value={actionFilter} onChange={(e) => { setActionFilter(e.target.value); setCurrentPage(1); }}>
             <option value="">Tất cả hành động</option>
             <option value="INSERT">INSERT</option>
             <option value="UPDATE">UPDATE</option>
             <option value="DELETE">DELETE</option>
           </select>
-          <select className={styles.filterSelect} value={tableFilter} onChange={handleTableFilterChange}>
+          <select value={tableFilter} onChange={(e) => { setTableFilter(e.target.value); setCurrentPage(1); }}>
             <option value="">Tất cả bảng</option>
             <option value="Users">Users</option>
             <option value="AuctionItems">AuctionItems</option>
@@ -239,55 +252,64 @@ function History() {
             <option value="Payments">Payments</option>
           </select>
         </div>
-        <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleExportLogs}>
-          <i className="fas fa-download"></i>
-          Xuất log
-        </button>
+        <div>
+          <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleExportLogs}>Xuất log</button>
+          <button className={`${styles.btn} ${styles.btn}`} style={{ marginLeft: 8 }} onClick={fetchLogs}>Làm mới</button>
+        </div>
       </div>
 
-      <table className={styles.dataTable}>
-        <thead>
-          <tr>
-            <th>ID Log</th>
-            <th>Người dùng</th>
-            <th>Bảng</th>
-            <th>Hành động</th>
-            <th>Thời gian</th>
-            <th>Giá trị cũ</th>
-            <th>Giá trị mới</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentLogs.map(log => (
-            <tr key={log.id}>
-              <td data-label="ID Log">{log.id}</td>
-              <td data-label="Người dùng">{log.user}</td>
-              <td data-label="Bảng">{log.table}</td>
-              <td data-label="Hành động">
-                <span className={`${styles.statusBadge} ${styles[log.actionClass]}`}>{log.action}</span>
-              </td>
-              <td data-label="Thời gian">{log.time}</td>
-              <td data-label="Giá trị cũ">{log.oldValue}</td>
-              <td data-label="Giá trị mới">{log.newValue}</td>
-              <td data-label="Hành động">
-                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => handleViewDetails(log)}>Xem chi tiết</button>
-                <button className={`${styles.btn} ${styles.btnDanger}`} onClick={() => handleDeleteLog(log)}>Xóa log</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {loading ? (
+        <div className={styles.loading}>Đang tải log...</div>
+      ) : logs.length === 0 ? (
+        <div className={styles.empty}>Không có log nào</div>
+      ) : (
+        <>
+          <table className={styles.dataTable}>
+            <thead>
+              <tr>
+                <th>ID Log</th>
+                <th>Người dùng</th>
+                <th>Bảng</th>
+                <th>Hành động</th>
+                <th>Thời gian</th>
+                <th>Giá trị cũ</th>
+                <th>Giá trị mới</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((log) => (
+                <tr key={log.id}>
+                  <td>{log.id}</td>
+                  <td>{log.user}</td>
+                  <td>{log.table}</td>
+                  <td>
+                    <span className={`${styles.statusBadge} ${styles[log.actionClass] || ''}`}>
+                      {log.action}
+                    </span>
+                  </td>
+                  <td>{log.time ? format(parseISO(log.time), 'dd/MM/yyyy HH:mm', { locale: vi }) : '-'}</td>
+                  <td className={styles.jsonCell}><pre>{log.oldValue}</pre></td>
+                  <td className={styles.jsonCell}><pre>{log.newValue}</pre></td>
+                  <td>
+                    <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => handleViewDetails(log)}>Xem</button>
+                    <button className={`${styles.btn} ${styles.btnDanger}`} onClick={() => handleDeleteLog(log.id)} style={{ marginLeft: 8 }}>Xóa</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-      <div className={styles.pagination}>
-        {renderPagination()}
-      </div>
+          <div className={styles.pagination}>
+            {renderPagination()}
+          </div>
+        </>
+      )}
 
-      <div className={styles.logSection}>
-        <h3><i className="fas fa-trash-alt"></i> Quản Lý Log Cũ</h3>
+      <div className={styles.logSection} style={{ marginTop: 20 }}>
+        <h3>Quản Lý Log Cũ</h3>
         <p className={styles.pageSubtitle}>Xóa log cũ hơn 30 ngày để tiết kiệm không gian lưu trữ.</p>
-        <button className={`${styles.clearBtn}`} onClick={handleClearOldLogs}>
-          <i className="fas fa-broom"></i>
+        <button className={styles.clearBtn} onClick={handleClearOldLogs}>
           Dọn dẹp log cũ
         </button>
       </div>
