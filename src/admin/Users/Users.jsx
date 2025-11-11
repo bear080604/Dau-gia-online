@@ -489,11 +489,10 @@ function Users() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // === SAVE USER ===
- const handleSaveUser = async () => {
+// ...existing code...
+const handleSaveUser = async () => {
   setErrors({});
   setFormError(null);
-  // setSuccessMsg("");
   setIsLoading(true);
 
   if (!validateForm()) {
@@ -532,67 +531,69 @@ function Users() {
       ? await registerUser(data)
       : await updateUserAdmin(selectedUser.id, data);
 
-    if (response.data?.status) {
-      const savedUser = response.data?.user || response.data?.data;
+    // normalize payload (handle various response shapes)
+    const payload = response?.data ?? response;
+    let savedUser = payload?.user ?? payload?.data ?? payload;
+    if (Array.isArray(savedUser)) savedUser = savedUser[0] ?? {};
 
-      // Tạo user object chuẩn để thêm/cập nhật vào danh sách
-      const formattedUser = {
-        id: savedUser.user_id || selectedUser.id,
-        name: savedUser.full_name || userForm.full_name,
-        email: savedUser.email || userForm.email,
-        phone: savedUser.phone || userForm.phone,
-        role_id: savedUser.role_id || selectedUser.role_id,
-        role_name: savedUser.role?.name || selectedUser.role_name,
-        email_verify: savedUser.email_verified_at ? 'Đã xác minh' : 'Chưa xác minh',
-        admin_verify: savedUser.admin_verify_status === 'approved'
-          ? 'Đã xét duyệt'
-          : savedUser.admin_verify_status === 'rejected'
-          ? 'Bị từ chối'
-          : 'Chờ xét duyệt',
-        createdDate: formatDate(savedUser.created_at || new Date()),
-        accountType: savedUser.account_type || accountType,
-        full_name: savedUser.full_name || userForm.full_name,
-        birth_date: formatDate(savedUser.birth_date || userForm.birth_date),
-        gender: savedUser.gender || userForm.gender,
-        address: savedUser.address || userForm.address,
-        bank_name: savedUser.bank_name || userForm.bank_name,
-        bank_account: savedUser.bank_account || userForm.bank_account,
-        bank_branch: savedUser.bank_branch || userForm.bank_branch,
-        identity_number: savedUser.identity_number || userForm.identity_number,
-        identity_issue_date: formatDate(savedUser.identity_issue_date || userForm.identity_issue_date),
-        identity_issued_by: savedUser.identity_issued_by || userForm.identity_issued_by,
-        position: savedUser.position || userForm.position,
-        organization_name: savedUser.organization_name || userForm.organization_name,
-        tax_code: savedUser.tax_code || userForm.tax_code,
-        business_license_issue_date: formatDate(savedUser.business_license_issue_date || userForm.business_license_issue_date),
-        business_license_issued_by: savedUser.business_license_issued_by || userForm.business_license_issued_by,
-        online_contact_method: savedUser.online_contact_method || userForm.online_contact_method,
-        certificate_number: savedUser.certificate_number || userForm.certificate_number,
-        certificate_issue_date: formatDate(savedUser.certificate_issue_date || userForm.certificate_issue_date),
-        certificate_issued_by: savedUser.certificate_issued_by || userForm.certificate_issued_by,
-        id_card_front_url: savedUser.id_card_front ? `${API_URL}/storage/${savedUser.id_card_front}` : (modalMode === 'edit' ? selectedUser.id_card_front_url : ''),
-        id_card_back_url: savedUser.id_card_back ? `${API_URL}/storage/${savedUser.id_card_back}` : (modalMode === 'edit' ? selectedUser.id_card_back_url : ''),
-        business_license_url: savedUser.business_license ? `${API_URL}/storage/${savedUser.business_license}` : (modalMode === 'edit' ? selectedUser.business_license_url : undefined),
-        auctioneer_card_front_url: savedUser.auctioneer_card_front ? `${API_URL}/storage/${savedUser.auctioneer_card_front}` : (modalMode === 'edit' ? selectedUser.auctioneer_card_front_url : undefined),
-        auctioneer_card_back_url: savedUser.auctioneer_card_back ? `${API_URL}/storage/${savedUser.auctioneer_card_back}` : (modalMode === 'edit' ? selectedUser.auctioneer_card_back_url : undefined),
-        is_locked: savedUser.is_locked ?? selectedUser?.is_locked ?? 0,
-      };
+    // build formattedUser with safe fallbacks
+    const savedId = savedUser?.user_id ?? savedUser?.id ?? selectedUser?.id;
+    const formattedUser = {
+      id: savedId,
+      name: savedUser?.full_name ?? userForm.full_name,
+      email: savedUser?.email ?? userForm.email,
+      phone: savedUser?.phone ?? userForm.phone,
+      role_id: savedUser?.role_id ?? selectedUser?.role_id ?? null,
+      role_name: savedUser?.role?.name ?? selectedUser?.role_name ?? 'Chưa có vai trò',
+      email_verify: savedUser?.email_verified_at ? 'Đã xác minh' : 'Chưa xác minh',
+      admin_verify: savedUser?.admin_verify_status === 'approved'
+        ? 'Đã xét duyệt'
+        : savedUser?.admin_verify_status === 'rejected'
+        ? 'Bị từ chối'
+        : selectedUser?.admin_verify ?? 'Chờ xét duyệt',
+      createdDate: formatDate(savedUser?.created_at ?? new Date()),
+      accountType: savedUser?.account_type ?? accountType,
+      full_name: savedUser?.full_name ?? userForm.full_name,
+      birth_date: formatDate(savedUser?.birth_date ?? userForm.birth_date),
+      gender: savedUser?.gender ?? userForm.gender,
+      address: savedUser?.address ?? userForm.address,
+      bank_name: savedUser?.bank_name ?? userForm.bank_name,
+      bank_account: savedUser?.bank_account ?? userForm.bank_account,
+      bank_branch: savedUser?.bank_branch ?? userForm.bank_branch,
+      identity_number: savedUser?.identity_number ?? userForm.identity_number,
+      identity_issue_date: formatDate(savedUser?.identity_issue_date ?? userForm.identity_issue_date),
+      identity_issued_by: savedUser?.identity_issued_by ?? userForm.identity_issued_by,
+      position: savedUser?.position ?? userForm.position,
+      organization_name: savedUser?.organization_name ?? userForm.organization_name,
+      tax_code: savedUser?.tax_code ?? userForm.tax_code,
+      business_license_issue_date: formatDate(savedUser?.business_license_issue_date ?? userForm.business_license_issue_date),
+      business_license_issued_by: savedUser?.business_license_issued_by ?? userForm.business_license_issued_by,
+      online_contact_method: savedUser?.online_contact_method ?? userForm.online_contact_method,
+      certificate_number: savedUser?.certificate_number ?? userForm.certificate_number,
+      certificate_issue_date: formatDate(savedUser?.certificate_issue_date ?? userForm.certificate_issue_date),
+      certificate_issued_by: savedUser?.certificate_issued_by ?? userForm.certificate_issued_by,
+      id_card_front_url: savedUser?.id_card_front ? `${API_URL}/storage/${savedUser.id_card_front}` : (modalMode === 'edit' ? selectedUser?.id_card_front_url : ''),
+      id_card_back_url: savedUser?.id_card_back ? `${API_URL}/storage/${savedUser.id_card_back}` : (modalMode === 'edit' ? selectedUser?.id_card_back_url : ''),
+      business_license_url: savedUser?.business_license ? `${API_URL}/storage/${savedUser.business_license}` : (modalMode === 'edit' ? selectedUser?.business_license_url : undefined),
+      auctioneer_card_front_url: savedUser?.auctioneer_card_front ? `${API_URL}/storage/${savedUser.auctioneer_card_front}` : (modalMode === 'edit' ? selectedUser?.auctioneer_card_front_url : undefined),
+      auctioneer_card_back_url: savedUser?.auctioneer_card_back ? `${API_URL}/storage/${savedUser.auctioneer_card_back}` : (modalMode === 'edit' ? selectedUser?.auctioneer_card_back_url : undefined),
+      is_locked: savedUser?.is_locked ?? selectedUser?.is_locked ?? 0,
+    };
 
-      // Cập nhật danh sách users
-      setUsers(prevUsers => {
-        if (modalMode === 'add') {
-          return [formattedUser, ...prevUsers]; // Thêm vào đầu
-        } else {
-          return prevUsers.map(u => u.id === formattedUser.id ? formattedUser : u);
-        }
-      });
+    // cập nhật UI ngay — nếu add thì thêm đầu, nếu edit thì thay thế
+    setUsers(prev => {
+      if (modalMode === 'add') {
+        // ensure no duplicate
+        const exists = prev.some(u => u.id === formattedUser.id);
+        return exists ? prev : [formattedUser, ...prev];
+      } else {
+        return prev.map(u => (u.id === formattedUser.id ? formattedUser : u));
+      }
+    });
 
-      // setSuccessMsg("Thành công! Đã lưu thông tin.");
-      // setTimeout(() => {
-      //   closeUserModal();
-      //   setSuccessMsg("");
-      // }, 1500);
-    }
+    // reset/close modal và reset trang về 1 để thấy mới thêm
+    setCurrentPage(1);
+    closeUserModal();
   } catch (err) {
     setFormError(err.response?.data?.message || 'Lỗi khi lưu người dùng');
     setErrors(err.response?.data?.errors || {});
@@ -600,6 +601,7 @@ function Users() {
     setIsLoading(false);
   }
 };
+
 
   const handleApproveUser = async (user) => {
     try {
