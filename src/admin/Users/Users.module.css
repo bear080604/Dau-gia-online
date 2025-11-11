@@ -727,3 +727,9 @@ ease;
   border-radius: 8px;
   border: 1px solid #ddd;
 }
+
+.error {
+  color: red;
+  font-size: 14px;
+  margin-top: 8px;
+}

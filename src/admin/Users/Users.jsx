@@ -254,6 +254,15 @@ function Users() {
     return () => document.removeEventListener("mousedown", handleOutside);
   }, []);
 
+  useEffect(() => {
+    if (formError) {
+      const timer = setTimeout(() => {
+        setFormError(null);
+      }, 5000);
+      return () => clearTimeout(timer); // cleanup nếu component bị unmount
+    }
+  }, [formError]);
+
   const filteredBanks = banks.filter(bank =>
     bank.name.toLowerCase().includes(searchBank.toLowerCase()) ||
     bank.shortName.toLowerCase().includes(searchBank.toLowerCase())
@@ -602,80 +611,84 @@ const handleSaveUser = async () => {
   }
 };
 
+  const [approvingId, setApprovingId] = useState(null);
+  const [rejectingId, setRejectingId] = useState(null);
 
   const handleApproveUser = async (user) => {
-    if (user.email_verified_at == null) {
-      setFormError('Tài khoản chưa xác minh email, không thể duyệt.');
-      return;
-    }
+    setApprovingId(user.id);
     try {
-      const response = await approveUserService(user.id);
-      if (response.data?.status) {
-        setUsers(prevUsers =>
-          prevUsers.map(u =>
-            u.id === user.id
-              ? { ...u, admin_verify: 'Đã xét duyệt', admin_verify_status: 'approved' }
-              : u
-          )
-        );
-      }
+      await approveUserService(user.id);
+      setUsers(prev => [...prev.map(u => 
+        u.id === user.id 
+          ? { ...u, admin_verify: 'Đã xét duyệt', admin_verify_status: 'approved' }
+          : u
+      )]);
     } catch (err) {
-      setFormError(err.response?.data?.message || 'Lỗi khi duyệt người dùng');
+  // Kiểm tra nếu lỗi từ API có thông tin email_verified_at
+    const isNotVerified = 
+        err.response?.data?.email_verified_at === null || 
+        err.response?.data?.message?.includes('verified') ||
+        err.response?.data?.message?.includes('xác thực');
+
+      if (isNotVerified) {
+        setFormError('Tài khoản chưa được xác thực');
+      } else {
+        setFormError(err.response?.data?.message || 'Lỗi khi duyệt');
+      }
+    } finally {
+      setApprovingId(null);
     }
   };
 
   const handleRejectUser = async (user) => {
+    setRejectingId(user.id);
     try {
-      const response = await rejectUserService(user.id);
-      if (response.data?.status) {
-        setUsers(prevUsers =>
-          prevUsers.map(u =>
-            u.id === user.id
-              ? { ...u, admin_verify: 'Bị từ chối', admin_verify_status: 'rejected' }
-              : u
-          )
-        );
-      }
+      await rejectUserService(user.id); 
+      setUsers(prev => [...prev.map(u => 
+        u.id === user.id 
+          ? { ...u, admin_verify: 'Bị từ chối', admin_verify_status: 'rejected' }
+          : u
+      )]);
     } catch (err) {
       setFormError(err.response?.data?.message || 'Lỗi khi từ chối người dùng');
+    } finally {
+      setRejectingId(null); // Reset sau khi hoàn tất
     }
   };
 
+
+  const [lockingId, setLockingId] = useState(null);
+  const [unlockingId, setUnlockingId] = useState(null);
+
   const handleLockUser = async (user) => {
-    if (window.confirm(`Bạn có chắc muốn khóa tài khoản ${user.name}?`)) {
-      try {
-        const response = await lockUserService(user.id);
-        if (response.data?.status) {
-          setUsers(prevUsers =>
-            prevUsers.map(u =>
-              u.id === user.id
-                ? { ...u, is_locked: 1 }
-                : u
-            )
-          );
-        }
-      } catch (err) {
-        setFormError(err.response?.data?.message || 'Lỗi khi khóa tài khoản');
-      }
+    if (!window.confirm(`Bạn có chắc muốn khóa tài khoản ${user.name}?`)) return;
+
+    setLockingId(user.id);
+    try {
+      await lockUserService(user.id);
+      setUsers(prev => [...prev.map(u =>
+        u.id === user.id ? { ...u, is_locked: 1 } : u
+      )]);
+    } catch (err) {
+      setFormError(err.response?.data?.message || 'Lỗi khi khóa tài khoản');
+    } finally {
+      setLockingId(null);
     }
   };
 
   const handleUnlockUser = async (user) => {
-    if (window.confirm(`Bạn có chắc muốn mở khóa tài khoản ${user.name}?`)) {
-      try {
-        const response = await unlockUserService(user.id);
-        if (response.data?.status) {
-          setUsers(prevUsers =>
-            prevUsers.map(u =>
-              u.id === user.id
-                ? { ...u, is_locked: null }
-                : u
-            )
-          );
-        }
-      } catch (err) {
-        setFormError(err.response?.data?.message || 'Lỗi khi mở khóa tài khoản');
-      }
+    if (!window.confirm(`Bạn có chắc muốn mở khóa tài khoản ${user.name}?`)) return;
+
+    setUnlockingId(user.id);
+    try {
+      await unlockUserService(user.id);
+      setUsers(prev => [...prev.map(u =>
+        u.id === user.id ? { ...u, is_locked: null } : u
+      )]);
+    } catch (err) {
+      setFormError(err.response?.data?.message || 'Lỗi khi mở khóa tài khoản');
+    } finally {
+      setUnlockingId(null);
     }
   };
 
@@ -761,6 +774,10 @@ const handleSaveUser = async () => {
             className={styles.searchInput}
           />
         </div>
+        {/* hien thong bao loi */}
+        <div className={styles.error}>
+          {formError && <p>{formError}</p>}
+        </div>
       </div>
 
       <h1 className={styles.pageTitle}>Quản Lý Người Dùng</h1>
@@ -836,18 +853,33 @@ const handleSaveUser = async () => {
                     {user.admin_verify === 'Chờ xét duyệt' ? (
                       <>
                         <button
-                          className={`${styles.btnSuccess} bg-green-600 hover:bg-green-700`}
+                          className={`${styles.btnSuccess} ${
+                            approvingId === user.id ? 'bg-green-500 opacity-75' : 'bg-green-600 hover:bg-green-700'
+                          }`}
                           onClick={() => handleApproveUser(user)}
+                          disabled={approvingId === user.id}
                           aria-label="Duyệt người dùng"
-                        > 
-                          <i className="fa fa-check"></i>
+                        >
+                          {approvingId === user.id ? (
+                            <i className="fas fa-spinner fa-spin"></i>
+                          ) : (
+                            <i className="fa fa-check"></i>
+                          )}
                         </button>
+
                         <button
-                          className={`${styles.btnDanger} bg-red-600 hover:bg-red-700`}
+                          className={`${styles.btnDanger} ${
+                            rejectingId === user.id ? 'bg-red-500 opacity-75' : 'bg-red-600 hover:bg-red-700'
+                          }`}
                           onClick={() => handleRejectUser(user)}
+                          disabled={rejectingId === user.id}
                           aria-label="Từ chối người dùng"
                         >
-                          <i className="fa fa-times"></i>
+                          {rejectingId === user.id ? (
+                            <i className="fas fa-spinner fa-spin"></i>
+                          ) : (
+                            <i className="fa fa-times"></i>
+                          )}
                         </button>
                         <button
                           className={styles.btnSuccess}
@@ -876,22 +908,35 @@ const handleSaveUser = async () => {
                         
                         {user.is_locked ? (
                           <button
-                            className={styles.btnSuccess}
+                            className={`${styles.btnSuccess} ${
+                              unlockingId === user.id ? 'bg-green-500 opacity-75' : 'hover:bg-green-700'
+                            }`}
                             onClick={() => handleUnlockUser(user)}
+                            disabled={unlockingId === user.id}
                             aria-label="Mở khóa tài khoản"
                           >
-                            <i className="fa fa-unlock"></i>
+                            {unlockingId === user.id ? (
+                              <i className="fas fa-spinner fa-spin"></i>
+                            ) : (
+                              <i className="fa fa-unlock"></i>
+                            )}
                           </button>
                         ) : (
                           <button
-                            className={styles.btnWarning}
+                            className={`${styles.btnWarning} ${
+                              lockingId === user.id ? 'bg-yellow-500 opacity-75' : 'hover:bg-yellow-600'
+                            }`}
                             onClick={() => handleLockUser(user)}
+                            disabled={lockingId === user.id}
                             aria-label="Khóa tài khoản"
                           >
-                            <i className="fa fa-lock"></i>
+                            {lockingId === user.id ? (
+                              <i className="fas fa-spinner fa-spin"></i>
+                            ) : (
+                              <i className="fa fa-lock"></i>
+                            )}
                           </button>
                         )}
-                        
                         <button
                           className={styles.btnSuccess}
                           onClick={() => openViewModal(user)}
