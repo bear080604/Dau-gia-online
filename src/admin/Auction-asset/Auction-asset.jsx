@@ -892,7 +892,7 @@ const AuctionAsset = () => {
               </div>
             </div>
             <div className={styles.modalFooter}>
-              <button className={`${styles.btn} ${styles.btnDanger}`} onClick={handleRejectAsset}>
+              <button className={`${styles.btnReject} ${styles.btnDanger}`} onClick={handleRejectAsset}>
                 Xác nhận từ chối
               </button>
               <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => closeModal('reject')}>

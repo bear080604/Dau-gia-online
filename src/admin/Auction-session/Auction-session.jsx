@@ -1307,28 +1307,35 @@ const handleRejectWinner = async (sessionId) => {
                 <p><strong>Lý do từ chối:</strong> {selectedSession.rejected_reason}</p>
               )}
               {selectedSession.status === 'Kết thúc' &&
-                selectedSession.currentWinnerId &&
-                selectedSession.currentWinnerId !== 'Chưa có' &&
-                !selectedSession.confirm_winner_at &&
-                !selectedSession.reject_winner_at &&
-                (
-                  <div style={{ marginTop: '10px', marginBottom: '10px', display: 'flex', gap: '10px' }}>
-                    <button
-                      className={`${styles.btn} ${styles.btnSuccess}`}
-                      onClick={() => handleConfirmWinner(selectedSession.id)}
-                      disabled={loading}
-                    >
-                      {loading ? 'Đang xử lý...' : 'Xác nhận người thắng'}
-                    </button>
-                    <button
-                      className={`${styles.btn} ${styles.btnDanger}`}
-                      onClick={() => handleRejectWinner(selectedSession.id)}
-                      disabled={loading}
-                    >
-                      {loading ? 'Đang xử lý...' : 'Từ chối người thắng'}
-                    </button>
-                  </div>
-                )}
+              selectedSession.currentWinnerId &&
+              selectedSession.currentWinnerId !== 'Chưa có' &&
+              !selectedSession.confirm_winner_at &&
+              !selectedSession.reject_winner_at && (
+                <div
+                  style={{
+                    marginTop: '10px',
+                    marginBottom: '10px',
+                    display: 'flex',
+                    gap: '10px',
+                  }}
+                >
+                  <button
+                    className={`${styles.btnSuccessConfirm}`}
+                    onClick={() => handleConfirmWinner(selectedSession.id)}
+                    disabled={loading}
+                  >
+                    {loading ? 'Đang xử lý...' : 'Xác nhận người thắng'}
+                  </button>
+
+                  <button
+                    className={`${styles.btnDangerReject}`}
+                    onClick={() => handleRejectWinner(selectedSession.id)}
+                    disabled={loading}
+                  >
+                    {loading ? 'Đang xử lý...' : 'Từ chối người thắng'}
+                  </button>
+                </div>
+              )}
               <p><strong>Quy định:</strong> {selectedSession.regulation}</p>
               <div className={styles.orderHistory}>
                 <h3>Hồ sơ đấu giá</h3>

@@ -233,7 +233,35 @@
 .btnSuccess:hover {
   background-color: #16a34a;
 }
+.btnSuccessConfirm{
+  background-color: rgb(96, 216, 130);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  margin-right: 0.5rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 
+}
+.btnDangerReject{
+  background-color: #ef4444;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  margin-right: 0.5rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 .btnSecondary {
   background-color: #6b7280;
   color: white;

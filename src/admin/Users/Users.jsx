@@ -602,6 +602,10 @@ function Users() {
 };
 
   const handleApproveUser = async (user) => {
+    if (user.email_verified_at == null) {
+      setFormError('Tài khoản chưa xác minh email, không thể duyệt.');
+      return;
+    }
     try {
       const response = await approveUserService(user.id);
       if (response.data?.status) {

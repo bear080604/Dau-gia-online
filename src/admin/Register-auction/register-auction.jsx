@@ -43,7 +43,7 @@ const AdminPanel = () => {
     'Đã Thanh Toán': 'Đã Thanh Toán',
   };
 
-  const fileurl = `${process.env.REACT_APP_BASE_URL}/storage/auction_files/`;
+  const fileurl = `${process.env.REACT_APP_BASE_URL}/storage/`;
 
   // === SOCKET.IO REALTIME ===
   useEffect(() => {
