@@ -13,8 +13,8 @@ import {
 } from '../../services/auctionAssetService';
 import { getCategories } from '../../services/categoryService';
 
-const BASE_IMAGE_URL = process.env.REACT_APP_BASE_URL;
-const BASE_FILE_URL = BASE_IMAGE_URL;
+// const BASE_IMAGE_URL = process.env.REACT_APP_BASE_URL;
+// const BASE_FILE_URL = BASE_IMAGE_URL;
 
 // Status mapping: API -> UI
 const statusMap = {
@@ -105,8 +105,8 @@ const AuctionAsset = () => {
         rawStatus: item.status,
         description: item.description || '',
         createdDate: formatDate(item.created_at),
-        imageUrl: item.image_url ? BASE_IMAGE_URL + item.image_url : null,
-        urlFile: item.url_file ? BASE_FILE_URL + item.url_file : null,
+        imageUrl: item.image_url ? item.image_url : null,
+        urlFile: item.url_file ? item.url_file : null,
         auctionOrgId: item.auction_org_id
       }));
       setAssets(mappedAssets);
@@ -137,8 +137,8 @@ const AuctionAsset = () => {
         rawStatus: item.status,
         description: item.description || '',
         createdDate: formatDate(item.created_at),
-        imageUrl: item.image_url ? BASE_IMAGE_URL + item.image_url : null,
-        urlFile: item.url_file ? BASE_FILE_URL + item.url_file : null,
+        imageUrl: item.image_url ? item.image_url : null,
+        urlFile: item.url_file ? item.url_file : null,
         auctionOrgId: item.auction_org_id
       }));
       setAssets(mappedAssets);
@@ -313,7 +313,7 @@ const AuctionAsset = () => {
       setIsEditMode(true);
       // Preview main image
       if (assetData.image_url) {
-        const fullImageUrl = BASE_IMAGE_URL + assetData.image_url;
+        const fullImageUrl =assetData.image_url;
         setImagePreview(
           <div className={styles.imageContainer}>
             <img src={fullImageUrl} alt="Preview" className={styles.previewImage} />
@@ -328,7 +328,7 @@ const AuctionAsset = () => {
       setExtraImagePreviews(extraImages.map(img => {
         const imgUrl = img.image_url || img.url || '';
         if (!imgUrl) return null;
-        const fullImageUrl = BASE_IMAGE_URL + imgUrl;
+        const fullImageUrl = imgUrl;
         return (
           <div key={img.image_id || img.id} className={styles.imageContainer}>
             <img src={fullImageUrl} alt="Extra" className={styles.previewImage} />
@@ -340,7 +340,7 @@ const AuctionAsset = () => {
       }).filter(Boolean));
       // File
       if (assetData.url_file) {
-        const fullFileUrl = BASE_FILE_URL + assetData.url_file;
+        const fullFileUrl =  assetData.url_file;
         const fileName = assetData.url_file.split('/').pop() || 'file_unknown';
         setFileNamePreview(
           <span>Tệp đã chọn: <a href={fullFileUrl} target="_blank" rel="noopener noreferrer">{fileName}</a></span>
@@ -368,13 +368,13 @@ const AuctionAsset = () => {
         amount: bid.amount,
         created_at: bid.created_at
       })) : [];
-      const fullImageUrl = assetData.image_url ? BASE_IMAGE_URL + assetData.image_url : '';
-      const fullFileUrl = assetData.url_file ? BASE_FILE_URL + assetData.url_file : '';
+      const fullImageUrl = assetData.image_url ? assetData.image_url : '';
+      const fullFileUrl = assetData.url_file ? assetData.url_file : '';
       const fileName = assetData.url_file ? assetData.url_file.split('/').pop() || 'file_unknown' : '';
       const extraImagesHtml = (assetData.images || []).map(img => {
         const imgUrl = img.image_url || img.url || '';
         if (!imgUrl) return '';
-        const fullImgUrl = BASE_IMAGE_URL + imgUrl;
+        const fullImgUrl =  imgUrl;
         return <img key={img.id} src={fullImgUrl} alt="Extra" className={styles.previewImage} />;
       }).filter(Boolean);
       const bidHistoryHtml = bidHistory.length > 0 ? bidHistory.map(bid => (

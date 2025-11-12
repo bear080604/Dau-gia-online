@@ -208,7 +208,7 @@ const AdminPanel = () => {
     setPaymentDetails({
       id: reg.profile_id,
       auction: sessionDetails?.sessionName || `Phiên ${reg.session_id}`,
-      documentUrl: reg.document_url ? `${fileurl}${reg.document_url}` : null,
+      documentUrl: reg.document_url || null,
       user: user.full_name || `user${reg.user_id}@example.com`,
       deposit: reg.deposit_amount,
       status: statusMap[reg.status] || 'Chờ Duyệt',
@@ -302,7 +302,7 @@ const AdminPanel = () => {
                 <td>{getSessionName(reg.session_id)}</td>
                 <td>
                   {reg.document_url ? (
-                    <a href={`${fileurl}${reg.document_url}`} download target="_blank" rel="noopener noreferrer">
+                    <a href={`${reg.document_url}`} download target="_blank" rel="noopener noreferrer">
                       Tải tài liệu
                     </a>
                   ) : 'Không có'}

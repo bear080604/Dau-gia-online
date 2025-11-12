@@ -168,11 +168,11 @@ function Users() {
         const usersData = usersRes?.users || usersRes?.data?.users || [];
         const mappedUsers = Array.isArray(usersData)
           ? usersData.map(user => {
-              const id_card_front_url = user.id_card_front ? `${API_URL}/storage/${user.id_card_front}` : '';
-              const id_card_back_url = user.id_card_back ? `${API_URL}/storage/${user.id_card_back}` : '';
-              const business_license_url = user.business_license ? `${API_URL}/storage/${user.business_license}` : undefined;
-              const auctioneer_card_front_url = user.auctioneer_card_front ? `${API_URL}/storage/${user.auctioneer_card_front}` : undefined;
-              const auctioneer_card_back_url = user.auctioneer_card_back ? `${API_URL}/storage/${user.auctioneer_card_back}` : undefined;
+              const id_card_front_url = user.id_card_front || '';
+              const id_card_back_url = user.id_card_back ||'';
+              const business_license_url = user.business_license || '';
+              const auctioneer_card_front_url = user.auctioneer_card_front  || '';
+              const auctioneer_card_back_url = user.auctioneer_card_back || '';
 
               return {
                 id: user.user_id,

@@ -199,6 +199,7 @@ const Detail = () => {
     const newAuctionItem = {
       item: session.item || {},
       auction_org: session.auction_org || {},
+      auctioneer: session.auctioneer || {},
       method: session.method || session.auction_method || '',
       register_start: session.register_start,
       register_end: session.register_end,
@@ -692,24 +693,24 @@ const Detail = () => {
 
   // Fixed getMainImage
   const getMainImage = () => {
-    const basePath = `${process.env.REACT_APP_BASE_URL}${AA_STORAGE_PATH}`;
+    const basePath = `${process.env.REACT_APP_BASE_URL}`;
     if (imagesFromApi.length > 0 && imagesFromApi[currentImageIndex]) {
-      return `${basePath}${imagesFromApi[currentImageIndex].image_url}`;
+      return `${imagesFromApi[currentImageIndex].image_url}`;
     }
     // Fallback: single image từ auctionItem hoặc placeholder
     const fallbackImg = auctionItem.item?.image_url || PLACEHOLDER_IMAGE;
-    return `${basePath}${fallbackImg}`;
+    return `${fallbackImg}`;
   };
 
   // Fixed renderThumbnails
   const renderThumbnails = () => {
-    const basePath = `${process.env.REACT_APP_BASE_URL}${AA_STORAGE_PATH}`;
+    const basePath = `${process.env.REACT_APP_BASE_URL}`;
     if (imagesFromApi.length === 0) {
       // Fallback thumbnail nếu empty
       const fallbackImg = auctionItem.item?.image_url || PLACEHOLDER_IMAGE;
       return (
         <img
-          src={`${basePath}${fallbackImg}`}
+          src={`${fallbackImg}`}
           className={`detailsp-thumbnail detailsp-active`}
           alt="Thumbnail 1"
         />
@@ -719,7 +720,7 @@ const Detail = () => {
     return imagesFromApi.map((img, i) => (
       <img
         key={i}
-        src={`${basePath}${img.image_url}`}
+        src={`${img.image_url}`}
         className={`detailsp-thumbnail ${i === currentImageIndex ? "detailsp-active" : ""}`}
         alt={`Thumbnail ${i + 1}`}
         onClick={() => changeImage(i)}
@@ -996,7 +997,8 @@ const Detail = () => {
             </li>
             <li>
               Đấu giá viên:
-              <span className='detailsp-auctioneer'>{auctionItem.auction_org?.full_name || 'N/A'}</span>
+              <span className='detailsp-auctioneer'>
+                {auctionItem.auctioneer?.full_name || 'N/A'}</span>
             </li>
             <li className='detailsp-location'>
               Địa điểm: Phòng 2.05 Lầu 2, Số 6 Lương Định Của, phường Bình Trưng, TP.HCM
@@ -1007,7 +1009,7 @@ const Detail = () => {
 
         <div className={`detailsp-tab-content ${activeTab === 1 ? 'detailsp-active' : ''}`}>
           <h3 className='detailsp-document-title'>Các tài liệu pháp lý liên quan đến cuộc đấu giá:</h3>
-          <a className='detailsp-document-title' href={process.env.REACT_APP_BASE_URL+auctionItem.item?.url_file}>xem hồ sơ</a>
+          <a className='detailsp-document-title' href={auctionItem.item?.url_file}>xem hồ sơ</a>
           <ul className='detailsp-document-list'>{renderDocuments()}</ul>
           <div className='detailsp-notice detailsp-document-notice'>
             <strong>

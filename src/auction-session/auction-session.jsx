@@ -360,7 +360,7 @@ function AuctionSession() {
                 <div key={session.session_id} className={styles.auctionItem}>
                   <div className={styles.itemImage}>
                     <img
-                      src={session.item?.image_url ? `${process.env.REACT_APP_BASE_URL}${session.item.image_url}` : ''}
+                      src={session.item?.image_url || ''}
                       alt={session.item?.name}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />

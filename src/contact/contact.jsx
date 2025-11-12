@@ -569,7 +569,7 @@ const Contact = () => {
                 <input
                   type="file"
                   className={styles.formControl}
-                  id="image_url"
+                  id="image_url" 
                   ref={fileInputRef}
                   accept="image/*"
                   onChange={handleImageChange}

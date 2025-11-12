@@ -57,8 +57,8 @@ const AuctionItem = React.memo(({ session, onToggleFavorite }) => {
   const item = session.item;
   const baseUrl = process.env.REACT_APP_BASE_URL; // Fallback
   const imageUrl = item?.image_url
-    ? `${baseUrl}${item.image_url}`
-    : '';
+
+    || '';
 
   // Đồng bộ state khi session.is_favorited thay đổi từ parent
   useEffect(() => {
