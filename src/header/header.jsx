@@ -248,6 +248,7 @@ useEffect(() => {
     {
       icon: 'fa-th-list',
       text: 'DANH MỤC TÀI SẢN',
+      href: '#',
       isCategory: true,
       subItems: categories,
     },
@@ -342,7 +343,7 @@ useEffect(() => {
       </div>
 
       {/* ==== SEARCH ==== */}
-    <header className={`${styles.headerMain} ${styles.responsive2560}`}>
+      <header className={styles.headerMain}>
         <div className={styles.logo}>
           <Link to="/">
             <img className={styles.logoImg} src="/assets/img/logo.jpg" alt="Logo" />
