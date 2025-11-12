@@ -1374,7 +1374,7 @@ const handleRemoveFavorite = async (sessionId) => {
               ) : (
                 <p>Không có thông tin tài khoản ngân hàng.</p>
               )}
-              <button className={styles.btn} onClick={openBankPopup}>Thêm tài khoản ngân hàng</button>
+              {/* <button className={styles.btn} onClick={openBankPopup}>Thêm tài khoản ngân hàng</button> */}
             </div>
           </div>
         );
