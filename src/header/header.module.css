@@ -1404,22 +1404,6 @@ mobileSearchBox {
   }
 }
 
-.suggestions {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  max-height: 200px;
-  overflow-y: auto;
-}
 .suggestions li {
   padding: 10px;
   cursor: pointer;
@@ -1469,22 +1453,6 @@ mobileSearchBox {
   color: #888;
 }
 
-/* SUBMENU (ẩn mặc định) */
-.categoryHidden {
-  display: none;
-  position: absolute;
-  top: 100%; /* nằm ngay dưới menu cha */
-  left: 0;
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  min-width: 220px;
-  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-  list-style: none;
-  padding: 8px 0;
-  margin: 0;
-  z-index: 999;
-}
 
 /* KHI HOVER VÀO DANH MỤC => HIỆN MENU CON */
 .navMenu > li:hover .categoryHidden {
@@ -1519,5 +1487,153 @@ mobileSearchBox {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ========================================= */
+/* RESPONSIVE: DESKTOP SIÊU LỚN - 2560px+     */
+/* ========================================= */
+@media (min-width: 1920px) {
+  .headerMain {
+    padding: 20px 8%;
+    gap: 30px;
+    max-width: 2400px;
+    margin: 0 auto;
+  }
+
+  .logo {
+    width: 200px;
+    height: 200px;
+  }
+
+  .logoImg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Search Box - lớn hơn, sang trọng */
+  .searchContainer {
+    max-width: 600px;
+    flex-grow: 1;
+  }
+
+  .searchBox {
+    border-radius: 30px;
+    box-shadow: 0 4px 16px rgba(39, 114, 186, 0.25);
+  }
+
+  .searchBox input {
+    padding: 16px 24px;
+    font-size: 16px;
+    border-radius: 30px 0 0 30px;
+  }
+
+  .searchBox button {
+    padding: 16px 32px;
+    font-size: 20px;
+  }
+
+  /* Hợp đồng chưa thanh toán */
+  .headContractBox {
+    width: 380px;
+    padding: 16px 20px;
+    border-radius: 16px;
+    gap: 16px;
+    box-shadow: 0 6px 16px rgba(255, 107, 107, 0.35);
+  }
+
+  .headIcon {
+    min-width: 56px;
+    min-height: 56px;
+    font-size: 22px;
+    border-radius: 12px;
+  }
+
+  .headTitle {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .headDueTime {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .datetime {
+    font-size: 16px;
+    padding: 6px 12px;
+    border-radius: 8px;
+  }
+
+  /* Top Bar */
+  .topBar {
+    padding: 12px 8%;
+    font-size: 16px;
+  }
+
+  .hotline,
+  .authLinks {
+    font-size: 16px;
+    gap: 20px;
+  }
+
+  /* Navigation Bar */
+  .navBar {
+    padding: 0;
+  }
+
+  .navMenu {
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .navMenu a {
+    padding: 20px 12px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .navMenu a i {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  /* Category Dropdown */
+  .categoryHidden {
+    width: 280px;
+    border-radius: 10px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  }
+
+  .categoryHidden li a {
+    padding: 14px 24px;
+    font-size: 15px;
+  }
+
+  /* Notification Bell & Badge */
+  .notifi {
+    font-size: 20px;
+  }
+
+  .notificationPopup {
+    top: 70px;
+    right: 30px;
+    max-width: 500px;
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .notificationContent h3 {
+    font-size: 20px;
+  }
+
+  .notificationContent li {
+    padding: 16px 20px;
+    font-size: 15px;
+  }
+
+  .viewMoreButton {
+    padding: 14px 20px;
+    font-size: 15px;
   }
 }

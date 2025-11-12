@@ -531,7 +531,7 @@
 .custom-select {
   position: relative;
   width: 100%;
-  user-select: none;
+ 
 }
 
 .selected {
@@ -587,3 +587,153 @@
 }
 
 
+/* ========================================= */
+/* RESPONSIVE: DESKTOP SIÊU LỚN - 2560px     */
+/* ========================================= */
+@media (min-width: 1920px) and (max-width: 2560px) {
+  /* Tăng padding container chính */
+  .home-container main {
+    padding: 30px 10%;
+    max-width: 2400px;
+    margin: 0 auto;
+  }
+
+  /* Tăng kích thước tiêu đề section */
+  .section-title {
+    font-size: 2.2rem;
+    margin-bottom: 28px;
+    padding: 12px 0;
+  }
+
+  .xem-them {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  /* Swiper: Hiển thị nhiều hơn */
+  .swiper {
+    padding: 20px 0;
+  }
+
+  /* Tăng số slide hiển thị */
+  .swiper-slide {
+    padding: 0 10px;
+  }
+
+  /* Auction Item - Tăng kích thước */
+  .auction-item {
+    max-width: 380px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.12);
+  }
+
+  .item-img,
+  .auction-image {
+    height: 300px;
+  }
+
+  .auction-name {
+    font-size: 1.1rem;
+    min-height: 56px;
+    padding: 0 15px;
+    margin-top: 12px;
+    line-height: 1.5em;
+  }
+
+  .auction-method,
+  .auction-price {
+    font-size: 1rem;
+  }
+
+  .action {
+    padding: 0 15px 20px;
+    gap: 12px;
+  }
+
+  .favorite-button,
+  .bid-button {
+    padding: 10px 18px;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .favorite-button::before,
+  .bid-button i {
+    font-size: 1.1rem;
+  }
+
+  /* News Item */
+  .news-item {
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .news-image {
+    height: 260px;
+  }
+
+  .news-title {
+    font-size: 1.25rem;
+    -webkit-line-clamp: 2;
+  }
+
+  .news-date {
+    font-size: 1rem;
+  }
+
+  .news-summary {
+    font-size: 1.05rem;
+    -webkit-line-clamp: 3;
+  }
+
+  .read-more-button {
+    padding: 10px 20px;
+    font-size: 1.05rem;
+  }
+
+  /* Head filter - tăng kích thước */
+  .head {
+    gap: 60px;
+    margin-top: 28px;
+  }
+
+  .input-search,
+  .select-cate,
+  .sort {
+    width: 30%;
+  }
+
+  .input-search > .input,
+  .selected,
+  .sort .select {
+    height: 44px;
+    font-size: 1rem;
+    padding: 0 14px;
+  }
+
+  .sort p {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  /* Custom Select Dropdown */
+  .options {
+    max-height: 280px;
+  }
+
+  .options li {
+    padding: 12px 14px;
+    font-size: 1rem;
+  }
+}
+
+/* Swiper breakpoints override cho màn hình 2560px */
+@media (min-width: 1920px) {
+  .swiper {
+    --swiper-navigation-size: 48px;
+  }
+
+  /* Tăng số lượng slide */
+  .swiper[data-breakpoint="2560"] .swiper-wrapper {
+    display: flex;
+  }
+}

@@ -225,10 +225,12 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
       ref={popupRef}
       className="notification-popup"
       style={{
-        position: "absolute",
-        top: "45px",
-        right: "0",
+        position: "fixed",
+        top: "60px",
+        right: "10px",
         width: "380px",
+        maxWidth: "calc(100vw - 20px)",
+        maxHeight: "calc(100vh - 80px)",
         background: "#fff",
         borderRadius: "12px",
         boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
@@ -308,7 +310,7 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
           <p style={{ margin: "15px 0 0 0" }}>Không có thông báo</p>
         </div>
       ) : (
-        <div style={{ maxHeight: "500px", overflowY: "auto" }}>
+        <div className="notification-list" style={{ maxHeight: "calc(100vh - 220px)", minHeight: "200px", overflowY: "auto" }}>
           {notifications.map((n) => (
             <div
               key={n.id}
@@ -405,25 +407,89 @@ export default function NotificationBell({ open, onClose, onUnreadCountChange })
         }
 
         /* Scrollbar */
-        .notification-popup > div:nth-child(3)::-webkit-scrollbar,
-        .notification-popup > div:nth-child(4)::-webkit-scrollbar {
+        .notification-list::-webkit-scrollbar {
           width: 6px;
         }
 
-        .notification-popup > div:nth-child(3)::-webkit-scrollbar-track,
-        .notification-popup > div:nth-child(4)::-webkit-scrollbar-track {
+        .notification-list::-webkit-scrollbar-track {
           background: #f1f5f9;
         }
 
-        .notification-popup > div:nth-child(3)::-webkit-scrollbar-thumb,
-        .notification-popup > div:nth-child(4)::-webkit-scrollbar-thumb {
+        .notification-list::-webkit-scrollbar-thumb {
           background: #cbd5e1;
           border-radius: 3px;
         }
 
-        .notification-popup > div:nth-child(3)::-webkit-scrollbar-thumb:hover,
-        .notification-popup > div:nth-child(4)::-webkit-scrollbar-thumb:hover {
+        .notification-list::-webkit-scrollbar-thumb:hover {
           background: #94a3b8;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+          .notification-popup {
+            width: calc(100vw - 20px) !important;
+            max-width: 400px !important;
+            right: 10px !important;
+          }
+
+          .notification-list {
+            max-height: calc(100vh - 200px) !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .notification-popup {
+            width: calc(100vw - 16px) !important;
+            max-width: none !important;
+            right: 8px !important;
+            top: 55px !important;
+          }
+
+          .notification-list {
+            max-height: calc(100vh - 180px) !important;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .notification-popup {
+            width: calc(100vw - 12px) !important;
+            right: 6px !important;
+            top: 50px !important;
+            border-radius: 10px !important;
+          }
+
+          .notification-popup > div:first-child {
+            padding: 10px 12px !important;
+          }
+
+          .notification-popup > div:first-child h3 {
+            font-size: 14px !important;
+          }
+
+          .notification-popup > div:first-child button {
+            font-size: 10px !important;
+            padding: 3px 6px !important;
+          }
+
+          .notification-list > div {
+            padding: 10px 12px !important;
+          }
+
+          .notification-list {
+            max-height: calc(100vh - 160px) !important;
+          }
+        }
+
+        /* Màn hình rất nhỏ hoặc landscape */
+        @media (max-height: 600px) {
+          .notification-popup {
+            top: 50px !important;
+            max-height: calc(100vh - 60px) !important;
+          }
+
+          .notification-list {
+            max-height: calc(100vh - 150px) !important;
+          }
         }
       `}</style>
     </div>

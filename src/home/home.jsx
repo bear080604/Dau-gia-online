@@ -214,6 +214,18 @@ const Home = () => {
       )
     );
   }, []);
+  useEffect(() => {
+  const handleResize = () => {
+    if (window.innerWidth >= 2560) {
+      document.body.classList.add('screen-2560');
+    } else {
+      document.body.classList.remove('screen-2560');
+    }
+  };
+  handleResize();
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
 
   // Socket.io - CHỈ TẠO 1 LẦN, KHÔNG LẶP
   useEffect(() => {

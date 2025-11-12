@@ -1,15 +1,36 @@
+/* ========================================= */
+/* NEWS PAGE - FULL RESPONSIVE & MODERN      */
+/* ========================================= */
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  font-family: 'Arial', sans-serif;
+  line-height: 1.7;
+  color: #2c3e50;
 }
 
 .pageTitle {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #333;
+  font-size: 32px;
+  font-weight: 700;
   text-align: center;
   margin-bottom: 30px;
+  color: #1e40af;
+  position: relative;
+  text-transform: uppercase;
+}
+
+.pageTitle::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #1e40af);
+  border-radius: 2px;
 }
 
 .layout {
@@ -19,20 +40,24 @@
 
 .sidebar {
   width: 250px;
-  height: fit-content;
-  background: #f9f9f9;
-  border-radius: 8px;
-  border: 1px solid #e8dddd;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
   padding: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  height: fit-content;
+  position: sticky;
+  top: 20px;
 }
 
 .sidebarTitle {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 20px;
-  color: #333;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  color: #1e40af;
   text-align: center;
-  border-bottom: 2px solid black;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #3b82f6;
 }
 
 .categoryList {
@@ -42,141 +67,184 @@
 }
 
 .categoryItem {
-  padding: 10px 15px;
+  padding: 12px 16px;
   cursor: pointer;
-  font-size: 1rem;
-  color: #333;
-  border-radius: 4px;
-  margin-bottom: 10px;
-  transition: background-color 0.3s;
+  font-size: 15px;
+  color: #374151;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
+  font-weight: 500;
 }
 
 .categoryItem:hover {
-  background-color: #e0e0e0;
+  background: #f3f4f6;
+  transform: translateX(3px);
 }
 
 .categoryItem.active {
-  background-color: #2772ba;
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
   color: white;
-  font-weight: bold;
+  font-weight: 600;
+  box-shadow: 0 3px 10px rgba(30, 64, 175, 0.25);
 }
 
 .categoryDivider {
   border: 0;
-  border-top: 1px solid #2772ba;
-  margin: 8px 0;
-  opacity: 0.3;
+  border-top: 1px dashed #d1d5db;
+  margin: 10px 0;
+  opacity: 0.5;
 }
 
 .newsList {
   flex: 1;
-  padding: 20px;
 }
 
 .newsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
+  margin-bottom: 30px;
 }
 
 .newsItem {
   background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
 }
 
 .newsItem:hover {
-  transform: translateY(-5px);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.14);
 }
 
 .newsImage {
   width: 100%;
-  height: 150px;
+  height: 180px;
   object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 15px;
+  transition: transform 0.4s ease;
+}
+
+.newsItem:hover .newsImage {
+  transform: scale(1.04);
 }
 
 .newsTitle {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 10px;
+  font-size: 19px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 14px 18px 8px;
+  line-height: 1.4;
 }
 
 .newsDate {
-  font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 10px;
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 18px 10px;
+  font-weight: 500;
 }
 
 .newsSummary {
-  font-size: 1rem;
-  color: #555;
-  margin-bottom: 15px;
-  line-height: 1.5;
+  font-size: 14px;
+  color: #4b5563;
+  margin: 0 18px 16px;
+  line-height: 1.6;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  flex: 1;
 }
 
 .readMoreBtn {
+  margin: 0 18px 18px;
   display: inline-flex;
   align-items: center;
-  padding: 8px 16px;
-  background-color: #2772ba;
+  gap: 6px;
+  padding: 9px 16px;
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
   color: white;
   text-decoration: none;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  transition: background-color 0.3s;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  align-self: flex-start;
 }
 
 .readMoreBtn:hover {
-  background-color: #1e5b9a;
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(30, 64, 175, 0.25);
 }
 
 .readMoreBtn i {
-  margin-left: 5px;
+  transition: transform 0.3s ease;
 }
 
+.readMoreBtn:hover i {
+  transform: translateX(3px);
+}
+
+/* Pagination */
 .pagination {
   display: flex;
   justify-content: center;
-  gap: 10px;
-  margin-top: 20px;
+  align-items: center;
+  gap: 6px;
+  margin-top: 25px;
+  flex-wrap: wrap;
 }
 
 .pageBtn {
-  padding: 8px 16px;
-  border: 1px solid #ddd;
   background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 8px 12px;
+  border-radius: 8px;
   cursor: pointer;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  transition: background-color 0.3s;
+  font-size: 14px;
+  min-width: 42px;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
-.pageBtn:hover {
-  background-color: #f0f0f0;
+.pageBtn:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .pageBtn:disabled {
-  background-color: #e0e0e0;
+  background: #f9fafb;
+  color: #9ca3af;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .pageBtn.active {
-  background-color: #2772ba;
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
   color: white;
-  border-color: #2772ba;
+  border-color: #3b82f6;
+  font-weight: 600;
 }
 
-/* Mobile Category Dropdown */
+.pageBtn:first-child,
+.pageBtn:nth-child(2),
+.pageBtn:nth-last-child(2),
+.pageBtn:last-child {
+  min-width: auto;
+  padding: 8px 12px;
+  font-weight: 600;
+}
+
+/* Mobile Menu */
 .mobileCategory {
   display: none;
   margin-bottom: 20px;
@@ -184,248 +252,149 @@
 
 .mobileCategoryToggle {
   width: 100%;
-  padding: 10px;
-  background: #2772ba;
+  padding: 14px;
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
   color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: all 0.3s ease;
+}
+
+.mobileCategoryToggle:hover {
+  transform: translateY(-1px);
 }
 
 .mobileCategoryList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  background: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  position: absolute;
-  width: 90%;
-  z-index: 10;
+  margin-top: 6px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  animation: slideDown 0.25s ease-out;
 }
 
 .mobileCategoryItem {
-  padding: 10px 15px;
+  padding: 12px 16px;
   cursor: pointer;
-  font-size: 1rem;
-  color: #333;
-  border-bottom: 1px solid #ddd;
+  font-size: 15px;
+  color: #374151;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.2s ease;
+}
+
+.mobileCategoryItem:hover {
+  background: #f3f4f6;
+}
+
+.mobileCategoryItem.active {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+  font-weight: 600;
 }
 
 .mobileCategoryItem:last-child {
   border-bottom: none;
 }
 
-.mobileCategoryItem:hover {
-  background-color: #e0e0e0;
-}
-
-.mobileCategoryItem.active {
-  background-color: #2772ba;
-  color: white;
-  font-weight: bold;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .layout {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    display: none;
-  }
-
-  .mobileCategory {
-    display: block;
-  }
-
-  .newsGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .newsList {
-    padding: 10px;
-  }
-
-  .newsImage {
-    height: 120px;
-  }
-}
-
-@media (max-width: 480px) {
-  .pageTitle {
-    font-size: 1.5rem;
-  }
-
-  .newsItem {
-    padding: 15px;
-  }
-
-  .newsTitle {
-    font-size: 1.1rem;
-  }
-
-  .newsSummary {
-    font-size: 0.9rem;
-  }
-
-  .newsImage {
-    height: 100px;
-  }
-
-  .pageBtn {
-    padding: 6px 12px;
-    font-size: 0.8rem;
-  }
-}
-
+/* Loading */
 .loadingContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 300px;
-  color: #333;
+  height: 350px;
+  color: #6b7280;
   font-size: 16px;
 }
 
 .spinner {
-  border: 4px solid #eee;
-  border-top: 4px solid #007bff;
+  border: 4px solid #f3f4f6;
+  border-top: 4px solid #3b82f6;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   animation: spin 0.8s linear infinite;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-/* Phần Pagination - Nâng cao cho News */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 4px; /* Khoảng cách giữa các nút */
-  margin-top: 20px;
-  padding: 10px 0;
-  flex-wrap: wrap; /* Tự động xuống dòng nếu quá nhiều nút trên mobile */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Styling chung cho các nút pagination */
-.pageBtn {
-  background-color: #f8f9fa; /* Nền xám nhạt */
-  border: 1px solid #dee2e6; /* Viền xám nhẹ */
-  color: #495057; /* Màu chữ xám đậm */
-  padding: 8px 12px; /* Padding cho nút số */
-  border-radius: 4px; /* Bo góc nhẹ */
-  cursor: pointer;
-  font-size: 14px; /* Kích thước chữ */
-  min-width: 40px; /* Độ rộng tối thiểu cho nút số */
-  transition: all 0.2s ease; /* Hiệu ứng mượt mà */
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* ========================================= */
+/* RESPONSIVE: 1440PX → 2560PX+ (3 CẤP)     */
+/* ========================================= */
+
+/* 1. MÀN HÌNH LỚN (1440px – 1919px) */
+@media (min-width: 1440px) and (max-width: 1919px) {
+  .container { max-width: 1300px; padding: 30px 5%; }
+  .pageTitle { font-size: 36px; margin-bottom: 40px; }
+  .sidebar { width: 280px; padding: 25px; }
+  .newsGrid { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 25px; }
+  .newsImage { height: 200px; }
+  .newsTitle { font-size: 21px; }
+  .newsSummary { font-size: 15px; }
+  .readMoreBtn { padding: 10px 18px; font-size: 15px; }
+  .pageBtn { padding: 10px 14px; font-size: 15px; }
 }
 
-/* Hover effect cho nút (khi không disabled) */
-.pageBtn:hover:not(:disabled) {
-  background-color: #e9ecef; /* Nền sáng hơn */
-  border-color: #adb5bd;
-  color: #212529;
-  transform: translateY(-1px); /* Nâng nhẹ khi hover */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Bóng đổ nhẹ */
+/* 2. MÀN HÌNH RỘNG (1920px – 2559px) */
+@media (min-width: 1920px) and (max-width: 2559px) {
+  .container { max-width: 1700px; padding: 40px 8%; }
+  .pageTitle { font-size: 40px; margin-bottom: 45px; }
+  .sidebar { width: 310px; padding: 28px; }
+  .newsGrid { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 30px; }
+  .newsImage { height: 230px; }
+  .newsTitle { font-size: 23px; }
+  .newsSummary { font-size: 16px; }
+  .readMoreBtn { padding: 12px 20px; font-size: 16px; }
+  .pageBtn { padding: 12px 16px; font-size: 16px; }
 }
 
-/* Nút disabled (không thể click) */
-.pageBtn:disabled {
-  background-color: #e9ecef;
-  border-color: #dee2e6;
-  color: #6c757d;
-  cursor: not-allowed;
-  opacity: 0.6;
-  transform: none; /* Không nâng khi disabled */
-  box-shadow: none;
+/* 3. SIÊU LỚN (2560px+) */
+@media (min-width: 2560px) {
+  .container { max-width: 2000px; padding: 50px 10%; }
+  .pageTitle { font-size: 44px; margin-bottom: 50px; }
+  .sidebar { width: 340px; padding: 32px; }
+  .newsGrid { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 35px; }
+  .newsImage { height: 260px; }
+  .newsTitle { font-size: 25px; }
+  .newsSummary { font-size: 17px; }
+  .readMoreBtn { padding: 14px 22px; font-size: 17px; }
+  .pageBtn { padding: 14px 18px; font-size: 17px; }
 }
 
-/* Nút active (trang hiện tại) */
-.pageBtn.active {
-  background-color: #007bff; /* Màu xanh chủ đạo */
-  border-color: #007bff;
-  color: white;
-  font-weight: bold;
+/* Tablet & Mobile */
+@media (max-width: 1024px) {
+  .layout { gap: 15px; }
+  .sidebar { width: 240px; }
 }
 
-.pageBtn.active:hover {
-  background-color: #0056b3; /* Xanh đậm hơn khi hover */
-  border-color: #0056b3;
-}
-
-/* Styling đặc biệt cho nút đầu/cuối và trước/sau (có icon Unicode) */
-.pageBtn:first-child { /* « Đầu */
-  min-width: auto;
-  padding: 8px 10px;
-}
-
-.pageBtn:nth-child(2) { /* ‹ Trước */
-  min-width: auto;
-  padding: 8px 10px;
-}
-
-.pageBtn:nth-last-child(2) { /* Tiếp › */
-  min-width: auto;
-  padding: 8px 10px;
-}
-
-.pageBtn:last-child { /* Cuối » */
-  min-width: auto;
-  padding: 8px 10px;
-}
-
-/* Responsive: Tối ưu cho mobile (≤768px) */
 @media (max-width: 768px) {
-  .pagination {
-    gap: 2px;
-    margin-top: 15px;
-  }
+  .container { padding: 15px; }
+  .layout { flex-direction: column; }
+  .sidebar { display: none; }
+  .mobileCategory { display: block; }
+  .newsGrid { grid-template-columns: 1fr; }
+  .pageTitle { font-size: 28px; }
+}
 
-  .pageBtn {
-    padding: 6px 8px;
-    font-size: 12px;
-    min-width: 32px;
-  }
-
-  /* Ẩn các nút số thừa trên mobile để gọn gàng (chỉ giữ đầu/trước/hiện tại/sau/cuối) */
-  .pageBtn:not(:first-child):not(:nth-child(2)):not(:last-child):not(:nth-last-child(2)):not(.active) {
-    display: none;
-  }
-
-  /* Giữ nút active và lân cận nếu cần (tùy chỉnh theo số trang) */
-  .pageBtn.active + .pageBtn,
-  .pageBtn.active + .pageBtn + .pageBtn {
-    display: flex; /* Hiển thị 2-3 nút quanh active */
-  }
+@media (max-width: 480px) {
+  .pageTitle { font-size: 24px; }
+  .newsImage { height: 160px; }
+  .newsTitle { font-size: 18px; }
+  .newsSummary { font-size: 14px; }
+  .readMoreBtn { padding: 10px 16px; font-size: 14px; }
 }
