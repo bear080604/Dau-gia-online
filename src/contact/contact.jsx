@@ -14,7 +14,7 @@ const Contact = () => {
     name: '',
     description: '',
     starting_price: '',
-    auction_org_id: '1', // Giá trị mặc định là ID của Công Ty Đấu Giá Hợp Danh Khải Bảo
+    // auction_org_id: '', 
     image: null,
     extra_images: [],
     url_file: null
@@ -249,9 +249,9 @@ const Contact = () => {
     }
 
     // Kiểm tra tổ chức đấu giá
-    if (!auction_org_id || Number(auction_org_id) !== 1) {
-      newErrors.auction_org_id = 'Tổ chức đấu giá không hợp lệ.';
-    }
+    // if (!auction_org_id || Number(auction_org_id) !== 1) {
+    //   newErrors.auction_org_id = 'Tổ chức đấu giá không hợp lệ.';
+    // }
 
     // 🆕 Yêu cầu phải chọn đủ cả 3 loại file
     if (!image) {
@@ -331,7 +331,7 @@ const Contact = () => {
     const submitData = new FormData();
     submitData.append('category_id', formData.category_id);
     submitData.append('owner_id', formData.owner_id);
-    submitData.append('auction_org_id', formData.auction_org_id);
+    // submitData.append('auction_org_id', formData.auction_org_id);
     submitData.append('name', formData.name.trim());
     submitData.append('description', formData.description.trim());
     submitData.append('starting_price', formData.starting_price.replace(/\./g, ''));
@@ -548,7 +548,7 @@ const Contact = () => {
             </div>
 
             {/* CỐ ĐỊNH TỔ CHỨC ĐẤU GIÁ */}
-            <div className={styles.formGroup} style={{display: 'none'}}  >
+            {/* <div className={styles.formGroup} >
               <label className={styles.formLabel} htmlFor="auction_org_id">Tổ chức đấu giá</label>
               <select
                 className={`${styles.formControl} ${errors.auction_org_id ? styles.error : ''}`}
@@ -558,10 +558,10 @@ const Contact = () => {
                 onChange={handleInputChange}
                 required
               >
-                <option value="1">Công Ty Đấu Giá Hợp Danh Khải Bảo</option>
+                <option value="">Công Ty Đấu Giá Hợp Danh Khải Bảo</option>
               </select>
               {errors.auction_org_id && <div className={styles.validationError}>{errors.auction_org_id}</div>}
-            </div>
+            </div> */}
 
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>Ảnh chính</label>

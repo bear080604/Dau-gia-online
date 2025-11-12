@@ -11,13 +11,13 @@ import queryClient from './queryClient'; // <-- mới tạo
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
+  // <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <App />
       {/* Chỉ hiện khi dev */}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
-  </React.StrictMode>
+  // {/* </React.StrictMode> */}
 );
 
 reportWebVitals();

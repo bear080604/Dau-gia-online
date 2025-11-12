@@ -1,8 +1,8 @@
 import apiInstance from './api';
 
 /**
- * Contract Service - Optimized
- * Fix: Cache + Deduplication
+ * News Category Service - Optimized
+ * Cache + Deduplication
  */
 
 // ============================================
@@ -11,7 +11,7 @@ import apiInstance from './api';
 const cache = new Map();
 const pending = new Map();
 
-const getCached = (key, maxAge = 60000) => {
+const getCached = (key, maxAge = 300000) => { // 5 phút - categories ít thay đổi
   const item = cache.get(key);
   if (!item) return null;
   if (Date.now() - item.time > maxAge) {
@@ -48,14 +48,13 @@ const dedupe = async (key, fn) => {
 // API FUNCTIONS với Cache
 // ============================================
 
-export const getContracts = async (userId = null) => {
-  const key = userId ? `contracts:user:${userId}` : 'contracts:all';
+export const getNewsCategories = async () => {
+  const key = 'news-categories';
   const cached = getCached(key);
   if (cached) return cached;
 
   const data = await dedupe(key, async () => {
-    const url = userId ? `contracts?user_id=${userId}` : 'contracts';
-    const res = await apiInstance.get(url);
+    const res = await apiInstance.get('news-categories');
     return res.data;
   });
 
@@ -63,13 +62,13 @@ export const getContracts = async (userId = null) => {
   return data;
 };
 
-export const getContractById = async (contractId) => {
-  const key = `contract:${contractId}`;
+export const getNewsCategoryById = async (categoryId) => {
+  const key = `news-category:${categoryId}`;
   const cached = getCached(key);
   if (cached) return cached;
 
   const data = await dedupe(key, async () => {
-    const res = await apiInstance.get(`contracts/${contractId}`);
+    const res = await apiInstance.get(`news-categories/${categoryId}`);
     return res.data;
   });
 
@@ -81,21 +80,23 @@ export const getContractById = async (contractId) => {
 // MUTATIONS - Clear cache
 // ============================================
 
-export const updateContract = async (contractId, formData) => {
-  const res = await apiInstance.post(`contracts/${contractId}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-  clearCache('contracts:');
-  clearCache(`contract:${contractId}`);
+export const createNewsCategory = async (formData) => {
+  const res = await apiInstance.post('news-categories', formData);
+  clearCache('news-categories');
+  clearCache('news-category:');
   return res.data;
 };
 
-export const deleteContract = async (contractId) => {
-  // Xóa econtracts trước
-  await apiInstance.delete(`econtracts/${contractId}`);
-  // Xóa hợp đồng chính
-  const res = await apiInstance.delete(`contracts/${contractId}`);
-  clearCache('contracts:');
-  clearCache(`contract:${contractId}`);
+export const updateNewsCategory = async (id, formData) => {
+  const res = await apiInstance.put(`news-categories/${id}`, formData);
+  clearCache('news-categories');
+  clearCache(`news-category:${id}`);     
   return res.data;
 };
+
+export const deleteNewsCategory = async (id) => {
+  const res = await apiInstance.delete(`news-categories/${id}`);
+  clearCache('news-categories');
+  clearCache(`news-category:${id}`);
+  return res.data;
+};  

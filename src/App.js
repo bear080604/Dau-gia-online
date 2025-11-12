@@ -39,7 +39,6 @@ import AdminUsers from './pages/AdminUsers';
 import AdminPayment from './pages/AdminPayment';
 import AdminNotification from './pages/AdminNotification';
 import AdminAuctionAsset from './pages/AdminAuctionAsset';
-import AdminProfile from './pages/AdminProfile';
 import AuctionSessionPage from './pages/AdminAuction-session';
 import RegisterAuctionPage from './pages/AdminRegisterAuction';
 import Adminnews from './pages/AdminNews';
@@ -238,14 +237,7 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/admin/profile"
-              element={
-                <ProtectedRoute>
-                  <AdminProfile />
-                </ProtectedRoute>
-              }
-            />
+    
             <Route
               path="/admin/auction-session"
               element={
