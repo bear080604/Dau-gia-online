@@ -199,6 +199,7 @@ const Detail = () => {
     const newAuctionItem = {
       item: session.item || {},
       auction_org: session.auction_org || {},
+      auctioneer: session.auctioneer || {},
       method: session.method || session.auction_method || '',
       register_start: session.register_start,
       register_end: session.register_end,
@@ -996,7 +997,8 @@ const Detail = () => {
             </li>
             <li>
               Đấu giá viên:
-              <span className='detailsp-auctioneer'>{auctionItem.auction_org?.full_name || 'N/A'}</span>
+              <span className='detailsp-auctioneer'>
+                {auctionItem.auctioneer?.full_name || 'N/A'}</span>
             </li>
             <li className='detailsp-location'>
               Địa điểm: Phòng 2.05 Lầu 2, Số 6 Lương Định Của, phường Bình Trưng, TP.HCM
@@ -1007,7 +1009,7 @@ const Detail = () => {
 
         <div className={`detailsp-tab-content ${activeTab === 1 ? 'detailsp-active' : ''}`}>
           <h3 className='detailsp-document-title'>Các tài liệu pháp lý liên quan đến cuộc đấu giá:</h3>
-          <a className='detailsp-document-title' href={process.env.REACT_APP_BASE_URL+auctionItem.item?.url_file}>xem hồ sơ</a>
+          <a className='detailsp-document-title' href={auctionItem.item?.url_file}>xem hồ sơ</a>
           <ul className='detailsp-document-list'>{renderDocuments()}</ul>
           <div className='detailsp-notice detailsp-document-notice'>
             <strong>
