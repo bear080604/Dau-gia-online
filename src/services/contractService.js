@@ -1,42 +1,101 @@
 import apiInstance from './api';
 
 /**
- * Service functions cho Contract API - có thể dùng cho cả admin và user
- * Admin: Xem tất cả hợp đồng
- * User: Xem hợp đồng của chính họ
+ * Contract Service - Optimized
+ * Fix: Cache + Deduplication
  */
 
-// Lấy danh sách hợp đồng
-// Admin: Lấy tất cả hợp đồng
-// User: Lấy hợp đồng của user hiện tại (nếu API hỗ trợ)
+// ============================================
+// SIMPLE CACHE + DEDUPLICATION
+// ============================================
+const cache = new Map();
+const pending = new Map();
+
+const getCached = (key, maxAge = 60000) => {
+  const item = cache.get(key);
+  if (!item) return null;
+  if (Date.now() - item.time > maxAge) {
+    cache.delete(key);
+    return null;
+  }
+  return item.data;
+};
+
+const setCache = (key, data) => {
+  cache.set(key, { data, time: Date.now() });
+};
+
+const clearCache = (pattern) => {
+  if (!pattern) {
+    cache.clear();
+  } else if (typeof pattern === 'string') {
+    cache.delete(pattern);
+  } else {
+    for (const key of cache.keys()) {
+      if (key.startsWith(pattern)) cache.delete(key);
+    }
+  }
+};
+
+const dedupe = async (key, fn) => {
+  if (pending.has(key)) return pending.get(key);
+  const promise = fn().finally(() => pending.delete(key));
+  pending.set(key, promise);
+  return promise;
+};
+
+// ============================================
+// API FUNCTIONS với Cache
+// ============================================
+
 export const getContracts = async (userId = null) => {
-  const url = userId ? `contracts?user_id=${userId}` : 'contracts';
-  const response = await apiInstance.get(url);
-  return response.data;
-};
+  const key = userId ? `contracts:user:${userId}` : 'contracts:all';
+  const cached = getCached(key);
+  if (cached) return cached;
 
-// Lấy chi tiết một hợp đồng
-export const getContractById = async (contractId) => {
-  const response = await apiInstance.get(`contracts/${contractId}`);
-  return response.data;
-};
-
-// Cập nhật hợp đồng
-export const updateContract = async (contractId, formData) => {
-  const response = await apiInstance.post(`contracts/${contractId}`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+  const data = await dedupe(key, async () => {
+    const url = userId ? `contracts?user_id=${userId}` : 'contracts';
+    const res = await apiInstance.get(url);
+    return res.data;
   });
-  return response.data;
+
+  setCache(key, data);
+  return data;
 };
 
-// Xóa hợp đồng và econtracts liên quan
+export const getContractById = async (contractId) => {
+  const key = `contract:${contractId}`;
+  const cached = getCached(key);
+  if (cached) return cached;
+
+  const data = await dedupe(key, async () => {
+    const res = await apiInstance.get(`contracts/${contractId}`);
+    return res.data;
+  });
+
+  setCache(key, data);
+  return data;
+};
+
+// ============================================
+// MUTATIONS - Clear cache
+// ============================================
+
+export const updateContract = async (contractId, formData) => {
+  const res = await apiInstance.post(`contracts/${contractId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  clearCache('contracts:');
+  clearCache(`contract:${contractId}`);
+  return res.data;
+};
+
 export const deleteContract = async (contractId) => {
   // Xóa econtracts trước
   await apiInstance.delete(`econtracts/${contractId}`);
   // Xóa hợp đồng chính
-  const response = await apiInstance.delete(`contracts/${contractId}`);
-  return response.data;
+  const res = await apiInstance.delete(`contracts/${contractId}`);
+  clearCache('contracts:');
+  clearCache(`contract:${contractId}`);
+  return res.data;
 };
-

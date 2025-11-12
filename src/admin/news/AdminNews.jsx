@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
 import styles from './adminNews.module.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Loading from '../../components/Loading';
+import { getNewsPageData, createNews, updateNews, deleteNews } from '../../services/newsService';
 
 const AdminNews = () => {
   const [news, setNews] = useState([]);
@@ -18,11 +17,7 @@ const AdminNews = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedNews, setSelectedNews] = useState(null);
   const itemsPerPage = 5;
-   const [open, setOpen] = useState(false);
-  const togglePopup = (e) => {
-    e.stopPropagation(); // tránh đóng liền sau khi mở
-    setOpen((prev) => !prev);
-  };
+
   const [formData, setFormData] = useState({
     title: '',
     category_id: '',
@@ -32,28 +27,27 @@ const AdminNews = () => {
     thumbnail: null,
   });
 
+  // ============================================
+  // LOAD DỮ LIỆU - Batch loading song song
+  // ============================================
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch danh mục
-        const categoriesResponse = await axios.get(`${process.env.REACT_APP_API_URL}news-categories`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-        if (categoriesResponse.data && Array.isArray(categoriesResponse.data)) {
-          setCategories(categoriesResponse.data);
+        // Gọi 1 lần để load news + categories song song
+        const { news: newsData, categories: categoriesData } = await getNewsPageData();
+        
+        if (Array.isArray(newsData)) {
+          setNews(newsData);
+        } else {
+          throw new Error('Invalid news data format');
+        }
+
+        if (Array.isArray(categoriesData)) {
+          setCategories(categoriesData);
         } else {
           throw new Error('Invalid categories data format');
         }
 
-        // Fetch tin tức
-        const newsResponse = await axios.get(`${process.env.REACT_APP_API_URL}news`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-        if (newsResponse.data && Array.isArray(newsResponse.data)) {
-          setNews(newsResponse.data);
-        } else {
-          throw new Error('Invalid news data format');
-        }
         setLoading(false);
       } catch (err) {
         setError('Không thể tải dữ liệu');
@@ -63,16 +57,20 @@ const AdminNews = () => {
     fetchData();
   }, []);
 
+  // ============================================
+  // CRUD OPERATIONS
+  // ============================================
   const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc muốn xóa tin tức này?')) {
       try {
-        await axios.delete(`${process.env.REACT_APP_API_URL}news/${id}`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
+        await deleteNews(id);
         setNews(news.filter(item => item.id !== id));
+        
         // Reset về trang 1 nếu trang hiện tại không còn item nào
-        if (currentNews.length === 1 && currentPage > 1) {
-          setCurrentPage(currentPage - 1);
+        const updatedNews = news.filter(item => item.id !== id);
+        const newTotalPages = Math.ceil(updatedNews.length / itemsPerPage);
+        if (currentPage > newTotalPages && newTotalPages > 0) {
+          setCurrentPage(newTotalPages);
         }
       } catch (err) {
         setError('Xóa tin tức thất bại');
@@ -91,26 +89,21 @@ const AdminNews = () => {
     if (formData.thumbnail) data.append('thumbnail', formData.thumbnail);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}news`, data, {
-        headers: { 
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const response = await createNews(data);
       
-      // Tìm thông tin category từ categories để thêm vào dữ liệu mới
+      // Tìm thông tin category
       const category = categories.find(cat => cat.id.toString() === formData.category_id);
       
-      // Tạo đối tượng tin tức mới với đầy đủ thông tin
+      // Tạo đối tượng tin tức mới
       const newNewsItem = {
-        ...response.data.data,
+        ...response.data,
         category: category || { id: formData.category_id, name: 'Unknown' }
       };
       
-      setNews([newNewsItem, ...news]); // Thêm vào đầu mảng
+      setNews([newNewsItem, ...news]);
       setShowAddModal(false);
       setFormData({ title: '', category_id: '', content: '', author: '', is_published: 0, thumbnail: null });
-      setCurrentPage(1); // Reset về trang đầu tiên
+      setCurrentPage(1);
     } catch (err) {
       setError('Thêm tin tức thất bại');
     }
@@ -128,18 +121,13 @@ const AdminNews = () => {
     if (formData.thumbnail) data.append('thumbnail', formData.thumbnail);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}news/${selectedNews.id}`, data, {
-        headers: { 
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const response = await updateNews(selectedNews.id, data);
 
-      // Tìm thông tin category từ categories để thêm vào dữ liệu cập nhật
+      // Tìm thông tin category
       const category = categories.find(cat => cat.id.toString() === formData.category_id);
       
       const updatedNewsItem = {
-        ...response.data.data,
+        ...response.data,
         category: category || { id: formData.category_id, name: 'Unknown' }
       };
 
@@ -152,6 +140,9 @@ const AdminNews = () => {
     }
   };
 
+  // ============================================
+  // MODAL HANDLERS
+  // ============================================
   const openEditModal = (item) => {
     setSelectedNews(item);
     setFormData({
@@ -170,6 +161,9 @@ const AdminNews = () => {
     setShowViewModal(true);
   };
 
+  // ============================================
+  // FILTERING & PAGINATION
+  // ============================================
   const filteredNews = news.filter(item => {
     const matchesStatus = statusFilter === 'all' || 
       (statusFilter === 'published' && item.is_published === 1) || 
@@ -183,6 +177,9 @@ const AdminNews = () => {
   const currentNews = filteredNews.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredNews.length / itemsPerPage);
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Quản Lý Tin Tức</h1>
@@ -211,23 +208,25 @@ const AdminNews = () => {
           </select>
         </div>
         <button
-            className={styles.addButton}
-            onClick={() => {
-              setFormData({
-                title: '',
-                category_id: '',
-                content: '',
-                author: '',
-                is_published: 0,
-                thumbnail: null,
-              });
-              setShowAddModal(true);
-            }}
-          >
-            + Thêm tin tức mới
-          </button>
+          className={styles.addButton}
+          onClick={() => {
+            setFormData({
+              title: '',
+              category_id: '',
+              content: '',
+              author: '',
+              is_published: 0,
+              thumbnail: null,
+            });
+            setShowAddModal(true);
+          }}
+        >
+          + Thêm tin tức mới
+        </button>
       </div>
+
       {error && <p className={styles.error}>{error}</p>}
+      
       {loading ? (
         <Loading message="Đang tải tin tức..." />
       ) : (
@@ -284,7 +283,6 @@ const AdminNews = () => {
             </tbody>
           </table>
           <div className={styles.pagination}>
-            
             {Array.from({ length: totalPages }, (_, i) => (
               <button
                 key={i + 1}
@@ -294,7 +292,6 @@ const AdminNews = () => {
                 {i + 1}
               </button>
             ))}
-            
           </div>
         </>
       )}

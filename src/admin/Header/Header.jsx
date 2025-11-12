@@ -44,7 +44,7 @@ const Sidebar = () => {
       // { id: 'settings', icon: 'fas fa-cog', label: 'Cài đặt', href: addAdminPrefix('/settings') },
       // { id: 'support', icon: 'fas fa-headset', label: 'Hỗ trợ', href: '#' },
       // { id: 'security', icon: 'fas fa-shield-alt', label: 'Bảo mật', href: '#' },
-      // { id: 'logs', icon: 'fas fa-history', label: 'Lịch sử log', href: addAdminPrefix('/history') },
+      { id: 'logs', icon: 'fas fa-history', label: 'Lịch sử log', href: addAdminPrefix('/history') },
     ];
   };
 
@@ -71,7 +71,7 @@ const Sidebar = () => {
     38: ['/roles', '/permissions'],
     42: ['/dashboard'], // manage_dashboard
     43: ['/users'],     // manage_users
-    // 44: ['/settings'],  // manage_settings
+    
     45: ['/history'],   // view_history
     46: ['/asset-categories']
   };

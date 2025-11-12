@@ -1,66 +1,142 @@
 import apiInstance from './api';
 
+/**
+ * Asset/Auction Items Service - Optimized
+ * Fix: Cache + Deduplication
+ */
+
+// ============================================
+// SIMPLE CACHE + DEDUPLICATION
+// ============================================
+const cache = new Map();
+const pending = new Map();
+
+const getCached = (key, maxAge = 60000) => {
+  const item = cache.get(key);
+  if (!item) return null;
+  if (Date.now() - item.time > maxAge) {
+    cache.delete(key);
+    return null;
+  }
+  return item.data;
+};
+
+const setCache = (key, data) => {
+  cache.set(key, { data, time: Date.now() });
+};
+
+const clearCache = (pattern) => {
+  if (!pattern) {
+    cache.clear();
+  } else if (typeof pattern === 'string') {
+    cache.delete(pattern);
+  } else {
+    for (const key of cache.keys()) {
+      if (key.startsWith(pattern)) cache.delete(key);
+    }
+  }
+};
+
+const dedupe = async (key, fn) => {
+  if (pending.has(key)) return pending.get(key);
+  const promise = fn().finally(() => pending.delete(key));
+  pending.set(key, promise);
+  return promise;
+};
+
+// ============================================
+// API FUNCTIONS với Cache
+// ============================================
 
 export const getAssets = async () => {
-  const response = await apiInstance.get('products');
-  return response.data;
+  const key = 'assets';
+  const cached = getCached(key);
+  if (cached) return cached;
+
+  const data = await dedupe(key, async () => {
+    const res = await apiInstance.get('products');
+    return res.data;
+  });
+
+  setCache(key, data);
+  return data;
 };
 
-// Lấy chi tiết một tài sản đấu giá
 export const getAssetById = async (assetId) => {
-  const response = await apiInstance.get(`auction-items/${assetId}`);
-  return response.data;
+  const key = `asset:${assetId}`;
+  const cached = getCached(key);
+  if (cached) return cached;
+
+  const data = await dedupe(key, async () => {
+    const res = await apiInstance.get(`auction-items/${assetId}`);
+    return res.data;
+  });
+
+  setCache(key, data);
+  return data;
 };
 
-// Lấy danh sách categories cho auction assets (không export để tránh conflict với categoryService)
-// Nên dùng getCategories từ categoryService thay vì function này
+// Internal function - không export
 const getCategoriesForAssets = async () => {
-  const response = await apiInstance.get('categories');
-  return response.data;
+  const key = 'categories';
+  const cached = getCached(key, 300000); // 5 phút
+  if (cached) return cached;
+
+  const data = await dedupe(key, async () => {
+    const res = await apiInstance.get('categories');
+    return res.data;
+  });
+
+  setCache(key, data);
+  return data;
 };
 
-// Tạo tài sản đấu giá mới
+// ============================================
+// MUTATIONS - Clear cache
+// ============================================
+
 export const createAsset = async (formData) => {
-  const response = await apiInstance.post('auction-items', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+  const res = await apiInstance.post('auction-items', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
   });
-  return response.data;
+  clearCache('assets');
+  return res.data;
 };
 
-// Cập nhật tài sản đấu giá
 export const updateAsset = async (assetId, formData) => {
-  // Laravel form method spoofing: sử dụng POST với _method=PUT
-  const response = await apiInstance.post(`auction-items/${assetId}`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+  const res = await apiInstance.post(`auction-items/${assetId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
   });
-  return response.data;
+  clearCache('assets');
+  clearCache(`asset:${assetId}`);
+  return res.data;
 };
 
-// Duyệt tài sản (approve)
 export const approveAsset = async (assetId, data) => {
-  const response = await apiInstance.put(`auction-items/${assetId}`, data);
-  return response.data;
+  const res = await apiInstance.put(`auction-items/${assetId}`, data);
+  clearCache('assets');
+  clearCache(`asset:${assetId}`);
+  return res.data;
 };
 
-// Từ chối tài sản (reject)
 export const rejectAsset = async (assetId, data) => {
-  const response = await apiInstance.put(`auction-items/${assetId}`, data);
-  return response.data;
+  const res = await apiInstance.put(`auction-items/${assetId}`, data);
+  clearCache('assets');
+  clearCache(`asset:${assetId}`);
+  return res.data;
 };
 
-// Xóa tài sản đấu giá
 export const deleteAsset = async (assetId) => {
-  const response = await apiInstance.delete(`auction-items/${assetId}`);
-  return response.data;
+  const res = await apiInstance.delete(`auction-items/${assetId}`);
+  clearCache('assets');
+  clearCache(`asset:${assetId}`);
+  return res.data;
 };
 
-// Xóa ảnh bổ sung
 export const deleteExtraImage = async (imageId) => {
-  const response = await apiInstance.delete(`auction-items/images/${imageId}`);
-  return response.data;
+  const res = await apiInstance.delete(`auction-items/images/${imageId}`);
+  // Clear all assets cache vì không biết image thuộc asset nào
+  clearCache('assets');
+  clearCache('asset:');
+  return res.data;
 };
-
