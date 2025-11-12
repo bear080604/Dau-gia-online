@@ -41,8 +41,8 @@ function AuctionSession() {
   const [sessionForm, setSessionForm] = useState({
     item: '',
     auctioneerId: '',
-    creator: user?.id || '',
-    creatorName: user?.full_name || '',
+    creator: token?.user_id || '',
+    creatorName: token?.full_name || '',
     startTime: '',
     endTime: '',
     regulation: '',
@@ -207,7 +207,7 @@ function AuctionSession() {
       id: session.session_id,
       item: session.item?.name || 'Chưa có',
       itemId: session.item_id?.toString(),
-      creator: session.auction_org?.full_name || user?.full_name || 'Chưa có',
+      creator: session.created_by || 'Chưa có',
       creatorId: session.created_by,
       startTime,
       endTime,
@@ -757,8 +757,12 @@ const handleRejectWinner = async (sessionId) => {
       if (!sessionForm.item) {
         throw new Error('Vui lòng chọn tài sản.');
       }
-      if (!sessionForm.auctionOrgId || isNaN(parseInt(sessionForm.auctionOrgId))) {
+     if (!sessionForm.auctionOrgId || sessionForm.auctionOrgId === '') {
         throw new Error('Vui lòng chọn tổ chức đấu giá.');
+      }
+      const auctionOrgId = parseInt(sessionForm.auctionOrgId, 10);
+      if (isNaN(auctionOrgId)) {
+        throw new Error('Tổ chức đấu giá không hợp lệ.');
       }
       if (!sessionForm.bidStep || isNaN(parseInt(sessionForm.bidStep.replace(/[^\d]/g, '')))) {
         throw new Error('Bước giá phải là số dương.');
@@ -771,7 +775,7 @@ const handleRejectWinner = async (sessionId) => {
         regulation: sessionForm.regulation,
         status: 'Mo',
         method: sessionForm.method,
-        auction_org_id: parseInt(sessionForm.auctionOrgId),
+        auction_org_id: auctionOrgId,
         auctioneer_id: sessionForm.auctioneerId ? parseInt(sessionForm.auctioneerId) : null,
         register_start: sessionForm.registerStart || null,
         register_end: sessionForm.registerEnd || null,
@@ -1070,7 +1074,7 @@ const handleRejectWinner = async (sessionId) => {
                   id="creator"
                   name="creatorName"
                   value={sessionForm.creatorName}
-                  disabled
+                  disabled 
                   style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
                 />
                 <input type="hidden" name="creator" value={sessionForm.creator} />
