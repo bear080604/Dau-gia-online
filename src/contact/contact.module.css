@@ -1,150 +1,124 @@
-/* Contact.module.css */
+/* Contact.module.css - Title nhỏ xíu + Responsive tối ưu */
+
+/* === CƠ BẢN === */
 .container {
   max-width: 800px;
-  margin: 50px auto;
+  width: 100%;
+  margin: 30px auto;
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-  /* overflow: hidden; */ /* Comment out nếu cần, nhưng giữ hidden cho container tổng nếu không ảnh hưởng */
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   position: relative;
   overflow-x: hidden;
+  padding: 0;
 }
 
+/* === HEADER === */
 .header {
   background: linear-gradient(135deg, #2c3e50, #4a6491);
   color: white;
-  padding: 25px;
+  padding: 20px 16px;
   text-align: center;
-  overflow: hidden;
+  border-radius: 12px 12px 0 0;
 }
 
 .headerTitle {
-  font-size: 28px;
-  margin-bottom: 10px;
+  font-size: 18px; /* Nhỏ xíu */
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.4;
   word-wrap: break-word;
 }
 
+/* === CONTENT === */
 .content {
-  padding: 30px;
+  padding: 24px 20px;
   overflow-x: hidden;
 }
 
 .section {
-  margin-bottom: 30px;
-  padding-bottom: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
   border-bottom: 1px solid #eee;
-  /* overflow: hidden; */ /* Comment out nếu dropdown vẫn bị che ở level này */
-  overflow: visible; /* Fix: Cho phép dropdown thoát nếu cần */
+  overflow: visible;
 }
 
 .sectionTitle {
-  font-size: 20px;
+  font-size: 16px; /* Nhỏ xíu */
   color: #2c3e50;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
   border-bottom: 2px solid #3498db;
+  font-weight: 600;
+  line-height: 1.4;
   word-wrap: break-word;
 }
 
+/* === FORM === */
 .assetForm {
   display: flex;
   flex-direction: column;
+  gap: 16px;
 }
 
 .formGroup {
-  margin-bottom: 20px;
-  overflow: visible !important; /* Fix chính: Cho phép dropdown absolute hiển thị ra ngoài */
+  margin-bottom: 0;
+  overflow: visible !important;
 }
 
 .formLabel {
   display: block;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: #2c3e50;
+  font-size: 14px;
+  line-height: 1.4;
   word-wrap: break-word;
 }
 
 .formControl {
   width: 100%;
-  padding: 12px 15px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 16px;
-  transition: border 0.3s;
-  overflow: hidden;
+  padding: 11px 14px;
+  border: 1.5px solid #ddd;
+  border-radius: 6px;
+  font-size: 15px;
+  transition: all 0.25s ease;
   word-wrap: break-word;
-  white-space: normal;
+  box-sizing: border-box;
 }
 
-.formControl.readonly {
-  background-color: #f8f9fa;
-  cursor: not-allowed;
+.formControl:focus {
+  border-color: #3498db;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
 }
 
 .formControl.error {
   border-color: #dc3545;
 }
 
-.formControl:focus {
-  border-color: #3498db;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-}
-
-.formControl:disabled,
-.formControl.disabled {
+.formControl.readonly {
   background-color: #f8f9fa;
   cursor: not-allowed;
   color: #6c757d;
 }
 
 textarea.formControl {
-  min-height: 100px;
+  min-height: 90px;
   resize: vertical;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-}
-
-select.formControl {
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 15px center;
-  background-size: 16px;
-  padding-right: 40px;
-  max-width: 100%;
-}
-
-select.formControl option {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  white-space: normal;
+  font-family: inherit;
 }
 
 .charCount {
-  font-size: 12px;
+  font-size: 11.5px;
   color: #6c757d;
   text-align: right;
-  margin-top: 5px;
+  margin-top: 4px;
 }
 
-.imagePreview {
-  margin-top: 15px; /* Clean duplicate: Giữ 15px consistent */
-  overflow: hidden;
-}
-
-.previewImg {
-  max-width: 200px; /* Cải thiện: Lớn hơn cho image chính */
-  max-height: 150px;
-  margin-right: 10px;
-  object-fit: cover;
-  border-radius: 5px;
-  border: 1px solid #ddd; /* Thêm border nhẹ cho preview */
-}
-
+/* === FILE UPLOAD === */
 .fileUpload {
   position: relative;
-  display: inline-block;
   width: 100%;
 }
 
@@ -156,19 +130,21 @@ select.formControl option {
   width: 100%;
   height: 100%;
   cursor: pointer;
+  z-index: 2;
 }
 
 .fileUploadLabel {
   display: block;
-  padding: 12px 15px;
+  padding: 11px 14px;
   background: #f8f9fa;
-  border: 1px dashed #ddd;
-  border-radius: 5px;
+  border: 1.5px dashed #ccc;
+  border-radius: 6px;
   text-align: center;
   color: #6c757d;
-  transition: all 0.3s;
-  word-wrap: break-word;
+  font-size: 14px;
+  transition: all 0.25s ease;
   cursor: pointer;
+  word-wrap: break-word;
 }
 
 .fileUpload:hover .fileUploadLabel {
@@ -177,37 +153,65 @@ select.formControl option {
   color: #3498db;
 }
 
+/* === IMAGE PREVIEW === */
+.imagePreview {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.previewImg {
+  max-width: 140px;
+  max-height: 110px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.fileNamePreview {
+  margin-top: 8px;
+  font-size: 13.5px;
+  color: #333;
+  word-break: break-all;
+}
+
+/* === BUTTON === */
 .btnSubmit {
-  display: block;
   width: 100%;
-  padding: 15px;
+  padding: 13px;
   background: linear-gradient(135deg, #3498db, #2872ba);
   color: white;
   border: none;
-  border-radius: 5px;
-  font-size: 18px;
+  border-radius: 6px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.25s ease;
+  margin-top: 8px;
 }
 
 .btnSubmit:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2980b9, #2872ba);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #2980b9, #1f5a92);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-.btnSubmit:disabled {
+.btnSubmit:disabled,
+.btnSubmit.disabled {
   background: #6c757d;
   cursor: not-allowed;
   transform: none;
+  opacity: 0.7;
 }
 
+/* === LOADING & ERROR === */
 .loading {
   text-align: center;
   color: #3498db;
-  font-size: 14px;
-  margin-top: 10px;
+  font-size: 13.5px;
+  margin-top: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -216,73 +220,51 @@ select.formControl option {
 
 .error {
   color: #dc3545;
-  text-align: center;
-  margin-top: 10px;
-  font-size: 14px;
-  padding: 10px;
-  background: #f8d7da;
-  border-radius: 5px;
+  background: #fdf0f0;
   border: 1px solid #f5c6cb;
-}
-
-.redirectLink {
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  margin-top: 12px;
   text-align: center;
-  margin-top: 20px;
-}
-
-.redirectLink a {
-  color: #3498db;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.redirectLink a:hover {
-  text-decoration: underline;
-}
-
-.checkAuth {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #7f8c8d;
-  font-size: 12px;
 }
 
 .validationError {
   color: #dc3545;
   font-size: 12px;
-  margin-top: 5px;
+  margin-top: 4px;
+  line-height: 1.3;
 }
 
-/* Toast Styles */
-:global(.fas) {
-  /* Font Awesome global if needed */
-}
-
+/* === TOAST === */
 .toastContainer {
   position: fixed;
-  right: 20px;
-  top: 20px;
+  right: 12px;
+  top: 12px;
+  left: 12px;
+  max-width: 400px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   z-index: 9999;
   pointer-events: none;
 }
 
 .toast {
-  width: 320px;
   background: #d4edda;
   color: #155724;
-  padding: 12px 14px;
-  border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  padding: 10px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-start;
-  transform: translateY(-120%);
+  transform: translateY(-100%);
   opacity: 0;
-  transition: transform 300ms cubic-bezier(.2,.9,.3,1), opacity 300ms ease;
+  transition: all 0.3s ease;
   pointer-events: auto;
+  font-size: 13.5px;
 }
 
 .toast.show {
@@ -290,36 +272,27 @@ select.formControl option {
   opacity: 1;
 }
 
-.toastBody {
-  flex: 1;
-}
-
 .toastTitle {
   font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.toastMsg {
-  font-size: 13px;
-  opacity: 0.9;
+  margin-bottom: 2px;
 }
 
 .toastClose {
   margin-left: auto;
-  background: transparent;
+  background: none;
   border: 0;
-  color: inherit;
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
 }
 
 .progress {
-  height: 4px;
+  height: 3px;
   background: rgba(0,0,0,0.1);
-  border-radius: 4px;
-  margin-top: 10px;
+  border-radius: 2px;
+  margin-top: 8px;
   overflow: hidden;
 }
 
@@ -328,131 +301,29 @@ select.formControl option {
   height: 100%;
   background: #28a745;
   width: 100%;
-  transition: width 5000ms linear;
+  transition: width 5s linear;
 }
 
-.fileNamePreview {
-  margin-top: 10px;
-  font-size: 14px;
-  color: #333;
-}
-
-@media (max-width: 420px) {
-  .toastContainer {
-    right: 10px;
-    left: 10px;
-    top: 12px;
-  }
-
-  .toast {
-    width: calc(100% - 20px);
-  }
-}
-
-@media (max-width: 768px) {
-  .content {
-    padding: 20px;
-  }
-
-  .container {
-    margin: 20px auto;
-    border-radius: 8px;
-  }
-
-  .header {
-    padding: 20px;
-  }
-
-  .headerTitle {
-    font-size: 24px;
-  }
-
-  .sectionTitle {
-    font-size: 18px;
-  }
-}
-
-@media (max-width: 480px) {
-  .content {
-    padding: 15px;
-  }
-
-  .formControl {
-    font-size: 14px;
-    padding: 10px;
-  }
-
-  .btnSubmit {
-    padding: 12px;
-    font-size: 16px;
-  }
-}
-
-.loadingWrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 50px;
-  color: #333;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #ddd;
-  border-top: 4px solid #007bff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 10px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.successMessage {
-  color: #1a9f29;
-  margin-bottom: 15px;
-  font-weight: 500;
-}
-
-.globalError {
-  color: #d93025;
-  margin-bottom: 15px;
-  font-weight: 500;
-}
-
-.readonlyText {
-  background: #f9f9f9;
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-  color: #555;
-}
-
-/* Custom Dropdown - Cải thiện từ file gốc */
+/* === CUSTOM DROPDOWN === */
 .customSelectWrapper {
   position: relative;
   width: 100%;
 }
 
 .customSelect {
-  border: 1px solid #ddd; /* Match formControl */
-  border-radius: 5px;
-  padding: 12px 15px;
+  border: 1.5px solid #ddd;
+  border-radius: 6px;
+  padding: 11px 14px;
   background: #fff;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 48px;
-  transition: border-color 0.3s, box-shadow 0.3s;
-  white-space: normal;
-  word-break: break-word;
+  min-height: 46px;
+  transition: all 0.25s ease;
+  font-size: 15px;
   line-height: 1.4;
+  word-break: break-word;
 }
 
 .customSelect:hover {
@@ -465,36 +336,30 @@ select.formControl option {
 
 .arrow {
   margin-left: 8px;
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
   transition: transform 0.2s;
 }
 
 .dropdownList {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 6px);
   left: 0;
   right: 0;
-  max-height: 250px;
+  max-height: 220px;
   overflow-y: auto;
   background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  z-index: 1000; /* Tăng để tránh conflict */
+  border: 1.5px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+  z-index: 1000;
   margin: 0;
-  padding: 0;
+  padding: 6px 0;
   list-style: none;
 }
 
-/* Custom scrollbar */
 .dropdownList::-webkit-scrollbar {
-  width: 6px;
-}
-
-.dropdownList::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
+  width: 5px;
 }
 
 .dropdownList::-webkit-scrollbar-thumb {
@@ -503,13 +368,12 @@ select.formControl option {
 }
 
 .dropdownList li {
-  padding: 12px 15px;
+  padding: 10px 14px;
   cursor: pointer;
-  white-space: normal;
-  word-break: break-word;
+  font-size: 14px;
   line-height: 1.4;
   border-bottom: 1px solid #eee;
-  transition: background-color 0.2s;
+  transition: background 0.2s;
 }
 
 .dropdownList li:last-child {
@@ -521,16 +385,125 @@ select.formControl option {
 }
 
 .activeOption {
-  background: #e3f2fd;
-  font-weight: 600;
+  background: #e3f2fd !important;
   color: #1976d2;
+  font-weight: 600;
 }
 
-/* Thêm cho fallback loading */
 .loadingOption {
   padding: 12px;
   text-align: center;
   color: #999;
   font-style: italic;
   cursor: default;
+  font-size: 13px;
+}
+
+/* === RESPONSIVE === */
+
+/* Tablet & Mobile */
+@media (max-width: 768px) {
+  .container {
+    margin: 16px auto;
+    border-radius: 10px;
+  }
+
+  .header {
+    padding: 16px 14px;
+  }
+
+  .headerTitle {
+    font-size: 17px;
+  }
+
+  .content {
+    padding: 20px 16px;
+  }
+
+  .sectionTitle {
+    font-size: 15.5px;
+  }
+
+  .formControl,
+  .fileUploadLabel,
+  .btnSubmit {
+    font-size: 14.5px;
+    padding: 10px 13px;
+  }
+
+  .previewImg {
+    max-width: 120px;
+    max-height: 90px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    margin: 12px 8px;
+    border-radius: 8px;
+  }
+
+  .header {
+    padding: 14px 12px;
+  }
+
+  .headerTitle {
+    font-size: 16px;
+  }
+
+  .content {
+    padding: 16px 12px;
+  }
+
+  .sectionTitle {
+    font-size: 15px;
+  }
+
+  .formLabel {
+    font-size: 13.5px;
+  }
+
+  .formControl,
+  .fileUploadLabel {
+    font-size: 14px;
+    padding: 9px 12px;
+  }
+
+  .btnSubmit {
+    padding: 11px;
+    font-size: 15px;
+  }
+
+  .previewImg {
+    max-width: 100px;
+    max-height: 80px;
+  }
+
+  .toastContainer {
+    left: 8px;
+    right: 8px;
+  }
+
+  .toast {
+    font-size: 13px;
+    padding: 9px 11px;
+  }
+}
+
+/* Rất nhỏ (iPhone SE, etc.) */
+@media (max-width: 360px) {
+  .headerTitle,
+  .sectionTitle {
+    font-size: 14.5px;
+  }
+
+  .formControl,
+  .fileUploadLabel {
+    font-size: 13.5px;
+  }
+
+  .previewImg {
+    max-width: 90px;
+    max-height: 70px;
+  }
 }

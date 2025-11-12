@@ -343,7 +343,7 @@ useEffect(() => {
       </div>
 
       {/* ==== SEARCH ==== */}
-      <header className={styles.headerMain}>
+    <header className={`${styles.headerMain} ${styles.responsive2560}`}>
         <div className={styles.logo}>
           <Link to="/">
             <img className={styles.logoImg} src="/assets/img/logo.jpg" alt="Logo" />

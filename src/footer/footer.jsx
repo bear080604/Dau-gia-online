@@ -31,18 +31,21 @@ const Footer = () => {
   };
 
   return (
-    <footer className={styles.footer}>
+    <footer className={`${styles.footer} ${styles.responsive2560}`}>
       <div className={styles.container}>
         {/* Left Section - Contact Form */}
         <div className={styles.leftSection}>
-          <h2 className={styles.title}>ĐĂNG KÝ TƯ VẤN</h2>
+          <h2 className={styles.title}>ĐĂNG KÝ ĐẤU GIÁ TÀI SẢN</h2>
           
-          <form className={styles.form}>
-            <button type="submit" className={styles.submitBtn}>
-              Liên hệ
-            
-            </button>
-          </form>
+          <div className={styles.contactBtnWrapper}>
+            <Link
+              to="/contact"
+              className={styles.submitBtn}   // giữ nguyên style
+            >
+              Liên hệ ngay
+              <i className="fa fa-arrow-right" aria-hidden="true"></i>
+            </Link>
+          </div>
           
           <div className={styles.stats}>
             <div className={styles.stat}>

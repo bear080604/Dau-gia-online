@@ -9,7 +9,7 @@ const About = () => {
   };
 
   return (
-    <div className={styles.container}>
+  <div className={`${styles.container} ${styles.responsive2560}`}>
       <h1 className={styles.title}>CÔNG TY ĐẤU GIÁ HỢP DANH KHẢI BẢO</h1>
       <div className={styles.tabContainer}>
         <button
