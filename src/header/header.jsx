@@ -248,7 +248,6 @@ useEffect(() => {
     {
       icon: 'fa-th-list',
       text: 'DANH MỤC TÀI SẢN',
-      href: '#',
       isCategory: true,
       subItems: categories,
     },
