@@ -692,24 +692,24 @@ const Detail = () => {
 
   // Fixed getMainImage
   const getMainImage = () => {
-    const basePath = `${process.env.REACT_APP_BASE_URL}${AA_STORAGE_PATH}`;
+    const basePath = `${process.env.REACT_APP_BASE_URL}`;
     if (imagesFromApi.length > 0 && imagesFromApi[currentImageIndex]) {
-      return `${basePath}${imagesFromApi[currentImageIndex].image_url}`;
+      return `${imagesFromApi[currentImageIndex].image_url}`;
     }
     // Fallback: single image từ auctionItem hoặc placeholder
     const fallbackImg = auctionItem.item?.image_url || PLACEHOLDER_IMAGE;
-    return `${basePath}${fallbackImg}`;
+    return `${fallbackImg}`;
   };
 
   // Fixed renderThumbnails
   const renderThumbnails = () => {
-    const basePath = `${process.env.REACT_APP_BASE_URL}${AA_STORAGE_PATH}`;
+    const basePath = `${process.env.REACT_APP_BASE_URL}`;
     if (imagesFromApi.length === 0) {
       // Fallback thumbnail nếu empty
       const fallbackImg = auctionItem.item?.image_url || PLACEHOLDER_IMAGE;
       return (
         <img
-          src={`${basePath}${fallbackImg}`}
+          src={`${fallbackImg}`}
           className={`detailsp-thumbnail detailsp-active`}
           alt="Thumbnail 1"
         />
@@ -719,7 +719,7 @@ const Detail = () => {
     return imagesFromApi.map((img, i) => (
       <img
         key={i}
-        src={`${basePath}${img.image_url}`}
+        src={`${img.image_url}`}
         className={`detailsp-thumbnail ${i === currentImageIndex ? "detailsp-active" : ""}`}
         alt={`Thumbnail ${i + 1}`}
         onClick={() => changeImage(i)}

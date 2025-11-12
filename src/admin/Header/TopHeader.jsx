@@ -158,10 +158,10 @@ const TopHeader = () => {
               </div>
               <div className={styles.userInfo}>
                 <span className={styles.userName}>
-                  {user?.name || 'Admin User'}
+                  {user?.full_name || 'Admin User'}
                 </span>
                 <span className={styles.userRole}>
-                  {user?.role_name || 'Administrator'}
+                  {user?.role || 'Administrator'}
                 </span>
               </div>
               <i
